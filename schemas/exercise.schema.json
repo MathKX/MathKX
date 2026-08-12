@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Exercise Definition",
+  "description": "Exploratory 0.1 schema for a generated exercise definition. This is not the stable MathKX Exercise Format v1.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "skill",
+    "difficulty",
+    "generator",
+    "parameters",
+    "question",
+    "answer"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "description": "Stable, language-neutral exercise definition ID."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Definition revision used as part of deterministic instance identity."
+    },
+    "skill": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "description": "Primary language-neutral skill ID."
+    },
+    "difficulty": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provisional difficulty label; no shared scale has been adopted."
+    },
+    "generator": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Name of a generator implemented in domain code."
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Generator-specific configuration. A later format should validate parameters by generator.",
+      "additionalProperties": true
+    },
+    "question": {
+      "type": "object",
+      "required": [
+        "template"
+      ],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "text",
+            "math",
+            "mixed"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "answer": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "visualization": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,26 @@
+{
+  "$schema": "../../../schemas/exercise.schema.json",
+  "schemaVersion": "0.1",
+  "id": "algebra.linear-equations.basic",
+  "version": 1,
+  "skill": "algebra.linear-equations",
+  "difficulty": "introductory",
+  "generator": "linear-equation",
+  "parameters": {
+    "solutionMin": -10,
+    "solutionMax": 10,
+    "coefficientMin": 2,
+    "coefficientMax": 8
+  },
+  "question": {
+    "format": "math",
+    "template": "Solve: {{equation}}"
+  },
+  "answer": {
+    "type": "number"
+  },
+  "visualization": {
+    "type": "equation-balance"
+  }
+}
+

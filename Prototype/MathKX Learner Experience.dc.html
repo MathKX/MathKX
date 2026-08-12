@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#F4F4F1;color:#16181D;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+input{font:inherit}
+a{color:#3B3A8C}
+a:hover{color:#2B2A6B}
+*:focus-visible{outline:3px solid #3B3A8C;outline-offset:2px}
+@keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#F4F4F1;color:#16181D;font-family:'IBM Plex Sans',system-ui,sans-serif;padding-bottom:110px">
+
+<a href="#main" style="position:absolute;left:-9999px;top:8px;z-index:60;background:#3B3A8C;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;text-decoration:none" style-focus="left:12px">Skip to main content</a>
+
+<header style="position:sticky;top:0;z-index:20;background:rgba(244,244,241,0.93);backdrop-filter:blur(10px);border-bottom:1px solid #E3E2DC">
+  <div style="max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px;margin-right:auto">
+      <div style="width:30px;height:30px;border-radius:9px;background:#3B3A8C;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Newsreader',Georgia,serif;font-size:19px;line-height:1" aria-hidden="true">&#8730;</div>
+      <span style="font-family:'Newsreader',Georgia,serif;font-size:22px;font-weight:600;letter-spacing:-0.01em">MathKX</span>
+    </div>
+
+    <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+      <nav aria-label="Main" style="display:flex;align-items:center;gap:4px">
+        <button type="button" onClick="{{ goHome }}" aria-current="{{ curHome }}" style="position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:5px;min-height:44px;padding:10px 14px 8px;border:0;background:transparent;border-radius:9px;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#EAE9E3">Dashboard<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}"><span style="display:block;width:20px;height:2px;border-radius:2px;background:#3B3A8C"></span></sc-if></button>
+        <button type="button" onClick="{{ goMap }}" aria-current="{{ curMap }}" style="position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:5px;min-height:44px;padding:10px 14px 8px;border:0;background:transparent;border-radius:9px;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#EAE9E3">Skill map<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:20px;height:2px;border-radius:2px;background:#3B3A8C"></span></sc-if></button>
+        <button type="button" onClick="{{ goSession }}" aria-current="{{ curSession }}" style="position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:5px;min-height:44px;padding:10px 14px 8px;border:0;background:transparent;border-radius:9px;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#EAE9E3">Session<sc-if value="{{ isSessionish }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:20px;height:2px;border-radius:2px;background:#3B3A8C"></span></sc-if></button>
+      </nav>
+    </sc-if>
+
+    <div style="display:flex;align-items:center;gap:9px;padding-left:16px;border-left:1px solid #E3E2DC">
+      <div style="width:30px;height:30px;border-radius:50%;background:#EEEDF7;border:1px solid #D6D4EC;color:#3B3A8C;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600" aria-hidden="true">{{ initial }}</div>
+      <span style="font-size:14px;color:#414651">{{ learnerName }}</span>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1" style="outline:none">
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="dash-h" style="max-width:1120px;margin:0 auto;padding:36px 20px 0;animation:riseIn .28s ease both">
+  <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7080">Your dashboard</p>
+  <h1 id="dash-h" style="font-family:'Newsreader',Georgia,serif;font-size:clamp(30px,4.4vw,42px);font-weight:500;letter-spacing:-0.015em;margin:0 0 10px;line-height:1.1">Good afternoon, {{ learnerName }}</h1>
+  <p style="margin:0;color:#5A5F6D;font-size:17px;line-height:1.55;max-width:60ch;text-wrap:pretty">Two skills are moving this week. Square roots is the one holding up your current goal.</p>
+
+  <article style="margin-top:28px;background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:clamp(20px,3vw,32px);display:flex;flex-wrap:wrap;gap:32px;align-items:center">
+    <div style="flex:1 1 340px;min-width:280px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="display:inline-flex;align-items:center;gap:7px;background:#EEEDF7;border:1px solid #D6D4EC;color:#2B2A6B;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#3B3A8C" stroke-width="2"></circle><circle cx="8" cy="8" r="2.4" fill="#3B3A8C"></circle></svg>
+          Current goal
+        </span>
+        <code style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#6B7080">geometry.pythagorean-theorem</code>
+      </div>
+      <h2 style="font-family:'Newsreader',Georgia,serif;font-size:30px;font-weight:500;letter-spacing:-0.01em;margin:0 0 8px">Pythagorean theorem</h2>
+      <p style="margin:0 0 22px;color:#5A5F6D;font-size:16px;line-height:1.55;max-width:46ch;text-wrap:pretty">Find the missing side of a right triangle when the other two are known.</p>
+
+      <div style="max-width:420px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:#414651;margin-bottom:7px">
+          <span style="font-weight:600">Mastery</span>
+          <span><strong style="font-size:16px">{{ goalPct }}%</strong> of 80% needed</span>
+        </div>
+        <div role="img" aria-label="{{ goalBarLabel }}" style="position:relative;height:10px;border-radius:999px;background:#EAE9E3;overflow:visible">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:{{ goalPct }}%;background:#3B3A8C;border-radius:999px;transition:width .5s ease"></div>
+          <div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:#16181D;opacity:.55"></div>
+        </div>
+        <p style="margin:8px 0 0;font-size:13px;color:#6B7080">The marker is the mastery threshold, not a score to beat.</p>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:24px">
+        <button type="button" onClick="{{ startSession }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;padding:0 24px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:background .15s ease" style-hover="background:#2B2A6B">
+          Continue learning
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <button type="button" onClick="{{ goMap }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:11px;border:1px solid #CFCDC4;background:#fff;color:#2B2A6B;font-size:16px;font-weight:600;cursor:pointer;transition:background .15s ease,border-color .15s ease" style-hover="background:#EEEDF7;border-color:#3B3A8C">Open skill map</button>
+      </div>
+    </div>
+
+    <div style="flex:0 1 260px;min-width:200px" aria-hidden="true">
+      <svg viewBox="0 0 260 210" style="width:100%;height:auto;display:block">
+        <path d="M60 170 L200 170 L60 40 Z" fill="#EEEDF7" stroke="#3B3A8C" stroke-width="2" stroke-linejoin="round"></path>
+        <path d="M60 156 L74 156 L74 170" fill="none" stroke="#3B3A8C" stroke-width="2"></path>
+        <text x="130" y="192" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="17" fill="#414651">6</text>
+        <text x="46" y="110" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="17" fill="#414651">8</text>
+        <text x="146" y="98" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="17" font-style="italic" fill="#3B3A8C">c</text>
+      </svg>
+    </div>
+  </article>
+
+  <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(292px,1fr));margin-top:20px">
+
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+      <h2 style="margin:0 0 4px;font-size:15px;font-weight:600">Recent skill progress</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#6B7080">Last seven days</p>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+        <li>
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px"><span style="font-size:14px;font-weight:500">Square roots</span><span style="font-size:13px;color:#414651;font-variant-numeric:tabular-nums">{{ sqrtPct }}% <span style="color:#6B7080">{{ sqrtDelta }}</span></span></div>
+          <div style="height:7px;border-radius:999px;background:#EAE9E3"><div style="height:100%;width:{{ sqrtPct }}%;border-radius:999px;background:#3B3A8C;transition:width .5s ease"></div></div>
+          <code style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A8E99">numbers.square-roots</code>
+        </li>
+        <li>
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px"><span style="font-size:14px;font-weight:500">Pythagorean theorem</span><span style="font-size:13px;color:#414651;font-variant-numeric:tabular-nums">{{ goalPct }}% <span style="color:#6B7080">{{ goalDelta }}</span></span></div>
+          <div style="height:7px;border-radius:999px;background:#EAE9E3"><div style="height:100%;width:{{ goalPct }}%;border-radius:999px;background:#3B3A8C;transition:width .5s ease"></div></div>
+          <code style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A8E99">geometry.pythagorean-theorem</code>
+        </li>
+        <li>
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px"><span style="font-size:14px;font-weight:500">Powers &amp; exponents</span><span style="font-size:13px;color:#414651;font-variant-numeric:tabular-nums">92% <span style="color:#6B7080">+3</span></span></div>
+          <div style="height:7px;border-radius:999px;background:#EAE9E3"><div style="height:100%;width:92%;border-radius:999px;background:#2E6B4F"></div></div>
+          <code style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A8E99">numbers.powers</code>
+        </li>
+      </ul>
+    </article>
+
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+      <h2 style="margin:0 0 4px;font-size:15px;font-weight:600">Mastery overview</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#6B7080">17 skills tracked</p>
+      <div role="img" aria-label="Of 17 skills: 9 mastered, 4 developing, 1 needs attention, 3 not started." style="display:flex;height:12px;border-radius:999px;overflow:hidden;border:1px solid #E3E2DC;margin-bottom:18px">
+        <div style="flex:9;background:#2E6B4F"></div>
+        <div style="flex:4;background:#3B3A8C"></div>
+        <div style="flex:1;background:repeating-linear-gradient(45deg,#8A5A15 0 4px,#C08B3E 4px 8px)"></div>
+        <div style="flex:3;background:repeating-linear-gradient(90deg,#D8D7D0 0 3px,#F4F4F1 3px 6px)"></div>
+      </div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;font-size:14px">
+        <li style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="flex:1">Mastered</span><strong style="font-variant-numeric:tabular-nums">9</strong></li>
+        <li style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#fff" stroke="#3B3A8C" stroke-width="1.8"></circle><path d="M8 1.4 A6.6 6.6 0 0 1 8 14.6 Z" fill="#3B3A8C"></path></svg><span style="flex:1">Developing</span><strong style="font-variant-numeric:tabular-nums">4</strong></li>
+        <li style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4 15.2 14.2 0.8 14.2Z" fill="#8A5A15"></path><path d="M8 6.1v3.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path><circle cx="8" cy="11.9" r="0.95" fill="#fff"></circle></svg><span style="flex:1">Needs attention</span><strong style="font-variant-numeric:tabular-nums">1</strong></li>
+        <li style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="#9A9DA8" stroke-width="1.8" stroke-dasharray="2 3"></circle></svg><span style="flex:1">Not started</span><strong style="font-variant-numeric:tabular-nums">3</strong></li>
+      </ul>
+    </article>
+
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+      <h2 style="margin:0 0 4px;font-size:15px;font-weight:600">Practice rhythm</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#6B7080">Minutes per day</p>
+      <div aria-hidden="true" style="display:flex;align-items:flex-end;gap:10px;height:96px;margin-bottom:16px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:56px;border-radius:5px;background:#3B3A8C"></div><span style="font-size:11px;color:#6B7080">M</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:68px;border-radius:5px;background:#3B3A8C"></div><span style="font-size:11px;color:#6B7080">T</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:3px;border-radius:5px;background:#DEDDD6"></div><span style="font-size:11px;color:#6B7080">W</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:46px;border-radius:5px;background:#3B3A8C"></div><span style="font-size:11px;color:#6B7080">T</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:3px;border-radius:5px;background:#DEDDD6"></div><span style="font-size:11px;color:#6B7080">F</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:62px;border-radius:5px;background:#3B3A8C"></div><span style="font-size:11px;color:#6B7080">S</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:100%;height:3px;border-radius:5px;background:#DEDDD6"></div><span style="font-size:11px;color:#6B7080">S</span></div>
+      </div>
+      <p style="margin:0;font-size:14px;line-height:1.55;color:#414651;text-wrap:pretty">You practiced on 4 of the last 7 days, around 18 minutes at a time. Short, regular sessions are enough.</p>
+    </article>
+
+    <sc-if value="{{ sessionDone }}" hint-placeholder-val="{{ false }}">
+    <article style="background:#fff;border:1px solid #BFD6C8;border-radius:16px;padding:24px">
+      <h2 style="margin:0 0 4px;font-size:15px;font-weight:600">Today&#8217;s session</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#6B7080">{{ sessionMinutesLabel }}</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#414651;text-wrap:pretty">You strengthened square roots and used it to finish the Pythagorean theorem problem you were on.</p>
+      <button type="button" onClick="{{ goSummary }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid #CFCDC4;background:#fff;color:#2B2A6B;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">See session summary</button>
+    </article>
+    </sc-if>
+
+  </div>
+</section>
+</sc-if>
+
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="map-h" style="max-width:1120px;margin:0 auto;padding:36px 20px 0;animation:riseIn .28s ease both">
+  <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7080">Skill map</p>
+  <h1 id="map-h" style="font-family:'Newsreader',Georgia,serif;font-size:clamp(28px,4vw,38px);font-weight:500;letter-spacing:-0.015em;margin:0 0 10px;line-height:1.1">What your goal is built on</h1>
+  <p style="margin:0 0 24px;color:#5A5F6D;font-size:16px;line-height:1.55;max-width:64ch;text-wrap:pretty">Skills are independent of grades and curricula. An arrow means the skill it points to depends on the one it comes from.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:18px">
+    <div role="group" aria-label="Map view" style="display:inline-flex;background:#EAE9E3;border-radius:11px;padding:3px;gap:3px">
+      <button type="button" onClick="{{ setGraph }}" aria-pressed="{{ pressedGraph }}" style="min-height:40px;padding:0 16px;border-radius:9px;border:1px solid transparent;background:{{ graphBg }};color:#16181D;font-size:14px;font-weight:600;cursor:pointer">Diagram</button>
+      <button type="button" onClick="{{ setList }}" aria-pressed="{{ pressedList }}" style="min-height:40px;padding:0 16px;border-radius:9px;border:1px solid transparent;background:{{ listBg }};color:#16181D;font-size:14px;font-weight:600;cursor:pointer">List</button>
+    </div>
+    <p style="margin:0;font-size:13.5px;color:#6B7080">List view carries the same information as the diagram.</p>
+  </div>
+
+  <ul aria-label="Legend" style="list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:10px 20px;font-size:13.5px;color:#414651">
+    <li style="display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>Mastered</li>
+    <li style="display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#fff" stroke="#3B3A8C" stroke-width="1.8"></circle><path d="M8 1.4 A6.6 6.6 0 0 1 8 14.6 Z" fill="#3B3A8C"></path></svg>Developing</li>
+    <li style="display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#3B3A8C" stroke-width="2"></circle><circle cx="8" cy="8" r="2.4" fill="#3B3A8C"></circle></svg>Current goal</li>
+    <li style="display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4 15.2 14.2 0.8 14.2Z" fill="#8A5A15"></path><path d="M8 6.1v3.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path><circle cx="8" cy="11.9" r="0.95" fill="#fff"></circle></svg>Needs attention</li>
+    <li style="display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="#9A9DA8" stroke-width="1.8" stroke-dasharray="2 3"></circle></svg>Not started</li>
+  </ul>
+
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+
+    <div style="flex:1 1 560px;min-width:280px;background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:14px">
+      <sc-if value="{{ mapGraph }}" hint-placeholder-val="{{ true }}">
+      <div style="overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch">
+        <div style="position:relative;width:900px;height:430px;margin:0 auto">
+          <svg viewBox="0 0 900 430" style="position:absolute;inset:0;width:900px;height:430px" aria-hidden="true">
+            <defs>
+              <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#A5A8B2"></path></marker>
+              <marker id="arwA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#8A5A15"></path></marker>
+            </defs>
+            <path d="M179 90 H210" stroke="#A5A8B2" stroke-width="2" fill="none" marker-end="url(#arw)"></path>
+            <path d="M384 90 H415" stroke="#A5A8B2" stroke-width="2" fill="none" marker-end="url(#arw)"></path>
+            <path d="M179 330 H415" stroke="#A5A8B2" stroke-width="2" fill="none" marker-end="url(#arw)"></path>
+            <path d="M589 330 H670" stroke="#A5A8B2" stroke-width="2" fill="none" marker-end="url(#arw)"></path>
+            <path d="M505 138 V276" stroke="{{ gapStroke }}" stroke-width="2.5" stroke-dasharray="{{ gapDash }}" fill="none" marker-end="{{ gapMarker }}"></path>
+          </svg>
+
+          <sc-if value="{{ sqrtWeak }}" hint-placeholder-val="{{ true }}">
+            <span style="position:absolute;left:572px;top:204px;transform:translate(-50%,-50%);background:#FAF0DE;border:1px solid #E2C38B;border-radius:7px;padding:4px 10px;font-size:12.5px;font-weight:600;color:#7A4E10;white-space:nowrap;pointer-events:none">blocking gap</span>
+          </sc-if>
+          <sc-if value="{{ sqrtStrong }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;left:572px;top:204px;transform:translate(-50%,-50%);background:#F4F4F1;border:1px solid #DEDDD6;border-radius:7px;padding:4px 10px;font-size:12.5px;font-weight:600;color:#6B7080;white-space:nowrap;pointer-events:none">prerequisite</span>
+          </sc-if>
+
+          <div aria-hidden="true" style="position:absolute;left:{{ ringX }}px;top:{{ ringY }}px;width:188px;height:116px;transform:translate(-50%,-50%);border:2px solid #3B3A8C;border-radius:18px;transition:left .28s ease,top .28s ease;pointer-events:none"></div>
+
+          <button type="button" onClick="{{ selIo }}" aria-pressed="{{ pIo }}" style="position:absolute;left:95px;top:90px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:1px solid #CFCDC4;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#3B3A8C">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#2E6B4F"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>Mastered</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Integer operations</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#EAE9E3"><span style="display:block;height:100%;width:100%;border-radius:999px;background:#2E6B4F"></span></span>
+          </button>
+
+          <button type="button" onClick="{{ selPow }}" aria-pressed="{{ pPow }}" style="position:absolute;left:300px;top:90px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:1px solid #CFCDC4;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#3B3A8C">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#2E6B4F"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>Mastered</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Powers &amp; exponents</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#EAE9E3"><span style="display:block;height:100%;width:92%;border-radius:999px;background:#2E6B4F"></span></span>
+          </button>
+
+          <button type="button" onClick="{{ selArea }}" aria-pressed="{{ pArea }}" style="position:absolute;left:95px;top:330px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:1px solid #CFCDC4;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#3B3A8C">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#2B2A6B"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#fff" stroke="#3B3A8C" stroke-width="1.8"></circle><path d="M8 1.4 A6.6 6.6 0 0 1 8 14.6 Z" fill="#3B3A8C"></path></svg>Developing</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Area &amp; perimeter</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#EAE9E3"><span style="display:block;height:100%;width:74%;border-radius:999px;background:#3B3A8C"></span></span>
+          </button>
+
+          <sc-if value="{{ sqrtWeak }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ selSqrt }}" aria-pressed="{{ pSqrt }}" style="position:absolute;left:505px;top:90px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:2px dashed #8A5A15;background:#FAF0DE;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="background:#F6E7CC">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#7A4E10"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4 15.2 14.2 0.8 14.2Z" fill="#8A5A15"></path><path d="M8 6.1v3.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path><circle cx="8" cy="11.9" r="0.95" fill="#fff"></circle></svg>Needs attention</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Square roots</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#E8DCC2"><span style="display:block;height:100%;width:41%;border-radius:999px;background:#8A5A15"></span></span>
+          </button>
+          </sc-if>
+          <sc-if value="{{ sqrtStrong }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ selSqrt }}" aria-pressed="{{ pSqrt }}" style="position:absolute;left:505px;top:90px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:1px solid #CFCDC4;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#3B3A8C">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#2B2A6B"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#fff" stroke="#3B3A8C" stroke-width="1.8"></circle><path d="M8 1.4 A6.6 6.6 0 0 1 8 14.6 Z" fill="#3B3A8C"></path></svg>Developing</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Square roots</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#EAE9E3"><span style="display:block;height:100%;width:68%;border-radius:999px;background:#3B3A8C"></span></span>
+          </button>
+          </sc-if>
+
+          <button type="button" onClick="{{ selPyth }}" aria-pressed="{{ pPyth }}" style="position:absolute;left:505px;top:330px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:2px solid #3B3A8C;background:#EEEDF7;box-shadow:0 0 0 4px rgba(59,58,140,.11);cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="background:#E5E3F3">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#2B2A6B"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#3B3A8C" stroke-width="2"></circle><circle cx="8" cy="8" r="2.4" fill="#3B3A8C"></circle></svg>Current goal</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25">Pythagorean theorem</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#DAD8EC"><span style="display:block;height:100%;width:{{ goalPct }}%;border-radius:999px;background:#3B3A8C;transition:width .5s ease"></span></span>
+          </button>
+
+          <button type="button" onClick="{{ selTrig }}" aria-pressed="{{ pTrig }}" style="position:absolute;left:760px;top:330px;transform:translate(-50%,-50%);width:168px;height:96px;text-align:left;padding:11px 13px;border-radius:13px;border:1px dashed #CFCDC4;background:#FAFAF8;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#3B3A8C">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#6B7080"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="#9A9DA8" stroke-width="1.8" stroke-dasharray="2 3"></circle></svg>Not started</span>
+            <span style="font-size:13.5px;font-weight:600;line-height:1.25;color:#414651">Right-triangle trigonometry</span>
+            <span style="margin-top:auto;display:block;height:5px;border-radius:999px;background:#EAE9E3"></span>
+          </button>
+        </div>
+      </div>
+      <p style="margin:6px 4px 2px;font-size:12.5px;color:#8A8E99">On a small screen the diagram scrolls sideways. The list view fits without scrolling.</p>
+      </sc-if>
+
+      <sc-if value="{{ mapList }}" hint-placeholder-val="{{ false }}">
+      <ul style="list-style:none;margin:0;padding:6px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="s" hint-placeholder-count="6">
+          <li>
+            <button type="button" onClick="{{ s.select }}" aria-pressed="{{ s.pressed }}" style="width:100%;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:56px;padding:13px 14px;border-radius:12px;border:1px solid {{ s.border }};background:{{ s.bg }};cursor:pointer" style-hover="border-color:#3B3A8C">
+              <span aria-hidden="true" style="width:26px;height:26px;flex:0 0 26px;border-radius:8px;border:1px solid {{ s.border }};background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;color:{{ s.tone }}">{{ s.mark }}</span>
+              <span style="flex:1 1 180px;min-width:0">
+                <span style="display:block;font-size:14.5px;font-weight:600">{{ s.name }}</span>
+                <code style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A8E99">{{ s.id }}</code>
+              </span>
+              <span style="font-size:13px;color:{{ s.tone }};font-weight:600;flex:0 0 auto">{{ s.state }}</span>
+              <span style="font-size:13px;color:#414651;font-variant-numeric:tabular-nums;flex:0 0 56px;text-align:right">{{ s.pctLabel }}</span>
+              <span style="flex:1 1 100%;font-size:12.5px;color:#6B7080">Requires: {{ s.requires }}</span>
+            </button>
+          </li>
+        </sc-for>
+      </ul>
+      </sc-if>
+    </div>
+
+    <aside aria-live="polite" style="flex:1 1 300px;min-width:270px;background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px;position:sticky;top:86px">
+      <p style="margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#6B7080">Selected skill</p>
+      <h2 style="font-family:'Newsreader',Georgia,serif;font-size:25px;font-weight:500;margin:0 0 6px;line-height:1.15">{{ sel.name }}</h2>
+      <code style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#6B7080">{{ sel.id }}</code>
+      <p style="margin:16px 0 18px;font-size:15px;line-height:1.6;color:#414651;text-wrap:pretty">{{ sel.desc }}</p>
+
+      <dl style="margin:0 0 18px;display:flex;flex-direction:column;gap:14px;font-size:14px">
+        <div><dt style="color:#6B7080;font-size:12.5px;margin-bottom:3px">Mastery state</dt><dd style="margin:0;font-weight:600">{{ sel.state }} &#183; {{ sel.pctLabel }}</dd></div>
+        <div><dt style="color:#6B7080;font-size:12.5px;margin-bottom:3px">Relationship to your goal</dt><dd style="margin:0;line-height:1.55;text-wrap:pretty">{{ sel.rel }}</dd></div>
+        <div><dt style="color:#6B7080;font-size:12.5px;margin-bottom:3px">Depends on</dt><dd style="margin:0;line-height:1.55">{{ sel.requires }}</dd></div>
+      </dl>
+
+      <button type="button" onClick="{{ sel.action }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 20px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#2B2A6B">{{ sel.actionLabel }}</button>
+    </aside>
+  </div>
+</section>
+</sc-if>
+
+
+<sc-if value="{{ isSession }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="ses-h" style="max-width:1120px;margin:0 auto;padding:24px 20px 0">
+
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:22px">
+    <button type="button" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 15px 0 11px;border-radius:10px;border:1px solid #E3E2DC;background:#fff;color:#414651;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C;color:#2B2A6B">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8h-11M6.5 3.5 2.5 8l4 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      Dashboard &#183; your work is kept
+    </button>
+    <ol aria-label="Session progress" style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px">
+      <li style="display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid {{ chip1Border }};background:{{ chip1Bg }};color:{{ chip1Tone }};font-weight:600">{{ chip1Mark }} Pythagorean theorem</li>
+      <sc-if value="{{ showSqrtChip }}" hint-placeholder-val="{{ false }}">
+        <li aria-hidden="true" style="color:#A5A8B2">&#8594;</li>
+        <li style="display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid {{ chip2Border }};background:{{ chip2Bg }};color:{{ chip2Tone }};font-weight:600">{{ chip2Mark }} Square roots</li>
+      </sc-if>
+      <li aria-hidden="true" style="color:#A5A8B2">&#8594;</li>
+      <li style="display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid #E3E2DC;background:#fff;color:#6B7080">Summary</li>
+    </ol>
+  </div>
+
+
+  <sc-if value="{{ stepPythag }}" hint-placeholder-val="{{ true }}">
+  <div style="animation:riseIn .28s ease both">
+    <sc-if value="{{ returned }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:12px;align-items:flex-start;background:#EEEDF7;border:1px solid #D6D4EC;border-radius:13px;padding:14px 18px;margin-bottom:20px">
+        <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true" style="flex:0 0 18px;margin-top:1px"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9" fill="none" stroke="#3B3A8C" stroke-width="1.8" stroke-linecap="round"></path><path d="M2 2.2v3.2h3.2" fill="none" stroke="#3B3A8C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <p style="margin:0;font-size:14.5px;line-height:1.55;color:#2B2A6B;text-wrap:pretty"><strong>Back where you left off.</strong> Square roots is stronger now. Your triangle, your hints and what you typed are all still here.</p>
+      </div>
+    </sc-if>
+
+    <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7080">Exercise 3 of 5 &#183; geometry.pythagorean-theorem</p>
+    <h1 id="ses-h" style="font-family:'Newsreader',Georgia,serif;font-size:clamp(25px,3.6vw,34px);font-weight:500;letter-spacing:-0.012em;margin:0 0 24px;line-height:1.25;max-width:24ch;text-wrap:pretty">A right triangle has legs of 6 and 8 units. How long is the hypotenuse?</h1>
+
+    <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start">
+
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h2 style="margin:0;font-size:15px;font-weight:600">The triangle</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" onClick="{{ toggleSquares }}" aria-pressed="{{ pressedSquares }}" style="min-height:40px;padding:0 13px;border-radius:9px;border:1px solid #CFCDC4;background:#fff;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">{{ squaresLabel }}</button>
+            <button type="button" onClick="{{ toggleNumbers }}" aria-pressed="{{ pressedNumbers }}" style="min-height:40px;padding:0 13px;border-radius:9px;border:1px solid #CFCDC4;background:#fff;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">{{ numbersLabel }}</button>
+          </div>
+        </div>
+
+        <div style="position:relative;max-width:440px;margin:0 auto">
+        <svg viewBox="0 0 440 340" role="img" aria-label="{{ triangleAria }}" style="width:100%;height:auto;display:block">
+          <path d="M120 280 L300 280 L120 40 Z" fill="#EEEDF7" stroke="#3B3A8C" stroke-width="2.5" stroke-linejoin="round"></path>
+          <path d="M120 262 L138 262 L138 280" fill="none" stroke="#3B3A8C" stroke-width="2"></path>
+          <circle cx="129" cy="271" r="1.8" fill="#3B3A8C"></circle>
+          <text x="210" y="306" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="21" fill="#16181D"><tspan font-style="italic">a</tspan> = 6</text>
+          <text x="104" y="166" text-anchor="end" font-family="Newsreader,Georgia,serif" font-size="21" fill="#16181D"><tspan font-style="italic">b</tspan> = 8</text>
+        </svg>
+        <span aria-hidden="true" style="position:absolute;left:53%;top:41%;transform:translateY(-50%);font-family:'Newsreader',Georgia,serif;font-size:clamp(17px,4.7vw,21px);font-weight:500;color:#3B3A8C;white-space:nowrap;pointer-events:none"><span style="font-style:italic">c</span> = {{ cLabel }}</span>
+        </div>
+
+        <sc-if value="{{ showSquares }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;border-top:1px solid #EAE9E3;padding-top:16px">
+            <svg viewBox="0 0 500 250" role="img" aria-label="Squares built on each side: 6 by 6 is 36, 8 by 8 is 64, and together they make 100, which is a 10 by 10 square." style="width:100%;height:auto;display:block">
+              <defs><pattern id="g16" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0V16H0" fill="none" stroke="#C7C4E4" stroke-width="1"></path></pattern></defs>
+              <rect x="16" y="104" width="96" height="96" fill="url(#g16)" stroke="#3B3A8C" stroke-width="2"></rect>
+              <text x="64" y="222" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="18" fill="#16181D">6&#178; = 36</text>
+              <text x="134" y="164" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="24" fill="#6B7080">+</text>
+              <rect x="156" y="72" width="128" height="128" fill="url(#g16)" stroke="#3B3A8C" stroke-width="2"></rect>
+              <text x="220" y="222" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="18" fill="#16181D">8&#178; = 64</text>
+              <text x="306" y="164" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="24" fill="#6B7080">=</text>
+              <rect x="328" y="40" width="160" height="160" fill="url(#g16)" stroke="#2E6B4F" stroke-width="2.5"></rect>
+              <text x="408" y="222" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="18" fill="#16181D">c&#178; = 100</text>
+            </svg>
+            <p style="margin:10px 0 0;font-size:13.5px;color:#6B7080;line-height:1.55;text-wrap:pretty">The two smaller squares, tile for tile, fill the large one exactly. That is what a&#178; + b&#178; = c&#178; means.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showNumbers }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;background:#FAFAF8;border:1px solid #E3E2DC;border-radius:12px;padding:16px">
+            <h3 style="margin:0 0 10px;font-size:13px;font-weight:600">The same triangle, as numbers</h3>
+            <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px;line-height:1.5">
+              <dt style="color:#6B7080">Right angle</dt><dd style="margin:0">Between side a and side b</dd>
+              <dt style="color:#6B7080">Side a</dt><dd style="margin:0">6 units</dd>
+              <dt style="color:#6B7080">Side b</dt><dd style="margin:0">8 units</dd>
+              <dt style="color:#6B7080">Side c</dt><dd style="margin:0">Unknown, opposite the right angle</dd>
+              <dt style="color:#6B7080">Rule</dt><dd style="margin:0">a&#178; + b&#178; = c&#178;</dd>
+              <dt style="color:#6B7080">Known so far</dt><dd style="margin:0">6&#178; + 8&#178; = c&#178;</dd>
+            </dl>
+            <p style="margin:12px 0 0;font-size:13.5px;color:#6B7080;line-height:1.5;text-wrap:pretty">Everything the diagram shows is here. Find c and type it into the answer box.</p>
+          </div>
+        </sc-if>
+      </article>
+
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <h2 style="margin:0 0 14px;font-size:15px;font-weight:600">Your working</h2>
+        <div style="background:#FAFAF8;border:1px solid #E3E2DC;border-radius:12px;padding:16px 18px;margin-bottom:20px">
+          <p style="margin:0 0 6px;font-family:'Newsreader',Georgia,serif;font-size:25px;line-height:1.3"><span style="font-style:italic">a</span>&#178; + <span style="font-style:italic">b</span>&#178; = <span style="font-style:italic">c</span>&#178;</p>
+          <p style="margin:0;font-family:'Newsreader',Georgia,serif;font-size:22px;color:#414651;line-height:1.3">6&#178; + 8&#178; = <span style="font-style:italic">c</span>&#178;</p>
+        </div>
+
+        <label for="ans" style="display:block;font-size:14px;font-weight:600;margin-bottom:8px">Length of the hypotenuse</label>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <div style="position:relative;flex:1 1 160px;min-width:150px">
+            <input id="ans" type="text" inputmode="decimal" autocomplete="off" value="{{ answer }}" onChange="{{ onAnswer }}" onKeyDown="{{ onKey }}" aria-describedby="ans-help" placeholder="Type a number" style="width:100%;min-height:54px;padding:0 62px 0 16px;border-radius:11px;border:1.5px solid #CFCDC4;background:#fff;font-size:19px;font-family:'IBM Plex Sans',sans-serif" style-focus="border-color:#3B3A8C" />
+            <span aria-hidden="true" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:14px;color:#6B7080">units</span>
+          </div>
+          <button type="button" onClick="{{ check }}" style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 24px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#2B2A6B">Check answer</button>
+        </div>
+        <p id="ans-help" style="margin:9px 0 0;font-size:13px;color:#6B7080">Whole number or decimal. Press Enter to check.</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px">
+          <button type="button" onClick="{{ hint }}" disabled="{{ hintsDone }}" style="display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 17px;border-radius:10px;border:1px solid #CFCDC4;background:#fff;color:#2B2A6B;font-size:14.5px;font-weight:600;cursor:pointer;opacity:{{ hintOpacity }}" style-hover="background:#EEEDF7;border-color:#3B3A8C">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6a4.6 4.6 0 0 0-2.8 8.25V12h5.6V9.85A4.6 4.6 0 0 0 8 1.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M6.3 14h3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+            {{ hintLabel }}
+          </button>
+          <button type="button" onClick="{{ stuck }}" style="display:inline-flex;align-items:center;min-height:46px;padding:0 17px;border-radius:10px;border:1px solid #E3E2DC;background:#FAFAF8;color:#414651;font-size:14.5px;font-weight:500;cursor:pointer" style-hover="background:#EAE9E3">I&#8217;m stuck</button>
+        </div>
+
+        <sc-if value="{{ hasHints }}" hint-placeholder-val="{{ false }}">
+          <ol style="list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ shownHints }}" as="h" hint-placeholder-count="1">
+              <li style="background:#FAF0DE;border:1px solid #E9D5AD;border-left:4px solid #8A5A15;border-radius:11px;padding:13px 16px">
+                <p style="margin:0 0 4px;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7A4E10">{{ h.label }}</p>
+                <p style="margin:0;font-size:14.5px;line-height:1.55;color:#3B2E12;text-wrap:pretty">{{ h.text }}</p>
+              </li>
+            </sc-for>
+          </ol>
+        </sc-if>
+
+        <div aria-live="polite">
+          <sc-if value="{{ isWrong }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:18px;background:#FDF7EC;border:1px solid #E9D5AD;border-radius:12px;padding:17px 18px">
+              <p style="margin:0 0 6px;display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#7A4E10">
+                <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4 15.2 14.2 0.8 14.2Z" fill="#8A5A15"></path><path d="M8 6.1v3.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path><circle cx="8" cy="11.9" r="0.95" fill="#fff"></circle></svg>
+                {{ wrongTitle }}
+              </p>
+              <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3B2E12;text-wrap:pretty">{{ wrongBody }}</p>
+              <sc-if value="{{ offerHelp }}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{ toBridge }}" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #C79A4A;background:#fff;color:#7A4E10;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#FAF0DE">
+                  Strengthen square roots first
+                  <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isRight }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:18px;background:#EAF3EE;border:1px solid #BFD6C8;border-radius:12px;padding:17px 18px">
+              <p style="margin:0 0 8px;display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#1F5038">
+                <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                That is it. c = 10 units.
+              </p>
+              <p style="margin:0 0 4px;font-family:'Newsreader',Georgia,serif;font-size:20px;color:#16181D">6&#178; + 8&#178; = 36 + 64 = 100</p>
+              <p style="margin:0 0 10px;font-family:'Newsreader',Georgia,serif;font-size:20px;color:#16181D">&#8730;100 = 10</p>
+              <p style="margin:0 0 14px;font-size:14.5px;line-height:1.6;color:#274A38;text-wrap:pretty">{{ successNote }}</p>
+              <button type="button" onClick="{{ finish }}" style="display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 20px;border-radius:11px;border:1px solid #23543C;background:#2E6B4F;color:#fff;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#23543C">
+                Finish session
+                <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+            </div>
+          </sc-if>
+        </div>
+      </article>
+    </div>
+  </div>
+  </sc-if>
+
+
+  <sc-if value="{{ stepBridge }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:760px;margin:0 auto;animation:riseIn .3s ease both">
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:18px;padding:clamp(24px,4vw,40px)">
+      <p style="margin:0 0 14px;display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7A4E10;background:#FAF0DE;border:1px solid #E9D5AD;border-radius:999px;padding:6px 13px">
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9" fill="none" stroke="#8A5A15" stroke-width="1.9" stroke-linecap="round"></path><path d="M2 2.2v3.2h3.2" fill="none" stroke="#8A5A15" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Adjusting your path
+      </p>
+      <h1 style="font-family:'Newsreader',Georgia,serif;font-size:clamp(24px,3.6vw,33px);font-weight:500;letter-spacing:-0.012em;line-height:1.3;margin:0 0 16px;text-wrap:pretty">You&#8217;re close. Square roots may be the part getting in the way. Let&#8217;s strengthen that skill, then return here.</h1>
+      <p style="margin:0 0 26px;font-size:16px;line-height:1.6;color:#5A5F6D;max-width:56ch;text-wrap:pretty">You set the triangle up correctly. The step that keeps stalling is turning c&#178; back into c, and that is square roots. Two short questions, then straight back to this triangle.</p>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:stretch;gap:14px;margin-bottom:28px">
+        <div style="flex:1 1 220px;background:#FAFAF8;border:1px solid #E3E2DC;border-radius:13px;padding:16px">
+          <p style="margin:0 0 6px;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B7080">Paused, not lost</p>
+          <p style="margin:0 0 4px;font-size:15px;font-weight:600">Pythagorean theorem</p>
+          <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8E99">geometry.pythagorean-theorem</code>
+        </div>
+        <div aria-hidden="true" style="display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#A5A8B2;font-size:20px;padding:0 4px">&#8594;</div>
+        <div style="flex:1 1 220px;background:#FAF0DE;border:2px dashed #C79A4A;border-radius:13px;padding:16px">
+          <p style="margin:0 0 6px;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7A4E10">Next, about 2 minutes</p>
+          <p style="margin:0 0 4px;font-size:15px;font-weight:600">Square roots</p>
+          <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A6A2E">numbers.square-roots</code>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <button type="button" onClick="{{ toSqrt }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 24px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#2B2A6B">
+          Strengthen square roots
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <button type="button" onClick="{{ keepTrying }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:11px;border:1px solid #CFCDC4;background:#fff;color:#2B2A6B;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">Keep trying the triangle</button>
+      </div>
+      <p style="margin:16px 0 0;font-size:13.5px;color:#6B7080">Either way, your answer and hints stay exactly as they are.</p>
+    </article>
+  </div>
+  </sc-if>
+
+
+  <sc-if value="{{ stepSqrt }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:riseIn .28s ease both">
+    <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7080">Prerequisite &#183; numbers.square-roots</p>
+    <h1 style="font-family:'Newsreader',Georgia,serif;font-size:clamp(25px,3.6vw,34px);font-weight:500;letter-spacing:-0.012em;margin:0 0 24px;line-height:1.25;max-width:26ch;text-wrap:pretty">{{ sqrtHeading }}</h1>
+
+    <sc-if value="{{ sqrtStage0 }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start">
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <h2 style="margin:0 0 14px;font-size:15px;font-weight:600">Build the square</h2>
+        <div style="position:relative;max-width:340px;margin:0 auto">
+        <svg viewBox="0 0 320 320" role="img" aria-label="{{ gridAria }}" style="width:100%;height:auto;display:block">
+          <defs><pattern id="g22" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M22 0V22H0" fill="none" stroke="#C7C4E4" stroke-width="1"></path></pattern></defs>
+          <rect x="24" y="24" width="272" height="272" fill="#FAFAF8" stroke="#EAE9E3" stroke-width="1"></rect>
+          <rect x="24" y="{{ boxY }}" width="{{ boxW }}" height="{{ boxW }}" fill="url(#g22)" stroke="#3B3A8C" stroke-width="2.5" style="transition:all .18s ease"></rect>
+        </svg>
+        <span aria-hidden="true" style="position:absolute;left:{{ midXPct }}%;top:96%;transform:translate(-50%,-50%);font-family:'Newsreader',Georgia,serif;font-size:clamp(16px,5vw,19px);color:#16181D;pointer-events:none;transition:left .18s ease">{{ side }}</span>
+        <span aria-hidden="true" style="position:absolute;left:4.4%;top:{{ midYPct }}%;transform:translate(-50%,-50%);font-family:'Newsreader',Georgia,serif;font-size:clamp(16px,5vw,19px);color:#16181D;pointer-events:none;transition:top .18s ease">{{ side }}</span>
+        </div>
+        <p style="margin:14px 0 0;font-size:13.5px;color:#6B7080;line-height:1.55;text-wrap:pretty">Each small cell is one square unit. The dark outline is the square you are building.</p>
+      </article>
+
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <h2 style="margin:0 0 6px;font-size:15px;font-weight:600">Set the side length</h2>
+        <p style="margin:0 0 18px;font-size:14px;color:#6B7080;line-height:1.55">Target area: <strong style="color:#16181D">81 square units</strong>. Change the side until the square covers exactly that.</p>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <button type="button" onClick="{{ dec }}" aria-label="Decrease side length" style="width:52px;height:52px;flex:0 0 52px;border-radius:11px;border:1px solid #CFCDC4;background:#fff;font-size:22px;line-height:1;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">&#8722;</button>
+          <div style="flex:1;text-align:center">
+            <div style="font-family:'Newsreader',Georgia,serif;font-size:34px;line-height:1">{{ side }}</div>
+            <div style="font-size:12.5px;color:#6B7080">side length</div>
+          </div>
+          <button type="button" onClick="{{ inc }}" aria-label="Increase side length" style="width:52px;height:52px;flex:0 0 52px;border-radius:11px;border:1px solid #CFCDC4;background:#fff;font-size:22px;line-height:1;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">+</button>
+        </div>
+
+        <label for="sideRange" style="display:block;font-size:13.5px;font-weight:600;margin-bottom:8px">Side length, 1 to 12</label>
+        <input id="sideRange" type="range" min="1" max="12" step="1" value="{{ side }}" onChange="{{ onSide }}" aria-valuetext="{{ ariaSide }}" style="width:100%;height:44px;accent-color:#3B3A8C;cursor:pointer" />
+
+        <div aria-live="polite" style="margin-top:14px;background:#FAFAF8;border:1px solid #E3E2DC;border-radius:12px;padding:16px 18px">
+          <p style="margin:0;font-family:'Newsreader',Georgia,serif;font-size:24px;line-height:1.3">{{ side }} &#215; {{ side }} = {{ area }}</p>
+          <p style="margin:6px 0 0;font-size:14px;color:#414651">{{ areaNote }}</p>
+        </div>
+
+        <button type="button" onClick="{{ checkSqrt }}" style="margin-top:18px;width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#2B2A6B">Check this square</button>
+
+        <div aria-live="polite">
+          <sc-if value="{{ sqrtMsgOn }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px;background:#FDF7EC;border:1px solid #E9D5AD;border-radius:12px;padding:15px 17px">
+              <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3B2E12;text-wrap:pretty">{{ sqrtMsg }}</p>
+            </div>
+          </sc-if>
+        </div>
+      </article>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ sqrtStage1 }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start">
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <div style="background:#EAF3EE;border:1px solid #BFD6C8;border-radius:12px;padding:14px 16px;margin-bottom:18px">
+          <p style="margin:0;font-size:14.5px;line-height:1.6;color:#274A38;text-wrap:pretty"><strong>9 &#215; 9 = 81</strong>, so &#8730;81 = 9. A square root asks: what side length gives this area?</p>
+        </div>
+        <svg viewBox="0 0 320 250" role="img" aria-label="A square made of 100 unit cells, drawn as ten rows of ten." style="width:100%;height:auto;display:block">
+          <defs><pattern id="g20" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0V20H0" fill="none" stroke="#C7C4E4" stroke-width="1"></path></pattern></defs>
+          <rect x="60" y="20" width="200" height="200" fill="url(#g20)" stroke="#3B3A8C" stroke-width="2.5"></rect>
+          <text x="160" y="242" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="19" fill="#16181D">? units</text>
+          <text x="44" y="126" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="19" fill="#16181D">?</text>
+          <text x="160" y="127" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="22" fill="#2B2A6B">area 100</text>
+        </svg>
+      </article>
+
+      <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:22px">
+        <h2 style="margin:0 0 6px;font-size:15px;font-weight:600">Now the one from your triangle</h2>
+        <p style="margin:0 0 4px;font-family:'Newsreader',Georgia,serif;font-size:30px;line-height:1.3">&#8730;100 = ?</p>
+        <p style="margin:0 0 18px;font-size:14px;color:#6B7080;line-height:1.55">A square covers 100 unit cells. How long is one side?</p>
+
+        <div role="group" aria-label="Choose the side length" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px">
+          <button type="button" onClick="{{ pick9 }}" aria-pressed="{{ p9 }}" style="min-height:60px;border-radius:12px;border:1.5px solid #CFCDC4;background:#fff;font-family:'Newsreader',Georgia,serif;font-size:24px;cursor:pointer" style-hover="border-color:#3B3A8C;background:#EEEDF7">9</button>
+          <button type="button" onClick="{{ pick10 }}" aria-pressed="{{ p10 }}" style="min-height:60px;border-radius:12px;border:1.5px solid #CFCDC4;background:#fff;font-family:'Newsreader',Georgia,serif;font-size:24px;cursor:pointer" style-hover="border-color:#3B3A8C;background:#EEEDF7">10</button>
+          <button type="button" onClick="{{ pick20 }}" aria-pressed="{{ p20 }}" style="min-height:60px;border-radius:12px;border:1.5px solid #CFCDC4;background:#fff;font-family:'Newsreader',Georgia,serif;font-size:24px;cursor:pointer" style-hover="border-color:#3B3A8C;background:#EEEDF7">20</button>
+          <button type="button" onClick="{{ pick50 }}" aria-pressed="{{ p50 }}" style="min-height:60px;border-radius:12px;border:1.5px solid #CFCDC4;background:#fff;font-family:'Newsreader',Georgia,serif;font-size:24px;cursor:pointer" style-hover="border-color:#3B3A8C;background:#EEEDF7">50</button>
+        </div>
+
+        <div aria-live="polite">
+          <sc-if value="{{ choiceMsgOn }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px;background:#FDF7EC;border:1px solid #E9D5AD;border-radius:12px;padding:15px 17px">
+              <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3B2E12;text-wrap:pretty">{{ choiceMsg }}</p>
+            </div>
+          </sc-if>
+        </div>
+      </article>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ sqrtStage2 }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:760px;animation:riseIn .3s ease both">
+      <article style="background:#fff;border:1px solid #BFD6C8;border-radius:18px;padding:clamp(24px,4vw,36px)">
+        <p style="margin:0 0 14px;display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#1F5038;background:#EAF3EE;border:1px solid #BFD6C8;border-radius:999px;padding:6px 13px">
+          <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Square roots strengthened
+        </p>
+        <h2 style="font-family:'Newsreader',Georgia,serif;font-size:clamp(23px,3.4vw,31px);font-weight:500;line-height:1.35;margin:0 0 20px;text-wrap:pretty">Since 10 &#215; 10 = 100, &#8730;100 = 10. That gives us the missing side of the triangle.</h2>
+
+        <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;background:#FAFAF8;border:1px solid #E3E2DC;border-radius:14px;padding:20px;margin-bottom:24px">
+          <svg viewBox="0 0 200 170" aria-hidden="true" style="flex:0 0 150px;width:150px;height:auto">
+            <defs><pattern id="g14" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0V14H0" fill="none" stroke="#C7C4E4" stroke-width="1"></path></pattern></defs>
+            <rect x="25" y="10" width="140" height="140" fill="url(#g14)" stroke="#2E6B4F" stroke-width="2.5"></rect>
+            <text x="95" y="88" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="19" fill="#1F5038">100</text>
+            <text x="95" y="166" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="17" fill="#16181D">10</text>
+          </svg>
+          <div style="flex:1 1 220px">
+            <p style="margin:0 0 8px;font-family:'Newsreader',Georgia,serif;font-size:21px;line-height:1.4">6&#178; + 8&#178; = 100</p>
+            <p style="margin:0 0 8px;font-family:'Newsreader',Georgia,serif;font-size:21px;line-height:1.4">c&#178; = 100</p>
+            <p style="margin:0;font-family:'Newsreader',Georgia,serif;font-size:21px;line-height:1.4;color:#1F5038">c = &#8730;100 = 10</p>
+          </div>
+        </div>
+
+        <button type="button" onClick="{{ backToTriangle }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 24px;border-radius:11px;border:1px solid #2B2A6B;background:#3B3A8C;color:#fff;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#2B2A6B">
+          Back to the triangle
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+      </article>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+</section>
+</sc-if>
+
+
+<sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="sum-h" style="max-width:840px;margin:0 auto;padding:36px 20px 0;animation:riseIn .3s ease both">
+  <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7080">Session summary</p>
+  <h1 id="sum-h" style="font-family:'Newsreader',Georgia,serif;font-size:clamp(28px,4.2vw,40px);font-weight:500;letter-spacing:-0.015em;margin:0 0 10px;line-height:1.15">Session complete</h1>
+  <p style="margin:0 0 28px;color:#5A5F6D;font-size:17px;line-height:1.55;max-width:58ch;text-wrap:pretty">{{ summaryLead }}</p>
+
+  <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+      <p style="margin:0 0 10px;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2B2A6B">
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#3B3A8C" stroke-width="2"></circle><circle cx="8" cy="8" r="2.4" fill="#3B3A8C"></circle></svg>
+        Skill practiced
+      </p>
+      <h2 style="font-family:'Newsreader',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 4px">Pythagorean theorem</h2>
+      <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8E99">geometry.pythagorean-theorem</code>
+      <div style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#414651;margin-bottom:7px"><span>Mastery</span><span style="font-variant-numeric:tabular-nums">38% &#8594; <strong>61%</strong></span></div>
+        <div role="img" aria-label="Pythagorean theorem mastery moved from 38 percent to 61 percent of the 80 percent threshold." style="position:relative;height:10px;border-radius:999px;background:#EAE9E3">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:61%;background:#3B3A8C;border-radius:999px"></div>
+          <div style="position:absolute;left:38%;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.9"></div>
+          <div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:#16181D;opacity:.55"></div>
+        </div>
+        <p style="margin:8px 0 0;font-size:12.5px;color:#6B7080">White line: where you started. Dark line: mastery threshold.</p>
+      </div>
+    </article>
+
+    <sc-if value="{{ intervened }}" hint-placeholder-val="{{ true }}">
+    <article style="background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+      <p style="margin:0 0 10px;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#1F5038">
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2E6B4F"></circle><path d="M4.6 8.3 6.9 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Prerequisite strengthened
+      </p>
+      <h2 style="font-family:'Newsreader',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 4px">Square roots</h2>
+      <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8E99">numbers.square-roots</code>
+      <div style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#414651;margin-bottom:7px"><span>Mastery</span><span style="font-variant-numeric:tabular-nums">41% &#8594; <strong>68%</strong></span></div>
+        <div role="img" aria-label="Square roots mastery moved from 41 percent to 68 percent of the 80 percent threshold." style="position:relative;height:10px;border-radius:999px;background:#EAE9E3">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:68%;background:#3B3A8C;border-radius:999px"></div>
+          <div style="position:absolute;left:41%;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.9"></div>
+          <div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:#16181D;opacity:.55"></div>
+        </div>
+        <p style="margin:8px 0 0;font-size:12.5px;color:#6B7080">No longer flagged as a blocking gap.</p>
+      </div>
+    </article>
+    </sc-if>
+  </div>
+
+  <article style="margin-top:16px;background:#fff;border:1px solid #E3E2DC;border-radius:16px;padding:24px">
+    <h2 style="margin:0 0 12px;font-size:15px;font-weight:600">What improved</h2>
+    <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#414651;max-width:64ch;text-wrap:pretty">{{ improvedText }}</p>
+    <button type="button" onClick="{{ toggleRecap }}" aria-expanded="{{ recapExpanded }}" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #CFCDC4;background:#fff;color:#2B2A6B;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#EEEDF7;border-color:#3B3A8C">{{ recapLabel }}</button>
+    <sc-if value="{{ showRecap }}" hint-placeholder-val="{{ false }}">
+      <ol style="margin:18px 0 0;padding:0 0 0 4px;list-style:none;display:flex;flex-direction:column;gap:0">
+        <sc-for list="{{ log }}" as="e" hint-placeholder-count="4">
+          <li style="display:flex;gap:14px;padding:0 0 16px">
+            <span aria-hidden="true" style="flex:0 0 10px;position:relative;margin-top:6px"><span style="display:block;width:10px;height:10px;border-radius:50%;background:#3B3A8C"></span></span>
+            <span style="font-size:14.5px;line-height:1.55;color:#414651;text-wrap:pretty">{{ e.text }}</span>
+          </li>
+        </sc-for>
+      </ol>
+    </sc-if>
+  </article>
+
+  <article style="margin-top:16px;background:#EEEDF7;border:1px solid #D6D4EC;border-radius:16px;padding:24px">
+    <h2 style="margin:0 0 8px;font-size:15px;font-weight:600;color:#2B2A6B">Recommended next</h2>
+    <p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#2B2A6B;max-width:60ch;text-wrap:pretty">Two more right triangles with different leg lengths, including one where the answer is not a whole number. That is what moves the Pythagorean theorem from 61% toward mastery.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px">
+      <button type="button" onClick="{{ schedule }}" disabled="{{ scheduled }}" style="display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 20px;border-radius:11px;border:1px solid #2B2A6B;background:{{ scheduleBg }};color:#fff;font-size:15px;font-weight:600;cursor:pointer;opacity:{{ scheduleOpacity }}" style-hover="background:#2B2A6B">{{ scheduleLabel }}</button>
+      <button type="button" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:11px;border:1px solid #B7B4D6;background:#fff;color:#2B2A6B;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#fff;border-color:#3B3A8C">Back to dashboard</button>
+      <button type="button" onClick="{{ goMap }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:11px;border:1px solid transparent;background:transparent;color:#2B2A6B;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#E5E3F3">See it on the skill map</button>
+    </div>
+  </article>
+</section>
+</sc-if>
+
+</main>
+
+<sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Main" style="position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);border-top:1px solid #E3E2DC;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:flex;gap:4px">
+  <button type="button" onClick="{{ goHome }}" aria-current="{{ curHome }}" style="flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;border-radius:11px;font-size:11.5px;font-weight:600;color:{{ tabHome }};cursor:pointer">
+    <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg>
+    Dashboard
+  </button>
+  <button type="button" onClick="{{ goMap }}" aria-current="{{ curMap }}" style="flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;border-radius:11px;font-size:11.5px;font-weight:600;color:{{ tabMap }};cursor:pointer">
+    <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"></circle><circle cx="18" cy="7" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"></circle><circle cx="12" cy="18" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M8.6 7h6.8M7.2 9.4 10.6 15.8M16.8 9.4 13.4 15.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    Skill map
+  </button>
+  <button type="button" onClick="{{ goSession }}" aria-current="{{ curSession }}" style="flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;border-radius:11px;font-size:11.5px;font-weight:600;color:{{ tabSession }};cursor:pointer">
+    <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 11 5l9 14z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg>
+    Session
+  </button>
+</nav>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;learnerName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Nora&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;interventionTrigger&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;First incorrect answer&quot;,&quot;Second incorrect answer&quot;],&quot;default&quot;:&quot;Second incorrect answer&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Adaptivity&quot;},&quot;sessionMinutes&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:14,&quot;min&quot;:5,&quot;max&quot;:45,&quot;unit&quot;:&quot;min&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Session summary&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: 'dashboard', step: 'pythag',
+    answer: '', attempts: 0, wrong: null, right: false, hintLevel: 0,
+    showNumbers: false, showSquares: false,
+    intervened: false, returned: false,
+    sqrtStage: 0, side: 5, sqrtMsg: null, choice: null, choiceMsg: null,
+    sel: 'geometry.pythagorean-theorem', mapMode: 'graph',
+    narrow: false, sessionDone: false, scheduled: false, showRecap: false, log: []
+  };
+
+  HINTS = [
+    { label: 'Hint 1 of 3', text: 'The right angle sits between the two sides you know. The side you are looking for is the one opposite it, and it is always the longest.' },
+    { label: 'Hint 2 of 3', text: 'Pythagoras says a\u00B2 + b\u00B2 = c\u00B2. Put in what you know: 6\u00B2 + 8\u00B2 = c\u00B2.' },
+    { label: 'Hint 3 of 3', text: '6\u00B2 = 36 and 8\u00B2 = 64, so c\u00B2 = 100. One step is left: find the number that, multiplied by itself, gives 100.' }
+  ];
+
+  SKILLS = {
+    'numbers.integer-operations': { name: 'Integer operations', state: 'Mastered', pct: 100, tone: '#1F5038', mark: '\u2713',
+      desc: 'Adding, subtracting, multiplying and dividing whole numbers, including negatives.',
+      rel: 'Two steps upstream of your goal. Solid, so it is not slowing anything down.',
+      requires: 'Nothing in this map' },
+    'numbers.powers': { name: 'Powers & exponents', state: 'Mastered', pct: 92, tone: '#1F5038', mark: '\u2713',
+      desc: 'Reading and evaluating expressions like 6\u00B2, and knowing that squaring means multiplying a number by itself.',
+      rel: 'Squaring is half of the Pythagorean theorem. You already handle this part reliably.',
+      requires: 'Integer operations' },
+    'numbers.square-roots': { name: 'Square roots', state: 'Needs attention', pct: 41, tone: '#7A4E10', mark: '\u25B2',
+      desc: 'Undoing a square: finding the side length of a square from its area, and reading \u221A81 as that side length.',
+      rel: 'This is the direct prerequisite that is currently blocking your goal. The last step of every triangle question needs it.',
+      relAfter: 'You strengthened this today, so it is no longer holding up your goal. The last step of every triangle question still runs through it.',
+      requires: 'Powers & exponents' },
+    'geometry.area-perimeter': { name: 'Area & perimeter', state: 'Developing', pct: 74, tone: '#2B2A6B', mark: '\u25D0',
+      desc: 'Measuring how much surface a shape covers and how far it is around the edge.',
+      rel: 'Feeds your goal. It is what makes the square-on-each-side picture of the theorem readable.',
+      requires: 'Integer operations' },
+    'geometry.pythagorean-theorem': { name: 'Pythagorean theorem', state: 'Current goal', pct: 38, tone: '#2B2A6B', mark: '\u25CE',
+      desc: 'In a right triangle, the squares on the two shorter sides add up to the square on the longest side: a\u00B2 + b\u00B2 = c\u00B2.',
+      rel: 'This is your current goal.',
+      requires: 'Square roots, Area & perimeter' },
+    'geometry.right-triangle-trigonometry': { name: 'Right-triangle trigonometry', state: 'Not started', pct: 0, tone: '#6B7080', mark: '\u25CB',
+      desc: 'Using ratios of sides to find angles and lengths that the Pythagorean theorem alone cannot reach.',
+      rel: 'Opens up once the Pythagorean theorem is mastered. Nothing to do here yet.',
+      requires: 'Pythagorean theorem' }
+  };
+
+  ORDER = ['numbers.integer-operations','numbers.powers','numbers.square-roots','geometry.area-perimeter','geometry.pythagorean-theorem','geometry.right-triangle-trigonometry'];
+
+  NODE_POS = {
+    'numbers.integer-operations': [95, 90],
+    'numbers.powers': [300, 90],
+    'numbers.square-roots': [505, 90],
+    'geometry.area-perimeter': [95, 330],
+    'geometry.pythagorean-theorem': [505, 330],
+    'geometry.right-triangle-trigonometry': [760, 330]
+  };
+
+  componentDidMount() {
+    this.resize();
+    window.addEventListener('resize', this.resize);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.resize); }
+  resize = () => {
+    const n = window.innerWidth < 880;
+    if (n !== this.state.narrow) this.setState({ narrow: n });
+  };
+
+  note(text) {
+    this.setState(s => (s.log.some(e => e.text === text) ? null : { log: s.log.concat([{ text }]) }));
+  }
+
+  view(v) { this.setState({ view: v }); this.focusMain(); }
+  focusMain() {
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById('main');
+      if (el) el.focus({ preventScroll: true });
+      window.scrollTo(0, 0);
+    });
+  }
+
+  diagnose(v) {
+    const t = String(v).trim();
+    if (t === '') return { title: 'Nothing to check yet', body: 'Type the length of the hypotenuse into the box, then choose Check answer.' };
+    const n = Number(t);
+    if (!isFinite(n)) return { title: 'That is not a number I can check', body: 'Enter a number, like 12 or 12.5. Everything else you have done is still here.' };
+    if (n === 14) return { title: 'Not this time \u2014 your work is saved', body: '14 is 6 + 8, the distance around the corner along both legs. The hypotenuse cuts straight across, so it has to be shorter than 14 and longer than 8.' };
+    if (n === 100) return { title: 'Very close \u2014 one step left', body: '100 is c\u00B2, not c. You have done the hard part. Now find the number that, multiplied by itself, gives 100.' };
+    if (n === 48) return { title: 'Not this time \u2014 your work is saved', body: '48 is 6 \u00D7 8, the area of a rectangle with those sides. Area and length are different quantities here.' };
+    if (n <= 8) return { title: 'Not this time \u2014 your work is saved', body: 'The hypotenuse is the longest side of a right triangle, so it has to be more than 8. Your working is still here.' };
+    return { title: 'Not this time \u2014 your work is saved', body: 'Set it up as 6\u00B2 + 8\u00B2 = c\u00B2. That gives c\u00B2 = 100, and c is the number that multiplied by itself makes 100.' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+    const learnerName = p.learnerName || 'Nora';
+    const minutes = p.sessionMinutes || 14;
+    const threshold = p.interventionTrigger === 'First incorrect answer' ? 1 : 2;
+
+    const sel = this.SKILLS[s.sel];
+    const selIsSqrt = s.sel === 'numbers.square-roots';
+    const selIsGoal = s.sel === 'geometry.pythagorean-theorem';
+    const sqrtPct = s.intervened ? 68 : 41;
+    const goalPct = s.sessionDone ? 61 : 38;
+
+    const pctOf = id => {
+      if (id === 'numbers.square-roots') return sqrtPct;
+      if (id === 'geometry.pythagorean-theorem') return goalPct;
+      return this.SKILLS[id].pct;
+    };
+    const stateOf = id => (id === 'numbers.square-roots' && s.intervened) ? 'Developing' : this.SKILLS[id].state;
+    const markOf = id => (id === 'numbers.square-roots' && s.intervened) ? '\u25D0' : this.SKILLS[id].mark;
+    const toneOf = id => (id === 'numbers.square-roots' && s.intervened) ? '#2B2A6B' : this.SKILLS[id].tone;
+
+    const select = id => () => this.setState({ sel: id });
+
+    const rows = this.ORDER.map(id => {
+      const k = this.SKILLS[id];
+      const on = s.sel === id;
+      return {
+        id, name: k.name, requires: k.requires,
+        state: stateOf(id), mark: markOf(id), tone: toneOf(id),
+        pctLabel: id === 'geometry.right-triangle-trigonometry' ? '\u2014' : pctOf(id) + '%',
+        border: on ? '#3B3A8C' : '#E3E2DC',
+        bg: on ? '#F7F7FC' : '#fff',
+        pressed: on, select: select(id)
+      };
+    });
+
+    const area = s.side * s.side;
+    const areaNote = area === 81 ? 'That is exactly 81 square units.'
+      : area < 81 ? 'Smaller than 81. The square does not cover enough.'
+      : 'Larger than 81. The square covers too much.';
+
+    const startSession = () => {
+      this.note('Opened the Pythagorean theorem exercise: legs 6 and 8, hypotenuse unknown.');
+      this.setState({ view: 'session', step: 'pythag' });
+      this.focusMain();
+    };
+
+    const toBridge = () => {
+      this.note('MathKX paused the triangle and pointed to square roots as the blocking prerequisite.');
+      this.setState({ step: 'bridge' });
+      this.focusMain();
+    };
+
+    const check = () => {
+      const t = String(this.state.answer).trim();
+      const n = Number(t);
+      if (t !== '' && isFinite(n) && Math.abs(n - 10) < 1e-9) {
+        this.note('Answered 10 units and explained it with 6\u00B2 + 8\u00B2 = 100.');
+        this.setState({ right: true, wrong: null, showSquares: true });
+        return;
+      }
+      const d = this.diagnose(t);
+      const counts = t !== '';
+      if (counts) this.note('Tried ' + t + ' for the hypotenuse. MathKX kept the working and explained the gap.');
+      this.setState(st => {
+        const attempts = st.attempts + (counts ? 1 : 0);
+        if (counts && attempts >= threshold && !st.intervened) window.setTimeout(toBridge, 550);
+        return { wrong: d, right: false, attempts };
+      });
+    };
+
+    const hint = () => {
+      this.setState(st => {
+        if (st.hintLevel >= 3) return null;
+        if (st.hintLevel === 0) window.setTimeout(() => this.note('Asked for a hint about which side the question is looking for.'), 0);
+        return { hintLevel: st.hintLevel + 1 };
+      });
+    };
+
+    const toSqrt = () => {
+      this.note('Moved to a short square-root exercise using an area model.');
+      this.setState({ step: 'sqrt', sqrtStage: 0, side: 5, sqrtMsg: null, choice: null, choiceMsg: null });
+      this.focusMain();
+    };
+
+    const checkSqrt = () => {
+      const side = this.state.side;
+      if (side * side === 81) {
+        this.note('Built a 9 by 9 square to show that \u221A81 = 9.');
+        this.setState({ sqrtStage: 1, sqrtMsg: null });
+        this.focusMain();
+      } else {
+        this.setState({ sqrtMsg: 'A side of ' + side + ' covers ' + (side * side) + ' squares' + (side * side < 81 ? ', which is short of 81. Make the side longer.' : ', which overshoots 81. Make the side shorter.') });
+      }
+    };
+
+    const pick = v => () => {
+      if (v === 10) {
+        this.note('Recognised that \u221A100 = 10, then linked it back to the triangle.');
+        this.setState({ choice: v, choiceMsg: null, sqrtStage: 2, intervened: true });
+        this.focusMain();
+      } else {
+        const why = v === 9 ? '9 \u00D7 9 = 81, not 100. Close, but the square needs one more row and one more column.'
+          : v === 20 ? '20 \u00D7 20 = 400. That is four times too big \u2014 doubling the side quadruples the area.'
+          : '50 is half of 100, but a square root is not half. 50 \u00D7 50 = 2500.';
+        this.setState({ choice: v, choiceMsg: why });
+      }
+    };
+
+    const backToTriangle = () => {
+      this.setState({ step: 'pythag', returned: true, wrong: null });
+      this.focusMain();
+    };
+
+    const finish = () => {
+      this.setState({ view: 'summary', sessionDone: true });
+      this.focusMain();
+    };
+
+    const shownHints = this.HINTS.slice(0, s.hintLevel);
+    const [rx, ry] = this.NODE_POS[s.sel] || [505, 330];
+
+    const chipActive = { border: '#3B3A8C', bg: '#EEEDF7', tone: '#2B2A6B' };
+    const chipDone = { border: '#BFD6C8', bg: '#EAF3EE', tone: '#1F5038' };
+    const chipIdle = { border: '#E3E2DC', bg: '#fff', tone: '#6B7080' };
+    const c1 = s.right ? chipDone : (s.step === 'pythag' ? chipActive : chipIdle);
+    const c2 = s.step === 'sqrt' ? chipActive : (s.intervened ? chipDone : chipIdle);
+
+    return {
+      learnerName, initial: learnerName.charAt(0).toUpperCase(),
+      wide: !s.narrow, narrow: s.narrow,
+      isDash: s.view === 'dashboard', isMap: s.view === 'map',
+      isSession: s.view === 'session', isSummary: s.view === 'summary',
+      isSessionish: s.view === 'session' || s.view === 'summary',
+      curHome: s.view === 'dashboard' ? 'page' : undefined,
+      curMap: s.view === 'map' ? 'page' : undefined,
+      curSession: (s.view === 'session' || s.view === 'summary') ? 'page' : undefined,
+      tabHome: s.view === 'dashboard' ? '#3B3A8C' : '#6B7080',
+      tabMap: s.view === 'map' ? '#3B3A8C' : '#6B7080',
+      tabSession: (s.view === 'session' || s.view === 'summary') ? '#3B3A8C' : '#6B7080',
+
+      goHome: () => this.view('dashboard'),
+      goMap: () => this.view('map'),
+      goSession: () => this.setState({ view: 'session' }, () => this.focusMain()),
+      goSummary: () => this.view('summary'),
+      startSession,
+
+      goalPct, sqrtPct, sessionDone: s.sessionDone,
+      goalDelta: s.sessionDone ? '+23 today' : '+4',
+      sqrtDelta: s.intervened ? '+27 today' : 'no change',
+      goalBarLabel: 'Pythagorean theorem mastery is at ' + goalPct + ' percent. Mastery is reached at 80 percent.',
+      sessionMinutesLabel: minutes + ' minutes, finished just now',
+
+      mapGraph: s.mapMode === 'graph', mapList: s.mapMode === 'list',
+      setGraph: () => this.setState({ mapMode: 'graph' }), setList: () => this.setState({ mapMode: 'list' }),
+      pressedGraph: s.mapMode === 'graph', pressedList: s.mapMode === 'list',
+      graphBg: s.mapMode === 'graph' ? '#fff' : 'transparent',
+      listBg: s.mapMode === 'list' ? '#fff' : 'transparent',
+      rows, ringX: rx, ringY: ry,
+      sqrtWeak: !s.intervened, sqrtStrong: s.intervened,
+      gapStroke: s.intervened ? '#A5A8B2' : '#8A5A15',
+      gapDash: s.intervened ? 'none' : '7 5',
+      gapMarker: s.intervened ? 'url(#arw)' : 'url(#arwA)',
+      selIo: select('numbers.integer-operations'), selPow: select('numbers.powers'),
+      selSqrt: select('numbers.square-roots'), selArea: select('geometry.area-perimeter'),
+      selPyth: select('geometry.pythagorean-theorem'), selTrig: select('geometry.right-triangle-trigonometry'),
+      pIo: s.sel === 'numbers.integer-operations', pPow: s.sel === 'numbers.powers',
+      pSqrt: selIsSqrt, pArea: s.sel === 'geometry.area-perimeter',
+      pPyth: selIsGoal, pTrig: s.sel === 'geometry.right-triangle-trigonometry',
+      sel: {
+        name: sel.name, id: s.sel, desc: sel.desc, requires: sel.requires,
+        rel: (selIsSqrt && s.intervened && sel.relAfter) ? sel.relAfter : sel.rel,
+        state: stateOf(s.sel),
+        pctLabel: s.sel === 'geometry.right-triangle-trigonometry' ? 'not measured yet' : pctOf(s.sel) + '% mastery',
+        actionLabel: selIsGoal ? 'Continue this goal' : selIsSqrt ? 'Practice square roots' : 'Go to your current goal',
+        action: selIsSqrt ? () => { this.setState({ view: 'session', step: 'sqrt', sqrtStage: 0, side: 5, sqrtMsg: null, choice: null, choiceMsg: null }); this.focusMain(); } : startSession
+      },
+
+      stepPythag: s.step === 'pythag', stepBridge: s.step === 'bridge', stepSqrt: s.step === 'sqrt',
+      showSqrtChip: s.step === 'sqrt' || s.intervened,
+      chip1Border: c1.border, chip1Bg: c1.bg, chip1Tone: c1.tone, chip1Mark: s.right ? '\u2713' : '\u25CE',
+      chip2Border: c2.border, chip2Bg: c2.bg, chip2Tone: c2.tone, chip2Mark: s.intervened ? '\u2713' : '\u25D0',
+      returned: s.returned,
+
+      answer: s.answer,
+      onAnswer: e => this.setState({ answer: e.target.value }),
+      onKey: e => { if (e.key === 'Enter') { e.preventDefault(); check(); } },
+      check, stuck: () => { this.note('Chose \u201CI\u2019m stuck\u201D on the triangle.'); toBridge(); },
+      hint, hintsDone: s.hintLevel >= 3, hintOpacity: s.hintLevel >= 3 ? 0.5 : 1,
+      hintLabel: s.hintLevel === 0 ? 'Give me a hint' : s.hintLevel >= 3 ? 'All hints shown' : 'Next hint',
+      hasHints: s.hintLevel > 0, shownHints,
+      cLabel: s.right ? '10' : '?',
+      triangleAria: 'Right triangle. The horizontal leg a is 6 units, the vertical leg b is 8 units, and the right angle is between them. The hypotenuse c is ' + (s.right ? '10 units.' : 'unknown.'),
+      isWrong: !!s.wrong && !s.right, wrongTitle: s.wrong ? s.wrong.title : '', wrongBody: s.wrong ? s.wrong.body : '',
+      offerHelp: !!s.wrong && !s.intervened,
+      isRight: s.right,
+      successNote: s.intervened
+        ? 'The square root was the missing piece, and you took it from the area model straight back to the triangle.'
+        : 'You set it up and finished it in one pass, including the square root at the end.',
+      toBridge, toSqrt, keepTrying: () => { this.setState({ step: 'pythag' }); this.focusMain(); },
+      finish,
+      showNumbers: s.showNumbers, pressedNumbers: s.showNumbers,
+      numbersLabel: s.showNumbers ? 'Hide numbers view' : 'Show as numbers',
+      toggleNumbers: () => this.setState(st => ({ showNumbers: !st.showNumbers })),
+      showSquares: s.showSquares, pressedSquares: s.showSquares,
+      squaresLabel: s.showSquares ? 'Hide the squares' : 'Show the squares',
+      toggleSquares: () => this.setState(st => ({ showSquares: !st.showSquares })),
+
+      sqrtStage0: s.sqrtStage === 0, sqrtStage1: s.sqrtStage === 1, sqrtStage2: s.sqrtStage === 2,
+      sqrtHeading: s.sqrtStage === 0 ? 'A square covers 81 square units. How long is each side?'
+        : s.sqrtStage === 1 ? 'Same idea, the number from your triangle'
+        : 'Back to the triangle with square roots in hand',
+      side: s.side, area,
+      areaNote,
+      ariaSide: 'Side ' + s.side + ', area ' + area + ' square units',
+      boxW: s.side * 22, boxY: 296 - s.side * 22,
+      midXPct: ((24 + s.side * 11) / 320 * 100).toFixed(2),
+      midYPct: ((296 - s.side * 11) / 320 * 100).toFixed(2),
+      gridAria: 'A square with a side of ' + s.side + ' units, made of ' + area + ' unit cells. The target area is 81.',
+      dec: () => this.setState(st => ({ side: Math.max(1, st.side - 1), sqrtMsg: null })),
+      inc: () => this.setState(st => ({ side: Math.min(12, st.side + 1), sqrtMsg: null })),
+      onSide: e => this.setState({ side: Number(e.target.value), sqrtMsg: null }),
+      checkSqrt, sqrtMsg: s.sqrtMsg, sqrtMsgOn: !!s.sqrtMsg,
+      pick9: pick(9), pick10: pick(10), pick20: pick(20), pick50: pick(50),
+      p9: s.choice === 9, p10: s.choice === 10, p20: s.choice === 20, p50: s.choice === 50,
+      choiceMsg: s.choiceMsg, choiceMsgOn: !!s.choiceMsg,
+      backToTriangle,
+
+      intervened: s.intervened,
+      summaryLead: s.intervened
+        ? minutes + ' minutes. One goal, one prerequisite, and the link between them made explicit.'
+        : minutes + ' minutes on your current goal, finished without a detour.',
+      improvedText: s.intervened
+        ? 'You could set the triangle up from the start \u2014 6\u00B2 + 8\u00B2 = c\u00B2 was never the problem. What was missing was the last move, turning c\u00B2 back into c. Building a square of area 81 gave you a picture for that, and you carried it back to the triangle yourself. That is why square roots moved further than the theorem today.'
+        : 'You set the triangle up, squared both legs and took the square root in one pass. The next questions can use less friendly numbers.',
+      log: s.log, showRecap: s.showRecap, recapExpanded: s.showRecap ? 'true' : 'false',
+      recapLabel: s.showRecap ? 'Hide the steps you took' : 'Show the steps you took',
+      toggleRecap: () => this.setState(st => ({ showRecap: !st.showRecap })),
+      scheduled: s.scheduled,
+      scheduleLabel: s.scheduled ? 'Added to tomorrow\u2019s plan' : 'Add to tomorrow\u2019s plan',
+      scheduleBg: s.scheduled ? '#2E6B4F' : '#3B3A8C',
+      scheduleOpacity: s.scheduled ? 0.85 : 1,
+      schedule: () => this.setState({ scheduled: true })
+    };
+  }
+}
+</script>
+</body>
+</html>
