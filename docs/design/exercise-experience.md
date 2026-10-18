@@ -62,6 +62,8 @@ This is a proposed presentation for the first addition example, not a universal 
 
 Support both visual help while solving and a worked explanation of why a result is correct. In practice, a learner should be able to request an available explanation after either a correct or an incorrect response. A correct answer does not imply that the learner understands the reasoning. If an explanation is requested before answering, distinguish it from a hint and make any answer reveal explicit; requesting it does not count as solving the exercise.
 
+A lesson opened from an exercise is teaching support for that delivery. It counts as showing the answer only when the lesson contains this exact instance with its result or a worked visual for the same values; then the learner is told before the lesson opens and may choose visual help instead, and a later correct answer is recorded as answered after the answer was shown. Other lesson reading before answering is recorded as help, not as a reveal (owner decision DL-026).
+
 An explanation should connect each visible action to a mathematical relationship, rather than merely animate the final number. For example:
 
 | Exercise | Visual reasoning |
@@ -88,7 +90,7 @@ Implement and verify explanations per supported exercise family. Tests must cove
 
 ### Help during checks of understanding
 
-Practice and supported self-checks may offer visual help on request. A check intended to observe independent work must state its support policy before starting. If a learner requests teaching help during such a check, offer a clear transition to supported work or an explanation after submission; never silently treat a helped response as independent evidence.
+Practice and supported self-checks may offer visual help on request. A check intended to observe independent work must state its support policy before starting. If a learner requests teaching help during such a check, offer a clear transition to supported work or an explanation after submission; never silently treat a helped response as independent evidence. The first-release default policy is independent: no teaching help inside the check, feedback at the end, and an explicit one-way switch to supported practice from the current exercise onward; answers saved before the switch stay independent (owner decision DL-028).
 
 Record which authored support was revealed and whether it was available before or after the response. Hiding help does not erase that history. Using teaching help is not an incorrect answer and does not prescribe a score deduction or mastery decrease. The future learning model decides how to interpret the observation.
 

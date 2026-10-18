@@ -30,6 +30,7 @@ Summaries can show skills practised, lessons explored, and the outcomes of work,
 
 - Correcting an unreadable input is not a mathematical failure or evidence of learning after corrective feedback.
 - A successful retry after mathematical feedback must not be presented as a first independent answer.
+- When non-revealing teaching help and corrective feedback both precede the first correct response, the help leads the summary (“Correct with visual help” or “Correct with help”) and the earlier wrong answer stays visible as a tag; “Correct after feedback” is reserved for retries with feedback and no teaching help. Any answer reveal takes precedence over both. Feedback is implied by an incorrect response in modes that always show it; an independent check must never assume feedback was shown. (Owner decision [DL-029](../reviews/round-01/decision-log.md).)
 - Partial correctness remains distinct from “not automatically assessed.” Do not promise that someone will review a response unless an actual review workflow exists.
 - Opening a lesson, requesting more questions, or completing many exercises does not establish mastery. Repeated exposure to the same question must remain distinguishable from work on new variations.
 - Asking for help or easier work is not failure and does not itself reduce mastery. Preserve the support context without imposing an automatic penalty.
@@ -38,7 +39,7 @@ These summaries should help the learner understand what they have worked on and 
 
 ### Persistence and current implementation status
 
-Persistent profiles and progress across sessions and devices are established requirements under [ADR 0006](../architecture/decisions/0006-support-profiles-without-personal-details.md). Progress belongs to a stable profile independent of display language or optional recovery email. The database, authentication mechanism, retention rules, and exact record format remain undecided.
+Persistent profiles and progress across sessions and devices are established requirements under [ADR 0006](../architecture/decisions/0006-support-profiles-without-personal-details.md). Progress belongs to a stable profile independent of display language or optional recovery email. The database is PostgreSQL ([ADR 0008](../architecture/decisions/0008-store-profiles-and-progress-in-postgresql.md)), hosted with the application in Norway East ([ADR 0009](../architecture/decisions/0009-host-on-azure-app-service.md)). The authentication mechanism, retention and deletion rules, and the exact record schema remain undecided, and no production persistence exists yet.
 
 The [current prototype](../../Prototype/mathkx-designsystemet/HANDOFF.md) demonstrates local activity history and simulated profiles. It does not implement production accounts, cross-device persistence, the complete observation model above, or a validated mastery/recommendation algorithm. A guest-only internal milestone may keep work in the browser with clear wording about that limitation; it does not replace the profile requirement for the application.
 

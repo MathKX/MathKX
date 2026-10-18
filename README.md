@@ -57,6 +57,6 @@ Repository-wide contributor and coding guidance lives in [AGENTS.md](AGENTS.md).
 
 ## Contributing
 
-MathKX is intended to welcome contributions from developers, educators, translators, curriculum experts, and learners. See [CONTRIBUTING.md](CONTRIBUTING.md) for the two contribution paths and how to run content validation locally. The project's license has not been chosen yet; it will be announced in a decision record. The documents above are the source of truth for the project's direction, and architectural changes are recorded as short decision records under [`docs/architecture/decisions`](docs/architecture/decisions/).
+MathKX is intended to welcome contributions from developers, educators, translators, curriculum experts, and learners. See [CONTRIBUTING.md](CONTRIBUTING.md) for the two contribution paths and how to run content validation locally. Code is licensed under MIT and learning content under CC BY-SA 4.0; see [ADR 0010](docs/architecture/decisions/0010-license-code-and-content.md). The documents above are the source of truth for the project's direction, and architectural changes are recorded as short decision records under [`docs/architecture/decisions`](docs/architecture/decisions/).
 
 Run `npm ci`, `npm test`, and `npm run validate` to install the tooling, test the validator, and check the current content. These checks do not establish mathematical correctness of generated exercises or translation completeness; those capabilities remain to be implemented.

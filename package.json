@@ -1,6 +1,7 @@
 {
   "name": "mathkx-content-tools",
   "private": true,
+  "license": "MIT",
   "description": "Validation tooling for MathKX content. Not an application package.",
   "type": "module",
   "engines": {
