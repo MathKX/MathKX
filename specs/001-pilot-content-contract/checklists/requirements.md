@@ -17,8 +17,8 @@
 - [x] Requirements are testable and unambiguous — each FR has a corresponding acceptance scenario or edge case
 - [x] Success criteria are measurable — session count, percentage coverage, seconds, documented-field coverage
 - [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined — 20 scenarios across five stories
-- [x] Edge cases are identified — ten listed
+- [x] All acceptance scenarios are defined — 23 scenarios across five stories
+- [x] Edge cases are identified — eleven listed
 - [x] Scope is clearly bounded — pilot contract only; Format v1, generators, dictionaries, and self-checks excluded by name
 - [x] Dependencies and assumptions identified — decision-log rows, constitution, existing validator, prototype shape
 
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Validated 2026-10-18 by the author against each item; one iteration. Ready for `/speckit-clarify` (optional) or `/speckit-plan`.
+- Validated 2026-10-18 by the author against each item; two iterations (counts updated after the PR 16 review). Ready for `/speckit-clarify` (optional) or `/speckit-plan`.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`.
