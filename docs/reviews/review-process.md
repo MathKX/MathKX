@@ -74,7 +74,29 @@ The design is ready to start when:
 
 Aim for one independent round and one focused challenge pass. If a critical issue remains, investigate that issue rather than restarting the entire review. A small prototype or learner observation should settle questions that prose cannot. Starting an internal slice does not waive validation required before public release.
 
+## 5. Final verification before specifications
+
+When the owner has recorded the decisions from steps 3 and 4 and intends to start implementation planning, run one bounded verification round rather than another review. Its purpose is to confirm that the record is consistent, that the prototype matches the documents where it is meant to be a reference, and that each candidate feature has the inputs a specification needs. Use the [round-04 verification prompt](round-04/verification-prompt.md); it carries a fixed ten-point checklist and a candidate-feature table.
+
+Arrangement:
+
+1. **Owner first.** Record pending decision-log rows, merge open review pull requests, choose one commit SHA, and put the SHA in the prompt. Schedule the human checks the models cannot do (physical iPad in Safari, VoiceOver, one learner, one educator, one translator) so their results can be cited.
+2. **Three verifiers, same SHA, same prompt.** Claude, Codex, and Gemini each work in their own branch and write only `docs/reviews/round-04/<reviewer-slug>/verification.md` plus evidence files. They may read all earlier rounds; they do not read each other's round-04 files until all three exist. Each runs the same commands and says what it ran and what it inferred. A "cannot verify" answer is acceptable; an unsupported claim is not.
+3. **Synthesis and challenge.** One verifier writes `round-04/synthesis.md`: a per-checklist-item and per-feature table of the three answers, agreements, contradictions, and a recommended disposition; another writes a short challenge pass. Assign the roles by track record of citation accuracy, because the synthesis becomes the evidence base for every specification; rotate when accuracy warrants it. Model agreement is still not proof.
+4. **Owner decides.** Record the verdict per feature in the decision log: specify now, specify with corrections, or not yet. Apply the small corrections to the documents they belong in. Stop here; do not open a fifth general round.
+
+Handing over to specifications:
+
+- Write the project constitution once, from `AGENTS.md`, `docs/product-principles.md`, and the durable rules in the ADRs, and review it as a document before any feature specification is generated from it.
+- Write one specification per feature that passed the gate, in the backlog order of the planning reference, each citing its requirement sources and the decision-log rows it depends on. The round-04 reports are the evidence section of each specification; do not rewrite them.
+- A specification may not quietly change an established requirement or an accepted ADR. If writing it reveals a conflict, bring the conflict back to the decision log.
+- Specifications for release-scope features (profiles, recovery, persistence) wait for their design proposals; verifying that the inputs exist is enough for this round.
+
 ## Reusable follow-up prompts
+
+### Final verification
+
+> Use `docs/reviews/round-04/verification-prompt.md` as written, with the baseline SHA filled in and your reviewer slug. Answer the checklist, give the feature verdicts, and write only your own `round-04/<reviewer-slug>/verification.md`. Do not read other round-04 reports until asked to synthesize.
 
 ### Synthesis
 
