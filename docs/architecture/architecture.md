@@ -68,6 +68,8 @@ Content should be reviewable through normal pull requests and accessible to cont
 
 The current validation script under `tools/` checks JSON schemas, unique skill IDs and exercise `(id, version)` pairs, skill references, and prerequisite cycles. Run it with `npm run validate`; run its regression tests with `npm test`. Both run in GitHub Actions on every pull request. Generator references, translation completeness, generated-value safety, and answer agreement are not yet checked.
 
+The [lesson structure and Markdown proposal](proposals/lesson-markdown-and-delivery.md) describes shared lesson metadata, localized Markdown, controlled visual references, and content packaged with the application. The initial direction is to render lessons inside MathKX and defer Hugo. The concrete lesson format and validation remain to be proven with a bilingual pilot.
+
 ## Cross-cutting constraints
 
 - Internationalization begins with stable identifiers and clean content boundaries; the localization storage mechanism is undecided.

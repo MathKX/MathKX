@@ -12,7 +12,7 @@ content/
   curricula/    competency goals and mappings from curricula to skills (not yet created)
 ```
 
-Directories are created when they contain real content. `lessons/` and `curricula/` do not exist yet because their formats have not been designed.
+Directories are created when they contain real content. `lessons/` and `curricula/` do not exist yet. Lessons have a proposed layout awaiting implementation and validation; the curriculum format remains to be designed.
 
 ### Skills
 
@@ -26,7 +26,9 @@ The current seven skills form a small seed graph around one learner story: the P
 
 ### Lessons and languages
 
-The proposed [learning experience](../docs/design/learning-experience.md) uses Markdown lessons with controlled references to interactive components and exercise families. The lesson format and preview workflow remain to be designed; contributors should not infer a stable syntax from this proposed directory structure.
+The proposed [learning experience](../docs/design/learning-experience.md) uses Markdown lessons with controlled references to interactive components and exercise families. The [lesson structure and Markdown proposal](../docs/architecture/proposals/lesson-markdown-and-delivery.md) places shared metadata in `lesson.json`, translations in `nb.md` and `en.md`, and optional assets in one folder per lesson. Show lessons inside MathKX and defer a separate Hugo learning site.
+
+The format, renderer, schema, and preview workflow remain to be implemented and validated with the first bilingual lesson. Contributors should not infer a stable syntax or existing lesson validation from this proposal. Real lesson JSON must follow the schema requirements below.
 
 The first learner release requires Norwegian and English for all released lessons, exercises, hints, feedback, and accessibility text. Localized variants share mathematical identities and learner progress. The English-only `0.1` exercise is an exploratory fixture, not release-ready content. Translation storage and completeness checks will be introduced with the first content format that supports them.
 

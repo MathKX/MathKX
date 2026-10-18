@@ -61,6 +61,8 @@ Markdown is an authoring format; it does not require a separate static site. Exp
 
 This is a proposed implementation direction. The Markdown dialect, mathematical notation, metadata syntax, component reference syntax, and rendering technology need a small working lesson before they become stable contracts.
 
+The [lesson structure and Markdown proposal](../architecture/proposals/lesson-markdown-and-delivery.md) describes a folder per lesson, shared metadata, localized Markdown, visual references, and the contribution workflow. Show lessons inside MathKX for the first implementation and defer a separate Hugo learning site. Any later reading edition should reuse the same sources.
+
 ### Authored material
 
 - Concept explanations, definitions, and reasoning.
@@ -82,7 +84,7 @@ Dynamic behavior does not require generating explanatory prose at runtime. Revie
 
 Lessons should use stable identities, versions, skill references, and localization boundaries. Exact metadata fields remain open. Course and grade mappings should reference the existing skills and lessons rather than duplicate their content.
 
-The first release requires Norwegian and English versions of every released lesson and its learner-facing dependencies, including exercises, hints, feedback, and accessibility text. Translations share content identities and skill references. Contributors should be able to edit one language without changing mathematical logic; review must identify when a source change requires updates to the other language. The translation storage layout and tooling remain undecided.
+The first release requires Norwegian and English versions of every released lesson and its learner-facing dependencies, including exercises, hints, feedback, and accessibility text. Translations share content identities and skill references. Contributors should be able to edit one language without changing mathematical logic; review must identify when a source change requires updates to the other language. Separate localized Markdown files with shared lesson metadata are proposed; the layout and tooling must be proven with the first lesson before becoming stable contracts.
 
 Lesson authors should be able to reference named interactions with validated configuration without writing JavaScript or React. New mathematical behavior belongs in tested domain code, while new presentation behavior belongs in reusable accessible components. Avoid arbitrary executable code in lesson files or a lesson syntax that becomes a programming language.
 
