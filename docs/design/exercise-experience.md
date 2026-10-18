@@ -58,6 +58,34 @@ The two groups represent the operands of the existing instance. A first reveal d
 
 This is a proposed presentation for the first addition example, not a universal layout. Larger quantities need an appropriate grouped or place-value representation rather than an unreadable field of counters.
 
+### Explaining why the result follows
+
+Support both visual help while solving and a worked explanation of why a result is correct. In practice, a learner should be able to request an available explanation after either a correct or an incorrect response. A correct answer does not imply that the learner understands the reasoning. If an explanation is requested before answering, distinguish it from a hint and make any answer reveal explicit; requesting it does not count as solving the exercise.
+
+An explanation should connect each visible action to a mathematical relationship, rather than merely animate the final number. For example:
+
+| Exercise | Visual reasoning |
+| --- | --- |
+| `4 + 4 = 8` | Show two labeled groups of four, combine them, and explain that the total counts all objects in both groups. |
+| `8 + 5 = 13` | Show that eight needs two to complete ten, split five into two and three, and connect the picture to `8 + 2 + 3 = 10 + 3 = 13`. |
+| `x + 3 = 7` | Use a balance to remove three from both sides, explaining that the same operation preserves equality and leaves `x = 4`. |
+
+These are examples of supported teaching approaches, not mandatory solution strategies. Explain the demonstrated method without assuming it is the one the learner used. A wrong response may suggest a useful explanation; it does not by itself diagnose a persistent misconception.
+
+For authored examples, review the question, solution, reasoning, and visual together. For generated exercises, derive the prompt, answer, intermediate steps, and visual quantities from the same deterministic mathematical instance and solution model. Tested domain code computes nontrivial steps; localized text and reusable visual components present them. This does not require AI-generated explanations.
+
+Each exercise family must declare which explanations and representations are supported and for which values. Do not assume a component that explains `8 + 5` can also explain `19 + 1`: the prototype's single-ten-frame approach would require different handling for an operand above ten. Either constrain the enabled definition to supported values or supply an appropriate, tested representation. Do not generate a plausible-looking explanation outside that contract.
+
+Record explanatory support and answer reveals in the [progress observation model](../learning/mastery.md#progress-tracking-before-a-mastery-algorithm). Showing an explanation after an answer must not retroactively mark that answer as helped, but it becomes support context for subsequent work on that instance. Hiding or replaying the explanation does not erase that history. Checks of understanding retain their stated disclosure policy; an independent check must not reveal solutions early while continuing to label the work independent.
+
+Worked explanations must ship in both Norwegian and English, including the reason for each step and accessible descriptions. Provide equivalent text or semantic mathematics and keyboard/touch operation, with a static or step-controlled alternative to animation. Do not expose an answer in the accessible version before it is disclosed in the visual version.
+
+### Coverage and current implementation status
+
+The [prototype](../../Prototype/mathkx-designsystemet/HANDOFF.md) demonstrates grouped counters, ten-frame/make-ten models, and a stepped equation balance for selected authored examples and questions. It is evidence of a possible interaction design, not a universal explanation engine or a tested generated-exercise pipeline.
+
+Implement and verify explanations per supported exercise family. Tests must cover agreement among the question, validator, worked steps, visual state, and accessible text at boundary values; reveal timing and support recording; both languages; and preservation of the learner's work. Mathematical and teaching review remain necessary alongside automated checks. Richer subjects can add other representations as they are authored and validated, without promising an automatic visual explanation for every possible mathematics problem.
+
 ### Help during checks of understanding
 
 Practice and supported self-checks may offer visual help on request. A check intended to observe independent work must state its support policy before starting. If a learner requests teaching help during such a check, offer a clear transition to supported work or an explanation after submission; never silently treat a helped response as independent evidence.

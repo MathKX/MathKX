@@ -10,6 +10,40 @@ A future model may consider correctness, task difficulty, repeated evidence, rec
 
 The [exercise capability model](../architecture/exercise-capability-model.md#9-mastery-evidence-requirements) defines structured observations the exercise system may emit without assigning weights or turning them into a mastery algorithm. In particular, accessibility accommodations and ordinary time-on-task are not negative mastery evidence.
 
+## Progress tracking before a mastery algorithm
+
+MathKX should provide a useful record of a learner's progress before it can reliably estimate mastery. Keep three responsibilities separate: record what happened, summarize those observations honestly, and eventually interpret evidence through a validated learning model. An activity summary is not an assessment that a skill has been mastered.
+
+The intended observation model records or resolves:
+
+- The target skills, learning purpose (learning, exploration, practice, or a check), and actual task features.
+- The exercise definition ID and version, generated-instance seed where applicable, and generator/validator compatibility needed to interpret or replay it. Fixed authored tasks retain stable references without requiring random generation.
+- A distinct delivery/session reference, ordered submissions, and submission identities so a network retry does not duplicate work and deliberate practice of the same instance remains a separate learning occasion.
+- The learner's response artifact and typed validation result, distinguishing correct, incorrect, partially correct, invalid input, and responses that cannot be assessed automatically.
+- Teaching support actually shown, including visual help, explanation steps, corrective feedback, and answer reveals, with enough ordering to establish whether it preceded a response.
+
+These are semantic requirements, not a finalized database or API schema. Collect only the observations needed for the learning purpose; this is not a requirement to retain every interaction, raw response, or timing indefinitely. Accessibility operation is not teaching support, and the absence of a recorded help event does not prove that no outside help was used.
+
+### Learner-facing summaries
+
+Summaries can show skills practised, lessons explored, and the outcomes of work, using descriptions such as “Correct on the first mathematical response,” “Correct after feedback,” and “Correct with visual help.” Their definitions must follow the observed sequence, not merely the last answer or submission count.
+
+- Correcting an unreadable input is not a mathematical failure or evidence of learning after corrective feedback.
+- A successful retry after mathematical feedback must not be presented as a first independent answer.
+- Partial correctness remains distinct from “not automatically assessed.” Do not promise that someone will review a response unless an actual review workflow exists.
+- Opening a lesson, requesting more questions, or completing many exercises does not establish mastery. Repeated exposure to the same question must remain distinguishable from work on new variations.
+- Asking for help or easier work is not failure and does not itself reduce mastery. Preserve the support context without imposing an automatic penalty.
+
+These summaries should help the learner understand what they have worked on and choose useful next practice. Automatic diagnosis of prerequisite gaps, mastery thresholds, and recommendations remain future learning-model decisions.
+
+### Persistence and current implementation status
+
+Persistent profiles and progress across sessions and devices are established requirements under [ADR 0006](../architecture/decisions/0006-support-profiles-without-personal-details.md). Progress belongs to a stable profile independent of display language or optional recovery email. The database, authentication mechanism, retention rules, and exact record format remain undecided.
+
+The [current prototype](../../Prototype/mathkx-designsystemet/HANDOFF.md) demonstrates local activity history and simulated profiles. It does not implement production accounts, cross-device persistence, the complete observation model above, or a validated mastery/recommendation algorithm. A guest-only internal milestone may keep work in the browser with clear wording about that limitation; it does not replace the profile requirement for the application.
+
+If guest history is later imported, distinguish its origin from observations recorded by the service. Revalidating a submitted answer against a reproducible exercise can confirm mathematical correctness; it cannot establish who answered or whether help was used. Do not silently turn imported history into verified independent-performance evidence.
+
 ## Product constraints
 
 - Mastery signals should be understandable enough to support meaningful learner feedback.
