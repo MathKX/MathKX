@@ -416,8 +416,10 @@ export function CheckPage({ id, query }) {
         <Heading level={2} data-size="xs" id="exp-h">{t('check.explanations')}</Heading>
         <Paragraph data-size="sm">{t('check.explanationsLead')}</Paragraph>
         <div className="flex flex-col gap-2 mt-3">
-          {rows.map(({ q, s: ds }) => (
-            <CheckExplanation key={q.id} q={q} revisit={ds.outcome !== 'correctFirst'}
+          {rows.map(({ q }) => (
+            // DL-036: the "Worth revisiting" tag marks exactly the items the "Worth revisiting"
+            // card lists: independent items that were neither correct first nor skipped.
+            <CheckExplanation key={q.id} q={q} revisit={groups.independentNotYet.some((r) => r.q.id === q.id)}
               lessonHref={`#/lesson/${chk.lesson}?s=${q.section}`} sectionTitle={sections.find((x) => x.id === q.section)?.title} />
           ))}
         </div>

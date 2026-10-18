@@ -100,9 +100,11 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
   const lockAnswer = solved && mode !== 'check';
 
   const supportTags = summary.tags.map((k) => t(`support.${k}`));
-  const outcomeMsg = summary.outcome === 'correctAfterExplanation'
+  // DL-029: the banner leads with the help-first outcome and still mentions an
+  // earlier wrong answer and its feedback when the outcome does not say so.
+  const outcomeMsg = `${summary.outcome === 'correctAfterExplanation'
     ? t(`ex.outcome.revealed_${summary.revealSources[0] ?? 'explanation'}`)
-    : t(`ex.outcome.${summary.outcome}`);
+    : t(`ex.outcome.${summary.outcome}`)}${summary.tags.includes('feedbackBefore') ? ` ${t('ex.outcome.feedbackNote')}` : ''}`;
 
   const panel = work.panel === 'help' ? (
     helpModel === 'groups' ? (

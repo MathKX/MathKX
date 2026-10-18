@@ -78,7 +78,8 @@
   .mkx-eqpart math[display='block'] { display: inline math; }
   .mkx-reveal-note { font-weight: 600; border-left: 4px solid var(--ds-color-warning-border-default); padding-left: 0.6rem; }
   /* Touch targets: links and small buttons that act as primary routes stay at 44 px. */
-  .ds-breadcrumbs a, .ds-breadcrumbs li > a { min-height: 44px; display: inline-flex; align-items: center; }
+  /* 44 × 44 (DL-037): short crumbs such as «Øv» get a minimum width too. */
+  .ds-breadcrumbs a, .ds-breadcrumbs li > a { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .ds-button[data-size='sm'] { min-height: 44px; }
   a.ds-tag, .mkx-taglink { min-height: 44px; display: inline-flex; align-items: center; }
 

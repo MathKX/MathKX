@@ -79,6 +79,18 @@ Requirement sources: [exercise experience](../../../../docs/design/exercise-expe
 
 After independent reviews by Claude, Codex and Gemini (18 October 2026), the crash after a self-check, the lesson detour that hid an answer reveal, counting to the total, explanation step recording, the balance check picture, “More like this” with a pending change, resuming an unfinished question, check boundaries in history, guest-work labels, the clipped 8 + 5 equation at 390 px, touch targets and several wording issues were fixed. Gemini's review added: the warning before an explanation after an incorrect answer, help “while solving” measured from the correct answer, clearing a change that points back to the current variation, explanations for every check item, resuming a part-done check, lesson visits, the simulated keyboard covering the answer, the derivative graph for typed values, keeping a confirmed email until a new one is confirmed, and removing unused iteration-1 strings. A new outcome, “Correct with help”, was added. The browser checks are now in the repository (`npm run test:browser`). See [REVIEW-RESPONSE.md](REVIEW-RESPONSE.md) for each finding, the change and the check.
 
+## Round-04 fixes
+
+Changes recorded in the [decision log](../../../../docs/reviews/round-01/decision-log.md) after the round-04 review, and nothing beyond them.
+
+| Row | Change | Check |
+| --- | --- | --- |
+| DL-029 | Help-first outcome labels: non-revealing help before the first correct answer gives “Correct with visual help” or “Correct with help”, even after a wrong answer; “Correct after feedback” is only for feedback-only retries; reveals still lead. The wrong answer stays visible as the new tag “Feedback on an earlier answer”, and the post-answer banner says so. | `npm test`: table of 18 event sequences; browser “DL-029” (banner, session summary, My learning, progress page; both languages) |
+| DL-035 | In the explanation's “together” step, counters are named by their place in their own group (“First group, counter 1 of 3”), not by the total. | browser “DL-035” (3 + 5, step 2 of 3: no accessible name or text in the accessibility tree contains 8; both languages) |
+| DL-036 | The check summary's “Worth revisiting” tag is shown only on the items the “Worth revisiting” card lists (independent, neither correct first nor skipped). | browser “DL-036” (wrong, skipped, switched-and-helped, skipped-last: the tag only on the wrong independent item) |
+| DL-037 | The touch-target check tests width as well as height (44 × 44). It found one element: the short breadcrumb “Øv” (21 × 44 px) in Bokmål. Breadcrumb links now have a 44 px minimum width. | browser “C12” on the lesson and practice pages, all four configurations |
+| DL-026, DL-028, DL-029 | `ASSUMPTIONS.md`: the four DL-026 rules, the DL-028 check policy and the help-first rule moved from “assumptions that should be confirmed” to “requirements the prototype follows”. | — |
+
 ## Also fixed
 
 - Untranslated `Legend` and `pluss` (R2 finding 7).
