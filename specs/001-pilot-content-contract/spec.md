@@ -13,7 +13,7 @@
 Per the constitution's specification rules, this feature restates existing decisions and creates no new requirement.
 
 - **Requirement sources**: `AGENTS.md` and `content/AGENTS.md` (content configures, code computes; stable language-neutral IDs; schema and format documentation change together); `docs/vision.md#first-release-languages`; `docs/design/learning-experience.md` (lesson authoring approach, open contribution workflow); `docs/architecture/proposals/lesson-markdown-and-delivery.md` (folder layout, directive idea, authoring workflow acceptance criteria); `docs/architecture/exercise-format.md` and `docs/architecture/exercise-capability-model.md` §6, §11 and §17 (fixed and generated content, authoring implications, pilot before Format v1); ADR 0002, 0003, 0004, 0010.
-- **Decision-log rows**: DL-004 (skills `numbers.number-bonds-to-ten` and `numbers.addition-within-20`), DL-006 (first topic), DL-012 (narrow experimental pilot contract; preserve the `0.1` fixture; not Format v1), DL-017 (canonical lesson ID; cross-language metadata and anchors validated, prose not byte-identical), DL-021 (validator: unknown schema names, relative paths), DL-033 (lesson `practice` references a definition; directive, notation, front-matter and table rules as the pilot contract), DL-038 (lesson-pairing check in CI).
+- **Decision-log rows**: DL-004 (skills `numbers.number-bonds-to-ten` and `numbers.addition-within-20`), DL-006 (first topic), DL-009 (bound each generated definition to the mathematics its help can represent; declared supported ranges; boundary fixtures `4 + 4`, `9 + 9`, `19 + 1`), DL-012 (narrow experimental pilot contract; preserve the `0.1` fixture; not Format v1), DL-014 (milestone one scoped to `within-10` and `crossing-ten`), DL-017 (canonical lesson ID; cross-language metadata and anchors validated, prose not byte-identical), DL-021 (validator: unknown schema names, relative paths), DL-033 (lesson `practice` references a definition; directive, notation, front-matter and table rules as the pilot contract), DL-038 (lesson-pairing check in CI).
 - **Evidence**: `docs/reviews/round-04/synthesis.md`, "Consolidated unresolved authoring contract", which lists the fields and rules this feature must define; `docs/reviews/round-01/claude-fable/revised-build-brief-corrections.md` §F; the prototype's `Prototype/mathkx-designsystemet/src/content/lessons/number-bonds-to-ten/` as the shape to formalize.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -52,6 +52,7 @@ A maintainer describes a family of generated questions as data: which skill it s
 3. **Given** a definition naming a generator or version that is not registered, **When** the check runs, **Then** it fails naming the unregistered generator.
 4. **Given** a fixed task with authored prompt and answer and no generator, **When** the check runs, **Then** it passes, and the task is identified by its definition ID and version alone.
 5. **Given** two definitions with the same ID and version, **When** the check runs, **Then** it fails naming both files (behaviour already present for the exploratory format, preserved).
+6. **Given** a fixed task whose authored validation data does not fit the response shape of the validator it names (for example a non-integer answer for an integer validator), **When** the check runs, **Then** it fails naming the task, the validator, and the mismatch.
 
 ---
 
@@ -84,6 +85,8 @@ A translator rewrites the English text of a lesson for clarity. They change word
 1. **Given** a lesson pair, **When** the translator changes only prose and the example title in one language, **Then** the check passes.
 2. **Given** a lesson pair where one language's visual directive has a different parameter value, **When** the check runs, **Then** it fails naming the directive, the attribute, and both values.
 3. **Given** a lesson pair where the mathematics inside the texts differs (a different expression), **When** the check runs, **Then** it fails naming the first differing expression and its section.
+4. **Given** a lesson pair where one language places two equivalent directives in a different order within a section, **When** the check runs, **Then** it passes.
+5. **Given** a lesson pair where the same quantity is written `2,5` in Norwegian and `2.5` in English, **When** the check runs, **Then** it passes.
 
 ---
 
@@ -110,6 +113,7 @@ The number-bonds lesson that today exists only inside the prototype, the two ski
 - A definition declares a misconception code that no validator provides: reported.
 - A definition's `source` is `fixed` but it also names a generator, or is `generated` without one: reported.
 - A lesson's `practice` entry names a definition whose skill is not among the lesson's skills: reported as a warning, not a failure (a lesson may legitimately send learners to a related skill).
+- A `:::practice` directive in the body has no matching entry in the metadata's `practice` list, or an entry has no directive: reported.
 - The `check` field the prototype's `lesson.json` carries is present: reported as not part of the pilot (self-checks are a later feature), with the line to remove.
 - Content references use a skill ID from the prototype's retired scheme (`arithmetic.*`): reported as unknown with a hint that the registry uses `numbers.*`.
 - A file under `content/` is valid JSON but not an object, or omits `$schema`: reported (behaviour already present, preserved).
@@ -122,17 +126,17 @@ The number-bonds lesson that today exists only inside the prototype, the two ski
 
 - **FR-001**: A lesson MUST be a folder `content/lessons/<lesson-id>/` containing shared metadata, one Markdown file per release language (`nb.md`, `en.md`), and an optional `assets/` folder. The folder name MUST equal the lesson's `id`.
 - **FR-002**: Lesson metadata MUST hold the language-neutral `id`, an integer `version`, a `status` from a documented set, the target `skills`, optional `prerequisites` (skills), optional `relatedSkills` and `relatedLessons`, the `practice` entries (each naming an exercise definition and version), the `visuals` the lesson may embed, and the `translations` map from language to file. Every field MUST be documented as required or optional with its type and allowed values.
-- **FR-003**: Each language file MUST carry `title` and `objective` as front matter and the lesson body as Markdown. Section headings MUST carry explicit anchors (`{#id}`), and the set and order of anchors MUST be identical across languages.
+- **FR-003**: Each language file MUST carry `title` and `objective` as front matter and the lesson body as Markdown. Section headings MUST carry explicit anchors (`{#id}`), and the set of anchors MUST be identical across languages; their order may differ (DL-017).
 - **FR-004**: Lesson bodies MUST use standard Markdown for text, headings, lists, links, images, and tables; tables MUST include the delimiter row so that generic renderers display them.
-- **FR-005**: Interactive elements MUST be expressed as the three fenced directives `:::visual{...}`, `:::example{...}`, `:::practice{...}`. The permitted attributes, their types, defaults, and ranges for each directive and each registered visual component MUST be documented and checked. Unknown directive names or attributes MUST be reported.
+- **FR-005**: Interactive elements MUST be expressed as the three fenced directives `:::visual{...}`, `:::example{...}`, `:::practice{...}`. The permitted attributes, their types, defaults, and ranges for each directive and each registered visual component MUST be documented and checked. Unknown directive names or attributes MUST be reported. A `:::practice` directive MUST name a definition and version (not a skill and variant) and MUST correspond to an entry in the lesson metadata's `practice` list; an entry without a directive or a directive without an entry MUST be reported. Directive attributes are classified as non-localized (identity and mathematics, such as `id`, `type`, `definition`, `version`, `start`, `a`, `b`, `c`), which MUST be identical across languages, or localized (such as the `title` of `:::example`), which MUST be present and non-empty in each language and are exempt from cross-language equality.
 - **FR-006**: Inline (`$...$`) and display (`$$...$$`) mathematics MUST conform to a documented notation grammar for the pilot; unsupported notation MUST be reported, never dropped or altered.
-- **FR-007**: Directive sequence (names and attribute values) and the mathematics inside the texts MUST be identical across a lesson's languages; prose, example titles, and sentence order within a section need not be.
+- **FR-007**: Across a lesson's languages, the set of directives (matched by identity: name plus `id`, name plus `definition`, or name plus `type` and non-localized parameters) and their non-localized attribute values MUST be identical, and the set of mathematical expressions within each section MUST be identical after normalization (locale decimal separators and whitespace normalized to canonical numbers and tokens). Directive order, sentence order within a section, prose, and localized attributes need not be identical (DL-017).
 - **FR-008**: Images in `assets/` MUST have alternative text in each language file; a referenced asset or link that does not exist MUST be reported.
 
 **Exercise definition contract (pilot)**
 
-- **FR-009**: An exercise definition MUST declare a language-neutral `id`, an integer `version`, the `skill` it serves, and a `source` of either `generated` or `fixed`.
-- **FR-010**: A `generated` definition MUST name a registered generator by name and version and supply the generator's parameters within the generator's declared domain; a `fixed` definition MUST supply its authored instance (prompt data and private validation data) and MUST NOT name a generator.
+- **FR-009**: An exercise definition MUST declare a language-neutral `id`, an integer `version`, the `skill` it serves, a `source` of either `generated` or `fixed`, and the registered validator (name and version) that judges responses to it.
+- **FR-010**: A `generated` definition MUST name a registered generator by name and version and supply the generator's parameters within the generator's declared domain; a `fixed` definition MUST supply its authored instance (prompt data and private validation data) and MUST NOT name a generator. The check MUST confirm that the named validator is registered and that the authored validation data conforms to that validator's declared response-artifact shape; a fixed task whose validation data does not fit its validator MUST be reported.
 - **FR-011**: A definition MUST list its supported representations (visual help and explanation models) with the value range each supports; the check MUST fail when any representation's range does not cover the definition's value range.
 - **FR-012**: A definition MUST list the misconception feedback codes its validator may emit, from a documented code list; unknown codes MUST be reported.
 - **FR-013**: The pair (`id`, `version`) MUST be unique across all definitions; different versions of one ID may coexist (behaviour preserved from the exploratory format).
@@ -151,7 +155,7 @@ The number-bonds lesson that today exists only inside the prototype, the two ski
 
 **Contributor guidance and pilot content**
 
-- **FR-020**: A lesson template folder and a short contributor guide MUST exist and MUST document every field, directive, attribute, the notation grammar, and the table rule; `content/AGENTS.md` and `content/README.md` MUST point to them.
+- **FR-020**: A lesson template folder and a short contributor guide MUST exist and MUST document every field, directive, attribute, the notation grammar, and the table rule; `content/AGENTS.md` and `content/README.md` MUST point to them. Existing statements that a skill file carries only its ID and prerequisites (in `content/README.md` and the skill schema's description) MUST be updated when the ladder is added.
 - **FR-021**: The repository MUST contain, under `content/`, the number-bonds lesson pair, the skills `numbers.number-bonds-to-ten` and `numbers.addition-within-20` with the prerequisite edge between them, the definitions `within-10` and `crossing-ten` of the addition skill, one fixed worked example, and the addition skill's ladder, all passing the check. The prototype's own copies are not modified by this feature.
 
 ### Key Entities
@@ -160,8 +164,9 @@ The number-bonds lesson that today exists only inside the prototype, the two ski
 - **Lesson**: Shared metadata plus one text per release language; references skills, related lessons, practice definitions, and visuals; identified by `id` and `version`.
 - **Lesson translation**: One language's title, objective, and body; must agree with its siblings on anchors, directives, and mathematics.
 - **Directive**: A named, parameterized reference inside a lesson to a registered visual component, a worked example block, or a practice entry point.
-- **Exercise definition**: Either a generated family (generator, version, parameters) or a fixed task (authored instance); declares skill, supported representations with ranges, and misconception codes; identified by `id` and `version`.
+- **Exercise definition**: Either a generated family (generator, version, parameters) or a fixed task (authored instance); declares skill, the validator (name and version) that judges responses, supported representations with ranges, and misconception codes; identified by `id` and `version`.
 - **Generator registration**: A documented generator name, version, parameter names, and parameter domain against which definitions are checked.
+- **Validator registration**: A documented validator name, version, and the response-artifact shape it accepts, against which fixed tasks' validation data and generated definitions' validator references are checked.
 - **Representation support**: A named visual or explanation model with the value range it can show.
 - **Misconception code**: A stable identifier for a feedback message pattern, with text supplied per language outside the definition.
 - **Challenge ladder**: An ordered list of a skill's definitions with localized step descriptions.
