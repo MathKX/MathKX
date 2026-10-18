@@ -8,8 +8,8 @@ MathKX is an open-source adaptive mathematics learning platform. It aims to help
 - [Product principles](docs/product-principles.md)
 - [Learning model](docs/learning/learning-model.md)
 - [Architecture](docs/architecture/architecture.md)
-- [Exercise format](docs/architecture/exercise-format.md)
 - [Exercise capability model](docs/architecture/exercise-capability-model.md)
+- [Exercise format](docs/architecture/exercise-format.md)
 - [Design principles](docs/design/design-principles.md)
 
 Content changes must also follow [content/AGENTS.md](content/AGENTS.md).

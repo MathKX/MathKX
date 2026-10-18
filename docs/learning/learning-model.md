@@ -8,7 +8,7 @@ This document defines the project's current shared vocabulary. It describes a di
 
 A language-neutral unit of mathematical knowledge or capability, identified independently of school system and grade. Examples include `numbers.square-roots`, `algebra.linear-equations`, and `geometry.pythagorean-theorem`.
 
-A skill may have prerequisite skills. Prerequisites form a directed graph, not a fixed course sequence: the same skill can support several later skills, and a learner may reach a skill through different curricula.
+A skill may have prerequisite skills. Prerequisites form a directed graph, not a fixed course sequence: the same skill can support several later skills, and a learner may reach a skill through different curricula. See [skill graph](skill-graph.md) for the modeling principles and open questions, and [`content/skills/`](../../content/skills/) for the current seed graph.
 
 ### Curriculum and competency goal
 
