@@ -14,13 +14,14 @@ No application projects have been scaffolded yet. When implementation begins, a 
 ```text
 content/       versioned skills, exercise definitions, and curriculum mappings
 schemas/       machine-readable validation for contributed content
-src/backend/   .NET application and domain code
-src/web/       React application and reusable visual components
-tests/         cross-cutting validation where it does not belong beside a project
+tools/         repository tooling such as the content validation script
+src/backend/   .NET application and domain code (not yet created)
+src/web/       React application and reusable visual components (not yet created)
+tests/         cross-cutting validation where it does not belong beside a project (not yet created)
 docs/          product, learning, design, and architecture documentation
 ```
 
-Directories should be created when they contain real work, not maintained as empty placeholders.
+Directories should be created when they contain real work, not maintained as empty placeholders. [content/README.md](../../content/README.md) describes the layout inside `content/`.
 
 ## Domain boundaries
 
@@ -64,7 +65,7 @@ Content should be reviewable through normal pull requests and accessible to cont
 - safe, valid generator output; and
 - agreement between generated answers and validators.
 
-The initial schema covers syntax only. No CI has been added before there is a stable validation workflow to run.
+The first two checks exist: a validation script under `tools/` validates every content file against its schema, resolves skill references, and rejects prerequisite cycles. It runs locally with `npm run validate` and in GitHub Actions on every pull request. Generator, translation, and answer-agreement checks will be added as the things they check come into existence.
 
 ## Cross-cutting constraints
 
@@ -82,6 +83,7 @@ Accepted decisions are documented in:
 - [ADR 0003: Use data-driven exercise definitions](decisions/0003-data-driven-exercise-definitions.md)
 - [ADR 0004: Make exercise generation deterministic](decisions/0004-deterministic-exercise-generation.md)
 - [ADR 0005: Separate exercise capability dimensions](decisions/0005-separate-exercise-capability-dimensions.md)
+- [ADR 0006: Seed representation and random source](decisions/0006-seed-and-random-source.md) (proposed)
 
 ## Future decisions
 

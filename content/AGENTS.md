@@ -9,7 +9,8 @@ This file applies to everything under `content/` in addition to the root [AGENTS
 - Preserve deterministic generation. Parameters must not rely on current time, ambient randomness, or machine locale.
 - Do not assume answers are text fields; describe the intended mathematical interaction.
 - Write content so it can be localized and accessed with assistive technology. Do not use color or pointer input as the only carrier of meaning.
-- Validate changed JSON against its schema and keep examples intentionally small.
+- Run `npm run validate` after changing JSON; it checks schemas, skill references, and the prerequisite graph. Keep examples intentionally small.
+- Every exercise must reference a skill defined under `content/skills/`. Add the skill in the same change if it does not exist.
 - Update the format documentation and schema together when their contract changes.
 
 The current schema and example are exploratory `0.1` artifacts, not a stable authoring contract.

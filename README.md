@@ -30,7 +30,7 @@ Skills remain independent of curricula and may depend on other skills. This allo
 
 ## Current status
 
-MathKX is in its **foundation and design stage**. This repository currently contains architectural and product documentation, a preliminary exercise-definition schema, and one illustrative content example. It does not yet contain a backend, frontend, learning engine, or production-ready content format.
+MathKX is in its **foundation and design stage**. This repository currently contains architectural and product documentation, preliminary skill and exercise-definition schemas, a small seed skill graph, one illustrative exercise definition, and a validation script that runs in CI. It does not yet contain a backend, frontend, learning engine, or production-ready content format.
 
 The intended direction is a monorepo with an ASP.NET Core/C# backend and a React/TypeScript frontend. Application projects will be introduced only when an implementation task makes their shape clear.
 
@@ -41,11 +41,11 @@ The intended direction is a monorepo with an ASP.NET Core/C# backend and a React
 3. [Learning model](docs/learning/learning-model.md)
 4. [Architecture](docs/architecture/architecture.md)
 5. [Exercise capability model](docs/architecture/exercise-capability-model.md)
-6. [Preliminary exercise format](docs/architecture/exercise-format.md)
+6. [Exercise format](docs/architecture/exercise-format.md)
 7. [Design principles](docs/design/design-principles.md)
 
 Repository-wide contributor and coding guidance lives in [AGENTS.md](AGENTS.md). Content-specific guidance lives in [content/AGENTS.md](content/AGENTS.md).
 
 ## Contributing
 
-MathKX is intended to welcome contributions from developers, educators, translators, curriculum experts, and learners. Contribution workflows and licensing are not established yet. Until they are, the documents above are the source of truth for the project's direction, and architectural changes should be recorded as short decision records under [`docs/architecture/decisions`](docs/architecture/decisions/).
+MathKX is intended to welcome contributions from developers, educators, translators, curriculum experts, and learners. See [CONTRIBUTING.md](CONTRIBUTING.md) for the two contribution paths and how to run content validation locally. The project's license has not been chosen yet; it will be announced in a decision record. The documents above are the source of truth for the project's direction, and architectural changes are recorded as short decision records under [`docs/architecture/decisions`](docs/architecture/decisions/).

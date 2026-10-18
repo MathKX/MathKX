@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Skill",
+  "description": "Exploratory 0.1 schema for a curriculum-independent mathematical skill. A skill carries only its stable identity and prerequisite edges; localized names, descriptions, and curriculum mappings live elsewhere.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "prerequisites"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "description": "Stable, language-neutral skill ID such as numbers.square-roots. Must not encode a country, curriculum, grade, or display language."
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "IDs of skills this skill depends on. The graph across all skills must be acyclic.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

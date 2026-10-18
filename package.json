@@ -1,0 +1,16 @@
+{
+  "name": "mathkx-content-tools",
+  "private": true,
+  "description": "Validation tooling for MathKX content. Not an application package.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "validate": "node tools/validate-content.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}
