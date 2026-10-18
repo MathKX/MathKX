@@ -1,0 +1,139 @@
+{
+  "equations-as-a-balance": {
+    "metaId": "equations-as-a-balance",
+    "metaIdEqualsFolder": true,
+    "schemaRef": "../../../../schemas/lesson.schema.json (proposed, not yet written)",
+    "metaSkills": [
+      "algebra.equality-meaning",
+      "algebra.solve-x-plus-a",
+      "algebra.check-solution"
+    ],
+    "metaPrereqs": [
+      "arithmetic.add-within-20",
+      "arithmetic.subtraction-within-20"
+    ],
+    "practice": [
+      {
+        "skill": "algebra.solve-x-plus-a",
+        "variant": "to-10"
+      }
+    ],
+    "anchorsEqual": true,
+    "anchorsNb": [
+      "meaning",
+      "balance",
+      "both-sides",
+      "check",
+      "mistake",
+      "practice"
+    ],
+    "anchorsEn": [
+      "meaning",
+      "balance",
+      "both-sides",
+      "check",
+      "mistake",
+      "practice"
+    ],
+    "headingsWithoutAnchor": {
+      "nb": [],
+      "en": []
+    },
+    "directivesEqual": false,
+    "directives": [
+      "visual{type=\"balance\" a=\"3\" c=\"7\"}",
+      "example{title=\"Eksempel: x + 5 = 9\" id=\"example\"}",
+      "practice{skill=\"algebra.solve-x-plus-a\" variant=\"to-10\"}"
+    ],
+    "mathEqual": true,
+    "mathCount": {
+      "nb": 10,
+      "en": 10
+    },
+    "mathDiff": {
+      "onlyNb": [],
+      "onlyEn": []
+    },
+    "tablesWithGfmDelimiterRow": {
+      "nb": 0,
+      "en": 0
+    },
+    "frontMatterKeys": [
+      "title",
+      "objective"
+    ],
+    "images": []
+  },
+  "number-bonds-to-ten": {
+    "metaId": "number-bonds-to-ten",
+    "metaIdEqualsFolder": true,
+    "schemaRef": "../../../../schemas/lesson.schema.json (proposed, not yet written)",
+    "metaSkills": [
+      "arithmetic.number-bonds-10",
+      "arithmetic.add-make-ten"
+    ],
+    "metaPrereqs": [
+      "arithmetic.counting-to-20",
+      "arithmetic.meaning-of-plus"
+    ],
+    "practice": [
+      {
+        "skill": "arithmetic.add-within-20",
+        "variant": "within-10"
+      },
+      {
+        "skill": "arithmetic.add-within-20",
+        "variant": "across-10"
+      }
+    ],
+    "anchorsEqual": true,
+    "anchorsNb": [
+      "what",
+      "pairs",
+      "ten-frame",
+      "why",
+      "try",
+      "practice"
+    ],
+    "anchorsEn": [
+      "what",
+      "pairs",
+      "ten-frame",
+      "why",
+      "try",
+      "practice"
+    ],
+    "headingsWithoutAnchor": {
+      "nb": [],
+      "en": []
+    },
+    "directivesEqual": false,
+    "directives": [
+      "visual{type=\"ten-frame-explorer\" start=\"3\"}",
+      "example{title=\"Gjennomgått eksempel: 8 + 5\" id=\"example\"}",
+      "visual{type=\"make-ten\" a=\"8\" b=\"5\"}",
+      "practice{skill=\"arithmetic.add-within-20\" variant=\"within-10\"}",
+      "practice{skill=\"arithmetic.add-within-20\" variant=\"across-10\"}"
+    ],
+    "mathEqual": true,
+    "mathCount": {
+      "nb": 15,
+      "en": 15
+    },
+    "mathDiff": {
+      "onlyNb": [],
+      "onlyEn": []
+    },
+    "tablesWithGfmDelimiterRow": {
+      "nb": 0,
+      "en": 0
+    },
+    "frontMatterKeys": [
+      "title",
+      "objective"
+    ],
+    "images": [
+      "assets/ten-frame-3-7.svg"
+    ]
+  }
+}
