@@ -1,0 +1,146 @@
+[
+  {
+    "name": "01-practice-help-counting-nb-820",
+    "lang": "nb",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Addisjon innenfor 20",
+    "pageErrors": []
+  },
+  {
+    "name": "02-explanation-reveal-confirm-en-390",
+    "lang": "en",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "dark",
+    "docOverflow": 0,
+    "h1": "Addition within 20",
+    "pageErrors": []
+  },
+  {
+    "name": "03-explanation-last-step-en-390",
+    "lang": "en",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "dark",
+    "docOverflow": 0,
+    "h1": "Addition within 20",
+    "pageErrors": []
+  },
+  {
+    "name": "04-challenge-pending-more-like-this-en-1180",
+    "lang": "en",
+    "viewport": {
+      "width": 1180,
+      "height": 820
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Addition within 20",
+    "pageErrors": []
+  },
+  {
+    "name": "05-session-summary-with-draft-nb-820",
+    "lang": "nb",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Økten er avsluttet",
+    "pageErrors": []
+  },
+  {
+    "name": "06-check-policy-en-390",
+    "lang": "en",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Check understanding: Number bonds and addition",
+    "pageErrors": []
+  },
+  {
+    "name": "07-check-summary-after-switch-nb-820",
+    "lang": "nb",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Oppsummering: Tiervenner og addisjon",
+    "pageErrors": []
+  },
+  {
+    "name": "08-progress-after-check-en-820",
+    "lang": "en",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Addition within 20",
+    "pageErrors": []
+  },
+  {
+    "name": "09-lesson-detour-banner-en-820",
+    "lang": "en",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Number bonds to ten",
+    "pageErrors": []
+  },
+  {
+    "name": "10-profile-step3-email-choice-en-390",
+    "lang": "en",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Create a learner profile",
+    "pageErrors": []
+  },
+  {
+    "name": "11-signin-with-guest-work-nb-390",
+    "lang": "nb",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "dark",
+    "docOverflow": 0,
+    "h1": "Logg inn",
+    "pageErrors": []
+  },
+  {
+    "name": "12-practice-simulated-keyboard-nb-390",
+    "lang": "nb",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "colorScheme": "light",
+    "docOverflow": 0,
+    "h1": "Addisjon innenfor 20",
+    "pageErrors": []
+  }
+]

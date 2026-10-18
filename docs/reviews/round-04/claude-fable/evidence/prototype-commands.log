@@ -1,0 +1,147 @@
+### npm ci (prototype)
+
+added 215 packages, and audited 216 packages in 10s
+
+83 packages are looking for funding
+  run `npm fund` for details
+
+5 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+EXIT=0
+### npm test (prototype)
+
+> mathkx-prototype@0.1.0 test
+> node --test tests/domain.test.mjs
+
+TAP version 13
+# Subtest: notation keeps every symbol or reports it as unsupported
+ok 1 - notation keeps every symbol or reports it as unsupported
+  ---
+  duration_ms: 1.0467
+  type: 'test'
+  ...
+# Subtest: numeric answers are parsed per locale and never silently altered
+ok 2 - numeric answers are parsed per locale and never silently altered
+  ---
+  duration_ms: 0.7202
+  type: 'test'
+  ...
+# Subtest: 8 + 5 explanation shows every step and ends with the answer
+ok 3 - 8 + 5 explanation shows every step and ends with the answer
+  ---
+  duration_ms: 0.2527
+  type: 'test'
+  ...
+# Subtest: every variant instance has explanation and help that agree with the validator
+ok 4 - every variant instance has explanation and help that agree with the validator
+  ---
+  duration_ms: 1.2063
+  type: 'test'
+  ...
+# Subtest: explanations refuse values outside their contract
+ok 5 - explanations refuse values outside their contract
+  ---
+  duration_ms: 0.0778
+  type: 'test'
+  ...
+# Subtest: finite pools repeat honestly and challenge stops at the ends of the ladder
+ok 6 - finite pools repeat honestly and challenge stops at the ends of the ladder
+  ---
+  duration_ms: 0.1296
+  type: 'test'
+  ...
+# Subtest: observations follow the order of events
+ok 7 - observations follow the order of events
+  ---
+  duration_ms: 0.405
+  type: 'test'
+  ...
+# Subtest: R03-01: a check session never produces a practice suggestion (no crash on Home)
+ok 8 - R03-01: a check session never produces a practice suggestion (no crash on Home)
+  ---
+  duration_ms: 0.315
+  type: 'test'
+  ...
+# Subtest: R03-02: the lesson shows the answer to 8 + 5 and x + 3 = 7, but not to 9 + 4
+ok 9 - R03-02: the lesson shows the answer to 8 + 5 and x + 3 = 7, but not to 9 + 4
+  ---
+  duration_ms: 2.1585
+  type: 'test'
+  ...
+# Subtest: R03-03: counting all is an answer reveal; opening the explanation is not until the revealing step
+ok 10 - R03-03: counting all is an answer reveal; opening the explanation is not until the revealing step
+  ---
+  duration_ms: 0.5426
+  type: 'test'
+  ...
+# Subtest: R03-04 (balance): the check step pictures x replaced by its value, not x alone
+ok 11 - R03-04 (balance): the check step pictures x replaced by its value, not x alone
+  ---
+  duration_ms: 0.1297
+  type: 'test'
+  ...
+# Subtest: R03-05: a check keeps its independent / supported boundary in the session summary
+ok 12 - R03-05: a check keeps its independent / supported boundary in the session summary
+  ---
+  duration_ms: 0.1587
+  type: 'test'
+  ...
+# Subtest: R03-07: a resumed question keeps the support context of the first delivery
+ok 13 - R03-07: a resumed question keeps the support context of the first delivery
+  ---
+  duration_ms: 0.1466
+  type: 'test'
+  ...
+# Subtest: R03 summaries: tags do not repeat what the outcome already says
+ok 14 - R03 summaries: tags do not repeat what the outcome already says
+  ---
+  duration_ms: 0.0934
+  type: 'test'
+  ...
+# Subtest: Gemini: help after an incorrect answer is help while solving, not "after answering"
+ok 15 - Gemini: help after an incorrect answer is help while solving, not "after answering"
+  ---
+  duration_ms: 0.0861
+  type: 'test'
+  ...
+# Subtest: Gemini: going back and forth to a lesson counts as one visit
+ok 16 - Gemini: going back and forth to a lesson counts as one visit
+  ---
+  duration_ms: 0.1074
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 167.0769
+EXIT=0
+### npm run build (prototype)
+
+> mathkx-prototype@0.1.0 build
+> vite build
+
+[36mvite v8.3.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 1205 modules transformed.
+rendering chunks...
+[plugin vite:singlefile] 
+
+[plugin vite:singlefile] Inlining: index-ozR1wgQe.js
+[plugin vite:singlefile] Inlining: style-C90oVg_u.css
+computing gzip size...
+dist/index.html  935.77 kB │ gzip: 244.31 kB
+
+[32m✓ built in 388ms[39m
+EXIT=0
