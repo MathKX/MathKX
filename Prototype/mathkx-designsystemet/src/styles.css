@@ -119,3 +119,15 @@
   .mkx-sample { border: 2px dashed var(--ds-color-ochre-border-strong); border-radius: 1rem; padding: 1rem; }
   .mkx-outcome-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; background: var(--ds-color-neutral-background-tinted); }
 }
+
+/* Disabled buttons: Designsystemet fades them with opacity, which left step buttons
+   ("Previous step" on step 1) at about 1.6:1. Keep them visibly inactive but readable. */
+@layer mathkx {
+  .ds-button:disabled, .ds-button[aria-disabled='true'] {
+    opacity: 1;
+    background: var(--ds-color-neutral-surface-tinted);
+    color: var(--ds-color-neutral-text-subtle);
+    border: 1px dashed var(--ds-color-neutral-border-default);
+    cursor: not-allowed;
+  }
+}
