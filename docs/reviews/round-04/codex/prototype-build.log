@@ -1,0 +1,16 @@
+
+> mathkx-prototype@0.1.0 build
+> vite build
+
+vite v8.3.2 building client environment for production...
+transforming...
+✓ 1205 modules transformed.
+rendering chunks...
+[plugin vite:singlefile] 
+
+[plugin vite:singlefile] Inlining: index-ozR1wgQe.js
+[plugin vite:singlefile] Inlining: style-C90oVg_u.css
+computing gzip size...
+dist/index.html  935.77 kB │ gzip: 244.31 kB
+
+✓ built in 397ms

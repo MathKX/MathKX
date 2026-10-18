@@ -1,0 +1,93 @@
+Browser: Chromium 141.0.7390.37; Windows; headless; no physical device or screen reader
+[
+  {
+    "lang": "nb",
+    "probe": "wrong then visual help then correct",
+    "observedOutcome": "Riktig etter tilbakemelding. Godt at du prøvde igjen.",
+    "planningAddendumExpected": "correctWithVisualHelp"
+  },
+  {
+    "lang": "nb",
+    "probe": "explanation after correct opens without pre-answer confirmation",
+    "passed": true
+  },
+  {
+    "lang": "nb",
+    "probe": "3 + 5 groups explanation step 2, before the marked revealing step",
+    "labels": [
+      "Brikke 1 av 8",
+      "Brikke 2 av 8",
+      "Brikke 3 av 8",
+      "Brikke 4 av 8",
+      "Brikke 5 av 8",
+      "Brikke 6 av 8",
+      "Brikke 7 av 8",
+      "Brikke 8 av 8"
+    ],
+    "answerRevealWarningVisible": true,
+    "issue": "accessible labels include total 8 before answer-reveal event"
+  },
+  {
+    "lang": "nb",
+    "probe": "Tab/Enter help, draft retained through language switch and resize 820x1180 -> 1180x820, reduced-motion CSS",
+    "first": "Sjekk svaret",
+    "second": "Vis visuell hjelp",
+    "motion": {
+      "reduced": true,
+      "animations": [
+        "none"
+      ]
+    },
+    "passed": true
+  },
+  {
+    "lang": "nb",
+    "probe": "new profile with pending unverified email, Verify later",
+    "passed": true
+  },
+  {
+    "lang": "en",
+    "probe": "wrong then visual help then correct",
+    "observedOutcome": "Correct after feedback. Good that you tried again.",
+    "planningAddendumExpected": "correctWithVisualHelp"
+  },
+  {
+    "lang": "en",
+    "probe": "explanation after correct opens without pre-answer confirmation",
+    "passed": true
+  },
+  {
+    "lang": "en",
+    "probe": "3 + 5 groups explanation step 2, before the marked revealing step",
+    "labels": [
+      "Counter 1 of 8",
+      "Counter 2 of 8",
+      "Counter 3 of 8",
+      "Counter 4 of 8",
+      "Counter 5 of 8",
+      "Counter 6 of 8",
+      "Counter 7 of 8",
+      "Counter 8 of 8"
+    ],
+    "answerRevealWarningVisible": true,
+    "issue": "accessible labels include total 8 before answer-reveal event"
+  },
+  {
+    "lang": "en",
+    "probe": "Tab/Enter help, draft retained through language switch and resize 820x1180 -> 1180x820, reduced-motion CSS",
+    "first": "Check answer",
+    "second": "Show visual help",
+    "motion": {
+      "reduced": true,
+      "animations": [
+        "none"
+      ]
+    },
+    "passed": true
+  },
+  {
+    "lang": "en",
+    "probe": "new profile with pending unverified email, Verify later",
+    "passed": true
+  }
+]

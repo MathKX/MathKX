@@ -1,0 +1,30 @@
+- text: Explanation – the full solution
+- button "Close"
+- paragraph: You opened the explanation before finding the answer. You can still enter it.
+- region "Explanation – the full solution":
+  - figure "All the counters in one group":
+    - text: All the counters in one group
+    - list "All the counters in one group":
+      - listitem:
+        - img "Counter 1 of 8"
+      - listitem:
+        - img "Counter 2 of 8"
+      - listitem:
+        - img "Counter 3 of 8"
+      - listitem:
+        - img "Counter 4 of 8"
+      - listitem:
+        - img "Counter 5 of 8"
+      - listitem:
+        - img "Counter 6 of 8"
+      - listitem:
+        - img "Counter 7 of 8"
+      - listitem:
+        - img "Counter 8 of 8"
+  - text: Step 2 of 3
+  - group "3 + 5":
+    - math: 3 + 5
+  - paragraph: Plus means we put the two groups together into one group.
+  - paragraph: The next step shows the answer.
+  - button "Previous step"
+  - button "Next step"
