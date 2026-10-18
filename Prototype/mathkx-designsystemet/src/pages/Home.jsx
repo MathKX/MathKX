@@ -2,36 +2,67 @@ import { useMemo } from 'react';
 import { Button, Card, Heading, Paragraph, Link, Tag, Alert } from '@digdir/designsystemet-react';
 import { ArrowRightIcon, CogIcon, PersonCircleIcon } from '@navikt/aksel-icons';
 import { useStore, sampleLearner } from '../store.jsx';
-import { lessons, domains, findTopic } from '../content/catalog.js';
+import { lessons, domains, findTopic, checks } from '../content/catalog.js';
 import { kinds } from '../domain/math.js';
 import { skills, variants } from '../domain/practice.js';
-import { summarizeDelivery, summarizeSession, sessionsFor, suggestNext, OUTCOMES } from '../domain/observations.js';
+import { summarizeDelivery, summarizeSession, sessionsFor, suggestNext, OUTCOMES, lessonVisits } from '../domain/observations.js';
 import { parseLesson } from '../components/Markdown.jsx';
 import { MathExpr } from '../components/math/MathExpr.jsx';
 import { PageHead } from '../components/Page.jsx';
 import { LanguageSwitch } from '../App.jsx';
 import { DomainGlyph } from './Landing.jsx';
-import { OutcomeTag } from './Practice.jsx';
+import { OutcomeTag, DeliveryTags } from './Practice.jsx';
 
 const fmtDate = (lang, at) => new Intl.DateTimeFormat(lang === 'nb' ? 'nb-NO' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(at);
 
-/** Where the learner left off, described concretely. */
+/**
+ * Where the learner left off, described concretely: the most recent of an open
+ * session, a question left unanswered when a session was finished, or a lesson.
+ */
 export function continueTarget(learner, L, t) {
+  const cands = [];
+  const lastAt = (sid) => learner.events.reduce((m, e) => (e.session === sid || learner.deliveries[e.delivery]?.session === sid ? Math.max(m, e.at ?? 0) : m), 0);
   for (const [skillId, sid] of Object.entries(learner.active)) {
     const s = learner.sessions[sid];
-    if (!s || s.endedAt || !s.current) continue;
+    if (!s || s.endedAt || !s.current || !skills[skillId]) continue;
     const d = learner.deliveries[s.current];
+    if (!d) continue;
     const sum = summarizeDelivery(learner.events, d.id);
     const typed = learner.work[d.id]?.answer;
-    return {
+    const qs = kinds[d.q.kind].plain(d.q);
+    cands.push({
       href: `#/practice/${skillId}`,
       title: `${L(skills[skillId].title)} · ${L(variants[d.q.variant].title)}`,
-      detail: sum.responses.length
-        ? t('home.cont.answered', { q: kinds[d.q.kind].plain(d.q), n: s.deliveries.length })
-        : typed ? t('home.cont.typed', { q: kinds[d.q.kind].plain(d.q), a: typed, n: s.deliveries.length }) : t('home.cont.open', { q: kinds[d.q.kind].plain(d.q), n: s.deliveries.length }),
-      at: learner.last?.at,
-    };
+      detail: sum.responses.length ? t('home.cont.answered', { q: qs, n: s.deliveries.length })
+        : typed ? t('home.cont.typed', { q: qs, a: typed, n: s.deliveries.length }) : t('home.cont.open', { q: qs, n: s.deliveries.length }),
+      at: lastAt(sid),
+    });
   }
+  // A question left unanswered when a session was finished can be continued (R03-07).
+  for (const [skillId, r] of Object.entries(learner.resumable ?? {})) {
+    if (!r || !skills[skillId] || learner.active[skillId] || !learner.deliveries[r.delivery]) continue;
+    const d = learner.deliveries[r.delivery];
+    const typed = learner.work[d.id]?.answer;
+    const qs = kinds[d.q.kind].plain(d.q);
+    cands.push({
+      href: `#/practice/${skillId}?resume=${d.id}`,
+      title: `${L(skills[skillId].title)} · ${L(variants[d.q.variant].title)}`,
+      detail: typed ? t('home.cont.resumeTyped', { q: qs, a: typed }) : t('home.cont.resumeOpen', { q: qs }),
+      at: r.at,
+    });
+  }
+  // A self-check left part-way (Gemini round-03).
+  for (const [cid, run] of Object.entries(learner.checks ?? {})) {
+    if (run?.status !== 'running' || !checks[cid]) continue;
+    cands.push({
+      href: `#/check/${cid}`,
+      title: `${t('check.titlePrefix')}: ${L(checks[cid].title)}`,
+      detail: t('home.cont.check', { i: run.index + 1, n: checks[cid].questions.length }),
+      at: lastAt(run.session),
+    });
+  }
+  // Work in an exercise comes first, most recent first; otherwise the last lesson.
+  if (cands.length) return cands.sort((a, b) => b.at - a.at)[0];
   if (learner.last?.kind === 'lesson' && lessons[learner.last.id]) {
     return { href: learner.last.href, title: parseLesson(L(lessons[learner.last.id].source)).meta.title, detail: t('home.cont.lesson'), at: learner.last.at };
   }
@@ -40,8 +71,8 @@ export function continueTarget(learner, L, t) {
 
 export function SuggestionCard({ learner, skillId }) {
   const { t, L } = useStore();
-  const sug = suggestNext(learner.events, skillId);
-  if (!sug) return null;
+  const sug = suggestNext(learner.events, skillId, variants);
+  if (!sug || !variants[sug.variant]) return null;
   const v = variants[sug.variant];
   const target = sug.kind === 'harder' ? (skills[skillId].ladder[skills[skillId].ladder.indexOf(sug.variant) + 1] ?? sug.variant) : sug.variant;
   return (
@@ -126,9 +157,8 @@ export function Home() {
                         <span className="text-xl" aria-hidden="true"><MathExpr expr={kinds[d.q.kind].plain(d.q)} /></span>
                         <span className="ds-sr-only">{kinds[d.q.kind].spoken(d.q)[lang]}</span>
                         <OutcomeTag outcome={s.outcome} />
-                        {s.explanationAfter && <Tag data-size="sm" data-color="neutral">{t('support.explainAfter')}</Tag>}
-                        {learner.sessions[d.session]?.mode === 'check' && <span className="text-sm">{t('home.fromCheck')}</span>}
-                        {e.prov === 'guest-import' && <Tag data-size="sm" data-color="neutral" variant="outline">{t('home.fromGuest')}</Tag>}
+                        <DeliveryTags item={{ ...s, repeat: d.repeat, resumedFrom: d.resumedFrom, prov: e.prov }} showGuest={!!profile} />
+                        {learner.sessions[d.session]?.mode === 'check' && <span className="text-sm">{checkSegment(learner, d.session, e.delivery) === 'supported' ? t('home.fromCheckSupported') : t('home.fromCheck')}</span>}
                       </span>
                       <span className="text-sm" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{fmtDate(lang, e.at)}</span>
                     </li>
@@ -146,6 +176,10 @@ export function Home() {
       {empty && <div className="grid gap-6 lg:grid-cols-2 mt-6 max-w-[64rem]"><BrowseCard /><ProfileCard /></div>}
     </div>
   );
+}
+
+function checkSegment(learner, session, delivery) {
+  return summarizeSession(learner.events, session).items.find((i) => i.delivery === delivery)?.segment;
 }
 
 function SkillCard({ learner, skillId }) {
@@ -202,14 +236,16 @@ function ProfileCard() {
 
 // ---- Focused skill progress -----------------------------------------------------
 export function ProgressPage({ skillId, query }) {
-  const { t, L, state, lang } = useStore();
+  const { t, L, state, lang, profile } = useStore();
   const sample = query?.get('sample') === '1';
+  const profileView = !!profile && !sample;
   const learner = useMemo(() => (sample ? sampleLearner(Date.UTC(2026, 9, 18, 10)) : state.learner), [sample, state.learner]);
   const sk = skills[skillId];
   if (!sk) return <div className="mkx-container py-10"><h1>404</h1></div>;
   const isSample = sample || learner.events.some((e) => e.prov === 'sample');
   const sessions = sessionsFor(learner.events, skillId);
   const lessonViews = learner.events.filter((e) => e.type === 'lesson-viewed' && e.lesson === sk.lesson);
+  const visits = lessonVisits(learner.events, sk.lesson);
   const all = sessions.filter((s) => s.mode !== 'check').flatMap((s) => summarizeSession(learner.events, s.session).items);
   const { topic } = findTopic(sk.topic);
 
@@ -219,7 +255,7 @@ export function ProgressPage({ skillId, query }) {
         crumbs={[{ href: '#/home', label: t('home.title') }, { href: `#/progress/${skillId}${sample ? '?sample=1' : ''}`, label: L(sk.title) }]} />
       {isSample && <Alert data-color="warning" className="mb-6 max-w-[48rem]"><Heading level={2} data-size="2xs">{t('progress.sampleTitle')}</Heading><Paragraph>{t('progress.sampleBody')}</Paragraph></Alert>}
 
-      {all.length === 0 && lessonViews.length === 0 ? (
+      {sessions.length === 0 && lessonViews.length === 0 ? (
         <Card className="max-w-[44rem]">
           <Heading level={2} data-size="xs">{t('progress.emptyTitle')}</Heading>
           <Paragraph>{t('progress.emptyBody')}</Paragraph>
@@ -234,13 +270,15 @@ export function ProgressPage({ skillId, query }) {
             <section aria-labelledby="obs-h" className="flex flex-col gap-3">
               <Heading level={2} data-size="xs" id="obs-h">{t('progress.observed')}</Heading>
               <Paragraph data-size="sm" className="m-0">{t('progress.observedNote')}</Paragraph>
+              {all.length === 0 && <Paragraph data-size="sm" className="m-0">{t('home.noPractice')}</Paragraph>}
               <ul className="list-none m-0 p-0 flex flex-col gap-2">
-                {lessonViews.length > 0 && <li className="mkx-outcome-row"><span>{t(lessonViews.length === 1 ? 'progress.lessonViewed1' : 'progress.lessonViewed', { title: parseLesson(L(lessons[sk.lesson].source)).meta.title, n: lessonViews.length })}</span><Tag data-size="sm" data-color="neutral" variant="outline">{t('outcome.viewed')}</Tag></li>}
+                {lessonViews.length > 0 && <li className="mkx-outcome-row"><span>{t(visits === 1 ? 'progress.lessonViewed1' : 'progress.lessonViewed', { title: parseLesson(L(lessons[sk.lesson].source)).meta.title, n: visits })}</span><Tag data-size="sm" data-color="neutral" variant="outline">{t('outcome.viewed')}</Tag></li>}
                 {OUTCOMES.map((o) => {
                   const n = all.filter((i) => i.outcome === o).length;
                   return n ? <li key={o} className="mkx-outcome-row"><span>{t(`progress.count.${o}`, { n })}</span><OutcomeTag outcome={o} /></li> : null;
                 })}
                 {all.filter((i) => i.explanationAfter).length > 0 && <li className="mkx-outcome-row"><span>{t('progress.count.explainAfter', { n: all.filter((i) => i.explanationAfter).length })}</span><Tag data-size="sm" data-color="neutral">{t('support.explainAfter')}</Tag></li>}
+                {all.some((i) => i.prov === 'guest' || i.prov === 'guest-import') && profileView && <li className="mkx-outcome-row"><span>{t('progress.count.guest', { n: all.filter((i) => i.prov === 'guest' || i.prov === 'guest-import').length })}</span><Tag data-size="sm" data-color="neutral" variant="outline">{t('home.fromGuest')}</Tag></li>}
               </ul>
             </section>
 
@@ -249,32 +287,40 @@ export function ProgressPage({ skillId, query }) {
               {sessions.map((s) => {
                 const sum = summarizeSession(learner.events, s.session);
                 const vs = [...new Set(sum.items.map((i) => i.variant))];
+                const row = (i) => {
+                  const d = learner.deliveries[i.delivery];
+                  if (!d) return null;
+                  return (
+                    <li key={i.delivery} className="mkx-outcome-row">
+                      <span className="flex items-center gap-3">
+                        <span className="text-lg" aria-hidden="true"><MathExpr expr={kinds[d.q.kind].plain(d.q)} /></span>
+                        <span className="ds-sr-only">{kinds[d.q.kind].spoken(d.q)[lang]}</span>
+                        <span className="text-sm">{i.responses.length ? t('progress.answers', { list: i.responses.map((r) => r.answer).join(', ') }) : ''}{i.invalid ? ` · ${t(i.invalid === 1 ? 'progress.invalid1' : 'progress.invalid', { n: i.invalid })}` : ''}</span>
+                      </span>
+                      <span className="flex flex-wrap gap-2">
+                        <OutcomeTag outcome={i.outcome} />
+                        <DeliveryTags item={{ ...i, segment: undefined }} showGuest={profileView} />
+                      </span>
+                    </li>
+                  );
+                };
+                // A check keeps its independent / supported boundary everywhere it is shown (R03-05).
+                const segs = s.mode === 'check' && sum.switchIndex >= 0
+                  ? [['independent', sum.items.filter((i) => i.segment === 'independent')], ['supported', sum.items.filter((i) => i.segment === 'supported')]]
+                  : [[s.mode === 'check' ? 'independent' : null, sum.items]];
+                const endLabel = !sum.ended ? t('progress.notEnded') : sum.endReason === 'imported' ? t('progress.endedImported') : sum.endReason === 'replaced' ? t('progress.endedReplaced') : t('progress.ended');
                 return (
                   <Card key={s.session}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Heading level={3} data-size="2xs" className="m-0">{s.mode === 'check' ? t('check.titlePrefix') : vs.map((v) => L(variants[v]?.title ?? v)).join(' → ')}</Heading>
-                      <span className="text-sm">{fmtDate(lang, s.at)} · {sum.ended ? t('progress.ended') : t('progress.notEnded')}</span>
+                      <span className="text-sm">{fmtDate(lang, s.at)} · {endLabel}</span>
                     </div>
-                    <ul className="list-none m-0 p-0 flex flex-col gap-2">
-                      {sum.items.map((i) => {
-                        const d = learner.deliveries[i.delivery];
-                        return (
-                          <li key={i.delivery} className="mkx-outcome-row">
-                            <span className="flex items-center gap-3">
-                              <span className="text-lg" aria-hidden="true"><MathExpr expr={kinds[d.q.kind].plain(d.q)} /></span>
-                              <span className="ds-sr-only">{kinds[d.q.kind].spoken(d.q)[lang]}</span>
-                              <span className="text-sm">{i.responses.length ? t('progress.answers', { list: i.responses.map((r) => r.answer).join(', ') }) : ''}{i.invalid ? ` · ${t('progress.invalid', { n: i.invalid })}` : ''}</span>
-                            </span>
-                            <span className="flex flex-wrap gap-2">
-                              <OutcomeTag outcome={i.outcome} />
-                              {i.explanationAfter && <Tag data-size="sm" data-color="neutral">{t('support.explainAfter')}</Tag>}
-                              {i.repeat && <Tag data-size="sm" data-color="neutral">{t('practice.repeatTag')}</Tag>}
-                              {i.events[0]?.prov === 'guest-import' && <Tag data-size="sm" data-color="neutral" variant="outline">{t('home.fromGuest')}</Tag>}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    {segs.map(([seg, items]) => (
+                      <div key={seg ?? 'all'} className="flex flex-col gap-2">
+                        {seg && <span className="text-sm font-semibold">{seg === 'supported' ? t('check.supportedTitle', { i: sum.switchIndex + 1 }) : t('check.modeIndependent')}</span>}
+                        {items.length ? <ul className="list-none m-0 p-0 flex flex-col gap-2">{items.map(row)}</ul> : <Paragraph data-size="sm" className="m-0">{t('check.none')}</Paragraph>}
+                      </div>
+                    ))}
                   </Card>
                 );
               })}
@@ -291,7 +337,7 @@ export function ProgressPage({ skillId, query }) {
             <Card variant="tinted">
               <Heading level={2} data-size="2xs">{t('progress.meaningTitle')}</Heading>
               <dl className="m-0 flex flex-col gap-2">
-                {['correctFirst', 'correctWithVisualHelp', 'correctAfterFeedback', 'correctAfterExplanation', 'notYetCorrect', 'skipped', 'unfinished', 'viewed'].map((o) => (
+                {['correctFirst', 'correctWithVisualHelp', 'correctWithHelp', 'correctAfterFeedback', 'correctAfterExplanation', 'notYetCorrect', 'skipped', 'unfinished', 'viewed'].map((o) => (
                   <div key={o}><dt className="font-semibold text-sm">{t(`outcome.${o}`)}</dt><dd className="m-0 text-sm">{t(`outcomeDef.${o}`)}</dd></div>
                 ))}
               </dl>

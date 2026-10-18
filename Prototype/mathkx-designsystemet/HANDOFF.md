@@ -8,14 +8,18 @@ It is a prototype. It is not the start of the production frontend, and it does n
 - [Requirement → screen/state checklist](docs/iteration-2/REQUIREMENTS-CHECKLIST.md)
 - [Assumptions, simulated behaviour and test status](docs/iteration-2/ASSUMPTIONS.md)
 - [Usability test script](docs/iteration-2/USABILITY-TEST-SCRIPT.md)
+- [Response to the round-03 reviews](docs/iteration-2/REVIEW-RESPONSE.md) (Claude, Codex and Gemini, 18 October 2026)
 
 ## Run it
 
 ```bash
 npm ci
-npm run dev      # local dev server
-npm test         # domain checks (node --test)
-npm run build    # dist/index.html, one self-contained file
+npm run dev           # local dev server
+npm test              # domain checks (node --test)
+npm run build         # dist/index.html, one self-contained file
+npx playwright install chromium   # once, for the browser checks
+npm run test:browser  # browser checks + axe on dist/index.html (4 configurations)
+npm run test:browser -- en-390-dark   # one configuration
 ```
 
 `npm run build` generates `dist/index.html`, which is excluded from Git. Open it directly in a browser. Fonts load from Google Fonts; without a network connection the system font is used.
@@ -38,14 +42,14 @@ npx designsystemet tokens build -o ./src/theme --clean
 
 | Area | Files |
 | --- | --- |
-| Domain logic (no UI) | `src/domain/math.js` (validation, feedback codes), `numbers.js` (locale parsing), `notation.js` (notation grammar), `practice.js` (variations, finite pools, ladder), `explanations.js` (help and explanation step models), `observations.js` (event summaries, suggestions) |
+| Domain logic (no UI) | `src/domain/math.js` (validation, feedback codes), `numbers.js` (locale parsing), `notation.js` (notation grammar), `practice.js` (variations, finite pools, ladder), `explanations.js` (help and explanation step models, which steps show the answer), `observations.js` (event summaries, outcomes, tags, suggestions), `disclosure.js` (does a lesson show this exercise's answer) |
 | Exercise workspace | `src/components/ExerciseShell.jsx` – answer flow, visual help vs explanation, support recording, feedback; used for arithmetic, algebra, practice and checks |
 | Visual components | `src/components/math/` – `Counters.jsx` (counters, groups, counting help), `TenFrame.jsx` (ten-frame, explorer), `Visuals.jsx` (groups / make-ten / balance states, `StepPlayer`), `MathExpr.jsx` (MathML renderer) |
 | Lessons | `src/content/lessons/<id>/lesson.json`, `nb.md`, `en.md`, `assets/` (proposed layout); renderer `src/components/Markdown.jsx` |
 | State | `src/store.jsx` – simulated profiles, guest work, ordered event log, sessions; labelled sample history |
 | Pages | `src/pages/` – Landing, Library/Domain/Topic, Lesson, Practice/Session summary/Check, Home/Progress, Preview (derivative), Profile/Sign-in/Recovery/Settings, About |
-| Strings | `src/i18n.js` + `src/i18n-iteration2.js` (deep-merged) |
-| Tests | `tests/domain.test.mjs` |
+| Strings | `src/i18n.js` + `src/i18n-iteration2.js` + `src/i18n-review.js` (deep-merged in that order; unused keys removed, both languages have the same keys) |
+| Tests | `tests/domain.test.mjs` (`npm test`), `tests/browser/review-checks.mjs` (`npm run test:browser`) |
 
 ### Lesson format (proposed)
 
@@ -66,4 +70,6 @@ Directives: `:::visual{type="ten-frame-explorer" start="3"}`, `:::visual{type="m
 - Every visual has a text equivalent (labelled lists, `role="img"` descriptions, step captions and MathML equations). The derivative graph has arrow buttons, a value table and direct entry.
 - Colour is never the only signal; `prefers-reduced-motion` disables the only animation.
 - Answer, open panel and step survive language switches, rotation and lesson visits.
+- Support is recorded per delivery in order: visual help, other help (part of the explanation, a lesson detour), and answer reveals (an explanation step that shows the answer, counting every counter, or a lesson that shows this exercise). Outcomes: correct on first response, correct with visual help, correct with help, correct after feedback, answered after the answer was shown, not correct yet, skipped, unfinished.
+- A page error shows a message inside the page; the header and navigation stay.
 - Not yet tested on a real iPad, with VoiceOver, or with learners. See [ASSUMPTIONS.md](docs/iteration-2/ASSUMPTIONS.md#what-still-needs-people-or-devices).

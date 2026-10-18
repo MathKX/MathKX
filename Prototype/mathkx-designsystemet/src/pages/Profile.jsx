@@ -54,10 +54,13 @@ function IdBox({ id }) {
 }
 
 /** Email + verification: enter → code (correctable address, resend, failure) → verified, or verify later. */
-function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '' }) {
+function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '', startAtEnter = false }) {
   const { t, dispatch, profile } = useStore();
-  const [email, setEmail] = useState(initialEmail || (profile?.emailState === 'pending' ? profile.email : ''));
-  const [stage, setStage] = useState(profile?.emailState === 'pending' && !initialEmail ? 'verify' : 'enter');
+  // Changing a confirmed address: the old one stays in use for recovery until the
+  // new one is confirmed (Gemini round-03). The new one waits in pendingEmail.
+  const replacing = profile?.emailState === 'verified';
+  const [email, setEmail] = useState(initialEmail || profile?.pendingEmail || (profile?.emailState === 'pending' ? profile.email : ''));
+  const [stage, setStage] = useState(!startAtEnter && ((profile?.emailState === 'pending') || profile?.pendingEmail) && !initialEmail ? 'verify' : 'enter');
   const [code, setCode] = useState('');
   const [err, setErr] = useState(null);
   const [tries, setTries] = useState(0);
@@ -70,7 +73,7 @@ function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '' }) {
         e.preventDefault();
         if (!validEmail(email)) { setErr(t('profile.emailInvalid')); return; }
         setErr(null); setTries(0); setCode('');
-        dispatch({ type: 'profilePatch', patch: { email: email.trim(), emailState: 'pending' } });
+        dispatch({ type: 'profilePatch', patch: replacing ? { pendingEmail: email.trim() } : { email: email.trim(), emailState: 'pending' } });
         setStage('verify'); setSentMsg('');
       }}>
         <Textfield type="email" autoComplete="email" inputMode="email" label={t('profile.emailLabel')} description={t('profile.emailPurpose')} value={email} onChange={(e) => { setEmail(e.target.value); setErr(null); }} error={err ?? undefined} />
@@ -90,7 +93,7 @@ function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '' }) {
         setErr(n >= MAX_CODE_TRIES ? t('profile.codeLocked') : t('profile.codeWrong', { left: MAX_CODE_TRIES - n }));
         return;
       }
-      dispatch({ type: 'profilePatch', patch: { emailState: 'verified' } });
+      dispatch({ type: 'profilePatch', patch: replacing ? { email: profile.pendingEmail ?? email.trim(), emailState: 'verified', pendingEmail: null } : { emailState: 'verified' } });
       onDone?.('verified');
     }}>
       <Heading level={3} data-size="xs" className="m-0">{t('profile.verifyTitle')}</Heading>
@@ -103,9 +106,10 @@ function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '' }) {
         <Button type="submit" disabled={locked}>{t('profile.verify')}</Button>
         <Button type="button" variant="secondary" onClick={() => { setTries(0); setErr(null); setCode(''); setSentMsg(t('profile.codeResent', { email })); }}>{t('profile.resend')}</Button>
         <Button type="button" variant="tertiary" onClick={() => { setStage('enter'); setErr(null); }}>{t('profile.changeEmail')}</Button>
+        {replacing && onCancel && <Button type="button" variant="tertiary" onClick={() => { dispatch({ type: 'profilePatch', patch: { pendingEmail: null } }); onCancel(); }}>{t('profile.cancelChange', { email: profile.email })}</Button>}
       </div>
       <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: 'var(--ds-color-neutral-border-subtle)' }}>
-        <Paragraph data-size="sm" className="m-0">{t('profile.pendingExplain')}</Paragraph>
+        <Paragraph data-size="sm" className="m-0">{replacing ? t('profile.pendingReplaceExplain', { email: profile.email }) : t('profile.pendingExplain')}</Paragraph>
         <div><Button type="button" variant="tertiary" onClick={() => onDone?.('pending')}>{t('profile.verifyLater')}</Button></div>
       </div>
     </form>
@@ -242,7 +246,7 @@ export function CreateProfile() {
               <Button variant="secondary" data-size="lg" className="w-full" onClick={() => setSignup({ step: 4, email: 'none' })}>{t('profile.noEmail')}</Button>
             </div>
           ) : (
-            <EmailSetup onDone={(s) => setSignup({ step: 4, email: s })} onCancel={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none' } }); setSignup({ step: 4, email: 'none' }); }} cancelLabel={t('profile.noEmail')} />
+            <EmailSetup onDone={(s) => setSignup({ step: 4, email: s })} onCancel={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none', pendingEmail: null } }); setSignup({ step: 4, email: 'none' }); }} cancelLabel={t('profile.noEmail')} />
           )}
           {keepLearning}
         </div>
@@ -266,8 +270,13 @@ export function CreateProfile() {
 function EmailStatus() {
   const { t, profile } = useStore();
   if (!profile) return null;
-  if (profile.emailState === 'verified') return <Paragraph className="m-0"><ShieldCheckmarkIcon aria-hidden="true" /> {t('profile.verifiedFor', { email: profile.email })}</Paragraph>;
-  if (profile.emailState === 'pending') return <Paragraph className="m-0"><Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag> {t('profile.pendingFor', { email: profile.email })}</Paragraph>;
+  if (profile.emailState === 'verified') return (
+    <div className="flex flex-col items-start gap-1">
+      <Paragraph className="m-0"><ShieldCheckmarkIcon aria-hidden="true" /> {t('profile.verifiedFor', { email: profile.email })}</Paragraph>
+      {profile.pendingEmail && <><Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag><Paragraph className="m-0">{t('profile.pendingReplace', { email: profile.pendingEmail, old: profile.email })}</Paragraph></>}
+    </div>
+  );
+  if (profile.emailState === 'pending') return <div className="flex flex-col items-start gap-1"><Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag><Paragraph className="m-0">{t('profile.pendingFor', { email: profile.email })}</Paragraph></div>;
   return <Paragraph className="m-0">{t('settings.noEmail')}</Paragraph>;
 }
 
@@ -388,13 +397,13 @@ export function Settings() {
           <Heading level={2} data-size="xs" id="s-rec">{t('settings.recovery')}</Heading>
           <div role="status">{msg && <Paragraph data-size="sm">{msg}</Paragraph>}</div>
           {adding ? (
-            <EmailSetup initialEmail={profile.emailState === 'pending' ? profile.email : ''} onDone={(s) => { setAdding(false); setMsg(s === 'verified' ? t('profile.verified') : t('profile.pending')); }} onCancel={() => setAdding(false)} cancelLabel={t('settings.cancel')} />
+            <EmailSetup startAtEnter={adding === 'enter'} initialEmail={profile.emailState === 'pending' && adding !== 'enter' ? profile.email : ''} onDone={(s) => { setAdding(false); setMsg(s === 'verified' ? t('profile.verified') : t('profile.pending')); }} onCancel={() => setAdding(false)} cancelLabel={t('settings.cancel')} />
           ) : profile.email ? (
             <>
               <EmailStatus />
               <div className="flex flex-wrap gap-3">
-                {profile.emailState === 'pending' && <Button onClick={() => { setAdding(true); setMsg(''); }}>{t('settings.finishVerify')}</Button>}
-                <Button variant="secondary" onClick={() => { setAdding(true); setMsg(''); }}>{t('settings.change')}</Button>
+                {(profile.emailState === 'pending' || profile.pendingEmail) && <Button onClick={() => { setAdding(true); setMsg(''); }}>{t('settings.finishVerify')}</Button>}
+                <Button variant="secondary" onClick={() => { setAdding('enter'); setMsg(''); }}>{t('settings.change')}</Button>
                 <Button variant="secondary" data-color="danger" onClick={() => confirmRef.current?.showModal()}>{t('settings.remove')}</Button>
               </div>
             </>
@@ -421,7 +430,7 @@ export function Settings() {
           <Paragraph className="mt-3">{t('settings.removeConfirm')}</Paragraph>
         </Dialog.Block>
         <Dialog.Block className="flex flex-wrap gap-3">
-          <Button data-color="danger" onClick={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none' } }); confirmRef.current?.close(); setMsg(t('settings.removed')); }}>{t('settings.removeYes')}</Button>
+          <Button data-color="danger" onClick={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none', pendingEmail: null } }); confirmRef.current?.close(); setMsg(t('settings.removed')); }}>{t('settings.removeYes')}</Button>
           <Button variant="secondary" onClick={() => confirmRef.current?.close()}>{t('settings.cancel')}</Button>
         </Dialog.Block>
       </Dialog>

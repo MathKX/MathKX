@@ -57,15 +57,23 @@ export function DerivativePreview() {
   const [answer, setAnswer] = useState('');
   const [fb, setFb] = useState(null);
   const [explain, setExplain] = useState(false);
+  const [confirm, setConfirm] = useState(false);
   const f = (v) => formatNumber(v, lang);
   const pick = (x) => { setA(x); setAnswer(f(x)); setFb(null); };
-  const stepA = (d) => pick(Math.max(-2, Math.min(2, a + d)));
+  // Arrows move to the next point on the 0.5 grid, also from a typed value such as 1.2.
+  const stepA = (d) => pick(Math.max(-2, Math.min(2, d > 0 ? Math.floor(a * 2 + 1e-9) / 2 + 0.5 : Math.ceil(a * 2 - 1e-9) / 2 - 0.5)));
+  const toggleExplain = () => {
+    if (explain) { setExplain(false); return; }
+    if (fb?.kind !== 'correct' && !confirm) { setConfirm(true); return; }
+    setConfirm(false); setExplain(true);
+  };
   const check = (e) => {
     e.preventDefault();
     const p = parseNumber(answer, { lang, variable: 'x' });
     if (!p.ok) { setFb({ kind: 'input', code: p.reason }); return; }
     if (Math.abs(p.value) > 2) { setFb({ kind: 'range' }); return; }
-    setA(Math.round(p.value * 2) / 2 === p.value ? p.value : a);
+    // Any valid x moves the point, so the graph, the slope text and the feedback agree (Gemini round-03).
+    setA(p.value);
     setFb(p.value === 1.5 ? { kind: 'correct' } : { kind: 'wrong', x: p.value, m: 2 * p.value });
   };
 
@@ -115,7 +123,17 @@ export function DerivativePreview() {
               {fb?.kind === 'correct' && <Alert data-color="success"><Paragraph>{t('deriv.correct')}</Paragraph></Alert>}
               {fb?.kind === 'wrong' && <Alert data-color="warning"><Paragraph>{t('deriv.wrong', { x: f(fb.x), m: f(fb.m) })}</Paragraph></Alert>}
             </div>
-            <div><Button variant="secondary" aria-expanded={explain} onClick={() => setExplain((v) => !v)}>{explain ? t('ex.hideExplain') : t('ex.explain')}</Button></div>
+            <div><Button variant="secondary" aria-expanded={explain} onClick={toggleExplain}>{explain ? t('ex.hideExplain') : t('ex.explain')}</Button></div>
+            {confirm && !explain && (
+              <div className="mkx-panel-accent flex flex-col gap-3" role="group" aria-label={t('deriv.revealTitle')}>
+                <Heading level={3} data-size="2xs" className="m-0">{t('deriv.revealTitle')}</Heading>
+                <Paragraph data-size="sm" className="m-0">{t('deriv.revealBody')}</Paragraph>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" onClick={() => { setConfirm(false); setExplain(true); }}>{t('ex.revealYes')}</Button>
+                  <Button type="button" variant="tertiary" onClick={() => setConfirm(false)}>{t('common.cancel')}</Button>
+                </div>
+              </div>
+            )}
             {explain && (
               <div className="mkx-panel flex flex-col gap-2">
                 <Paragraph className="m-0">{t('deriv.ex1')}</Paragraph>

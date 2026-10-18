@@ -74,28 +74,36 @@ export function MakeTenVisual({ a, b, phase }) {
   );
 }
 
-/** phase 0 level · 1 a removed (marked) on both sides · 2/3 removed blocks gone, x alone */
+/**
+ * phase 0 level · 1 a removed (marked) on both sides · 2/3 removed blocks gone, x alone ·
+ * 4 check: the original balance with x replaced by its value (x ones + a ones = c ones)
+ */
 export function BalanceVisual({ a, c, phase }) {
   const { t } = useStore();
+  const x = c - a;
   const removed = phase === 1;
-  const gone = phase >= 2;
+  const gone = phase === 2 || phase === 3;
+  const check = phase === 4;
+  const unit = (key, isRemoved, sub) => (
+    <li key={key} className="m-0">
+      <span className="mkx-unit" data-removed={isRemoved ? 'true' : undefined} data-sub={sub ? 'true' : undefined} role="img"
+        aria-label={`${t('help.unit')}${isRemoved ? ` (${t('help.removed')})` : ''}${sub ? ` (${t('help.inPlaceOfX')})` : ''}`}>1</span>
+    </li>
+  );
   const units = (count, side) => {
     const shown = gone ? count - a : count;
-    return Array.from({ length: shown }, (_, i) => {
-      const isRemoved = removed && i >= count - a;
-      return (
-        <li key={side + i} className="m-0">
-          <span className="mkx-unit" data-removed={isRemoved ? 'true' : undefined} role="img"
-            aria-label={`${t('help.unit')}${isRemoved ? ` (${t('help.removed')})` : ''}`}>1</span>
-        </li>
-      );
-    });
+    return Array.from({ length: shown }, (_, i) => unit(side + i, removed && i >= count - a, false));
   };
   const leftCount = gone ? 0 : a;
   const rightCount = gone ? c - a : c;
-  const desc = (side) => side === 'left'
-    ? `${t('help.leftSide')}: x${leftCount ? ` + ${leftCount} ${t('help.units')}` : ''}${removed ? ` (${a} ${t('help.removed')})` : ''}`
-    : `${t('help.rightSide')}: ${rightCount} ${t('help.units')}${removed ? ` (${a} ${t('help.removed')})` : ''}`;
+  const desc = (side) => {
+    if (check) return side === 'left'
+      ? `${t('help.leftSide')}: ${x} ${t('help.units')} ${t('help.inPlaceOfX')} + ${a} ${t('help.units')}`
+      : `${t('help.rightSide')}: ${c} ${t('help.units')}`;
+    return side === 'left'
+      ? `${t('help.leftSide')}: x${leftCount ? ` + ${leftCount} ${t('help.units')}` : ''}${removed ? ` (${a} ${t('help.removed')})` : ''}`
+      : `${t('help.rightSide')}: ${rightCount} ${t('help.units')}${removed ? ` (${a} ${t('help.removed')})` : ''}`;
+  };
   return (
     <figure className="m-0" aria-label={t('help.balanceLabel')}>
       <div className="grid grid-cols-2 gap-3 md:gap-6 items-end">
@@ -103,7 +111,15 @@ export function BalanceVisual({ a, c, phase }) {
           <div key={side} className="flex flex-col min-w-0">
             <span className="text-sm font-semibold mb-1">{side === 'left' ? t('help.leftSide') : t('help.rightSide')}</span>
             <ul className="mkx-pan m-0 list-none" aria-label={desc(side)}>
-              {side === 'left' && <li className="m-0"><span className="mkx-xbox" role="img" aria-label={t('help.xBox')}>x</span></li>}
+              {side === 'left' && check && (
+                <li className="m-0 flex flex-col items-center gap-1">
+                  <span aria-hidden="true" className="text-sm font-semibold" style={{ color: 'var(--ds-color-accent-text-default)' }}>x = {x}</span>
+                  <ul className="mkx-xsub m-0 list-none" aria-label={`${x} ${t('help.units')} ${t('help.inPlaceOfX')}`}>
+                    {Array.from({ length: x }, (_, i) => unit(`s${i}`, false, true))}
+                  </ul>
+                </li>
+              )}
+              {side === 'left' && !check && <li className="m-0"><span className="mkx-xbox" role="img" aria-label={t('help.xBox')}>x</span></li>}
               {side === 'left' ? units(a, 'l') : units(c, 'r')}
             </ul>
           </div>
@@ -128,20 +144,27 @@ export function StepVisual({ visual }) {
  * Plays a list of steps ({visual, eq, text}). The visual, equation and text shown
  * always come from the same step object. Moving back and forward is by buttons.
  */
-export function StepPlayer({ steps, step, onStep, title }) {
+export function StepPlayer({ steps, step, onStep, title, label, revealNote }) {
   const { t, lang } = useStore();
   const id = useId();
   const cur = steps[Math.min(step, steps.length - 1)];
   const last = steps.length - 1;
+  // A chain such as 8 + 5 = 8 + 2 + 3 = 10 + 3 = 13 is split at the equals signs so
+  // it wraps on narrow screens instead of hiding the result off to the side.
+  const parts = cur.eq.split(' = ');
+  const note = revealNote ? (step === revealNote.at - 1 ? revealNote.before : step >= revealNote.at ? revealNote.on : null) : null;
   return (
-    <section className="flex flex-col gap-3" aria-labelledby={id}>
+    <section className="flex flex-col gap-3" {...(title ? { 'aria-labelledby': id } : { 'aria-label': label })}>
       {title && <h3 id={id} className="m-0 text-base font-semibold">{title}</h3>}
       <StepVisual visual={cur.visual} />
       <div aria-live="polite" className="flex flex-col gap-1">
         <span className="text-sm" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{t('help.step', { i: step + 1, n: steps.length })}</span>
-        <div className="overflow-x-auto text-xl" tabIndex={0} role="group" aria-label={cur.eq}><MathExpr expr={cur.eq} display /></div>
+        <div className="mkx-eqchain text-xl" role="group" aria-label={cur.eq}>
+          {parts.map((p, i) => <span key={i} className="mkx-eqpart"><MathExpr expr={i === 0 ? p : `= ${p}`} display /></span>)}
+        </div>
         <Paragraph className="m-0 font-semibold">{cur.text[lang]}</Paragraph>
       </div>
+      {note && <Paragraph data-size="sm" className="m-0 mkx-reveal-note">{note}</Paragraph>}
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => onStep(Math.max(0, step - 1))} disabled={step === 0}>{t('help.prev')}</Button>
         <Button variant="primary" onClick={() => onStep(Math.min(last, step + 1))} disabled={step === last}>{t('help.nextStep')}</Button>

@@ -69,6 +69,18 @@
   .mkx-xbox { min-width: 3.5rem; height: 4.25rem; border-radius: 0.6rem; display: grid; place-items: center; font: italic 700 1.6rem Georgia, serif; background: var(--ds-color-accent-base-default); color: var(--ds-color-accent-base-contrast-default); }
   .mkx-unit { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: grid; place-items: center; font-weight: 700; background: var(--ds-color-ochre-surface-tinted); color: var(--ds-color-ochre-text-default); border: 3px solid var(--ds-color-ochre-border-strong); box-sizing: border-box; }
   .mkx-unit[data-removed='true'] { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--ds-color-neutral-surface-hover) 6px 8px); border: 2px dashed var(--ds-color-neutral-border-default); color: var(--ds-color-neutral-text-subtle); text-decoration: line-through; }
+  /* Check step: the ones that replace x, kept together in an accent outline. */
+  .mkx-xsub { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.3rem; border: 2px dashed var(--ds-color-accent-border-strong); border-radius: 0.6rem; max-width: 11.5rem; justify-content: center; }
+  .mkx-unit[data-sub='true'] { background: var(--ds-color-accent-surface-tinted); color: var(--ds-color-accent-text-default); border-color: var(--ds-color-accent-border-strong); }
+  /* Equation chains wrap at the equals signs instead of overflowing (R03, 390 px). */
+  .mkx-eqchain { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.15em; row-gap: 0.15em; }
+  .mkx-eqpart { white-space: nowrap; }
+  .mkx-eqpart math[display='block'] { display: inline math; }
+  .mkx-reveal-note { font-weight: 600; border-left: 4px solid var(--ds-color-warning-border-default); padding-left: 0.6rem; }
+  /* Touch targets: links and small buttons that act as primary routes stay at 44 px. */
+  .ds-breadcrumbs a, .ds-breadcrumbs li > a { min-height: 44px; display: inline-flex; align-items: center; }
+  .ds-button[data-size='sm'] { min-height: 44px; }
+  a.ds-tag, .mkx-taglink { min-height: 44px; display: inline-flex; align-items: center; }
 
   .mkx-steps { counter-reset: step; }
   .mkx-code { font-family: var(--font-mono); font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; background: var(--ds-color-neutral-background-tinted); border: 1px solid var(--ds-color-neutral-border-subtle); border-radius: 0.75rem; padding: 1rem; max-height: 55vh; overflow: auto; }
@@ -84,7 +96,8 @@
 
   @media (prefers-reduced-motion: no-preference) {
     .mkx-fade { animation: mkx-fade .25s ease-out; }
-    @keyframes mkx-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    /* Movement only: fading text from transparent briefly lowered its contrast (Gemini round-03). */
+    @keyframes mkx-fade { from { transform: translateY(4px); } to { transform: none; } }
   }
 }
 
@@ -131,3 +144,17 @@
     cursor: not-allowed;
   }
 }
+
+/* Unlayered on purpose: hosts (for example the artifact viewer) may inject a plain
+   `body { background:#fff; color:#000; font:14px … }` reset. Unlayered styles beat
+   layered ones, so the base colours must be unlayered too, or text can end up
+   black on a dark band in dark mode. */
+html body {
+  background: var(--ds-color-neutral-background-default);
+  color: var(--ds-color-neutral-text-default);
+  font-family: var(--ds-font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+:root[data-color-scheme='dark'] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) { :root[data-color-scheme='auto'] { color-scheme: dark; } }

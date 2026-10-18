@@ -2,7 +2,7 @@
 export const LANGS = ['nb', 'en'];
 
 const nb = {
-  meta: { langName: 'Norsk bokmål', switchTo: 'English', switchLabel: 'Språk' },
+  meta: {   switchLabel: 'Språk' },
   proto: {
     banner: 'Prototype: profiler, lagret fremgang og resultater er simulert og lagres bare i denne nettleseren.',
     tag: 'Prototype',
@@ -60,8 +60,7 @@ const nb = {
     available: 'Klar til bruk',
     preview: 'Forhåndsvisning',
     previewExplain: 'Planlagt emne. Ikke tilgjengelig i prototypen ennå.',
-    topics: '{n} emner',
-    openDomain: 'Åpne {name}',
+
     noResults: 'Ingen emner passer med søket. Prøv et annet ord.',
     results: '{n} emner vises',
     typical: 'Møtes ofte: {stage}',
@@ -70,7 +69,6 @@ const nb = {
     topicsTitle: 'Emner',
     availableNow: 'Klar nå',
     planned: 'Planlagt',
-    openTopic: 'Åpne emnet',
     previewDomain: 'Dette området er en forhåndsvisning. Emnene under viser planlagt innhold.',
     contribute: 'Vil du hjelpe til med dette området? Les om hvordan du kan bidra.',
   },
@@ -84,24 +82,13 @@ const nb = {
     startPractice: 'Start øving',
     startCheck: 'Ta en kort sjekk',
     skills: 'Ferdigheter i emnet',
-    status: 'Din aktivitet',
     minutes: 'ca. {n} min',
-    questions: '{n} oppgaver',
-  },
-  status: {
-    notStarted: 'Ikke startet',
-    explored: 'Leksjon utforsket',
-    practicedHelp: 'Øvd med visuell hjelp',
-    practicedIndependent: 'Øvd på egen hånd',
-    practiced: 'Øvd',
-    checked: 'Sjekk gjennomført',
   },
   lesson: {
     objective: 'Mål for leksjonen',
     inThisLesson: 'I denne leksjonen',
     related: 'Relaterte ferdigheter',
-    readyTitle: 'Klar til å øve?',
-    readyLead: 'Prøv selv. Visuell hjelp er tilgjengelig i alle oppgavene.',
+
     suggest: 'Foreslå en forbedring',
     source: 'Se eller rediger kilden',
     previewSkill: 'forhåndsvisning',
@@ -115,48 +102,29 @@ const nb = {
     check: 'Sjekk svaret',
     showHelp: 'Vis visuell hjelp',
     hideHelp: 'Skjul visuell hjelp',
-    next: 'Neste oppgave',
     tryAgain: 'Du kan endre svaret og sjekke igjen.',
-    helpUsedNote: 'Visuell hjelp brukt',
-    done: 'Du har gått gjennom alle oppgavene i settet.',
-    restart: 'Begynn på nytt',
-    goCheck: 'Ta en kort sjekk',
+
     backTopic: 'Tilbake til emnet',
-    empty: 'Skriv inn et svar før du sjekker.',
-    unparseable: 'Vi klarte ikke å lese «{raw}» som et tall. Skriv svaret med sifre, for eksempel 12.',
-    expression: '«{raw}» ser ut som et regnestykke. Regn det ut og skriv bare svaret som ett tall.',
+
     correct: 'Riktig.',
-    altMethod: 'Uansett hvordan du kom fram til det, er svaret riktig.',
-    withHelpPraise: 'Du brukte visuell hjelp underveis – det er en god måte å se sammenhengen på.',
-    lessonLink: 'Les forklaringen igjen',
-    feedbackRegion: 'Tilbakemelding',
-    solvedHeading: 'Bra jobbet',
+
   },
   check: {
     titlePrefix: 'Sjekk forståelsen',
     policyTitle: 'Før du begynner',
-    policy1: 'Sjekken har {n} oppgaver. Det er ingen tidsbegrensning.',
-    policy2: 'Du kan åpne visuell hjelp i alle oppgavene. Vi noterer om du brukte hjelp, slik at du ser hva du klarte på egen hånd og hva du løste med støtte.',
-    policy3: 'Å bruke hjelp gir ikke trekk og blir ikke regnet som feil.',
-    policy4: 'Du ser hvordan det gikk når du er ferdig, sammen med forklaringer.',
-    policy5: 'En sjekk gir et øyeblikksbilde, ikke en endelig vurdering av hva du kan.',
+
     start: 'Start sjekken',
     submit: 'Lagre svaret og gå videre',
     finish: 'Lagre svaret og se oppsummeringen',
     skip: 'Hopp over',
-    saved: 'Svaret er lagret.',
     summaryTitle: 'Oppsummering',
-    independent: 'Svarte på egen hånd',
-    withHelp: 'Svarte med hjelp',
-    revisit: 'Verdt å se på igjen',
+
     none: 'Ingen oppgaver her.',
     yourAnswer: 'Ditt svar: {a}',
-    skipped: 'Hoppet over',
     correctAnswer: 'Riktig svar: {a}',
     explanations: 'Forklaringer',
     again: 'Ta sjekken på nytt',
     summaryNote: 'Hjelp er en del av læringen. Oppgaver du løste med hjelp, er gode kandidater for litt mer øving – når du selv ønsker det.',
-    saveProfile: 'Lag en profil hvis du vil lagre resultatet.',
   },
   help: {
     groupsQuestion: 'Hvor mange er det til sammen?',
@@ -173,24 +141,14 @@ const nb = {
     step: 'Steg {i} av {n}',
     prev: 'Forrige steg',
     nextStep: 'Neste steg',
-    makeTen0: '{a} i tierrammen. {b} ved siden av.',
-    makeTen1: '{a} trenger {need} for å bli 10. Del {b} i {need} og {rest}.',
-    makeTen2: 'Flytt {need} inn i tierrammen. Nå er den full: 10. Det er {rest} igjen.',
-    makeTen2q: 'Hvor mye er 10 og {rest} til sammen?',
-    makeTen3: '{a} + {b} = 10 + {rest} = {sum}',
-    firstNumber: 'fra {a}',
-    secondNumber: 'fra {b}',
+
     tenFrame: 'Tierramme',
     frameDesc: '{filled} av 10 plasser er fylt',
     frameDescMix: '{a} plasser fra det første tallet og {b} fra det andre. {empty} tomme.',
     looseDesc: '{n} brikker utenfor tierrammen',
     legendA: 'Hel farge: det første tallet',
     legendB: 'Kraftig kant: det andre tallet',
-    balance0: 'Vekten er i balanse: venstre side, x og {a} enere, veier like mye som høyre side, {c} enere.',
-    balance1: 'Ta bort {a} enere fra begge sider. Da er vekten fortsatt i balanse.',
-    balance2: 'Nå er x alene på venstre side. Hvor mange enere er igjen på høyre side?',
-    balance3: 'x = {x}, fordi {x} + {a} = {c}.',
-    removeBoth: 'Ta bort {a} fra begge sider',
+
     leftSide: 'Venstre side',
     rightSide: 'Høyre side',
     unit: 'ener',
@@ -215,7 +173,6 @@ const nb = {
     pwShort: 'Passordet må ha minst 10 tegn.',
     pwMismatch: 'Passordene er ikke like.',
     continue: 'Fortsett',
-    back: 'Tilbake',
     saveTitle: 'Ta vare på innloggingen din',
     saveLead: 'Du trenger ID-en og passordet for å logge inn. Lagre ID-en et sted du finner den igjen, og husk passordet.',
     copy: 'Kopier ID',
@@ -283,7 +240,6 @@ const nb = {
     languageDesc: 'Språket brukes i menyer, leksjoner, oppgaver og tilbakemeldinger.',
     recovery: 'E-post for gjenoppretting',
     noEmail: 'Ingen e-post er lagt til. Profilen fungerer som vanlig, men kan ikke gjenopprettes hvis du mister både ID og passord.',
-    current: 'Gjenoppretting går til {email}.',
     remove: 'Fjern e-post',
     removeConfirmTitle: 'Fjerne e-post for gjenoppretting?',
     removeConfirm: 'Fremgangen din beholdes. Uten e-post kan profilen ikke gjenopprettes hvis du mister både ID og passord.',
@@ -292,7 +248,6 @@ const nb = {
     removed: 'E-postadressen er fjernet.',
     change: 'Bytt e-post',
     signOut: 'Logg ut',
-    signedOut: 'Du er logget ut.',
     privacy: 'Dette lagrer vi',
     privacyList: 'Læringsprofil-ID, passord (lagret kryptert i en ekte løsning), fremgang i leksjoner og øving, og eventuelt e-post for gjenoppretting. Ikke navn, alder eller skole.',
   },
@@ -301,18 +256,14 @@ const nb = {
     welcome: 'Velkommen tilbake',
     continue: 'Fortsett der du slapp',
     continueBtn: 'Fortsett',
-    currentTopic: 'Emnet du jobber med',
     recent: 'Nylig øving',
-    noRecent: 'Ingen øving ennå. Når du øver, ser du det her.',
     browse: 'Utforsk matematikk',
     browseLead: 'Sju områder, fra tall og regning til lineær algebra.',
     signedInAs: 'Logget inn som',
     settings: 'Innstillinger',
     guestNote: 'Du er ikke logget inn. Det du gjør nå, lagres bare midlertidig i denne økten.',
     honest: 'Vi viser hva du har gjort, ikke en poengsum. Én riktig oppgave betyr ikke at noe er lært for godt.',
-    correctIndependent: 'Riktig på egen hånd',
-    correctHelp: 'Riktig med visuell hjelp',
-    notYet: 'Ikke løst ennå',
+
     fromCheck: 'i sjekk',
   },
   report: {
@@ -341,7 +292,6 @@ const nb = {
   source: {
     title: 'Kilden til leksjonen',
     lead: 'Leksjonene skrives i Markdown med noen få faste byggeklosser for interaktive illustrasjoner. Endringer vurderes før publisering.',
-    path: 'Foreslått plassering i repoet',
     proto: 'Prototype: denne leksjonen finnes ikke i repoet ennå. Lenken går til prosjektets repo.',
     edit: 'Åpne MathKX-repoet',
     close: 'Lukk',
@@ -375,14 +325,12 @@ const nb = {
     proto: 'Prototype – ikke en ferdig tjeneste.',
   },
   common: {
-    or: 'eller',
     close: 'Lukk',
-    stageFrom: 'fra',
   },
 };
 
 const en = {
-  meta: { langName: 'English', switchTo: 'Norsk', switchLabel: 'Language' },
+  meta: {   switchLabel: 'Language' },
   proto: {
     banner: 'Prototype: profiles, saved progress and results are simulated and stored only in this browser.',
     tag: 'Prototype',
@@ -428,53 +376,41 @@ const en = {
     search: 'Search topics', searchPlaceholder: 'For example “equation” or “fraction”',
     onlyAvailable: 'Show only topics that are ready', available: 'Ready to use', preview: 'Preview',
     previewExplain: 'Planned topic. Not available in the prototype yet.',
-    topics: '{n} topics', openDomain: 'Open {name}', noResults: 'No topics match your search. Try another word.',
+      noResults: 'No topics match your search. Try another word.',
     results: '{n} topics shown', typical: 'Often met: {stage}',
   },
   domain: {
-    topicsTitle: 'Topics', availableNow: 'Ready now', planned: 'Planned', openTopic: 'Open topic',
+    topicsTitle: 'Topics', availableNow: 'Ready now', planned: 'Planned', 
     previewDomain: 'This domain is a preview. The topics below show planned content.',
     contribute: 'Want to help with this domain? Read how you can contribute.',
   },
   topic: {
     understand: 'What you will understand', prereq: 'Helpful to know first', lessons: 'Lessons', practice: 'Practice',
     check: 'Check understanding', startLesson: 'Read the lesson', startPractice: 'Start practice', startCheck: 'Take a short check',
-    skills: 'Skills in this topic', status: 'Your activity', minutes: 'about {n} min', questions: '{n} exercises',
-  },
-  status: {
-    notStarted: 'Not started', explored: 'Lesson explored', practicedHelp: 'Practised with visual help',
-    practicedIndependent: 'Practised independently', practiced: 'Practised', checked: 'Check completed',
+    skills: 'Skills in this topic',  minutes: 'about {n} min', 
   },
   lesson: {
-    objective: 'Lesson goal', inThisLesson: 'In this lesson', related: 'Related skills', readyTitle: 'Ready to practise?',
-    readyLead: 'Try it yourself. Visual help is available in every exercise.', suggest: 'Suggest an improvement',
+    objective: 'Lesson goal', inThisLesson: 'In this lesson', related: 'Related skills', 
+     suggest: 'Suggest an improvement',
     source: 'View or edit lesson source', previewSkill: 'preview', sectionNav: 'Lesson sections',
   },
   ex: {
     question: 'Exercise {i} of {n}', answer: 'Your answer', answerHintNumber: 'Enter a number.',
     answerHintX: 'Enter the value of x, for example 5 or x = 5.', check: 'Check answer', showHelp: 'Show visual help',
-    hideHelp: 'Hide visual help', next: 'Next exercise', tryAgain: 'You can change your answer and check again.',
-    helpUsedNote: 'Visual help used', done: 'You have worked through every exercise in this set.', restart: 'Start again',
-    goCheck: 'Take a short check', backTopic: 'Back to topic', empty: 'Enter an answer before checking.',
-    unparseable: 'We couldn’t read “{raw}” as a number. Write your answer in digits, for example 12.',
-    expression: '“{raw}” looks like a calculation. Work it out and enter just the answer as a single number.',
-    correct: 'Correct.', altMethod: 'However you got there, the answer is correct.',
-    withHelpPraise: 'You used visual help along the way, which is a good way to see how it fits together.',
-    lessonLink: 'Read the explanation again', feedbackRegion: 'Feedback', solvedHeading: 'Well done',
+    hideHelp: 'Hide visual help',  tryAgain: 'You can change your answer and check again.',
+     backTopic: 'Back to topic', 
+
+    correct: 'Correct.', 
+
   },
   check: {
     titlePrefix: 'Check understanding', policyTitle: 'Before you start',
-    policy1: 'The check has {n} exercises. There is no time limit.',
-    policy2: 'You can open visual help in every exercise. We note whether you used help, so you can see what you managed on your own and what you solved with support.',
-    policy3: 'Using help is never a penalty and is not counted as wrong.',
-    policy4: 'You’ll see how it went when you finish, together with explanations.',
-    policy5: 'A check is a snapshot, not a final judgement of what you know.',
+
     start: 'Start the check', submit: 'Save answer and continue', finish: 'Save answer and see summary', skip: 'Skip',
-    saved: 'Answer saved.', summaryTitle: 'Summary', independent: 'Answered independently', withHelp: 'Answered with help',
-    revisit: 'Worth revisiting', none: 'No exercises here.', yourAnswer: 'Your answer: {a}', skipped: 'Skipped',
+     summaryTitle: 'Summary',  
+     none: 'No exercises here.', yourAnswer: 'Your answer: {a}', 
     correctAnswer: 'Correct answer: {a}', explanations: 'Explanations', again: 'Take the check again',
     summaryNote: 'Help is part of learning. Exercises you solved with help are good candidates for a little more practice, whenever you choose.',
-    saveProfile: 'Create a profile if you want to keep this result.',
   },
   help: {
     groupsQuestion: 'How many are there altogether?', group1: 'First group: {n}', group2: 'Second group: {n}',
@@ -483,19 +419,12 @@ const en = {
     countIntro: 'Tap to count one counter at a time. You can also count on from {a}: the whole first group is {a}.',
     countOn: 'Count on from {a}', countDoneNote: 'Once you have counted them all, you know how many there are altogether. Enter your answer in the field.',
     step: 'Step {i} of {n}', prev: 'Previous step', nextStep: 'Next step',
-    makeTen0: '{a} in the ten-frame. {b} beside it.',
-    makeTen1: '{a} needs {need} to make 10. Split {b} into {need} and {rest}.',
-    makeTen2: 'Move {need} into the ten-frame. Now it is full: 10. There are {rest} left.',
-    makeTen2q: 'What is 10 and {rest} altogether?',
-    makeTen3: '{a} + {b} = 10 + {rest} = {sum}',
-    firstNumber: 'from {a}', secondNumber: 'from {b}', tenFrame: 'Ten-frame',
+
+      tenFrame: 'Ten-frame',
     frameDesc: '{filled} of 10 spaces are filled', frameDescMix: '{a} spaces from the first number and {b} from the second. {empty} empty.',
     looseDesc: '{n} counters outside the ten-frame', legendA: 'Solid colour: the first number', legendB: 'Heavy outline: the second number',
-    balance0: 'The balance is level: the left side, x and {a} ones, weighs the same as the right side, {c} ones.',
-    balance1: 'Remove {a} ones from both sides. The balance stays level.',
-    balance2: 'Now x is alone on the left. How many ones are left on the right?',
-    balance3: 'x = {x}, because {x} + {a} = {c}.',
-    removeBoth: 'Remove {a} from both sides', leftSide: 'Left side', rightSide: 'Right side', unit: 'one', removed: 'removed',
+
+     leftSide: 'Left side', rightSide: 'Right side', unit: 'one', removed: 'removed',
     xBox: 'unknown number x', balanceLabel: 'Balance showing the equation',
   },
   profile: {
@@ -507,7 +436,7 @@ const en = {
     newId: 'Generate a new ID', password: 'Choose a password', fixErrors: 'Fix this to continue',
     passwordDesc: 'At least 10 characters. A few words together are easier to remember than random characters.',
     password2: 'Enter the password again', show: 'Show password', pwShort: 'The password must be at least 10 characters.',
-    pwMismatch: 'The passwords don’t match.', continue: 'Continue', back: 'Back',
+    pwMismatch: 'The passwords don’t match.', continue: 'Continue', 
     saveTitle: 'Keep your sign-in details',
     saveLead: 'You need your ID and password to sign in. Save the ID somewhere you can find it again, and remember your password.',
     copy: 'Copy ID', copied: 'ID copied.', copyFailed: 'Couldn’t copy. Select the ID and copy it manually.',
@@ -548,20 +477,20 @@ const en = {
     title: 'Settings', profile: 'Learner profile', language: 'Language',
     languageDesc: 'Used for menus, lessons, exercises and feedback.', recovery: 'Recovery email',
     noEmail: 'No email added. Your profile works as usual, but it cannot be recovered if you lose both your ID and password.',
-    current: 'Recovery goes to {email}.', remove: 'Remove email', removeConfirmTitle: 'Remove the recovery email?',
+     remove: 'Remove email', removeConfirmTitle: 'Remove the recovery email?',
     removeConfirm: 'Your progress is kept. Without email, the profile cannot be recovered if you lose both your ID and password.',
     removeYes: 'Remove email', cancel: 'Cancel', removed: 'Email address removed.', change: 'Change email',
-    signOut: 'Sign out', signedOut: 'You are signed out.', privacy: 'What we store',
+    signOut: 'Sign out',  privacy: 'What we store',
     privacyList: 'Learner ID, password (stored encrypted in a real service), progress in lessons and practice, and a recovery email if you add one. No name, age or school.',
   },
   home: {
     title: 'My page', welcome: 'Welcome back', continue: 'Continue where you left off', continueBtn: 'Continue',
-    currentTopic: 'Your current topic', recent: 'Recent practice', noRecent: 'No practice yet. When you practise, it shows up here.',
+     recent: 'Recent practice', 
     browse: 'Explore mathematics', browseLead: 'Seven domains, from numbers and arithmetic to linear algebra.',
     signedInAs: 'Signed in as', settings: 'Settings',
     guestNote: 'You are not signed in. What you do now is only kept temporarily in this session.',
     honest: 'We show what you have done, not a score. One correct answer doesn’t mean something is learned for good.',
-    correctIndependent: 'Correct, independently', correctHelp: 'Correct with visual help', notYet: 'Not solved yet', fromCheck: 'in check',
+       fromCheck: 'in check',
   },
   report: {
     title: 'Suggest an improvement',
@@ -578,7 +507,6 @@ const en = {
   source: {
     title: 'Lesson source',
     lead: 'Lessons are written in Markdown with a few named building blocks for interactive illustrations. Changes are reviewed before publication.',
-    path: 'Proposed location in the repository',
     proto: 'Prototype: this lesson is not in the repository yet. The link goes to the project repository.',
     edit: 'Open the MathKX repository', close: 'Close',
   },
@@ -603,10 +531,11 @@ const en = {
     protoT: 'About this prototype', proto: 'Profiles, saved progress, check results and suggestion submission are simulated. Nothing is sent from this page.',
   },
   footer: { tagline: 'Open-source mathematics learning.', proto: 'Prototype, not a finished service.' },
-  common: { or: 'or', close: 'Close', stageFrom: 'from' },
+  common: {  close: 'Close',  },
 };
 
 import { nb2, en2 } from './i18n-iteration2.js';
+import { nb3x as nb3, en3x as en3 } from './i18n-review.js';
 
 function deepMerge(a, b) {
   const out = { ...a };
@@ -614,7 +543,7 @@ function deepMerge(a, b) {
   return out;
 }
 
-export const DICT = { nb: deepMerge(nb, nb2), en: deepMerge(en, en2) };
+export const DICT = { nb: deepMerge(deepMerge(nb, nb2), nb3), en: deepMerge(deepMerge(en, en2), en3) };
 
 export function translate(lang, key, params) {
   const parts = key.split('.');

@@ -8,11 +8,11 @@ Requirement sources: [exercise experience](../../../../docs/design/exercise-expe
 
 | Change | Requirement |
 | --- | --- |
-| Separate actions: **Vis visuell hjelp / Show visual help** (support while trying, never shows the result) and **Forklar løsningen / Explain the solution** (full reasoning including the answer). | EX “Explaining why the result follows” |
+| Separate actions: **Vis visuell hjelp / Show visual help** (support while trying; shows the total only if the learner counts every counter, which is then recorded as a reveal) and **Forklar løsningen / Explain the solution** (full reasoning including the answer). | EX “Explaining why the result follows” |
 | Explanation is available before answering and after correct or incorrect answers. Before answering, an explicit confirmation says the answer will be shown and offers visual help instead. | EX; R2 finding 1 |
 | 8 + 5 explanation shows all four steps ending in `8 + 5 = 8 + 2 + 3 = 10 + 3 = 13`. Picture, equation and text come from one step object (`src/domain/explanations.js`) and are tested together. Previous/Next step buttons. | EX table; R2 finding 1 |
 | x + 3 = 7 explanation now reaches `x = 4` and the substitution check. Groups explanation for 4 + 4 combines and counts the groups. | EX table |
-| Support is recorded as ordered events. Opening an explanation after answering is shown as “Explanation opened after answering” and never relabels the earlier answer. | EX; MA “Progress tracking”; R2 finding 2 |
+| Support is recorded as ordered events. Opening an explanation after answering is shown as “Explanation opened after answering” and never relabels the earlier answer. (Round 03: opening and each step are recorded separately; only the steps that show the answer count as a reveal.) | EX; MA “Progress tracking”; R2 finding 2 |
 | The learner’s typed answer, open panel and explanation step survive language switching, rotation and visits to the lesson. | EX “Answering on iPad”; VI |
 | Self-checks are independent by default. The policy (scope, support, feedback timing, accessibility, snapshot) is stated before starting. “I need help” opens an explicit transition to supported practice; answers already saved stay independent. | LX “Check understanding”; EX “Help during checks” |
 | Explanations refuse values outside their supported range (for example 19 + 1) instead of drawing a plausible picture. | EX “Coverage” |
@@ -44,7 +44,7 @@ Requirement sources: [exercise experience](../../../../docs/design/exercise-expe
 | Exercise workspace: question, answer field, Check, feedback and support buttons in one compact block; help/explanation panel directly below at 390/820 px and beside it at ≥ 992 px. | DP “iPad and touch use” |
 | Real on-screen keyboard detection (visualViewport) compacts the layout; a clearly labelled **simulated keyboard** can be switched on from the banner on exercise pages. Focusing the answer scrolls it into view; no sticky controls cover work. | DP; EX “Answering on iPad” |
 | 44 px minimum targets for actions; no hover or dragging needed; derivative graph has arrow buttons and direct entry as alternatives to tapping. | DP |
-| axe-core clean on all main routes and practice states (light 820 px, dark 390 px, both languages). | DP “Accessible by default” |
+| axe-core clean on the main routes (iteration 2: run by hand; round 03: in `npm run test:browser`, four configurations). | DP “Accessible by default” |
 
 ## 5. Beyond elementary arithmetic
 
@@ -74,6 +74,10 @@ Requirement sources: [exercise experience](../../../../docs/design/exercise-expe
 | Interrupted setup shows a banner to resume; “Keep learning now” is available on every step. | ADR 0006 |
 | Guest work is added to a new profile (marked as guest work). When signing in, the learner chooses to add or not add guest work; imported work keeps a “guest work” label and does not replace the profile’s own place. | MA “Persistence”; ADR 0006 |
 | Authentication, recovery mechanism and hashing are labelled as simulated and undecided. | AGENTS.md |
+
+## Round-03 review fixes
+
+After independent reviews by Claude, Codex and Gemini (18 October 2026), the crash after a self-check, the lesson detour that hid an answer reveal, counting to the total, explanation step recording, the balance check picture, “More like this” with a pending change, resuming an unfinished question, check boundaries in history, guest-work labels, the clipped 8 + 5 equation at 390 px, touch targets and several wording issues were fixed. Gemini's review added: the warning before an explanation after an incorrect answer, help “while solving” measured from the correct answer, clearing a change that points back to the current variation, explanations for every check item, resuming a part-done check, lesson visits, the simulated keyboard covering the answer, the derivative graph for typed values, keeping a confirmed email until a new one is confirmed, and removing unused iteration-1 strings. A new outcome, “Correct with help”, was added. The browser checks are now in the repository (`npm run test:browser`). See [REVIEW-RESPONSE.md](REVIEW-RESPONSE.md) for each finding, the change and the check.
 
 ## Also fixed
 

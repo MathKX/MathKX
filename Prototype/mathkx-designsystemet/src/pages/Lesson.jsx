@@ -130,7 +130,7 @@ export function LessonPage({ id }) {
                 <span className="text-sm font-semibold">{t('lesson.prereq')}</span>
                 {lesson.meta.prerequisites.map((sid) => {
                   const s = skillLinks[sid];
-                  return s ? <Tag key={sid} data-size="sm" data-color="neutral" variant="outline"><a href={s.href} className="underline">{L(s.title)}</a>{s.preview ? <span>&nbsp;· {t('lesson.previewSkill')}</span> : null}</Tag> : null;
+                  return s ? <span key={sid} className="text-sm"><a href={s.href} className="underline mkx-taglink">{L(s.title)}</a>{s.preview ? <span>&nbsp;· {t('lesson.previewSkill')}</span> : null}</span> : null;
                 })}
               </div>
             )}
@@ -165,7 +165,7 @@ export function LessonPage({ id }) {
             <Card className="mt-2">
               <Heading level={2} data-size="xs">{t('topic.check')}</Heading>
               <Paragraph data-size="sm">{t('lesson.checkLead')}</Paragraph>
-              <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}`}>{t('topic.startCheck')}</a></Button></div>
+              <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}?new=1`}>{t('topic.startCheck')}</a></Button></div>
             </Card>
           )}
           <div className="pt-4 border-t" style={{ borderColor: 'var(--ds-color-neutral-border-subtle)' }}>{contributeButtons}</div>

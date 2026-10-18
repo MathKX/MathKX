@@ -1,0 +1,14 @@
+[
+  {
+    "level": "error",
+    "message": "TypeError: Cannot read properties of undefined (reading 'title')\n    at SuggestionCard (http://127.0.0.1:5174/src/pages/Home.jsx:79:69)\n    at Object.react_stack_bottom_frame (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:14142:12)\n    at renderWithHooks (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:4400:19)\n    at updateFunctionComponent (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:5775:16)\n    at beginWork (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:6391:20)\n    at runWithFiberInDEV (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:944:66)\n    at performUnitOfWork (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9148:92)\n    at workLoopSync (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9044:37)\n    at renderRootSync (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9028:6)\n    at performWorkOnRoot (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:8715:27)",
+    "timestamp": "2026-10-18T10:45:19.487Z",
+    "url": "http://127.0.0.1:5174/src/pages/Home.jsx"
+  },
+  {
+    "level": "error",
+    "message": "TypeError: Cannot read properties of undefined (reading 'title')\n    at SuggestionCard (http://127.0.0.1:5174/src/pages/Home.jsx:79:69)\n    at Object.react_stack_bottom_frame (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:14142:12)\n    at renderWithHooks (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:4400:19)\n    at updateFunctionComponent (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:5775:16)\n    at beginWork (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:6391:20)\n    at runWithFiberInDEV (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:944:66)\n    at performUnitOfWork (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9148:92)\n    at workLoopSync (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9044:37)\n    at renderRootSync (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:9028:6)\n    at performWorkOnRoot (http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=666793ac:8715:27)",
+    "timestamp": "2026-10-18T10:50:18.014Z",
+    "url": "http://127.0.0.1:5174/src/pages/Home.jsx"
+  }
+]

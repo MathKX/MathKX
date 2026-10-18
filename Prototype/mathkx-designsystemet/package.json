@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test tests/domain.test.mjs"
+    "test": "node --test tests/domain.test.mjs",
+    "test:browser": "node tests/browser/review-checks.mjs"
   },
   "dependencies": {
     "@digdir/designsystemet-css": "^1.23.0",
@@ -19,6 +20,8 @@
     "@digdir/designsystemet": "^1.23.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
+    "axe-core": "^4.10.3",
+    "playwright": "^1.56.1",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.2",
     "vite-plugin-singlefile": "^2.3.3"

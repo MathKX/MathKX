@@ -49,7 +49,7 @@ export function PlusSign() {
 }
 
 /** Visual help for small additions: two separated groups, optional step-by-step counting. */
-export function GroupsHelp({ a, b, work, onWork, onSupport }) {
+export function GroupsHelp({ a, b, work, onWork, onSupport, answered = false }) {
   const { t } = useStore();
   const counting = work.counting;
   const counted = work.counted ?? 0;
@@ -78,7 +78,9 @@ export function GroupsHelp({ a, b, work, onWork, onSupport }) {
             {counted > 0 && <Button variant="tertiary" onClick={() => onWork({ counted: 0 })}>{t('help.countRestart')}</Button>}
           </div>
           <p className="m-0 text-sm" role="status">{counted > 0 ? t('help.counted', { i: counted }) : ''}</p>
-          {counted >= total && <Paragraph data-size="sm" className="m-0">{t('help.countDoneNote')}</Paragraph>}
+          {/* Counting the last counter shows the total: say so before it happens (exercise-experience.md). */}
+          {!answered && counted < total && <Paragraph data-size="sm" className="m-0">{counted === total - 1 ? t('help.countNextReveals') : t('help.countRevealNote')}</Paragraph>}
+          {counted >= total && <Paragraph data-size="sm" className="m-0">{answered ? t('help.countDoneAfter') : t('help.countDoneNote')}</Paragraph>}
         </div>
       )}
     </div>

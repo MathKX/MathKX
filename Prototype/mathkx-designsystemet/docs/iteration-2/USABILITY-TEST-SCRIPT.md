@@ -17,8 +17,11 @@ Observe: use of the ten-frame explorer and the step-by-step 8 + 5 model. Does th
 **3. Try an exercise (3 min).** From the lesson, start practice with “Addition within ten”. “Answer the question. Then type `fire` / `four` in the box and check.”
 Observe: understanding of feedback for an unreadable answer versus a wrong answer.
 
+**3b. Counting (2 min, optional).** On 4 + 4: “Use the help to count.” Observe: do they notice that counting the last counter shows the answer, and do they mind?
+
 **4. Help and explanation (5 min).** Switch to “Addition across ten” (Make it easier / More challenge, or the topic page). On 8 + 5: “If you were stuck, how would you get help without seeing the answer?” Then: “Now find out why 8 + 5 is 13.”
-Ask: “What is the difference between the two buttons?” Observe: do they notice the warning that the explanation shows the answer? Can they move back and forth between steps?
+Ask: “What is the difference between the two buttons?” Observe: do they notice the warning that the explanation ends with the answer, and the note before the step that shows it? Can they move back and forth between steps?
+Optional: on 8 + 5, tap **Read in the lesson** before answering. Observe: do they understand the warning that the lesson shows this answer?
 
 **5. On-screen keyboard (2 min, iPad).** Tap the answer field. “Answer and check without closing the keyboard. Then open visual help.”
 Observe: is the question, field and Check button visible? Does anything get covered?
@@ -26,17 +29,17 @@ Observe: is the question, field and Check button visible? Does anything get cove
 **6. Easier or harder (3 min).** “This feels too easy. Make the next question harder.” Then: “Make it easier.” Then: “Ask for more of the same until something changes.”
 Ask: “What will the next question be?” Observe: understanding of “applies to the next exercise”, the unavailable message and the repeat notice.
 
-**7. Finish and progress (4 min).** “Stop for today.” On the summary: “What does this tell you?” Open My learning and See progress. “What does ‘Correct with visual help’ mean? Is it better or worse than ‘Correct on first response, no help’?”
+**7. Finish and progress (4 min).** Type an answer without checking it, then: “Stop for today.” On the summary: “What does this tell you?” Open My learning and See progress. “What does ‘Correct with visual help’ mean? And ‘Correct with help’? And ‘Answered after the answer was shown’? Is any of them better or worse than ‘Correct on first response, no help’?”
 Listen for: whether help is seen as failure; whether anything reads as a score.
 
-**8. Check understanding (3 min).** Start the check. “Read the rules and tell me what happens if you need help.” Answer two, then ask for help and choose to switch.
+**8. Check understanding (3 min).** From the topic page, choose **Check my understanding**. “Read the rules and tell me what happens if you need help.” Answer two, then ask for help and choose to switch.
 Observe: do they understand which answers count as independent?
 
 **9. Profile (4 min).** “Save your progress so you can continue on another device.” Create a profile; skip the email. Ask: “Which part could someone else know without being able to sign in as you?” Then: “How would you get back in if you forgot your password?”
 Observe: ID versus password understanding; how they feel about the no-email warning.
 
 **10. Return later (2 min).** Sign out, sign back in (or reload). “Continue where you left off.”
-Observe: is the continue card clear and correct?
+Observe: is the continue card clear and correct? Does it bring back the answer they typed before stopping?
 
 ## Closing questions
 

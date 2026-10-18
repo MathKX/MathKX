@@ -1,0 +1,80 @@
+[
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 375,
+    "height": 844,
+    "language": "en",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 375,
+    "smallButtons": [],
+    "width": 390
+  },
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 375,
+    "height": 844,
+    "language": "nb",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 375,
+    "smallButtons": [],
+    "width": 390
+  },
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 805,
+    "height": 1180,
+    "language": "en",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 805,
+    "smallButtons": [],
+    "width": 820
+  },
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 805,
+    "height": 1180,
+    "language": "nb",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 805,
+    "smallButtons": [],
+    "width": 820
+  },
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 1165,
+    "height": 820,
+    "language": "en",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 1165,
+    "smallButtons": [],
+    "width": 1180
+  },
+  {
+    "answer": "x = 4",
+    "background": "rgb(23, 24, 25)",
+    "client": 1165,
+    "height": 820,
+    "language": "nb",
+    "missingLabelTargets": [
+      "_r_g_"
+    ],
+    "scroll": 1165,
+    "smallButtons": [],
+    "width": 1180
+  }
+]

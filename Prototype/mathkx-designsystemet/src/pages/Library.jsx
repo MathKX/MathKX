@@ -165,7 +165,7 @@ export function TopicPage({ id }) {
             <div className="flex flex-wrap items-center gap-2"><CheckmarkCircleIcon aria-hidden="true" fontSize="1.5rem" /></div>
             <Heading level={2} data-size="xs">{t('topic.check')}</Heading>
             <Paragraph data-size="sm">{L(chk.scope)} · {t('check.count', { n: chk.questions.length })}. {t('topic.checkLead')}</Paragraph>
-            <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}`}>{t('topic.startCheck')}</a></Button></div>
+            <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}?new=1`}>{t('topic.startCheck')}</a></Button></div>
           </Card>
         </div>
         <aside className="flex flex-col gap-4">

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { translate, pick } from './i18n.js';
 import { instance, nextInstance, stepVariant, variants, skills } from './domain/practice.js';
+import { summarizeDelivery } from './domain/observations.js';
 
 // ---- Simulated persistence ------------------------------------------------
 // Everything here is prototype behaviour. Profiles (with their learning record)
@@ -19,7 +20,7 @@ export const DEMO = { id: 'MKX-DEMO-4K7P', password: 'tiervenner10' };
 // Toy hash so the prototype does not store the password verbatim. NOT security.
 function toyHash(s) { let h = 2166136261; for (const c of s) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
 
-export const emptyLearner = () => ({ events: [], seq: 0, sessions: {}, deliveries: {}, work: {}, active: {}, last: null, checks: {} });
+export const emptyLearner = () => ({ events: [], seq: 0, sessions: {}, deliveries: {}, work: {}, active: {}, last: null, checks: {}, resumable: {} });
 
 const uid = (p) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -53,9 +54,12 @@ export function sampleLearner(now = Date.now()) {
   d = deliver(t += 1e4, 's1', 'within-10', 3); // 2 + 7
   log(t += 2e4, { type: 'response', delivery: d, answer: '9', result: 'correct', code: 'correct' });
   log(t += 1e4, { type: 'support', delivery: d, support: 'explanation', step: 2 });
+  d = deliver(t += 1e4, 's1', 'within-10', 5); // 1 + 8, read in the lesson first (the lesson does not show this answer)
+  log(t += 1e4, { type: 'support', delivery: d, support: 'lesson', lesson: 'number-bonds-to-ten' });
+  log(t += 6e4, { type: 'response', delivery: d, answer: '9', result: 'correct', code: 'correct' });
   d = deliver(t += 1e4, 's1', 'within-10', 4); // 5 + 4
   log(t += 1e4, { type: 'skip', delivery: d });
-  log(t += 1e4, { type: 'session-end', session: 's1' });
+  log(t += 1e4, { type: 'session-end', session: 's1', reason: 'finished' });
   L.sessions.s1.endedAt = t;
   // Session 2: learner asked for more challenge; left unfinished
   t = now - day;
@@ -63,7 +67,10 @@ export function sampleLearner(now = Date.now()) {
   log(t, { type: 'session-start', session: 's2', skill: 'arithmetic.add-within-20', variant: 'across-10', mode: 'practice' });
   log(t += 1e3, { type: 'challenge', session: 's2', from: 'within-10', to: 'across-10', request: 'harder', outcome: 'applied' });
   d = deliver(t += 1e4, 's2', 'across-10', 0); // 8 + 5
-  log(t += 2e4, { type: 'support', delivery: d, support: 'answer-reveal', step: 0 });
+  log(t += 2e4, { type: 'support', delivery: d, support: 'explanation-open', step: 0 });
+  log(t += 1e4, { type: 'support', delivery: d, support: 'explanation-step', step: 1, reveals: false });
+  log(t += 1e4, { type: 'support', delivery: d, support: 'explanation-step', step: 2, reveals: false });
+  log(t += 1e4, { type: 'support', delivery: d, support: 'explanation-step', step: 3, reveals: true });
   log(t += 4e4, { type: 'response', delivery: d, answer: '13', result: 'correct', code: 'correct' });
   d = deliver(t += 1e4, 's2', 'across-10', 1); // 9 + 4, unfinished
   L.work[d] = { answer: '1' };
@@ -109,8 +116,9 @@ function reducer(state, action) {
     case 'returnTo': return { ...state, returnTo: action.returnTo };
     case 'kbdSim': return { ...state, kbdSim: action.on };
     case 'createProfile': {
-      // Guest work in this browser becomes part of the new profile, marked as guest work.
-      const learner = { ...state.learner, events: state.learner.events.map((e) => ({ ...e, prov: e.prov === 'guest' ? 'guest' : e.prov })) };
+      // Guest work in this browser becomes part of the new profile. Its events keep
+      // prov 'guest', and the learner views tag them as guest work.
+      const learner = state.learner;
       const p = { id: action.id, pw: toyHash(action.password), email: null, emailState: 'none', createdAt: Date.now(), learner };
       return { ...state, profiles: { ...state.profiles, [p.id]: p }, profileId: p.id, learner, guestCleared: true };
     }
@@ -121,10 +129,16 @@ function reducer(state, action) {
         // Imported guest observations keep their origin; they are not re-labelled as verified profile work.
         const base = learner.seq;
         const imported = state.learner.events.map((e) => ({ ...e, seq: base + e.seq, prov: 'guest-import' }));
+        // Imported sessions become history: each open one gets an explicit end, so
+        // it is not shown as "not finished" or suggested as the place to continue.
+        let seq = base + state.learner.seq;
+        const ends = Object.values(state.learner.sessions)
+          .filter((v) => !state.learner.events.some((e) => e.type === 'session-end' && e.session === v.id))
+          .map((v) => ({ seq: ++seq, at: Date.now(), prov: 'guest-import', type: 'session-end', session: v.id, reason: 'imported' }));
         learner = {
           ...learner,
-          events: [...learner.events, ...imported],
-          seq: base + state.learner.seq,
+          events: [...learner.events, ...imported, ...ends],
+          seq,
           // Imported guest sessions become history; the profile's own place is kept.
           sessions: { ...learner.sessions, ...Object.fromEntries(Object.entries(state.learner.sessions).map(([k, v]) => [k, { ...v, endedAt: v.endedAt ?? Date.now(), imported: true }])) },
           deliveries: { ...learner.deliveries, ...state.learner.deliveries },
@@ -188,11 +202,22 @@ export function useLearner() {
       const add = evs.map((e) => ({ seq: ++seq, at, prov, ...e }));
       return { ...L, seq, events: [...L.events, ...add] };
     };
-    const deliverInto = (L, sessionId, q, repeat) => {
+    const deliverInto = (L, sessionId, q, repeat, resumedFrom) => {
       const d = uid('d');
       const s = L.sessions[sessionId];
-      L = { ...L, deliveries: { ...L.deliveries, [d]: { id: d, session: sessionId, q, repeat } }, sessions: { ...L.sessions, [sessionId]: { ...s, deliveries: [...s.deliveries, d], current: d, variant: q.variant } } };
-      return logInto(L, [{ type: 'delivery', delivery: d, session: sessionId, qid: q.id, variant: q.variant, repeat }]);
+      L = { ...L, deliveries: { ...L.deliveries, [d]: { id: d, session: sessionId, q, repeat, ...(resumedFrom ? { resumedFrom } : {}) } }, sessions: { ...L.sessions, [sessionId]: { ...s, deliveries: [...s.deliveries, d], current: d, variant: q.variant } } };
+      return logInto(L, [{ type: 'delivery', delivery: d, session: sessionId, qid: q.id, variant: q.variant, repeat, ...(resumedFrom ? { resumedFrom } : {}) }]);
+    };
+    // Ending a session: an unanswered current question stays resumable from My learning.
+    const endInto = (L, sessionId, reason = 'finished') => {
+      const s = L.sessions[sessionId];
+      if (!s || s.endedAt) return L;
+      const cur = s.current && L.deliveries[s.current];
+      const open = cur && s.mode !== 'check' && summarizeDelivery(L.events, cur.id).outcome === 'unfinished';
+      const resumable = { ...(L.resumable ?? {}) };
+      if (open) resumable[s.skill] = { delivery: cur.id, session: sessionId, at: Date.now() };
+      L = { ...L, resumable, sessions: { ...L.sessions, [sessionId]: { ...s, endedAt: Date.now() } }, active: Object.fromEntries(Object.entries(L.active).filter(([, v]) => v !== sessionId)) };
+      return logInto(L, [{ type: 'session-end', session: sessionId, reason }]);
     };
     const seenIn = (L, sessionId, variant) => L.sessions[sessionId].deliveries.map((d) => L.deliveries[d].q).filter((q) => q.variant === variant).map((q) => q.index);
 
@@ -203,53 +228,89 @@ export function useLearner() {
         const p = typeof patch === 'function' ? patch(prev) : patch;
         return { ...L, work: { ...L.work, [delivery]: { ...prev, ...p } } };
       }),
-      /** Start (or resume) a practice session for a skill. */
-      startPractice: (skillId, variant, { force = false } = {}) => up((L) => {
-        const existing = L.active[skillId];
-        if (existing && L.sessions[existing] && !L.sessions[existing].endedAt && !force) return L;
-        const v = variant ?? skills[skillId].defaultVariant;
-        const sid = uid('s');
-        L = { ...L, sessions: { ...L.sessions, [sid]: { id: sid, skill: skillId, variant: v, mode: 'practice', deliveries: [], startedAt: Date.now() } }, active: { ...L.active, [skillId]: sid } };
-        L = logInto(L, [{ type: 'session-start', session: sid, skill: skillId, variant: v, mode: 'practice' }]);
-        const { q } = nextInstance(v, []);
-        return deliverInto(L, sid, q, false);
-      }),
+      /**
+       * Start a practice session for a skill (no-op if one is active, unless force).
+       * force: the active session is ended first (reason 'replaced'), so it gets a
+       *   summary and is not left "not finished".
+       * resume: a delivery id from an ended session whose question was not answered;
+       *   the new session starts with that question, the typed draft, and its support context.
+       * Returns { replaced?: sessionId }.
+       */
+      startPractice: (skillId, variant, { force = false, resume = null } = {}) => {
+        let info = {};
+        up((L) => {
+          const existing = L.active[skillId];
+          if (existing && L.sessions[existing] && !L.sessions[existing].endedAt) {
+            if (!force && !resume) return L;
+            L = endInto(L, existing, 'replaced');
+            info = { replaced: existing };
+          }
+          const old = resume ? L.deliveries[resume] : null;
+          const v = old?.q.variant ?? variant ?? skills[skillId].defaultVariant;
+          const sid = uid('s');
+          L = { ...L, sessions: { ...L.sessions, [sid]: { id: sid, skill: skillId, variant: v, startVariant: v, mode: 'practice', deliveries: [], startedAt: Date.now() } }, active: { ...L.active, [skillId]: sid } };
+          L = logInto(L, [{ type: 'session-start', session: sid, skill: skillId, variant: v, mode: 'practice', ...(old ? { resumedFrom: old.session } : {}) }]);
+          if (old) {
+            L = deliverInto(L, sid, old.q, false, resume);
+            const nd = L.sessions[sid].current;
+            const { feedback, ...draft } = L.work[resume] ?? {};
+            L = { ...L, work: { ...L.work, [nd]: draft }, resumable: { ...(L.resumable ?? {}), [skillId]: null } };
+            return L;
+          }
+          const { q } = nextInstance(v, []);
+          return deliverInto(L, sid, q, false);
+        });
+        return info;
+      },
       /** Easier / more challenge: chosen now, applied to the next question. The current question stays as it is. */
       challenge: (sessionId, dir) => {
         let outcome = null;
         up((L) => {
           const s = L.sessions[sessionId];
-          const base = s.pending ?? L.deliveries[s.current]?.q.variant ?? s.variant;
+          const cur = L.deliveries[s.current]?.q.variant ?? s.variant;
+          const base = s.pending ?? cur;
           const to = stepVariant(base, dir);
           if (!to) { outcome = { kind: 'unavailable', request: dir }; return logInto(L, [{ type: 'challenge', session: sessionId, from: base, to: null, request: dir, outcome: 'unavailable' }]); }
+          // Back to the current variation: there is nothing to change, so clear the request.
+          if (to === cur) {
+            outcome = { kind: 'cleared', request: dir, variant: cur };
+            L = { ...L, sessions: { ...L.sessions, [sessionId]: { ...s, pending: null } } };
+            return logInto(L, [{ type: 'challenge', session: sessionId, from: base, to, request: dir, outcome: 'cleared' }]);
+          }
           outcome = { kind: 'pending', request: dir, variant: to };
           L = { ...L, sessions: { ...L.sessions, [sessionId]: { ...s, pending: to } } };
-          return logInto(L, [{ type: 'challenge', session: sessionId, from: base, to, request: dir, outcome: 'applied' }]);
+          // Recorded as requested now; 'applied' is logged when the next question uses it.
+          return logInto(L, [{ type: 'challenge', session: sessionId, from: cur, to, request: dir, outcome: 'requested' }]);
         });
         return outcome;
       },
-      clearPending: (sessionId) => up((L) => ({ ...L, sessions: { ...L.sessions, [sessionId]: { ...L.sessions[sessionId], pending: null } } })),
+      clearPending: (sessionId) => up((L) => {
+        const s = L.sessions[sessionId];
+        if (!s?.pending) return L;
+        L = { ...L, sessions: { ...L.sessions, [sessionId]: { ...s, pending: null } } };
+        return logInto(L, [{ type: 'challenge', session: sessionId, from: s.pending, to: null, request: 'undo', outcome: 'cleared' }]);
+      }),
       /** request: 'another' (uses a pending challenge change) | 'same' (more like this). */
       next: (sessionId, request) => {
         let outcome = null;
         up((L) => {
           const s = L.sessions[sessionId];
           const cur = L.deliveries[s.current]?.q;
+          // "More like this" keeps the current variation (learning-experience.md). If an
+          // easier/harder change was pending, it is replaced, and the learner is told.
           const v = request === 'same' ? (cur?.variant ?? s.variant) : (s.pending ?? cur?.variant ?? s.variant);
+          const dropped = request === 'same' && s.pending && s.pending !== v ? s.pending : null;
           L = { ...L, sessions: { ...L.sessions, [sessionId]: { ...s, pending: null } } };
+          if (dropped) L = logInto(L, [{ type: 'challenge', session: sessionId, from: dropped, to: v, request: 'same', outcome: 'replaced' }]);
+          if (request !== 'same' && s.pending && cur && s.pending !== cur.variant) L = logInto(L, [{ type: 'challenge', session: sessionId, from: cur.variant, to: s.pending, request: 'another', outcome: 'applied' }]);
           const r = nextInstance(v, seenIn(L, sessionId, v), { same: request === 'same' ? cur?.index : undefined });
           if (r.repeat) L = logInto(L, [{ type: 'challenge', session: sessionId, from: v, to: v, request, outcome: 'repeat' }]);
-          outcome = { kind: r.repeat ? 'repeat' : 'applied', request, variant: v, changed: v !== cur?.variant, poolSize: variants[v].pool.length };
+          outcome = { kind: r.repeat ? 'repeat' : 'applied', request, variant: v, changed: v !== cur?.variant, poolSize: variants[v].pool.length, dropped };
           return deliverInto(L, sessionId, r.q, r.repeat);
         });
         return outcome;
       },
-      endSession: (sessionId) => up((L) => {
-        const s = L.sessions[sessionId];
-        if (!s || s.endedAt) return L;
-        L = { ...L, sessions: { ...L.sessions, [sessionId]: { ...s, endedAt: Date.now() } }, active: Object.fromEntries(Object.entries(L.active).filter(([, v]) => v !== sessionId)) };
-        return logInto(L, [{ type: 'session-end', session: sessionId }]);
-      }),
+      endSession: (sessionId) => up((L) => endInto(L, sessionId, 'finished')),
       setLast: (last) => up((L) => (L.last?.href === last.href ? L : { ...L, last: { ...last, at: Date.now() } })),
       check: (id, patch) => up((L) => ({ ...L, checks: { ...L.checks, [id]: { ...(L.checks[id] ?? {}), ...(typeof patch === 'function' ? patch(L.checks[id] ?? {}) : patch) } } })),
       /** Deliver a fixed check question into a check session. */

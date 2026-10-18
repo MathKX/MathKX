@@ -4,8 +4,10 @@ import { XMarkIcon, BookIcon } from '@navikt/aksel-icons';
 import { useStore, useLearner, go } from '../store.jsx';
 import { kinds, evaluateAnswer, feedbackText } from '../domain/math.js';
 import { variants } from '../domain/practice.js';
-import { helpSteps, explanationSteps } from '../domain/explanations.js';
+import { helpSteps, explanationSteps, firstRevealStep } from '../domain/explanations.js';
 import { summarizeDelivery } from '../domain/observations.js';
+import { lessonDisclosure } from '../domain/disclosure.js';
+import { lessons } from '../content/catalog.js';
 import { MathExpr } from './math/MathExpr.jsx';
 import { GroupsHelp } from './math/Counters.jsx';
 import { StepPlayer } from './math/Visuals.jsx';
@@ -19,7 +21,7 @@ import { StepPlayer } from './math/Visuals.jsx';
  * mode 'check-supported' after that switch: help and feedback like practice
  */
 export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubmitted, onNeedHelp, lessonHref, footer }) {
-  const { state, t, lang, dispatch } = useStore();
+  const { state, t, L, lang, dispatch } = useStore();
   const learner = useLearner();
   const work = state.learner.work[delivery] ?? {};
   const setWork = (p) => learner.work(delivery, p);
@@ -36,21 +38,47 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
   const hSteps = helpModel && helpModel !== 'groups' ? helpSteps(helpModel, q) : null;
   const eSteps = explainModel ? explanationSteps(explainModel, q) : null;
   const solved = summary.outcome?.startsWith('correct');
-  const revealed = summary.events.some((e) => e.type === 'support' && e.support === 'answer-reveal');
+  const revealStep = firstRevealStep(eSteps);
+  // Once the learner has confirmed the explanation before answering, do not ask again.
+  const explainConfirmed = summary.events.some((e) => e.type === 'support' && ['explanation-open', 'answer-reveal'].includes(e.support));
 
   const support = (s, extra = {}) => learner.log({ type: 'support', delivery, support: s, ...extra });
+  // Opening the explanation is recorded separately from reaching a step that shows the answer.
+  const logStep = (i, open = false) => {
+    const evs = [];
+    if (open) evs.push({ type: 'support', delivery, support: 'explanation-open', step: i });
+    if (!open || eSteps?.[i]?.reveals) evs.push({ type: 'support', delivery, support: 'explanation-step', step: i, reveals: !!eSteps?.[i]?.reveals });
+    learner.log(evs);
+  };
 
   const openPanel = (panel) => {
     if (work.panel === panel) { setWork({ panel: null, confirmExplain: false }); return; }
-    if (panel === 'help') { setWork({ panel: 'help', confirmExplain: false }); support('visual'); return; }
-    // Explanation before any mathematical answer shows the result: ask first.
-    if (!answered && !revealed) { setWork({ confirmExplain: true }); return; }
-    setWork({ panel: 'explain', confirmExplain: false, explainStep: work.explainStep ?? 0 });
-    support(answered ? 'explanation' : 'answer-reveal', { step: work.explainStep ?? 0 });
+    if (panel === 'help') { setWork({ panel: 'help', confirmExplain: false, confirmLesson: false }); support('visual'); return; }
+    // The explanation leads to the answer: before any mathematical answer, ask first.
+    // Also after an incorrect answer: until the answer is found, the explanation would show it (Gemini round-03).
+    if (!solved && !explainConfirmed) { setWork({ confirmExplain: true, confirmLesson: false }); return; }
+    const step = work.explainStep ?? 0;
+    setWork({ panel: 'explain', confirmExplain: false, explainStep: step });
+    logStep(step, true);
   };
   const confirmReveal = () => {
     setWork({ panel: 'explain', confirmExplain: false, explainStep: 0 });
-    support('answer-reveal', { step: 0 });
+    logStep(0, true);
+  };
+
+  // The lesson from an exercise: before answering, say so when it shows this exact answer.
+  const lessonId = lessonHref?.match(/#\/lesson\/([^?]+)/)?.[1];
+  const lessonSrc = lessonId && lessons[lessonId] ? L(lessons[lessonId].source) : '';
+  const disclosure = useMemo(() => lessonDisclosure(lessonSrc, q), [lessonSrc, q]);
+  const goLesson = (reveal) => {
+    support(reveal ? 'lesson-reveal' : 'lesson', { lesson: lessonId });
+    setWork({ confirmLesson: false });
+    dispatch({ type: 'returnTo', returnTo: { href: window.location.hash, label: kind.plain(q) } });
+    go(lessonHref);
+  };
+  const openLesson = () => {
+    if (!solved && disclosure.discloses) { setWork({ confirmLesson: true, confirmExplain: false }); return; }
+    goLesson(false);
   };
 
   const submit = (e) => {
@@ -71,30 +99,22 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
   const promptLabel = q.kind === 'linear' ? t('ex.findX') : t('ex.workOut');
   const lockAnswer = solved && mode !== 'check';
 
-  const supportTags = [];
-  const evs = summary.events;
-  const firstResp = evs.find((e) => e.type === 'response' && e.result !== 'invalid');
-  const before = (e) => !firstResp || e.seq < firstResp.seq;
-  if (evs.some((e) => e.type === 'support' && ['visual', 'counting', 'help-steps'].includes(e.support) && before(e))) supportTags.push(t('support.visualBefore'));
-  if (evs.some((e) => e.type === 'support' && ['visual', 'counting', 'help-steps'].includes(e.support) && !before(e))) supportTags.push(t('support.visualAfter'));
-  if (revealed) supportTags.push(t('support.revealBefore'));
-  if (summary.explanationAfter) supportTags.push(t('support.explainAfter'));
-
-  const openLesson = () => {
-    dispatch({ type: 'returnTo', returnTo: { href: window.location.hash, label: kind.plain(q) } });
-    go(lessonHref);
-  };
+  const supportTags = summary.tags.map((k) => t(`support.${k}`));
+  const outcomeMsg = summary.outcome === 'correctAfterExplanation'
+    ? t(`ex.outcome.revealed_${summary.revealSources[0] ?? 'explanation'}`)
+    : t(`ex.outcome.${summary.outcome}`);
 
   const panel = work.panel === 'help' ? (
     helpModel === 'groups' ? (
-      <GroupsHelp a={q.a} b={q.b} work={work} onWork={setWork} onSupport={(s) => support(s)} />
+      <GroupsHelp a={q.a} b={q.b} work={work} onWork={setWork} onSupport={(s) => support(s)} answered={solved} />
     ) : hSteps ? (
-      <StepPlayer steps={hSteps} step={Math.min(work.helpStep ?? 0, hSteps.length - 1)}
+      <StepPlayer steps={hSteps} step={Math.min(work.helpStep ?? 0, hSteps.length - 1)} label={t('ex.helpTitle')}
         onStep={(s) => { setWork({ helpStep: s }); support('help-steps', { step: s }); }} />
     ) : null
   ) : work.panel === 'explain' && eSteps ? (
-    <StepPlayer steps={eSteps} step={Math.min(work.explainStep ?? 0, eSteps.length - 1)}
-      onStep={(s) => setWork({ explainStep: s })} />
+    <StepPlayer steps={eSteps} step={Math.min(work.explainStep ?? 0, eSteps.length - 1)} label={t('ex.explainTitle')}
+      revealNote={!solved && revealStep >= 0 ? { at: revealStep, before: t('ex.nextReveals'), on: t('ex.thisReveals') } : null}
+      onStep={(s) => { setWork({ explainStep: s }); logStep(s); }} />
   ) : null;
 
   return (
@@ -131,7 +151,7 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
               {fb.status === 'correct' ? (
                 <Alert data-color="success">
                   <Heading level={3} data-size="2xs">{t('ex.correct')} {feedbackText(lang, `correct.${q.kind}`, fb.values)}</Heading>
-                  <Paragraph data-size="sm">{t(`ex.outcome.${summary.outcome}`)}</Paragraph>
+                  <Paragraph data-size="sm">{outcomeMsg}</Paragraph>
                 </Alert>
               ) : (
                 <Alert data-color="warning">
@@ -164,11 +184,22 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
         {work.confirmExplain && (
           <div className="mkx-panel-accent flex flex-col gap-3 mkx-fade" role="group" aria-label={t('ex.revealTitle')}>
             <Heading level={3} data-size="2xs" className="m-0">{t('ex.revealTitle')}</Heading>
-            <Paragraph data-size="sm" className="m-0">{t('ex.revealBody')}</Paragraph>
+            <Paragraph data-size="sm" className="m-0">{t('ex.revealBody', { n: revealStep + 1, total: eSteps?.length ?? 0 })}{helpModel ? ` ${t(helpModel === 'groups' ? 'ex.revealHelpNoteCount' : 'ex.revealHelpNote')}` : ''}</Paragraph>
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={confirmReveal}>{t('ex.revealYes')}</Button>
               {helpModel && <Button type="button" variant="secondary" onClick={() => { setWork({ confirmExplain: false }); openPanel('help'); }}>{t('ex.revealHelpInstead')}</Button>}
               <Button type="button" variant="tertiary" onClick={() => setWork({ confirmExplain: false })}>{t('common.cancel')}</Button>
+            </div>
+          </div>
+        )}
+        {work.confirmLesson && (
+          <div className="mkx-panel-accent flex flex-col gap-3 mkx-fade" role="group" aria-label={t('ex.lessonRevealTitle', { q: kind.plain(q) })}>
+            <Heading level={3} data-size="2xs" className="m-0">{t('ex.lessonRevealTitle', { q: kind.plain(q) })}</Heading>
+            <Paragraph data-size="sm" className="m-0">{t('ex.lessonRevealBody')}</Paragraph>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={() => goLesson(true)}>{t('ex.lessonRevealYes')}</Button>
+              {helpModel && <Button type="button" variant="secondary" onClick={() => { setWork({ confirmLesson: false }); openPanel('help'); }}>{t('ex.revealHelpInstead')}</Button>}
+              <Button type="button" variant="tertiary" onClick={() => setWork({ confirmLesson: false })}>{t('common.cancel')}</Button>
             </div>
           </div>
         )}
@@ -182,7 +213,7 @@ export function ExerciseShell({ q, delivery, mode = 'practice', position, onSubm
               <span className="text-sm font-semibold">{work.panel === 'help' ? t('ex.helpTitle') : t('ex.explainTitle')}</span>
               <Button type="button" variant="tertiary" icon aria-label={t('common.close')} onClick={() => setWork({ panel: null })}><XMarkIcon aria-hidden="true" /></Button>
             </div>
-            {work.panel === 'explain' && !answered && <Paragraph data-size="sm" className="m-0">{t('ex.revealedNote')}</Paragraph>}
+            {work.panel === 'explain' && !solved && <Paragraph data-size="sm" className="m-0">{t('ex.revealedNote')}</Paragraph>}
             {panel}
           </div>
         )}

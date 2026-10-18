@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Button, ToggleGroup, SkipLink, Link, Paragraph } from '@digdir/designsystemet-react';
+import { Component, useEffect, useRef, useState } from 'react';
+import { Button, ToggleGroup, SkipLink, Link, Paragraph, Alert, Heading } from '@digdir/designsystemet-react';
 import { MenuHamburgerIcon, XMarkIcon, PersonCircleIcon } from '@navikt/aksel-icons';
 import { useStore, useRoute } from './store.jsx';
 import { Switch } from '@digdir/designsystemet-react';
@@ -116,7 +116,19 @@ function useKeyboardState(sim) {
     };
     update();
     vv?.addEventListener('resize', update);
-    return () => vv?.removeEventListener('resize', update);
+    // When the (simulated) keyboard opens, keep the answer field and its Check
+    // button above it, even if the field was not focused (Gemini round-03).
+    const keepVisible = () => {
+      const form = document.querySelector('[data-answer-input]')?.closest('form');
+      if (!form) return;
+      const kb = document.querySelector('.mkx-kbd');
+      const limit = kb ? kb.getBoundingClientRect().top : (vv ? vv.height : window.innerHeight);
+      const r = form.getBoundingClientRect();
+      if (r.bottom > limit - 12) window.scrollBy({ top: r.bottom - limit + 24 });
+      else if (r.top < 64) window.scrollBy({ top: r.top - 80 });
+    };
+    const tm = sim ? setTimeout(keepVisible, 60) : null;
+    return () => { vv?.removeEventListener('resize', update); clearTimeout(tm); };
   }, [sim]);
 }
 
@@ -146,6 +158,30 @@ function KeyboardSim() {
         <button type="button" className="mkx-kbd-key" style={{ gridColumn: 'span 2' }} onMouseDown={(e) => e.preventDefault()}
           onClick={() => document.querySelector('[data-answer-input]')?.form?.requestSubmit()}>{t('kbd.done')}</button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A rendering error on one page must never blank the whole application
+ * (round-03 R03-01). The header, navigation and stored work stay available.
+ */
+class PageBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error) { console.error('MathKX page error', error); }
+  render() { return this.state.error ? <PageError /> : this.props.children; }
+}
+
+function PageError() {
+  const { t } = useStore();
+  return (
+    <div className="mkx-container py-10 max-w-[44rem]">
+      <Alert data-color="danger">
+        <Heading level={1} data-size="xs" tabIndex={-1}>{t('error.title')}</Heading>
+        <Paragraph>{t('error.body')}</Paragraph>
+        <div className="flex flex-wrap gap-2 mt-2"><Button asChild><a href="#/">{t('error.home')}</a></Button><Button variant="secondary" asChild><a href="#/library">{t('library.title')}</a></Button></div>
+      </Alert>
     </div>
   );
 }
@@ -181,7 +217,7 @@ export function App() {
     case 'practice': page = parts[2] === 'summary' ? <SessionSummary skillId={b} sessionId={parts[3]} /> : <PracticePage key={b} skillId={b} query={query} />; break;
     case 'progress': page = <ProgressPage skillId={b} query={query} />; break;
     case 'preview': page = <DerivativePreview />; break;
-    case 'check': page = <CheckPage id={b} />; break;
+    case 'check': page = <CheckPage key={`${b}-${query.get('new') ?? ''}`} id={b} query={query} />; break;
     case 'profile': page = <CreateProfile />; break;
     case 'signin': page = <SignIn />; break;
     case 'recovery': page = <Recovery />; break;
@@ -203,7 +239,7 @@ export function App() {
       <Header path={path} />
       <main id="main" ref={mainRef} className="flex-1" tabIndex={-1} style={state.kbdSim ? { paddingBottom: '26rem' } : undefined}>
         {!/^\/profile/.test(path) && <div className="mkx-container pt-3 empty:hidden"><SetupBanner /></div>}
-        {page}
+        <PageBoundary key={parts.join('/')}>{page}</PageBoundary>
       </main>
       {!state.kbdSim && <Footer />}
       {state.kbdSim && <KeyboardSim />}
