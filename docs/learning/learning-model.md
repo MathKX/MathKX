@@ -46,6 +46,8 @@ A learner's interaction with an exercise instance, including the submitted answe
 
 An estimate of a learner's current command of a skill. Mastery may be informed by attempts over time, task difficulty, help used, recency, or other evidence. The exact model is deliberately undecided; see [mastery.md](mastery.md).
 
+Progress tracking can precede that algorithm: record and summarize learning activity, responses, retries, and support without declaring a skill mastered. See [progress tracking before a mastery algorithm](mastery.md#progress-tracking-before-a-mastery-algorithm) for the intended observations, learner-facing summaries, persistence requirement, and current implementation limits. [Visual worked explanations](../design/exercise-experience.md#explaining-why-the-result-follows) are one kind of teaching support whose timing matters to those observations.
+
 ## Conceptual relationships
 
 ```text
