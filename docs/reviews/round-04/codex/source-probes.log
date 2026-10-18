@@ -1,0 +1,160 @@
+{
+  "dictionaryKeys": {
+    "nb": 610,
+    "en": 610
+  },
+  "missingEn": [],
+  "missingNb": [],
+  "placeholderMismatch": [],
+  "empty": []
+}
+{
+  "lesson": "number-bonds-to-ten",
+  "idMatches": true,
+  "languages": {
+    "nb": {
+      "title": "Tiervenner – tall som blir 10",
+      "objective": true,
+      "anchors": [
+        "what",
+        "pairs",
+        "ten-frame",
+        "why",
+        "try",
+        "practice"
+      ],
+      "directives": [
+        ":::visual{type=\"ten-frame-explorer\" start=\"3\"}",
+        ":::visual{type=\"make-ten\" a=\"8\" b=\"5\"}",
+        ":::practice{skill=\"arithmetic.add-within-20\" variant=\"within-10\"}",
+        ":::practice{skill=\"arithmetic.add-within-20\" variant=\"across-10\"}"
+      ],
+      "math": [
+        "3 + 7 = 10",
+        "0 + 10 = 10",
+        "1 + 9 = 10",
+        "2 + 8 = 10",
+        "3 + 7 = 10",
+        "4 + 6 = 10",
+        "5 + 5 = 10",
+        "9 + 1",
+        "1 + 9",
+        "8 + 5 = 8 + 2 + 3 = 10 + 3 = 13",
+        "9 + 4",
+        "10 + 3",
+        "7 + 6",
+        "10 + 3",
+        "6 + 5"
+      ]
+    },
+    "en": {
+      "title": "Number bonds to ten",
+      "objective": true,
+      "anchors": [
+        "what",
+        "pairs",
+        "ten-frame",
+        "why",
+        "try",
+        "practice"
+      ],
+      "directives": [
+        ":::visual{type=\"ten-frame-explorer\" start=\"3\"}",
+        ":::visual{type=\"make-ten\" a=\"8\" b=\"5\"}",
+        ":::practice{skill=\"arithmetic.add-within-20\" variant=\"within-10\"}",
+        ":::practice{skill=\"arithmetic.add-within-20\" variant=\"across-10\"}"
+      ],
+      "math": [
+        "3 + 7 = 10",
+        "0 + 10 = 10",
+        "1 + 9 = 10",
+        "2 + 8 = 10",
+        "3 + 7 = 10",
+        "4 + 6 = 10",
+        "5 + 5 = 10",
+        "9 + 1",
+        "1 + 9",
+        "8 + 5 = 8 + 2 + 3 = 10 + 3 = 13",
+        "9 + 4",
+        "10 + 3",
+        "7 + 6",
+        "10 + 3",
+        "6 + 5"
+      ]
+    }
+  },
+  "anchorsMatch": true,
+  "directivesMatch": true,
+  "mathMatch": true,
+  "unsupported": []
+}
+{
+  "lesson": "equations-as-a-balance",
+  "idMatches": true,
+  "languages": {
+    "nb": {
+      "title": "Likninger som en vekt – x + 3 = 7",
+      "objective": true,
+      "anchors": [
+        "meaning",
+        "balance",
+        "both-sides",
+        "check",
+        "mistake",
+        "practice"
+      ],
+      "directives": [
+        ":::visual{type=\"balance\" a=\"3\" c=\"7\"}",
+        ":::practice{skill=\"algebra.solve-x-plus-a\" variant=\"to-10\"}"
+      ],
+      "math": [
+        "x + 3 = 7",
+        "+ 3",
+        "x + 3 − 3 = 7 − 3",
+        "x = 4",
+        "4 + 3 = 7",
+        "x + 5 − 5 = 9 − 5",
+        "x = 4",
+        "4 + 5 = 9",
+        "x = 10",
+        "10 + 3 = 13"
+      ]
+    },
+    "en": {
+      "title": "Equations as a balance – x + 3 = 7",
+      "objective": true,
+      "anchors": [
+        "meaning",
+        "balance",
+        "both-sides",
+        "check",
+        "mistake",
+        "practice"
+      ],
+      "directives": [
+        ":::visual{type=\"balance\" a=\"3\" c=\"7\"}",
+        ":::practice{skill=\"algebra.solve-x-plus-a\" variant=\"to-10\"}"
+      ],
+      "math": [
+        "x + 3 = 7",
+        "+ 3",
+        "x + 3 − 3 = 7 − 3",
+        "x = 4",
+        "4 + 3 = 7",
+        "x + 5 − 5 = 9 − 5",
+        "x = 4",
+        "4 + 5 = 9",
+        "x = 10",
+        "10 + 3 = 13"
+      ]
+    }
+  },
+  "anchorsMatch": true,
+  "directivesMatch": true,
+  "mathMatch": true,
+  "unsupported": []
+}
+{"probe":"incorrect -> help -> correct","support":"visual","outcome":"correctAfterFeedback","tags":["visualBefore"]}
+{"probe":"incorrect -> help -> correct","support":"explanation-open","outcome":"correctAfterFeedback","tags":["explainPartBefore"]}
+{"probe":"incorrect -> help -> correct","support":"lesson","outcome":"correctAfterFeedback","tags":["lessonBefore"]}
+{"rng":"proposal algorithm independently implemented in JS BigInt, not C# conformance","rawOutputsPassed":15,"boundedOutputsPassed":32,"injectedBoundaryRowsPassed":4}

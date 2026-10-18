@@ -1,0 +1,30 @@
+- text: Forklaring – hele løsningen
+- button "Lukk"
+- paragraph: Du har åpnet forklaringen før du har funnet svaret. Du kan fortsatt skrive det inn.
+- region "Forklaring – hele løsningen":
+  - figure "Alle brikkene i én gruppe":
+    - text: Alle brikkene i én gruppe
+    - list "Alle brikkene i én gruppe":
+      - listitem:
+        - img "Brikke 1 av 8"
+      - listitem:
+        - img "Brikke 2 av 8"
+      - listitem:
+        - img "Brikke 3 av 8"
+      - listitem:
+        - img "Brikke 4 av 8"
+      - listitem:
+        - img "Brikke 5 av 8"
+      - listitem:
+        - img "Brikke 6 av 8"
+      - listitem:
+        - img "Brikke 7 av 8"
+      - listitem:
+        - img "Brikke 8 av 8"
+  - text: Steg 2 av 3
+  - group "3 + 5":
+    - math: 3 + 5
+  - paragraph: Pluss betyr at vi slår gruppene sammen til én gruppe.
+  - paragraph: Neste steg viser svaret.
+  - button "Forrige steg"
+  - button "Neste steg"

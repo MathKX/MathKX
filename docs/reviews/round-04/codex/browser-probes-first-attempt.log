@@ -1,0 +1,34 @@
+Browser: Chromium 141.0.7390.37; Windows; headless; no physical device or screen reader
+[
+  {
+    "lang": "nb",
+    "probe": "wrong then visual help then correct",
+    "observedOutcome": "Riktig etter tilbakemelding. Godt at du prøvde igjen.",
+    "planningAddendumExpected": "correctWithVisualHelp"
+  },
+  {
+    "lang": "nb",
+    "probe": "explanation after correct opens without pre-answer confirmation",
+    "passed": true
+  },
+  {
+    "lang": "nb",
+    "probe": "3 + 5 groups explanation step 2, before the marked revealing step",
+    "labels": [
+      "Brikke 1 av 8",
+      "Brikke 2 av 8",
+      "Brikke 3 av 8",
+      "Brikke 4 av 8",
+      "Brikke 5 av 8",
+      "Brikke 6 av 8",
+      "Brikke 7 av 8",
+      "Brikke 8 av 8"
+    ],
+    "answerRevealWarningVisible": true,
+    "issue": "accessible labels include total 8 before answer-reveal event"
+  },
+  {
+    "probe": "harness failure",
+    "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('radio', { name: 'English', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"en\" type=\"radio\" name=\"togglegroup-name-_r_0_\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label lang=\"en\" class=\"ds-button\" aria-label=\"English\" data-variant=\"tertiary\">…</label> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label lang=\"en\" class=\"ds-button\" aria-label=\"English\" data-variant=\"tertiary\">…</label> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    9 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label lang=\"en\" class=\"ds-button\" aria-label=\"English\" data-variant=\"tertiary\">…</label> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\n    at D:\\repos\\MathKX\\docs\\reviews\\round-04\\codex\\browser-probes.mjs:48:88"
+  }
+]

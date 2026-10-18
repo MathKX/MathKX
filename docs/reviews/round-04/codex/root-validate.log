@@ -1,0 +1,5 @@
+
+> validate
+> node tools/validate-content.mjs
+
+Content validation passed: 8 content file(s), 7 skill(s), 1 exercise definition(s).

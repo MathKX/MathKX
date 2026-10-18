@@ -1,0 +1,38 @@
+npm warn cleanup Failed to remove some directories [
+npm warn cleanup   [
+npm warn cleanup     '\\\\?\\D:\\repos\\MathKX\\Prototype\\mathkx-designsystemet\\node_modules\\@jsonjoy.com\\json-pack',
+npm warn cleanup     [Error: EPERM: operation not permitted, rmdir 'D:\repos\MathKX\Prototype\mathkx-designsystemet\node_modules\@jsonjoy.com\json-pack\node_modules'] {
+npm warn cleanup       errno: -4048,
+npm warn cleanup       code: 'EPERM',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: 'D:\\repos\\MathKX\\Prototype\\mathkx-designsystemet\\node_modules\\@jsonjoy.com\\json-pack\\node_modules'
+npm warn cleanup     }
+npm warn cleanup   ]
+npm warn cleanup ]
+npm error code EPERM
+npm error syscall mkdir
+npm error path D:\repos\MathKX\Prototype\mathkx-designsystemet\node_modules\@nodelib\fs.stat
+npm error errno -4048
+npm error Error: EPERM: operation not permitted, mkdir 'D:\repos\MathKX\Prototype\mathkx-designsystemet\node_modules\@nodelib\fs.stat'
+npm error     at async mkdir (node:internal/fs/promises:860:10)
+npm error     at async C:\Users\rune\AppData\Roaming\npm\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\reify.js:624:20
+npm error     at async Promise.allSettled (index 45)
+npm error     at async [reifyPackages] (C:\Users\rune\AppData\Roaming\npm\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\reify.js:325:11)
+npm error     at async Arborist.reify (C:\Users\rune\AppData\Roaming\npm\node_modules\npm\node_modules\@npmcli\arborist\lib\arborist\reify.js:142:5)
+npm error     at async CI.exec (C:\Users\rune\AppData\Roaming\npm\node_modules\npm\lib\commands\ci.js:100:5)
+npm error     at async Npm.exec (C:\Users\rune\AppData\Roaming\npm\node_modules\npm\lib\npm.js:208:9)
+npm error     at async module.exports (C:\Users\rune\AppData\Roaming\npm\node_modules\npm\lib\cli\entry.js:67:5) {
+npm error   errno: -4048,
+npm error   code: 'EPERM',
+npm error   syscall: 'mkdir',
+npm error   path: 'D:\\repos\\MathKX\\Prototype\\mathkx-designsystemet\\node_modules\\@nodelib\\fs.stat'
+npm error }
+npm error
+npm error The operation was rejected by your operating system.
+npm error It's possible that the file was already in use (by a text editor or antivirus),
+npm error or that you lack permissions to access it.
+npm error
+npm error If you believe this might be a permissions issue, please double-check the
+npm error permissions of the file and its containing directories, or try running
+npm error the command again as root/Administrator.
+npm error A complete log of this run can be found in: C:\Users\rune\AppData\Local\Packages\sandbox.{17216dfb-563d-4590-9353-586171101adf}\AC\Temp\mathkx-codex-npm-cache-prototype\_logs\2026-10-18T13_03_22_264Z-debug-0.log

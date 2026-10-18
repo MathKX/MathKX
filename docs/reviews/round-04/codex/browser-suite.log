@@ -1,0 +1,86 @@
+
+> mathkx-prototype@0.1.0 test:browser
+> node tests/browser/review-checks.mjs
+
+PASS  [nb-820-light] R03-01 Home and progress render during and after a check, boundary kept
+PASS  [nb-820-light] R03-02 Reading the lesson before answering is recorded (reveal and plain help)
+PASS  [nb-820-light] R03-03 Counting all is an answer reveal; part of the explanation is help
+PASS  [nb-820-light] R03-04 More like this says it replaced a pending change
+PASS  [nb-820-light] R03-04b A challenge change does not bring back the link’s variant prompt
+PASS  [nb-820-light] C9 Starting a new variation ends the old session with a summary
+PASS  [nb-820-light] R03-06 Balance check step pictures 4 in place of x
+PASS  [nb-820-light] R03-07 Finish keeps an unanswered question resumable with its draft
+PASS  [nb-820-light] C6 + R03-08 8 + 5 final step fits; step player labels resolve
+PASS  [nb-820-light] R03-05b One way on in a supported check; fresh check from the topic
+PASS  [nb-820-light] C7 + C8 Guest work is labelled on create and on sign-in import
+PASS  [nb-820-light] C11 Plural and labels
+PASS  [nb-820-light] C12 Touch targets are at least 44 px (lesson, practice with a pending change)
+PASS  [nb-820-light] G1 Explanation after an incorrect answer asks first and is recorded once
+PASS  [nb-820-light] G2 Easier then harder clears the change instead of pointing at the current variation
+PASS  [nb-820-light] G3 Check summary explains every item; G4 a part-done check is offered on Home
+PASS  [nb-820-light] G5 Simulated keyboard keeps the answer and Check visible
+PASS  [nb-820-light] G6 Derivative: a typed x moves the point; the explanation asks first
+PASS  [nb-820-light] G7 Changing a confirmed email keeps the old one until the new one is confirmed
+PASS  [nb-820-light] axe-core (WCAG 2 A/AA, 2.1 AA, best practice) on main routes
+PASS  [en-390-dark] R03-01 Home and progress render during and after a check, boundary kept
+PASS  [en-390-dark] R03-02 Reading the lesson before answering is recorded (reveal and plain help)
+PASS  [en-390-dark] R03-03 Counting all is an answer reveal; part of the explanation is help
+PASS  [en-390-dark] R03-04 More like this says it replaced a pending change
+PASS  [en-390-dark] R03-04b A challenge change does not bring back the link’s variant prompt
+PASS  [en-390-dark] C9 Starting a new variation ends the old session with a summary
+PASS  [en-390-dark] R03-06 Balance check step pictures 4 in place of x
+PASS  [en-390-dark] R03-07 Finish keeps an unanswered question resumable with its draft
+PASS  [en-390-dark] C6 + R03-08 8 + 5 final step fits; step player labels resolve
+PASS  [en-390-dark] R03-05b One way on in a supported check; fresh check from the topic
+PASS  [en-390-dark] C7 + C8 Guest work is labelled on create and on sign-in import
+PASS  [en-390-dark] C11 Plural and labels
+PASS  [en-390-dark] C12 Touch targets are at least 44 px (lesson, practice with a pending change)
+PASS  [en-390-dark] G1 Explanation after an incorrect answer asks first and is recorded once
+PASS  [en-390-dark] G2 Easier then harder clears the change instead of pointing at the current variation
+PASS  [en-390-dark] G3 Check summary explains every item; G4 a part-done check is offered on Home
+PASS  [en-390-dark] G5 Simulated keyboard keeps the answer and Check visible
+PASS  [en-390-dark] G6 Derivative: a typed x moves the point; the explanation asks first
+PASS  [en-390-dark] G7 Changing a confirmed email keeps the old one until the new one is confirmed
+PASS  [en-390-dark] axe-core (WCAG 2 A/AA, 2.1 AA, best practice) on main routes
+PASS  [en-1180-light] R03-01 Home and progress render during and after a check, boundary kept
+PASS  [en-1180-light] R03-02 Reading the lesson before answering is recorded (reveal and plain help)
+PASS  [en-1180-light] R03-03 Counting all is an answer reveal; part of the explanation is help
+PASS  [en-1180-light] R03-04 More like this says it replaced a pending change
+PASS  [en-1180-light] R03-04b A challenge change does not bring back the link’s variant prompt
+PASS  [en-1180-light] C9 Starting a new variation ends the old session with a summary
+PASS  [en-1180-light] R03-06 Balance check step pictures 4 in place of x
+PASS  [en-1180-light] R03-07 Finish keeps an unanswered question resumable with its draft
+PASS  [en-1180-light] C6 + R03-08 8 + 5 final step fits; step player labels resolve
+PASS  [en-1180-light] R03-05b One way on in a supported check; fresh check from the topic
+PASS  [en-1180-light] C7 + C8 Guest work is labelled on create and on sign-in import
+PASS  [en-1180-light] C11 Plural and labels
+PASS  [en-1180-light] C12 Touch targets are at least 44 px (lesson, practice with a pending change)
+PASS  [en-1180-light] G1 Explanation after an incorrect answer asks first and is recorded once
+PASS  [en-1180-light] G2 Easier then harder clears the change instead of pointing at the current variation
+PASS  [en-1180-light] G3 Check summary explains every item; G4 a part-done check is offered on Home
+PASS  [en-1180-light] G5 Simulated keyboard keeps the answer and Check visible
+PASS  [en-1180-light] G6 Derivative: a typed x moves the point; the explanation asks first
+PASS  [en-1180-light] G7 Changing a confirmed email keeps the old one until the new one is confirmed
+PASS  [en-1180-light] axe-core (WCAG 2 A/AA, 2.1 AA, best practice) on main routes
+PASS  [nb-390-dark] R03-01 Home and progress render during and after a check, boundary kept
+PASS  [nb-390-dark] R03-02 Reading the lesson before answering is recorded (reveal and plain help)
+PASS  [nb-390-dark] R03-03 Counting all is an answer reveal; part of the explanation is help
+PASS  [nb-390-dark] R03-04 More like this says it replaced a pending change
+PASS  [nb-390-dark] R03-04b A challenge change does not bring back the link’s variant prompt
+PASS  [nb-390-dark] C9 Starting a new variation ends the old session with a summary
+PASS  [nb-390-dark] R03-06 Balance check step pictures 4 in place of x
+PASS  [nb-390-dark] R03-07 Finish keeps an unanswered question resumable with its draft
+PASS  [nb-390-dark] C6 + R03-08 8 + 5 final step fits; step player labels resolve
+PASS  [nb-390-dark] R03-05b One way on in a supported check; fresh check from the topic
+PASS  [nb-390-dark] C7 + C8 Guest work is labelled on create and on sign-in import
+PASS  [nb-390-dark] C11 Plural and labels
+PASS  [nb-390-dark] C12 Touch targets are at least 44 px (lesson, practice with a pending change)
+PASS  [nb-390-dark] G1 Explanation after an incorrect answer asks first and is recorded once
+PASS  [nb-390-dark] G2 Easier then harder clears the change instead of pointing at the current variation
+PASS  [nb-390-dark] G3 Check summary explains every item; G4 a part-done check is offered on Home
+PASS  [nb-390-dark] G5 Simulated keyboard keeps the answer and Check visible
+PASS  [nb-390-dark] G6 Derivative: a typed x moves the point; the explanation asks first
+PASS  [nb-390-dark] G7 Changing a confirmed email keeps the old one until the new one is confirmed
+PASS  [nb-390-dark] axe-core (WCAG 2 A/AA, 2.1 AA, best practice) on main routes
+
+80 passed, 0 failed
