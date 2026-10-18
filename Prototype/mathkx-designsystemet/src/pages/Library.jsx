@@ -2,23 +2,27 @@ import { useState, useMemo } from 'react';
 import { Button, Card, Heading, Paragraph, Link, Tag, Search, Switch, Alert, List } from '@digdir/designsystemet-react';
 import { BookIcon, PencilWritingIcon, CheckmarkCircleIcon } from '@navikt/aksel-icons';
 import { useStore } from '../store.jsx';
-import { domains, findDomain, findTopic, lessons, practiceSets, checks } from '../content/catalog.js';
+import { domains, findDomain, findTopic, lessons, checks } from '../content/catalog.js';
+import { skills, variants } from '../domain/practice.js';
+import { PracticeEntry } from './Practice.jsx';
 import { parseLesson } from '../components/Markdown.jsx';
 import { PageHead } from '../components/Page.jsx';
 import { DomainGlyph } from './Landing.jsx';
-import { lessonStatus, practiceStatus, checkStatus, statusColor } from '../activity.js';
 
 function TopicRow({ topic }) {
   const { t, L } = useStore();
   const ready = topic.status === 'available';
+  const preview = topic.status === 'design-preview';
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 border-b last:border-b-0" style={{ borderColor: 'var(--ds-color-neutral-border-subtle)' }}>
       <div className="flex flex-col">
         {ready ? <Link href={`#/topic/${topic.id}`} className="text-lg font-semibold">{L(topic.title)}</Link>
+          : preview ? <Link href={topic.href} className="text-lg font-semibold">{L(topic.title)}</Link>
           : <span className="text-lg" style={{ color: 'var(--ds-color-neutral-text-default)' }}>{L(topic.title)}</span>}
         <span className="text-sm" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{t('library.typical', { stage: L(topic.stage) })}</span>
       </div>
       {ready ? <Tag data-color="success" data-size="sm">{t('library.available')}</Tag>
+        : preview ? <Tag data-color="warning" data-size="sm">{t('library.designPreview')}</Tag>
         : <Tag data-color="neutral" data-size="sm" title={t('library.previewExplain')}>{t('library.preview')}<span className="ds-sr-only">: {t('library.previewExplain')}</span></Tag>}
     </li>
   );
@@ -113,17 +117,14 @@ export function DomainPage({ id }) {
   );
 }
 
-function StatusTag({ s }) {
-  const { t } = useStore();
-  return <Tag data-color={statusColor(s)} data-size="sm" variant={s === 'notStarted' ? 'outline' : 'default'}>{t(`status.${s}`)}</Tag>;
-}
 
 export function TopicPage({ id }) {
   const { t, L, state } = useStore();
   const found = findTopic(id);
   if (!found || !found.details) return <div className="mkx-container py-10"><h1>404</h1></div>;
   const { domain, topic, details } = found;
-  const set = practiceSets[details.practice];
+  const sk = skills[details.practice];
+  const viewed = (lid) => state.learner.events.some((e) => e.type === 'lesson-viewed' && e.lesson === lid);
   const chk = checks[details.check];
   return (
     <div className="mkx-container">
@@ -142,7 +143,7 @@ export function TopicPage({ id }) {
               const meta = parseLesson(L(lesson.source)).meta;
               return (
                 <Card key={lid}>
-                  <div className="flex flex-wrap items-center gap-2"><BookIcon aria-hidden="true" fontSize="1.5rem" /><StatusTag s={lessonStatus(state.progress, lid)} /><span className="text-sm">{t('topic.minutes', { n: lesson.minutes })}</span></div>
+                  <div className="flex flex-wrap items-center gap-2"><BookIcon aria-hidden="true" fontSize="1.5rem" />{viewed(lid) ? <Tag data-size="sm" data-color="neutral">{t('outcome.viewed')}</Tag> : null}<span className="text-sm">{t('topic.minutes', { n: lesson.minutes })}</span></div>
                   <Heading level={3} data-size="xs">{meta.title}</Heading>
                   <Paragraph>{meta.objective}</Paragraph>
                   <div><Button asChild><a href={`#/lesson/${lid}`}>{t('topic.startLesson')}</a></Button></div>
@@ -150,20 +151,22 @@ export function TopicPage({ id }) {
               );
             })}
           </section>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <div className="flex flex-wrap items-center gap-2"><PencilWritingIcon aria-hidden="true" fontSize="1.5rem" /><StatusTag s={practiceStatus(state.progress, set.id)} /></div>
-              <Heading level={2} data-size="xs">{t('topic.practice')}: {L(set.title)}</Heading>
-              <Paragraph data-size="sm">{t('topic.questions', { n: set.questions.length })}. {t('lesson.readyLead')}</Paragraph>
-              <div><Button variant="secondary" asChild><a href={`#/practice/${set.id}`}>{t('topic.startPractice')}</a></Button></div>
-            </Card>
-            <Card>
-              <div className="flex flex-wrap items-center gap-2"><CheckmarkCircleIcon aria-hidden="true" fontSize="1.5rem" /><StatusTag s={checkStatus(state.progress, chk.id)} /></div>
-              <Heading level={2} data-size="xs">{t('topic.check')}</Heading>
-              <Paragraph data-size="sm">{t('topic.questions', { n: chk.questions.length })}. {t('check.policy3')}</Paragraph>
-              <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}`}>{t('topic.startCheck')}</a></Button></div>
-            </Card>
-          </div>
+          <section aria-labelledby="prac-h" className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <Heading level={2} data-size="sm" id="prac-h">{t('topic.practice')}</Heading>
+              <Link href={`#/progress/${sk.id}`}>{t('progress.open')}</Link>
+            </div>
+            <Paragraph data-size="sm" className="m-0">{t('topic.variantsLead')}</Paragraph>
+            <div className="grid gap-3 md:grid-cols-2">
+              {sk.ladder.map((v) => <PracticeEntry key={v} skill={sk.id} variant={v} />)}
+            </div>
+          </section>
+          <Card>
+            <div className="flex flex-wrap items-center gap-2"><CheckmarkCircleIcon aria-hidden="true" fontSize="1.5rem" /></div>
+            <Heading level={2} data-size="xs">{t('topic.check')}</Heading>
+            <Paragraph data-size="sm">{L(chk.scope)} · {t('check.count', { n: chk.questions.length })}. {t('topic.checkLead')}</Paragraph>
+            <div><Button variant="secondary" asChild><a href={`#/check/${chk.id}`}>{t('topic.startCheck')}</a></Button></div>
+          </Card>
         </div>
         <aside className="flex flex-col gap-4">
           <Card variant="tinted">

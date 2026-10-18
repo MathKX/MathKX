@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Card, Heading, Paragraph, Link, Tag, Alert, Textfield, Checkbox, Dialog, Divider, List, ErrorSummary } from '@digdir/designsystemet-react';
+import { Button, Card, Heading, Paragraph, Link, Tag, Alert, Textfield, Checkbox, Dialog, ErrorSummary, Radio, Fieldset, useRadioGroup } from '@digdir/designsystemet-react';
 import { FilesIcon, DownloadIcon, ArrowRightIcon, EnvelopeClosedIcon, ShieldCheckmarkIcon } from '@navikt/aksel-icons';
 import { useStore, generateLearnerId, checkCredentials, DEMO, go } from '../store.jsx';
 import { PageHead } from '../components/Page.jsx';
 import { LanguageSwitch } from '../App.jsx';
 
+// All authentication here is SIMULATED. Credential format, hashing, recovery and
+// session handling are open decisions (ADR 0006).
 const PROTO_CODE = '246810';
+const MAX_CODE_TRIES = 3;
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim());
+
+export function guestSummary(learner) {
+  const tasks = learner.events.filter((e) => e.type === 'delivery').length;
+  const lessons = new Set(learner.events.filter((e) => e.type === 'lesson-viewed').map((e) => e.lesson)).size;
+  return { tasks, lessons, any: learner.events.length > 0 };
+}
 
 function IdBox({ id }) {
   const { t, lang } = useStore();
@@ -17,17 +26,15 @@ function IdBox({ id }) {
   const download = async () => {
     const text = t('profile.reminderFile', { id, date: new Date().toLocaleDateString(lang === 'nb' ? 'nb-NO' : 'en-GB'), url: 'https://mathkx.example/signin (prototype)' });
     const filename = `mathkx-${id}.txt`;
-    // Hosted artifact: offer the file through the viewer's download capability.
     const dl = window.claude?.use ? await window.claude.use('downloads').catch(() => null) : null;
     if (dl) {
-      try { await dl.save({ filename, data: text }); setMsg(lang === 'nb' ? 'ID-påminnelsen er lagret.' : 'ID reminder saved.'); }
-      catch (e) { if (e?.code !== 'declined') setMsg(lang === 'nb' ? 'Filen kunne ikke lagres her. Kopier ID-en i stedet.' : 'The file could not be saved here. Copy the ID instead.'); }
+      try { await dl.save({ filename, data: text }); setMsg(t('profile.reminderSaved')); }
+      catch (e) { if (e?.code !== 'declined') setMsg(t('profile.reminderFailed')); }
       return;
     }
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
+    a.href = URL.createObjectURL(blob); a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
@@ -35,27 +42,38 @@ function IdBox({ id }) {
     <div className="mkx-panel-accent flex flex-col gap-3">
       <span className="text-sm font-semibold">{t('profile.yourId')}</span>
       <span className="mkx-id select-all" aria-label={`${t('profile.yourId')}: ${id.split('').join(' ')}`}>{id}</span>
+      <Paragraph data-size="sm" className="m-0">{t('profile.idNotSecret')}</Paragraph>
       <div className="flex flex-wrap gap-3">
         <Button variant="secondary" onClick={copy}><FilesIcon aria-hidden="true" />{t('profile.copy')}</Button>
         <Button variant="secondary" onClick={download}><DownloadIcon aria-hidden="true" />{t('profile.download')}</Button>
       </div>
       <p className="m-0 text-sm" role="status">{msg}</p>
-      <Paragraph data-size="sm">{t('profile.downloadNote')}</Paragraph>
+      <Paragraph data-size="sm" className="m-0">{t('profile.downloadNote')}</Paragraph>
     </div>
   );
 }
 
-/** Email + verification, shared by profile creation and settings. */
-function EmailSetup({ onDone, onCancel, cancelLabel }) {
-  const { t, dispatch } = useStore();
-  const [email, setEmail] = useState('');
-  const [stage, setStage] = useState('enter');
+/** Email + verification: enter → code (correctable address, resend, failure) → verified, or verify later. */
+function EmailSetup({ onDone, onCancel, cancelLabel, initialEmail = '' }) {
+  const { t, dispatch, profile } = useStore();
+  const [email, setEmail] = useState(initialEmail || (profile?.emailState === 'pending' ? profile.email : ''));
+  const [stage, setStage] = useState(profile?.emailState === 'pending' && !initialEmail ? 'verify' : 'enter');
   const [code, setCode] = useState('');
   const [err, setErr] = useState(null);
+  const [tries, setTries] = useState(0);
+  const [sentMsg, setSentMsg] = useState('');
+  const locked = tries >= MAX_CODE_TRIES;
+
   if (stage === 'enter') {
     return (
-      <form noValidate className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (!validEmail(email)) { setErr(t('profile.emailInvalid')); return; } setErr(null); dispatch({ type: 'profilePatch', patch: { email: email.trim(), emailVerified: false } }); setStage('verify'); }}>
-        <Textfield type="email" autoComplete="email" inputMode="email" label={t('profile.emailLabel')} value={email} onChange={(e) => setEmail(e.target.value)} error={err ?? undefined} />
+      <form noValidate className="flex flex-col gap-4" onSubmit={(e) => {
+        e.preventDefault();
+        if (!validEmail(email)) { setErr(t('profile.emailInvalid')); return; }
+        setErr(null); setTries(0); setCode('');
+        dispatch({ type: 'profilePatch', patch: { email: email.trim(), emailState: 'pending' } });
+        setStage('verify'); setSentMsg('');
+      }}>
+        <Textfield type="email" autoComplete="email" inputMode="email" label={t('profile.emailLabel')} description={t('profile.emailPurpose')} value={email} onChange={(e) => { setEmail(e.target.value); setErr(null); }} error={err ?? undefined} />
         <div className="flex flex-wrap gap-3">
           <Button type="submit">{t('profile.sendCode')}</Button>
           {onCancel && <Button type="button" variant="secondary" onClick={onCancel}>{cancelLabel}</Button>}
@@ -64,16 +82,45 @@ function EmailSetup({ onDone, onCancel, cancelLabel }) {
     );
   }
   return (
-    <form noValidate className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (code.replace(/\s/g, '') !== PROTO_CODE) { setErr(t('profile.codeWrong')); return; } dispatch({ type: 'profilePatch', patch: { emailVerified: true } }); onDone?.('verified'); }}>
-      <Heading level={3} data-size="xs">{t('profile.verifyTitle')}</Heading>
-      <Paragraph>{t('profile.verifyLead', { email })}</Paragraph>
+    <form noValidate className="flex flex-col gap-4" onSubmit={(e) => {
+      e.preventDefault();
+      if (locked) return;
+      if (code.replace(/\s/g, '') !== PROTO_CODE) {
+        const n = tries + 1; setTries(n);
+        setErr(n >= MAX_CODE_TRIES ? t('profile.codeLocked') : t('profile.codeWrong', { left: MAX_CODE_TRIES - n }));
+        return;
+      }
+      dispatch({ type: 'profilePatch', patch: { emailState: 'verified' } });
+      onDone?.('verified');
+    }}>
+      <Heading level={3} data-size="xs" className="m-0">{t('profile.verifyTitle')}</Heading>
+      <Paragraph className="m-0">{t('profile.verifyLead', { email })}</Paragraph>
+      <p className="m-0 text-sm" role="status">{sentMsg}</p>
       <Alert data-color="info"><Paragraph data-size="sm">{t('profile.verifyProto')}</Paragraph></Alert>
-      <div className="w-48"><Textfield label={t('profile.code')} inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => { setCode(e.target.value); setErr(null); }} error={err ?? undefined} /></div>
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit">{t('profile.verify')}</Button>
-        <Button type="button" variant="secondary" onClick={() => onDone?.('pending')}>{t('profile.verifyLater')}</Button>
+      <div className="w-full max-w-sm"><Textfield label={t('profile.code')} inputMode="numeric" autoComplete="one-time-code" value={code} disabled={locked}
+        onChange={(e) => { setCode(e.target.value); if (!locked) setErr(null); }} error={err ?? undefined} /></div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={locked}>{t('profile.verify')}</Button>
+        <Button type="button" variant="secondary" onClick={() => { setTries(0); setErr(null); setCode(''); setSentMsg(t('profile.codeResent', { email })); }}>{t('profile.resend')}</Button>
+        <Button type="button" variant="tertiary" onClick={() => { setStage('enter'); setErr(null); }}>{t('profile.changeEmail')}</Button>
+      </div>
+      <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: 'var(--ds-color-neutral-border-subtle)' }}>
+        <Paragraph data-size="sm" className="m-0">{t('profile.pendingExplain')}</Paragraph>
+        <div><Button type="button" variant="tertiary" onClick={() => onDone?.('pending')}>{t('profile.verifyLater')}</Button></div>
       </div>
     </form>
+  );
+}
+
+export function SetupBanner() {
+  const { state, t } = useStore();
+  const s = state.signup;
+  if (!s || s.step < 2 || s.step > 3 || !state.profileId) return null;
+  return (
+    <Alert data-color="warning" className="mb-4">
+      <Paragraph>{t('profile.interrupted', { id: s.id })}</Paragraph>
+      <Link href="#/profile/new">{t('profile.resumeSetup')}</Link>
+    </Alert>
   );
 }
 
@@ -83,7 +130,7 @@ export function CreateProfile() {
   const signup = state.signup ?? { step: 1, id: initialId };
   useEffect(() => { if (!state.signup && !profile) dispatch({ type: 'signup', signup }); }, []); // eslint-disable-line
   const setSignup = (p) => dispatch({ type: 'signup', signup: { ...signup, ...p } });
-  // Passwords stay in component memory only, never in session storage.
+  // Passwords stay in component memory only, never in storage.
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [show, setShow] = useState(false);
@@ -93,6 +140,8 @@ export function CreateProfile() {
   const [emailOpen, setEmailOpen] = useState(false);
   const total = 4;
   const step = signup.step;
+  const guest = guestSummary(state.learner);
+
   if (profile && !state.signup) {
     return (
       <div className="mkx-container max-w-[44rem]">
@@ -114,10 +163,13 @@ export function CreateProfile() {
     setPw(''); setPw2('');
     setSignup({ step: 2 });
   };
+  const keepLearning = (
+    <Paragraph data-size="sm" className="m-0"><Link href="#/home">{t('profile.continueLearning')}</Link> {step >= 2 ? t('profile.continueLearningNote') : ''}</Paragraph>
+  );
 
   return (
-    <div className="mkx-container max-w-[44rem]">
-      <PageHead title={t('profile.createTitle')} lead={t('profile.createLead')}
+    <div className="mkx-container max-w-[44rem] pb-8">
+      <PageHead title={t('profile.createTitle')} lead={step === 1 ? t('profile.createLead') : undefined}
         eyebrow={<span className="text-sm font-semibold block mb-2" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{t('profile.step', { i: step, n: total })}</span>} />
 
       {step === 1 && (
@@ -126,48 +178,63 @@ export function CreateProfile() {
             <Heading level={2} data-size="2xs">{t('profile.noPersonal')}</Heading>
             <Paragraph data-size="sm">{t('profile.notAnon')}</Paragraph>
           </Alert>
+          {guest.any && (
+            <Card variant="tinted">
+              <Heading level={2} data-size="2xs">{t('profile.guestTitle')}</Heading>
+              <Paragraph data-size="sm" className="m-0">{t('profile.guestBody', { tasks: guest.tasks, lessons: guest.lessons })}</Paragraph>
+            </Card>
+          )}
           {Object.keys(errors).length > 0 && (
             <ErrorSummary>
               <ErrorSummary.Heading>{t('profile.fixErrors')}</ErrorSummary.Heading>
               <ErrorSummary.List>
-                {Object.entries(errors).map(([k, v]) => <ErrorSummary.Item key={k}><ErrorSummary.Link href={`#`} onClick={(e) => { e.preventDefault(); document.getElementById(`f-${k}`)?.focus(); }}>{v}</ErrorSummary.Link></ErrorSummary.Item>)}
+                {Object.entries(errors).map(([k, v]) => <ErrorSummary.Item key={k}><ErrorSummary.Link href="#" onClick={(e) => { e.preventDefault(); document.getElementById(`f-${k}`)?.focus(); }}>{v}</ErrorSummary.Link></ErrorSummary.Item>)}
               </ErrorSummary.List>
             </ErrorSummary>
           )}
-          <div className="flex flex-col gap-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="mkx-panel-accent flex flex-col gap-2">
               <span className="text-sm font-semibold">{t('profile.yourId')}</span>
               <span className="mkx-id" aria-label={`${t('profile.yourId')}: ${signup.id.split('').join(' ')}`}>{signup.id}</span>
-              <Paragraph data-size="sm">{t('profile.idExplain')}</Paragraph>
+              <Paragraph data-size="sm" className="m-0">{t('profile.idExplain')}</Paragraph>
               <div><Button type="button" variant="tertiary" data-size="sm" onClick={() => setSignup({ id: generateLearnerId() })}>{t('profile.newId')}</Button></div>
             </div>
+            <div className="mkx-panel flex flex-col gap-2">
+              <span className="text-sm font-semibold">{t('profile.passwordBox')}</span>
+              <Paragraph data-size="sm" className="m-0">{t('profile.passwordExplain')}</Paragraph>
+            </div>
           </div>
-          {/* username field helps password managers save the credential pair */}
           <input type="text" name="username" autoComplete="username" value={signup.id} readOnly hidden />
           <Textfield id="f-pw" type={show ? 'text' : 'password'} autoComplete="new-password" label={t('profile.password')} description={t('profile.passwordDesc')} value={pw} onChange={(e) => setPw(e.target.value)} error={errors.pw} />
           <Textfield id="f-pw2" type={show ? 'text' : 'password'} autoComplete="new-password" label={t('profile.password2')} value={pw2} onChange={(e) => setPw2(e.target.value)} error={errors.pw2} />
           <Checkbox label={t('profile.show')} checked={show} onChange={(e) => setShow(e.target.checked)} />
-          <div><Button type="submit" data-size="lg">{t('profile.continue')}<ArrowRightIcon aria-hidden="true" /></Button></div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Button type="submit" data-size="lg">{t('profile.create')}<ArrowRightIcon aria-hidden="true" /></Button>
+            <Button type="button" variant="tertiary" onClick={() => { dispatch({ type: 'signup', signup: null }); go('#/home'); }}>{t('profile.notNow')}</Button>
+          </div>
+          <Paragraph data-size="xs" className="m-0">{t('profile.simulated')}</Paragraph>
         </form>
       )}
 
       {step === 2 && (
         <div className="flex flex-col gap-6">
+          <Alert data-color="success"><Paragraph>{t('profile.created', { tasks: guest.tasks })}</Paragraph></Alert>
           <Heading level={2} data-size="sm">{t('profile.saveTitle')}</Heading>
-          <Paragraph data-size="lg">{t('profile.saveLead')}</Paragraph>
+          <Paragraph data-size="lg" className="m-0">{t('profile.saveLead')}</Paragraph>
           <IdBox id={signup.id} />
           <Checkbox label={t('profile.confirmSaved')} checked={saved} onChange={(e) => { setSaved(e.target.checked); setSavedErr(null); }} error={savedErr ?? undefined} />
           <div><Button data-size="lg" onClick={() => { if (!saved) { setSavedErr(t('profile.confirmRequired')); return; } setSignup({ step: 3 }); }}>{t('profile.continue')}<ArrowRightIcon aria-hidden="true" /></Button></div>
+          {keepLearning}
         </div>
       )}
 
       {step === 3 && (
         <div className="flex flex-col gap-6">
           <Heading level={2} data-size="sm">{t('profile.emailTitle')}</Heading>
-          <Paragraph data-size="lg">{t('profile.emailLead')}</Paragraph>
+          <Paragraph data-size="lg" className="m-0">{t('profile.emailLead')}</Paragraph>
           <Card variant="tinted">
-            <Paragraph>{t('profile.emailRisk')}</Paragraph>
-            <Paragraph data-size="sm">{t('profile.emailLater')}</Paragraph>
+            <Paragraph className="m-0">{t('profile.emailRisk')}</Paragraph>
+            <Paragraph data-size="sm" className="m-0">{t('profile.emailLater')}</Paragraph>
           </Card>
           {!emailOpen ? (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -175,8 +242,9 @@ export function CreateProfile() {
               <Button variant="secondary" data-size="lg" className="w-full" onClick={() => setSignup({ step: 4, email: 'none' })}>{t('profile.noEmail')}</Button>
             </div>
           ) : (
-            <EmailSetup onDone={(s) => setSignup({ step: 4, email: s })} onCancel={() => setSignup({ step: 4, email: 'none' })} cancelLabel={t('profile.noEmail')} />
+            <EmailSetup onDone={(s) => setSignup({ step: 4, email: s })} onCancel={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none' } }); setSignup({ step: 4, email: 'none' }); }} cancelLabel={t('profile.noEmail')} />
           )}
+          {keepLearning}
         </div>
       )}
 
@@ -186,8 +254,7 @@ export function CreateProfile() {
             <Heading level={2} data-size="xs">{t('profile.doneTitle')}</Heading>
             <Paragraph>{t('profile.doneLead')}</Paragraph>
           </Alert>
-          {signup.email === 'verified' && <Paragraph><ShieldCheckmarkIcon aria-hidden="true" /> {t('profile.verified')}</Paragraph>}
-          {signup.email === 'pending' && <Paragraph><Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag> {profile?.email}</Paragraph>}
+          <EmailStatus />
           <div className="mkx-panel"><span className="text-sm font-semibold block">{t('profile.yourId')}</span><span className="mkx-id">{signup.id}</span></div>
           <div><Button data-size="lg" onClick={() => { dispatch({ type: 'signup', signup: null }); go('#/home'); }}>{t('profile.goHome')}<ArrowRightIcon aria-hidden="true" /></Button></div>
         </div>
@@ -196,35 +263,54 @@ export function CreateProfile() {
   );
 }
 
+function EmailStatus() {
+  const { t, profile } = useStore();
+  if (!profile) return null;
+  if (profile.emailState === 'verified') return <Paragraph className="m-0"><ShieldCheckmarkIcon aria-hidden="true" /> {t('profile.verifiedFor', { email: profile.email })}</Paragraph>;
+  if (profile.emailState === 'pending') return <Paragraph className="m-0"><Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag> {t('profile.pendingFor', { email: profile.email })}</Paragraph>;
+  return <Paragraph className="m-0">{t('settings.noEmail')}</Paragraph>;
+}
+
 export function SignIn() {
   const { t, state, dispatch } = useStore();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [err, setErr] = useState(null);
+  const guest = guestSummary(state.learner);
+  const { getRadioProps, value: guestChoice } = useRadioGroup({ name: 'guest-work', value: 'import' });
   const submit = (e) => {
     e.preventDefault();
     if (!id.trim() || !pw) { setErr(t('signin.missing')); return; }
     const p = checkCredentials(state.profiles, id, pw);
     if (!p) { setErr(t('signin.failed')); return; }
-    dispatch({ type: 'signIn', id: p.id });
+    dispatch({ type: 'signIn', id: p.id, guest: guest.any ? guestChoice : 'none' });
     go('#/home');
   };
   return (
-    <div className="mkx-container max-w-[34rem]">
+    <div className="mkx-container max-w-[36rem] pb-8">
       <PageHead title={t('signin.title')} lead={t('signin.lead')} />
       <form noValidate onSubmit={submit} className="flex flex-col gap-5">
         {err && <Alert data-color="danger" role="alert"><Paragraph>{err}</Paragraph></Alert>}
         <Textfield label={t('signin.id')} description={t('signin.idDesc')} autoComplete="username" autoCapitalize="characters" spellCheck={false} value={id} onChange={(e) => setId(e.target.value)} />
         <Textfield type="password" label={t('signin.password')} autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+        {guest.any && (
+          <Fieldset>
+            <Fieldset.Legend>{t('signin.guestTitle')}</Fieldset.Legend>
+            <Fieldset.Description>{t('signin.guestBody', { tasks: guest.tasks, lessons: guest.lessons })}</Fieldset.Description>
+            <Radio label={t('signin.guestImport')} description={t('signin.guestImportDesc')} {...getRadioProps('import')} />
+            <Radio label={t('signin.guestDiscard')} description={t('signin.guestDiscardDesc')} {...getRadioProps('none')} />
+          </Fieldset>
+        )}
         <div><Button type="submit" data-size="lg">{t('signin.submit')}</Button></div>
       </form>
       <div className="flex flex-col gap-2 mt-6">
         <Link href="#/recovery">{t('signin.forgot')}</Link>
         <span>{t('signin.noProfile')} <Link href="#/profile/new">{t('nav.createProfile')}</Link></span>
+        <span><Link href="#/home">{t('signin.asGuest')}</Link></span>
       </div>
       <Alert data-color="info" className="mt-8">
         <Paragraph data-size="sm">{t('signin.demo', { id: DEMO.id, pw: DEMO.password })}</Paragraph>
-        <Button variant="tertiary" data-size="sm" onClick={() => { setId(DEMO.id); setPw(DEMO.password); setErr(null); }}>{t('signin.useDemo')}</Button>
+        <Button data-color="accent" variant="tertiary" data-size="sm" onClick={() => { setId(DEMO.id); setPw(DEMO.password); setErr(null); }}>{t('signin.useDemo')}</Button>
       </Alert>
     </div>
   );
@@ -236,7 +322,7 @@ export function Recovery() {
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState(null);
   return (
-    <div className="mkx-container max-w-[44rem]">
+    <div className="mkx-container max-w-[44rem] pb-8">
       <PageHead title={t('recovery.title')} lead={t('recovery.lead')} />
       <div className="flex flex-col gap-4">
         <Card>
@@ -257,8 +343,12 @@ export function Recovery() {
         <Card variant="tinted">
           <Heading level={2} data-size="xs">{t('recovery.p3t')}</Heading>
           <Paragraph>{t('recovery.p3')}</Paragraph>
-          <div><Button variant="secondary" asChild><a href="#/profile/new">{t('recovery.newProfile')}</a></Button></div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" asChild><a href="#/profile/new">{t('recovery.newProfile')}</a></Button>
+            <Button variant="tertiary" asChild><a href="#/home">{t('signin.asGuest')}</a></Button>
+          </div>
         </Card>
+        <Paragraph data-size="xs">{t('recovery.open')}</Paragraph>
       </div>
     </div>
   );
@@ -279,12 +369,13 @@ export function Settings() {
     );
   }
   return (
-    <div className="mkx-container max-w-[44rem]">
+    <div className="mkx-container max-w-[44rem] pb-8">
       <PageHead title={t('settings.title')} crumbs={[{ href: '#/home', label: t('home.title') }, { href: '#/settings', label: t('settings.title') }]} />
       <div className="flex flex-col gap-6">
         <section aria-labelledby="s-prof"><Card>
           <Heading level={2} data-size="xs" id="s-prof">{t('settings.profile')}</Heading>
           <IdBox id={profile.id} />
+          <Paragraph data-size="sm" className="m-0">{t('settings.passwordNote')}</Paragraph>
         </Card></section>
 
         <section aria-labelledby="s-lang"><Card>
@@ -296,19 +387,17 @@ export function Settings() {
         <section aria-labelledby="s-rec"><Card>
           <Heading level={2} data-size="xs" id="s-rec">{t('settings.recovery')}</Heading>
           <div role="status">{msg && <Paragraph data-size="sm">{msg}</Paragraph>}</div>
-          {profile.email && !adding ? (
+          {adding ? (
+            <EmailSetup initialEmail={profile.emailState === 'pending' ? profile.email : ''} onDone={(s) => { setAdding(false); setMsg(s === 'verified' ? t('profile.verified') : t('profile.pending')); }} onCancel={() => setAdding(false)} cancelLabel={t('settings.cancel')} />
+          ) : profile.email ? (
             <>
-              <Paragraph>
-                {t('settings.current', { email: profile.email })}{' '}
-                {profile.emailVerified ? <Tag data-color="success" data-size="sm">✓ {t('profile.verified').split('.')[0]}</Tag> : <Tag data-color="warning" data-size="sm">{t('profile.pending')}</Tag>}
-              </Paragraph>
+              <EmailStatus />
               <div className="flex flex-wrap gap-3">
+                {profile.emailState === 'pending' && <Button onClick={() => { setAdding(true); setMsg(''); }}>{t('settings.finishVerify')}</Button>}
                 <Button variant="secondary" onClick={() => { setAdding(true); setMsg(''); }}>{t('settings.change')}</Button>
                 <Button variant="secondary" data-color="danger" onClick={() => confirmRef.current?.showModal()}>{t('settings.remove')}</Button>
               </div>
             </>
-          ) : adding ? (
-            <EmailSetup onDone={(s) => { setAdding(false); setMsg(s === 'verified' ? t('profile.verified') : t('profile.pending')); }} onCancel={() => setAdding(false)} cancelLabel={t('settings.cancel')} />
           ) : (
             <>
               <Paragraph>{t('settings.noEmail')}</Paragraph>
@@ -323,6 +412,7 @@ export function Settings() {
         </Card></section>
 
         <div><Button variant="secondary" onClick={() => { dispatch({ type: 'signOut' }); go('#/'); }}>{t('settings.signOut')}</Button></div>
+        <Paragraph data-size="xs">{t('settings.signOutNote')}</Paragraph>
       </div>
 
       <Dialog ref={confirmRef} closeButton={t('settings.cancel')} closedby="any" className="w-[min(32rem,calc(100vw-2rem))]">
@@ -331,7 +421,7 @@ export function Settings() {
           <Paragraph className="mt-3">{t('settings.removeConfirm')}</Paragraph>
         </Dialog.Block>
         <Dialog.Block className="flex flex-wrap gap-3">
-          <Button data-color="danger" onClick={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailVerified: false } }); confirmRef.current?.close(); setMsg(t('settings.removed')); }}>{t('settings.removeYes')}</Button>
+          <Button data-color="danger" onClick={() => { dispatch({ type: 'profilePatch', patch: { email: null, emailState: 'none' } }); confirmRef.current?.close(); setMsg(t('settings.removed')); }}>{t('settings.removeYes')}</Button>
           <Button variant="secondary" onClick={() => confirmRef.current?.close()}>{t('settings.cancel')}</Button>
         </Dialog.Block>
       </Dialog>

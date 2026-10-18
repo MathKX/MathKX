@@ -1,0 +1,16 @@
+{
+  "$schema": "../../../../schemas/lesson.schema.json (proposed, not yet written)",
+  "id": "number-bonds-to-ten",
+  "version": 2,
+  "status": "prototype",
+  "skills": ["arithmetic.number-bonds-10", "arithmetic.add-make-ten"],
+  "prerequisites": ["arithmetic.counting-to-20", "arithmetic.meaning-of-plus"],
+  "related": ["arithmetic.add-within-10", "arithmetic.subtraction-within-20", "algebra.solve-x-plus-a"],
+  "practice": [
+    { "skill": "arithmetic.add-within-20", "variant": "within-10" },
+    { "skill": "arithmetic.add-within-20", "variant": "across-10" }
+  ],
+  "check": "check-addition",
+  "visuals": ["ten-frame-explorer", "make-ten"],
+  "translations": { "nb": "nb.md", "en": "en.md" }
+}

@@ -15,7 +15,7 @@ export function DomainGlyph({ icon, size = 44 }) {
 
 export function Landing() {
   const { t, L, state } = useStore();
-  const explored = Object.keys(state.progress.lessons).length + state.progress.attempts.length;
+  const explored = state.learner.events.length;
   return (
     <>
       <section className="mkx-container pt-10 pb-12 md:pt-16 grid gap-10 lg:grid-cols-[1.1fr_1fr] items-center">
@@ -42,7 +42,7 @@ export function Landing() {
       <section aria-labelledby="ben-h" className="py-12" style={{ background: 'var(--ds-color-neutral-background-tinted)' }}>
         <div className="mkx-container">
           <Heading level={2} data-size="md" id="ben-h" className="mb-6">{t('landing.benefitsTitle')}</Heading>
-          <ul className="list-none m-0 p-0 grid gap-4 md:grid-cols-3">
+          <ul className="list-none m-0 p-0 grid gap-4 lg:grid-cols-3">
             {[[BookIcon, 'b1'], [LightBulbIcon, 'b2'], [PencilWritingIcon, 'b3']].map(([Icon, k]) => (
               <li key={k}>
                 <Card className="h-full">
@@ -67,19 +67,32 @@ export function Landing() {
         <ul className="list-none m-0 p-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {domains.map((d) => {
             const ready = d.topics.filter((x) => x.status === 'available').length;
+            const preview = d.topics.filter((x) => x.status === 'design-preview').length;
             return (
               <li key={d.id}>
                 <Card asChild className="h-full" data-color="neutral">
                   <a href={`#/domain/${d.id}`} className="no-underline">
                     <div className="flex items-center gap-3"><DomainGlyph icon={d.icon} size={40} /><Heading level={3} data-size="2xs">{L(d.title)}</Heading></div>
                     <Paragraph data-size="sm">{L(d.range)}</Paragraph>
-                    {ready > 0 ? <Tag data-color="success" data-size="sm">{t('library.available')}</Tag> : <Tag data-color="neutral" data-size="sm">{t('library.preview')}</Tag>}
+                    <span className="flex flex-wrap gap-2">
+                      {ready > 0 && <Tag data-color="success" data-size="sm">{t('landing.readyTopics', { n: ready })}</Tag>}
+                      {preview > 0 && <Tag data-color="warning" data-size="sm">{t('library.designPreview')}</Tag>}
+                      {!ready && !preview && <Tag data-color="neutral" data-size="sm" variant="outline">{t('landing.plannedOnly')}</Tag>}
+                    </span>
                   </a>
                 </Card>
               </li>
             );
           })}
         </ul>
+        <Card className="mt-6" aria-labelledby="adv-h">
+          <Heading level={3} data-size="xs" id="adv-h">{t('landing.advancedTitle')}</Heading>
+          <Paragraph className="m-0">{t('landing.advancedBody')}</Paragraph>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" asChild><a href="#/preview/derivative">{t('landing.advancedPreview')}</a></Button>
+            <Button variant="tertiary" asChild><a href="#/domain/calculus">{t('landing.advancedPlanned')}</a></Button>
+          </div>
+        </Card>
       </section>
 
       <section className="mkx-container grid gap-6 lg:grid-cols-2 pb-6">

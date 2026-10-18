@@ -606,7 +606,15 @@ const en = {
   common: { or: 'or', close: 'Close', stageFrom: 'from' },
 };
 
-export const DICT = { nb, en };
+import { nb2, en2 } from './i18n-iteration2.js';
+
+function deepMerge(a, b) {
+  const out = { ...a };
+  for (const [k, v] of Object.entries(b)) out[k] = v && typeof v === 'object' && !Array.isArray(v) && typeof a[k] === 'object' ? deepMerge(a[k], v) : v;
+  return out;
+}
+
+export const DICT = { nb: deepMerge(nb, nb2), en: deepMerge(en, en2) };
 
 export function translate(lang, key, params) {
   const parts = key.split('.');

@@ -1,9 +1,13 @@
-// A deliberately small lesson renderer for the proposed Markdown authoring format.
-// Supports: front matter, ## / ### headings with {#id}, paragraphs, lists, tables,
-// **bold**, *italic*, inline $math$, block $$math$$, :::example blocks and
-// {{component key=value}} embeds that resolve to named, tested components.
+// Prototype renderer for the PROPOSED lesson format (docs/architecture/proposals/
+// lesson-markdown-and-delivery.md). Not a stable contract.
+//
+// Supported: front matter (title, objective) · ## / ### headings with {#id} ·
+// paragraphs · - and 1. lists · | tables · ![alt](assets/file) images ·
+// **bold** *italic* · $inline$ and $$display$$ maths (src/domain/notation.js) ·
+// :::example{title="" id=""} … ::: · :::visual{type="" …} ::: · :::practice{skill="" variant=""} :::
+// Unknown directives and unsupported notation render a visible notice; nothing is dropped.
 import { Fragment } from 'react';
-import { Heading, Paragraph, Card } from '@digdir/designsystemet-react';
+import { Heading, Paragraph, Card, Alert } from '@digdir/designsystemet-react';
 import { MathExpr } from './math/MathExpr.jsx';
 
 export function parseLesson(src) {
@@ -17,7 +21,6 @@ export function parseLesson(src) {
       if (i > 0) meta[line.slice(0, i).trim()] = line.slice(i + 1).trim();
     }
   }
-  for (const k of ['skills', 'related']) if (meta[k]) meta[k] = meta[k].split(',').map((s) => s.trim());
   const blocks = parseBlocks(body.split('\n'));
   const sections = blocks.filter((b) => b.type === 'h2').map((b) => ({ id: b.id, title: b.text }));
   return { meta, blocks, sections };
@@ -27,6 +30,7 @@ const idOf = (text) => {
   const mm = text.match(/\s*\{#([\w-]+)\}\s*$/);
   return mm ? { text: text.slice(0, mm.index).trim(), id: mm[1] } : { text: text.trim(), id: text.trim().toLowerCase().replace(/[^\w]+/g, '-') };
 };
+const attrs = (s) => Object.fromEntries([...(s ?? '').matchAll(/(\w+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
 
 function parseBlocks(lines) {
   const out = [];
@@ -39,18 +43,13 @@ function parseBlocks(lines) {
       const { text, id } = idOf(mm[2]);
       out.push({ type: mm[1].length === 2 ? 'h2' : 'h3', text, id }); i++; continue;
     }
-    if ((mm = line.match(/^:::(\w+)\s*(.*)$/))) {
+    if ((mm = line.match(/^:::(\w[\w-]*)(?:\{(.*)\})?\s*$/))) {
       const inner = []; i++;
       while (i < lines.length && lines[i].trim() !== ':::') inner.push(lines[i++]);
       i++;
-      const { text, id } = idOf(mm[2] || '');
-      out.push({ type: 'container', kind: mm[1], title: text, id, children: parseBlocks(inner) }); continue;
+      out.push({ type: 'directive', name: mm[1], attrs: attrs(mm[2]), children: parseBlocks(inner) }); continue;
     }
-    if ((mm = line.match(/^\{\{([\w-]+)\s*(.*?)\}\}\s*$/))) {
-      const props = {};
-      for (const p of mm[2].matchAll(/(\w+)=("[^"]*"|\S+)/g)) props[p[1]] = p[2].replace(/^"|"$/g, '');
-      out.push({ type: 'component', name: mm[1], props }); i++; continue;
-    }
+    if ((mm = line.match(/^!\[(.*)\]\((.+)\)\s*$/))) { out.push({ type: 'img', alt: mm[1], src: mm[2] }); i++; continue; }
     if ((mm = line.match(/^\$\$(.+)\$\$\s*$/))) { out.push({ type: 'math', expr: mm[1] }); i++; continue; }
     if (/^\|/.test(line)) {
       const rows = [];
@@ -68,7 +67,7 @@ function parseBlocks(lines) {
       out.push({ type: ordered ? 'ol' : 'ul', items }); continue;
     }
     const para = [];
-    while (i < lines.length && lines[i].trim() && !/^(#{2,3}\s|:::|\{\{|\$\$|\||-\s|\d+\.\s)/.test(lines[i])) para.push(lines[i++]);
+    while (i < lines.length && lines[i].trim() && !/^(#{2,3}\s|:::|!\[|\$\$|\||-\s|\d+\.\s)/.test(lines[i])) para.push(lines[i++]);
     out.push({ type: 'p', text: para.join(' ') });
   }
   return out;
@@ -90,7 +89,8 @@ export function Inline({ text }) {
   return <>{parts}</>;
 }
 
-export function Blocks({ blocks, components }) {
+/** components: { visual: {type: Component}, practice: Component }, assets: {path: url} */
+export function Blocks({ blocks, components, assets = {}, unknown }) {
   return blocks.map((b, i) => {
     switch (b.type) {
       case 'h2': return <Heading key={i} level={2} data-size="sm" id={b.id} tabIndex={-1} className="pt-6 scroll-mt-24">{b.text}</Heading>;
@@ -98,24 +98,33 @@ export function Blocks({ blocks, components }) {
       case 'p': return <Paragraph key={i} data-size="lg"><Inline text={b.text} /></Paragraph>;
       case 'ul': return <ul key={i} className="list-disc pl-6 flex flex-col gap-2 text-lg">{b.items.map((it, j) => <li key={j}><Inline text={it} /></li>)}</ul>;
       case 'ol': return <ol key={i} className="pl-6 list-decimal flex flex-col gap-2 text-lg">{b.items.map((it, j) => <li key={j}><Inline text={it} /></li>)}</ol>;
-      case 'math': return <div key={i} className="overflow-x-auto"><MathExpr display expr={b.expr} /></div>;
+      case 'math': return <div key={i} className="overflow-x-auto" tabIndex={0} role="group" aria-label={b.expr}><MathExpr display expr={b.expr} /></div>;
+      case 'img': return (
+        <figure key={i} className="m-0 flex flex-col gap-2">
+          <div className="rounded-xl p-3 w-fit" style={{ background: '#ffffff', border: '1px solid var(--ds-color-neutral-border-subtle)' }}>
+            {assets[b.src] ? <img src={assets[b.src]} alt={b.alt} className="block max-w-full h-auto" /> : <span className="mkx-notation-error">{b.src}</span>}
+          </div>
+          <figcaption className="text-sm" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{b.alt}</figcaption>
+        </figure>
+      );
       case 'table': return (
-        <div key={i} className="overflow-x-auto">
+        <div key={i} className="overflow-x-auto" tabIndex={0} role="group" aria-label={b.head.join(', ')}>
           <table className="mkx-table text-lg">
             <thead><tr>{b.head.map((h, j) => <th key={j} scope="col"><Inline text={h} /></th>)}</tr></thead>
             <tbody>{b.rows.map((r, j) => <tr key={j}>{r.map((c, l) => <td key={l}><Inline text={c} /></td>)}</tr>)}</tbody>
           </table>
         </div>
       );
-      case 'container': return (
-        <Card key={i} variant="tinted" data-color="accent" id={b.id} className="scroll-mt-24">
-          <Heading level={3} data-size="xs">{b.title}</Heading>
-          <div className="flex flex-col gap-3"><Blocks blocks={b.children} components={components} /></div>
-        </Card>
-      );
-      case 'component': {
-        const C = components[b.name];
-        return C ? <div key={i}><C {...b.props} /></div> : null;
+      case 'directive': {
+        if (b.name === 'example') return (
+          <Card key={i} variant="tinted" data-color="accent" id={b.attrs.id} className="scroll-mt-24">
+            <Heading level={3} data-size="xs">{b.attrs.title}</Heading>
+            <div className="flex flex-col gap-3"><Blocks blocks={b.children} components={components} assets={assets} unknown={unknown} /></div>
+          </Card>
+        );
+        if (b.name === 'visual' && components.visual?.[b.attrs.type]) { const C = components.visual[b.attrs.type]; return <div key={i}><C {...b.attrs} /></div>; }
+        if (b.name === 'practice' && components.practice) { const C = components.practice; return <div key={i}><C {...b.attrs} /></div>; }
+        return <Alert key={i} data-color="danger"><Paragraph data-size="sm">{unknown} <code>:::{b.name}{b.attrs.type ? ` type="${b.attrs.type}"` : ''}</code></Paragraph></Alert>;
       }
       default: return null;
     }

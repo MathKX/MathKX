@@ -1,35 +1,15 @@
-// Deterministic mathematical domain logic: parsing, validation and feedback codes.
-// UI components render these results; they never decide correctness themselves.
-
-/** Parse a learner's typed answer into an integer. */
-export function parseAnswer(raw, { variable } = {}) {
-  const original = (raw ?? '').toString();
-  let s = original.trim().replace(/−/g, '-').replace(/\s+/g, ' ');
-  if (s === '') return { ok: false, reason: 'empty' };
-  if (variable) {
-    const re = new RegExp(`^${variable}\\s*=\\s*`, 'i');
-    s = s.replace(re, '');
-  }
-  s = s.replace(/\s/g, '');
-  // Integer, or a decimal that is a whole number ("8,0" / "8.0")
-  if (/^-?\d+([.,]0+)?$/.test(s)) return { ok: true, value: parseInt(s, 10) };
-  if (/^-?\d+[.,]\d+$/.test(s)) return { ok: true, value: Number(s.replace(',', '.')) };
-  if (/^[-\d\s+*x×·/=().,]+$/i.test(s) && /\d/.test(s) && /[+\-*×·/]/.test(s.slice(1))) {
-    return { ok: false, reason: 'expression' };
-  }
-  return { ok: false, reason: 'unparseable' };
-}
-
-// ---- Exercise kinds -------------------------------------------------------
+// Deterministic mathematical domain logic for the prototype: exercise kinds,
+// validation and misconception codes. UI components render results; they never
+// decide correctness themselves.
+import { parseNumber } from './numbers.js';
 
 export const kinds = {
   addition: {
     solve: (q) => q.a + q.b,
     expression: (q) => `${q.a} + ${q.b} = ?`,
+    plain: (q) => `${q.a} + ${q.b}`,
     spoken: (q) => ({ nb: `${q.a} pluss ${q.b} er lik hva?`, en: `${q.a} plus ${q.b} equals what?` }),
-    help: (q) => (q.a + q.b > 10 ? 'make-ten' : 'groups'),
     answerHint: 'ex.answerHintNumber',
-    /** Return a structured feedback object; text is resolved per language later. */
     evaluate(q, value) {
       const sum = q.a + q.b;
       if (value === sum) return { status: 'correct', code: 'correct', values: { a: q.a, b: q.b, sum } };
@@ -44,8 +24,8 @@ export const kinds = {
     // x + a = c
     solve: (q) => q.c - q.a,
     expression: (q) => `x + ${q.a} = ${q.c}`,
+    plain: (q) => `x + ${q.a} = ${q.c}`,
     spoken: (q) => ({ nb: `x pluss ${q.a} er lik ${q.c}. Hva er x?`, en: `x plus ${q.a} equals ${q.c}. What is x?` }),
-    help: () => 'balance',
     variable: 'x',
     answerHint: 'ex.answerHintX',
     evaluate(q, value) {
@@ -59,15 +39,15 @@ export const kinds = {
   },
 };
 
-export function evaluateAnswer(q, raw) {
+export function evaluateAnswer(q, raw, lang) {
   const kind = kinds[q.kind];
-  const parsed = parseAnswer(raw, { variable: kind.variable });
+  const parsed = parseNumber(raw, { lang, variable: kind.variable });
   if (!parsed.ok) return { status: 'input', code: parsed.reason, values: { raw: (raw ?? '').toString().trim() } };
   return kind.evaluate(q, parsed.value);
 }
 
-// Localized feedback for the domain codes. Kept next to the logic so that
-// translations stay aligned with the misconceptions they describe.
+// Localized feedback, kept beside the logic so translations stay aligned with
+// the misconceptions they describe.
 const FEEDBACK = {
   'add.oneGroup': {
     nb: '{v} er antallet i én av gruppene. Hvor mange blir det når du tar med begge gruppene?',

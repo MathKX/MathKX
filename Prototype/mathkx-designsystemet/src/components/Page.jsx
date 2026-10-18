@@ -18,13 +18,13 @@ export function Crumbs({ items }) {
   );
 }
 
-export function PageHead({ title, lead, crumbs, children, eyebrow }) {
+export function PageHead({ title, lead, crumbs, children, eyebrow, compact }) {
   return (
-    <div className="pt-6 pb-6 md:pt-10">
+    <div className={compact ? 'pt-4 pb-4' : 'pt-6 pb-6 md:pt-10'}>
       <Crumbs items={crumbs} />
       {eyebrow}
-      <Heading level={1} data-size="lg" tabIndex={-1}>{title}</Heading>
-      {lead && <Paragraph data-size="lg" className="mt-3 max-w-[42rem]" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{lead}</Paragraph>}
+      <Heading level={1} data-size={compact ? 'sm' : 'lg'} tabIndex={-1}>{title}</Heading>
+      {lead && <Paragraph data-size="lg" className="mkx-page-head-lead mt-3 max-w-[42rem]" style={{ color: 'var(--ds-color-neutral-text-subtle)' }}>{lead}</Paragraph>}
       {children}
     </div>
   );

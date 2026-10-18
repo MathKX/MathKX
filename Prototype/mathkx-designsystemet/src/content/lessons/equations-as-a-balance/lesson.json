@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../../schemas/lesson.schema.json (proposed, not yet written)",
+  "id": "equations-as-a-balance",
+  "version": 2,
+  "status": "prototype",
+  "skills": ["algebra.equality-meaning", "algebra.solve-x-plus-a", "algebra.check-solution"],
+  "prerequisites": ["arithmetic.add-within-20", "arithmetic.subtraction-within-20"],
+  "related": ["arithmetic.number-bonds-10", "algebra.linear-equations"],
+  "practice": [{ "skill": "algebra.solve-x-plus-a", "variant": "to-10" }],
+  "check": "check-linear",
+  "visuals": ["balance"],
+  "translations": { "nb": "nb.md", "en": "en.md" }
+}

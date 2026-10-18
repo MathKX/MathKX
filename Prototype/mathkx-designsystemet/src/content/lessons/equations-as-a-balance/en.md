@@ -1,12 +1,6 @@
 ---
-id: algebra.equations-as-a-balance
-lang: en
 title: Equations as a balance – x + 3 = 7
 objective: You will learn to find an unknown number in an equation by doing the same thing to both sides, and to check your answer.
-skills: algebra.equality-meaning, algebra.solve-x-plus-a, algebra.check-solution
-related: arithmetic.number-bonds-10, arithmetic.subtraction-within-20, algebra.linear-equations
-practice: linear-balance
-check: check-linear
 ---
 
 ## What does x + 3 = 7 mean? {#meaning}
@@ -21,7 +15,8 @@ Imagine a pair of scales that is level. On the left there is a box holding x one
 
 If you remove the same amount from both sides, the scales stay level. Go through the steps:
 
-{{balance a=3 c=7}}
+:::visual{type="balance" a="3" c="7"}
+:::
 
 ## Do the same to both sides {#both-sides}
 
@@ -37,7 +32,7 @@ Put your answer back into the original equation. If both sides are equal, the an
 
 $$4 + 3 = 7$$
 
-:::example Example: x + 5 = 9 {#example}
+:::example{title="Example: x + 5 = 9" id="example"}
 1. Subtract 5 from both sides: $x + 5 − 5 = 9 − 5$.
 2. Now x is on its own: $x = 4$.
 3. Check: $4 + 5 = 9$. It works.
@@ -46,3 +41,8 @@ $$4 + 3 = 7$$
 ## A common mistake {#mistake}
 
 Some people add 3 instead of subtracting, and get $x = 10$. The check reveals it: $10 + 3 = 13$, not 7. Substituting your answer is a good habit, however you solved the equation.
+
+## Practise {#practice}
+
+:::practice{skill="algebra.solve-x-plus-a" variant="to-10"}
+:::

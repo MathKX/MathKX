@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, ToggleGroup, SkipLink, Link, Paragraph } from '@digdir/designsystemet-react';
 import { MenuHamburgerIcon, XMarkIcon, PersonCircleIcon } from '@navikt/aksel-icons';
 import { useStore, useRoute } from './store.jsx';
+import { Switch } from '@digdir/designsystemet-react';
 import { Landing } from './pages/Landing.jsx';
 import { Library, DomainPage, TopicPage } from './pages/Library.jsx';
 import { LessonPage } from './pages/Lesson.jsx';
-import { PracticePage, CheckPage } from './pages/Practice.jsx';
-import { CreateProfile, SignIn, Recovery, Settings } from './pages/Profile.jsx';
-import { Home } from './pages/Home.jsx';
+import { PracticePage, CheckPage, SessionSummary } from './pages/Practice.jsx';
+import { DerivativePreview } from './pages/Preview.jsx';
+import { CreateProfile, SignIn, Recovery, Settings, SetupBanner } from './pages/Profile.jsx';
+import { Home, ProgressPage } from './pages/Home.jsx';
 import { About } from './pages/About.jsx';
 
 export const REPO_URL = 'https://github.com/MathKX/MathKX';
@@ -40,12 +42,12 @@ function Header({ path }) {
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
   const links = [
-    { href: '#/library', label: t('nav.library'), active: /^\/(library|domain|topic|lesson|practice|check)/.test(path) },
+    { href: '#/library', label: t('nav.library'), active: /^\/(library|domain|topic|lesson|practice|check|preview)/.test(path) },
     { href: '#/about', label: t('nav.about'), active: path.startsWith('/about') },
   ];
   const profileLink = profile
-    ? { href: '#/home', label: t('nav.myPage'), active: path.startsWith('/home') || path.startsWith('/settings') }
-    : { href: '#/signin', label: t('nav.signIn'), active: path.startsWith('/signin') };
+    ? { href: '#/home', label: t('nav.myPage'), active: /^\/(home|settings|progress)/.test(path) }
+    : { href: '#/home', label: t('nav.myLearning'), active: /^\/(home|progress)/.test(path) };
   return (
     <header className="sticky z-20 border-b" style={{ top: 'env(safe-area-inset-top, 0px)', background: 'color-mix(in srgb, var(--ds-color-neutral-background-default) 94%, transparent)', backdropFilter: 'blur(8px)', borderColor: 'var(--ds-color-neutral-border-subtle)' }}>
       <div className="mkx-container flex items-center gap-3 py-2 min-h-16">
@@ -60,9 +62,10 @@ function Header({ path }) {
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitch />
           <div className="hidden lg:flex items-center gap-2">
-            <Button variant={profile ? 'tertiary' : 'secondary'} asChild aria-current={profileLink.active ? 'page' : undefined}>
+            <Button variant="tertiary" asChild aria-current={profileLink.active ? 'page' : undefined}>
               <a href={profileLink.href}><PersonCircleIcon aria-hidden="true" fontSize="1.4rem" />{profileLink.label}</a>
             </Button>
+            {!profile && <Button variant="secondary" asChild aria-current={path.startsWith('/signin') ? 'page' : undefined}><a href="#/signin">{t('nav.signIn')}</a></Button>}
             {!profile && <Button asChild><a href="#/profile/new">{t('nav.createProfile')}</a></Button>}
           </div>
           <Button className="lg:hidden" variant="tertiary" icon aria-expanded={open} aria-controls="mobile-nav" aria-label={open ? t('nav.closeMenu') : t('nav.menu')} onClick={() => setOpen((o) => !o)}>
@@ -75,6 +78,7 @@ function Header({ path }) {
           {[{ href: '#/', label: t('nav.home') }, ...links, profileLink].map((l) => (
             <li key={l.href}><Button variant="tertiary" asChild className="w-full justify-start" aria-current={l.active ? 'page' : undefined}><a href={l.href}>{l.label}</a></Button></li>
           ))}
+          {!profile && <li><Button variant="tertiary" asChild className="w-full justify-start"><a href="#/signin">{t('nav.signIn')}</a></Button></li>}
           {!profile && <li className="pt-2"><Button asChild className="w-full"><a href="#/profile/new">{t('nav.createProfile')}</a></Button></li>}
         </ul>
       </nav>
@@ -101,13 +105,60 @@ function Footer() {
   );
 }
 
+// ---- On-screen keyboard: real detection + labelled simulation -------------------
+function useKeyboardState(sim) {
+  useEffect(() => {
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    const update = () => {
+      const real = vv ? vv.height < window.innerHeight * 0.78 : false;
+      root.setAttribute('data-kbd', sim || real ? 'open' : 'closed');
+    };
+    update();
+    vv?.addEventListener('resize', update);
+    return () => vv?.removeEventListener('resize', update);
+  }, [sim]);
+}
+
+function typeIntoAnswer(key) {
+  const el = document.activeElement?.matches?.('[data-answer-input], input') ? document.activeElement : document.querySelector('[data-answer-input]');
+  if (!el || el.readOnly) return;
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+  const v = el.value;
+  setter.call(el, key === 'back' ? v.slice(0, -1) : v + key);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function KeyboardSim() {
+  const { t, dispatch } = useStore();
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.', '−', 'x', '=', ' '];
+  return (
+    <div className="mkx-kbd" role="group" aria-label={t('kbd.label')}>
+      <div className="flex flex-wrap items-center justify-between gap-2 max-w-[60rem] mx-auto mb-2">
+        <span className="text-sm font-semibold">{t('kbd.label')}</span>
+        <button type="button" className="mkx-kbd-key px-4 text-base" onMouseDown={(e) => e.preventDefault()} onClick={() => dispatch({ type: 'kbdSim', on: false })}>{t('kbd.close')}</button>
+      </div>
+      <div className="mkx-kbd-keys">
+        {keys.map((k) => (
+          <button key={k} type="button" className="mkx-kbd-key" onMouseDown={(e) => e.preventDefault()} onClick={() => typeIntoAnswer(k === '−' ? '-' : k)} aria-label={k === ' ' ? t('kbd.space') : k}>{k === ' ' ? '␣' : k}</button>
+        ))}
+        <button type="button" className="mkx-kbd-key" style={{ gridColumn: 'span 2' }} onMouseDown={(e) => e.preventDefault()} onClick={() => typeIntoAnswer('back')} aria-label={t('kbd.back')}>⌫</button>
+        <button type="button" className="mkx-kbd-key" style={{ gridColumn: 'span 2' }} onMouseDown={(e) => e.preventDefault()}
+          onClick={() => document.querySelector('[data-answer-input]')?.form?.requestSubmit()}>{t('kbd.done')}</button>
+      </div>
+    </div>
+  );
+}
+
 function NotFound() {
   return <div className="mkx-container py-12"><h1 tabIndex={-1}>404</h1><Link href="#/">MathKX</Link></div>;
 }
 
 export function App() {
-  const { path, parts } = useRoute();
-  const { t } = useStore();
+  const { path, parts, query } = useRoute();
+  const { t, state, dispatch } = useStore();
+  useKeyboardState(state.kbdSim);
+  const exerciseRoute = /^\/(practice|check|preview)/.test(path) && !path.includes('/summary/');
   const mainRef = useRef(null);
   const first = useRef(true);
 
@@ -127,7 +178,9 @@ export function App() {
     case 'domain': page = <DomainPage id={b} />; break;
     case 'topic': page = <TopicPage id={b} />; break;
     case 'lesson': page = <LessonPage id={b} />; break;
-    case 'practice': page = <PracticePage id={b} />; break;
+    case 'practice': page = parts[2] === 'summary' ? <SessionSummary skillId={b} sessionId={parts[3]} /> : <PracticePage key={b} skillId={b} query={query} />; break;
+    case 'progress': page = <ProgressPage skillId={b} query={query} />; break;
+    case 'preview': page = <DerivativePreview />; break;
     case 'check': page = <CheckPage id={b} />; break;
     case 'profile': page = <CreateProfile />; break;
     case 'signin': page = <SignIn />; break;
@@ -142,11 +195,18 @@ export function App() {
     <div className="min-h-screen flex flex-col">
       <SkipLink href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>{t('nav.skip')}</SkipLink>
       <section aria-label={t('proto.tag')} className="text-sm py-2" style={{ background: 'var(--ds-color-ochre-surface-tinted)', color: 'var(--ds-color-ochre-text-default)' }}>
-        <p className="mkx-container m-0"><strong>{t('proto.tag')}.</strong> {t('proto.banner').replace(/^Prototype:\s*/, '')}</p>
+        <div className="mkx-container flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+          <p className="m-0"><strong>{t('proto.tag')}.</strong> {t('proto.banner').replace(/^Prototype:\s*/, '')}</p>
+          {exerciseRoute && <Switch data-size="sm" label={t('kbd.toggle')} checked={state.kbdSim} onChange={(e) => dispatch({ type: 'kbdSim', on: e.target.checked })} />}
+        </div>
       </section>
       <Header path={path} />
-      <main id="main" ref={mainRef} className="flex-1" tabIndex={-1}>{page}</main>
-      <Footer />
+      <main id="main" ref={mainRef} className="flex-1" tabIndex={-1} style={state.kbdSim ? { paddingBottom: '26rem' } : undefined}>
+        {!/^\/profile/.test(path) && <div className="mkx-container pt-3 empty:hidden"><SetupBanner /></div>}
+        {page}
+      </main>
+      {!state.kbdSim && <Footer />}
+      {state.kbdSim && <KeyboardSim />}
     </div>
   );
 }

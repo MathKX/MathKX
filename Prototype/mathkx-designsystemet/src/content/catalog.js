@@ -1,9 +1,16 @@
 // Sample content catalog: domains -> topics -> skills -> lessons and exercises.
 // Stable, language-neutral IDs; display text is localized.
-import bondsNb from './lessons/number-bonds-to-ten.nb.md?raw';
-import bondsEn from './lessons/number-bonds-to-ten.en.md?raw';
-import balanceNb from './lessons/equations-as-a-balance.nb.md?raw';
-import balanceEn from './lessons/equations-as-a-balance.en.md?raw';
+// Lessons follow the proposed folder layout: <lesson-id>/lesson.json, nb.md, en.md, assets/.
+import bondsMeta from './lessons/number-bonds-to-ten/lesson.json';
+import bondsMetaRaw from './lessons/number-bonds-to-ten/lesson.json?raw';
+import bondsNb from './lessons/number-bonds-to-ten/nb.md?raw';
+import bondsEn from './lessons/number-bonds-to-ten/en.md?raw';
+import bondsAsset from './lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg?url';
+import bondsAssetRaw from './lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg?raw';
+import balanceMeta from './lessons/equations-as-a-balance/lesson.json';
+import balanceMetaRaw from './lessons/equations-as-a-balance/lesson.json?raw';
+import balanceNb from './lessons/equations-as-a-balance/nb.md?raw';
+import balanceEn from './lessons/equations-as-a-balance/en.md?raw';
 
 const S = {
   primary: { nb: 'barneskolen', en: 'primary school' },
@@ -101,7 +108,7 @@ export const domains = [
     range: { nb: 'Fra videregående til universitet', en: 'From upper secondary to university' },
     topics: [
       t('calculus.limits', 'Grenseverdier', 'Limits', S.upper),
-      t('calculus.derivatives', 'Derivasjon', 'Differentiation', S.upper),
+      t('calculus.derivatives', 'Derivasjon', 'Differentiation', S.upper, { status: 'design-preview', href: '#/preview/derivative' }),
       t('calculus.integrals', 'Integrasjon', 'Integration', S.upper),
       t('calculus.series', 'Følger og rekker', 'Sequences and series', S.uni),
       t('calculus.odes', 'Differensiallikninger', 'Differential equations', S.uni),
@@ -143,7 +150,7 @@ export const topicDetails = {
       { id: 'arithmetic.add-make-ten', title: { nb: 'Addere ved å fylle opp til 10', en: 'Add by making ten' } },
     ],
     lessons: ['number-bonds-to-ten'],
-    practice: 'addition-visual',
+    practice: 'arithmetic.add-within-20',
     check: 'check-addition',
   },
   'algebra.linear-equations-one-step': {
@@ -163,67 +170,50 @@ export const topicDetails = {
       { id: 'algebra.check-solution', title: { nb: 'Sjekke en løsning', en: 'Check a solution' } },
     ],
     lessons: ['equations-as-a-balance'],
-    practice: 'linear-balance',
+    practice: 'algebra.solve-x-plus-a',
     check: 'check-linear',
   },
 };
 
 export const lessons = {
   'number-bonds-to-ten': {
-    id: 'number-bonds-to-ten', topic: 'arithmetic.addition-within-20', minutes: 8,
-    path: 'content/lessons/arithmetic/number-bonds-to-ten/{lang}.md',
+    id: 'number-bonds-to-ten', meta: bondsMeta, topic: 'arithmetic.addition-within-20', minutes: 8,
+    files: { 'lesson.json': bondsMetaRaw, 'nb.md': bondsNb, 'en.md': bondsEn, 'assets/ten-frame-3-7.svg': bondsAssetRaw },
     source: { nb: bondsNb, en: bondsEn },
+    assets: { 'assets/ten-frame-3-7.svg': bondsAsset },
   },
   'equations-as-a-balance': {
-    id: 'equations-as-a-balance', topic: 'algebra.linear-equations-one-step', minutes: 7,
-    path: 'content/lessons/algebra/equations-as-a-balance/{lang}.md',
+    id: 'equations-as-a-balance', meta: balanceMeta, topic: 'algebra.linear-equations-one-step', minutes: 7,
+    files: { 'lesson.json': balanceMetaRaw, 'nb.md': balanceNb, 'en.md': balanceEn },
     source: { nb: balanceNb, en: balanceEn },
+    assets: {},
   },
 };
+export const lessonPath = (id, file = '') => `content/lessons/${id}/${file}`;
 
-// Reviewed example question sets (stand-ins for generated exercise families).
-export const practiceSets = {
-  'addition-visual': {
-    id: 'addition-visual', topic: 'arithmetic.addition-within-20', lesson: 'number-bonds-to-ten',
-    title: { nb: 'Addisjon med visuell hjelp', en: 'Addition with visual help' },
-    questions: [
-      { id: 'add-4-4', kind: 'addition', a: 4, b: 4 },
-      { id: 'add-3-5', kind: 'addition', a: 3, b: 5 },
-      { id: 'add-6-4', kind: 'addition', a: 6, b: 4 },
-      { id: 'add-2-7', kind: 'addition', a: 2, b: 7 },
-      { id: 'add-8-5', kind: 'addition', a: 8, b: 5 },
-    ],
-  },
-  'linear-balance': {
-    id: 'linear-balance', topic: 'algebra.linear-equations-one-step', lesson: 'equations-as-a-balance',
-    title: { nb: 'Likninger med vekt som hjelp', en: 'Equations with a balance as help' },
-    questions: [
-      { id: 'lin-3-7', kind: 'linear', a: 3, c: 7 },
-      { id: 'lin-5-9', kind: 'linear', a: 5, c: 9 },
-      { id: 'lin-2-8', kind: 'linear', a: 2, c: 8 },
-      { id: 'lin-6-10', kind: 'linear', a: 6, c: 10 },
-    ],
-  },
-};
-
+// Self-checks: a fixed, reviewed set with a stated scope and support policy.
+const add = (id, a, b) => ({ id, kind: 'addition', a, b, variant: 'check', help: a + b > 10 ? 'make-ten' : 'groups', explanation: a + b > 10 ? 'make-ten' : 'groups' });
+const lin = (id, a, c) => ({ id, kind: 'linear', a, c, variant: 'check', help: 'balance', explanation: 'balance' });
 export const checks = {
   'check-addition': {
-    id: 'check-addition', topic: 'arithmetic.addition-within-20', lesson: 'number-bonds-to-ten',
+    id: 'check-addition', topic: 'arithmetic.addition-within-20', lesson: 'number-bonds-to-ten', skill: 'arithmetic.add-within-20',
     title: { nb: 'Tiervenner og addisjon', en: 'Number bonds and addition' },
+    scope: { nb: 'Addisjon innenfor ti og over tieren', en: 'Addition within ten and across ten' },
     questions: [
-      { id: 'chk-add-7-3', kind: 'addition', a: 7, b: 3, section: 'pairs' },
-      { id: 'chk-add-5-4', kind: 'addition', a: 5, b: 4, section: 'ten-frame' },
-      { id: 'chk-add-8-5', kind: 'addition', a: 8, b: 5, section: 'why' },
-      { id: 'chk-add-9-4', kind: 'addition', a: 9, b: 4, section: 'try' },
+      { ...add('chk-add-7-3', 7, 3), section: 'pairs' },
+      { ...add('chk-add-5-4', 5, 4), section: 'ten-frame' },
+      { ...add('chk-add-8-5', 8, 5), section: 'why' },
+      { ...add('chk-add-9-4', 9, 4), section: 'try' },
     ],
   },
   'check-linear': {
-    id: 'check-linear', topic: 'algebra.linear-equations-one-step', lesson: 'equations-as-a-balance',
+    id: 'check-linear', topic: 'algebra.linear-equations-one-step', lesson: 'equations-as-a-balance', skill: 'algebra.solve-x-plus-a',
     title: { nb: 'Likninger i ett steg', en: 'One-step equations' },
+    scope: { nb: 'Likninger av typen x + a = b', en: 'Equations of the form x + a = b' },
     questions: [
-      { id: 'chk-lin-4-9', kind: 'linear', a: 4, c: 9, section: 'both-sides' },
-      { id: 'chk-lin-2-7', kind: 'linear', a: 2, c: 7, section: 'check' },
-      { id: 'chk-lin-7-10', kind: 'linear', a: 7, c: 10, section: 'balance' },
+      { ...lin('chk-lin-4-9', 4, 9), section: 'both-sides' },
+      { ...lin('chk-lin-2-7', 2, 7), section: 'check' },
+      { ...lin('chk-lin-7-10', 7, 10), section: 'balance' },
     ],
   },
 };
@@ -236,15 +226,13 @@ export function findTopic(id) {
   return null;
 }
 export const findDomain = (id) => domains.find((d) => d.id === id);
-export const allQuestions = () => {
-  const map = {};
-  for (const s of [...Object.values(practiceSets), ...Object.values(checks)]) for (const q of s.questions) map[q.id] = { ...q, set: s.id };
-  return map;
-};
 
 // Skill registry used for "related skills" links. A skill links to where it is taught.
-export const skills = {
-  'arithmetic.add-within-10': { title: { nb: 'Addere innenfor 10', en: 'Add within 10' }, href: '#/practice/addition-visual' },
+export const skillLinks = {
+  'arithmetic.add-within-10': { title: { nb: 'Addisjon innenfor ti', en: 'Addition within ten' }, href: '#/practice/arithmetic.add-within-20?variant=within-10' },
+  'arithmetic.add-within-20': { title: { nb: 'Addisjon innenfor 20', en: 'Addition within 20' }, href: '#/topic/arithmetic.addition-within-20' },
+  'arithmetic.counting-to-20': { title: { nb: 'Telle til 20', en: 'Counting to 20' }, preview: true, href: '#/domain/arithmetic' },
+  'arithmetic.meaning-of-plus': { title: { nb: 'Hva et plusstegn betyr', en: 'What a plus sign means' }, preview: true, href: '#/domain/arithmetic' },
   'arithmetic.number-bonds-10': { title: { nb: 'Tiervenner', en: 'Number bonds to ten' }, href: '#/lesson/number-bonds-to-ten' },
   'arithmetic.add-make-ten': { title: { nb: 'Addere ved å fylle opp til 10', en: 'Add by making ten' }, href: '#/lesson/number-bonds-to-ten' },
   'arithmetic.subtraction-within-20': { title: { nb: 'Subtraksjon innenfor 20', en: 'Subtraction within 20' }, preview: true, href: '#/domain/arithmetic' },

@@ -72,7 +72,7 @@
 
   .mkx-steps { counter-reset: step; }
   .mkx-code { font-family: var(--font-mono); font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; background: var(--ds-color-neutral-background-tinted); border: 1px solid var(--ds-color-neutral-border-subtle); border-radius: 0.75rem; padding: 1rem; max-height: 55vh; overflow: auto; }
-  .mkx-id { font-family: var(--font-mono); font-size: clamp(1.4rem, 6vw, 2rem); letter-spacing: 0.08em; font-weight: 500; }
+  .mkx-id { font-family: var(--font-mono); font-size: clamp(1.2rem, 4.6vw, 1.85rem); letter-spacing: 0.06em; font-weight: 500; white-space: nowrap; }
 
   /* Lesson table */
   .mkx-table { border-collapse: collapse; }
@@ -86,4 +86,36 @@
     .mkx-fade { animation: mkx-fade .25s ease-out; }
     @keyframes mkx-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   }
+}
+
+/* ---- Exercise workspace (iteration 2) ---- */
+@layer mathkx {
+  .mkx-workspace { display: grid; gap: 1rem; align-items: start; }
+  @media (min-width: 62rem) {
+    .mkx-workspace[data-panel='open'] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  }
+  .mkx-ws-task { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+  .mkx-ws-panel { min-width: 0; }
+  .mkx-ws-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 2rem; }
+  .mkx-ws-prompt { display: flex; flex-direction: column; gap: 0.25rem; }
+  .mkx-ws-answer { display: flex; align-items: flex-end; gap: 0.75rem; flex-wrap: wrap; }
+  .mkx-workspace[data-panel='open'] .mkx-expr { font-size: clamp(2rem, 5.5vw, 2.75rem); }
+  html[data-kbd='open'] .mkx-expr { font-size: 2rem; }
+  html[data-kbd='open'] .mkx-ws-task { gap: 0.6rem; }
+  html[data-kbd='open'] .mkx-page-head-lead { display: none; }
+
+  .mkx-kbd {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    padding: 0.5rem max(0.5rem, env(safe-area-inset-left, 0px)) calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    background: var(--ds-color-neutral-surface-tinted); border-top: 1px solid var(--ds-color-neutral-border-default);
+    min-height: clamp(16rem, 32vh, 24rem); /* roughly an iPad keyboard; simulation only */
+  }
+  .mkx-kbd-keys { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 0.4rem; max-width: 60rem; margin-inline: auto; }
+  .mkx-kbd-key { min-height: 3.5rem; border-radius: 0.5rem; border: 1px solid var(--ds-color-neutral-border-subtle); background: var(--ds-color-neutral-background-default); color: var(--ds-color-neutral-text-default); font: inherit; font-size: 1.25rem; }
+  .mkx-kbd-key:focus-visible { outline: 3px solid var(--ds-color-focus-outer); }
+
+  .mkx-notation-error { border: 1px dashed var(--ds-color-danger-border-default); border-radius: 0.375rem; padding: 0 0.35rem; color: var(--ds-color-danger-text-default); }
+
+  .mkx-sample { border: 2px dashed var(--ds-color-ochre-border-strong); border-radius: 1rem; padding: 1rem; }
+  .mkx-outcome-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; background: var(--ds-color-neutral-background-tinted); }
 }

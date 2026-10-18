@@ -1,1 +1,26 @@
-{"name":"mathkx-prototype","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"vite build"},"dependencies":{"@digdir/designsystemet-css":"^1.23.0","@digdir/designsystemet-react":"^1.23.0","@navikt/aksel-icons":"^8.18.0","react":"^19.3.0","react-dom":"^19.3.0"},"devDependencies":{"@digdir/designsystemet":"^1.23.0","@tailwindcss/vite":"^4.3.3","@vitejs/plugin-react":"^6.1.1","tailwindcss":"^4.3.3","vite":"^8.3.2","vite-plugin-singlefile":"^2.3.3"}}
+{
+  "name": "mathkx-prototype",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node --test tests/domain.test.mjs"
+  },
+  "dependencies": {
+    "@digdir/designsystemet-css": "^1.23.0",
+    "@digdir/designsystemet-react": "^1.23.0",
+    "@navikt/aksel-icons": "^8.18.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@digdir/designsystemet": "^1.23.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.2",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}
