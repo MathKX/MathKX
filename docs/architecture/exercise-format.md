@@ -100,7 +100,7 @@ Identifiers and generator names are language-neutral. The example contains Engli
 
 ## Validation today
 
-[`schemas/exercise.schema.json`](../../schemas/exercise.schema.json) deliberately validates only the small illustrative shape. It does not verify that referenced skills or generators exist, that generated values are safe, or that answers validate correctly. Those checks belong to later semantic tooling.
+[`schemas/exercise.schema.json`](../../schemas/exercise.schema.json) deliberately validates only the small illustrative shape. The validation script in [`tools/validate-content.mjs`](../../tools/validate-content.mjs), run locally with `npm run validate` and in CI on every pull request, additionally checks that the definition's `skill` resolves to a skill defined under [`content/skills/`](../../content/skills/) and that the skill prerequisite graph is acyclic. It does not verify that generators exist, that generated values are safe, or that answers validate correctly. Those checks belong to later semantic tooling.
 
 The checked-in example is at [`content/exercises/examples/linear-equation-basic.json`](../../content/exercises/examples/linear-equation-basic.json).
 
