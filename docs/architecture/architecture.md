@@ -75,7 +75,7 @@ The current validation script under `tools/` checks JSON schemas, unique skill I
 - Accessibility requirements apply to every interaction, including mathematical visualizations.
 - Learner profiles must support sign-in and saved progress across sessions and devices without required personal details. Email recovery is optional; see ADR 0006 below.
 - Learner privacy favors minimal collection and no advertising profiling. Anonymous profile setup does not establish complete anonymity for network traffic or operational data.
-- Authentication mechanisms, persistence technology, hosting, AI usage, and production infrastructure remain outside the current architecture decision set. Durable progress storage is required for profiles; its implementation is undecided.
+- Profiles and progress are stored in PostgreSQL (ADR 0008), and the application is hosted on Azure App Service in Norway East (ADR 0009), so learner data stays in that region. Authentication mechanisms, session handling, retention and deletion rules, and AI usage remain outside the current architecture decision set.
 
 ## Decision records
 
@@ -88,6 +88,8 @@ Accepted decisions are documented in:
 - [ADR 0005: Separate exercise capability dimensions](decisions/0005-separate-exercise-capability-dimensions.md)
 - [ADR 0006: Support profiles without personal details](decisions/0006-support-profiles-without-personal-details.md)
 - [ADR 0007: Use Designsystemet and Tailwind for the web UI](decisions/0007-use-designsystemet-and-tailwind.md)
+- [ADR 0008: Store profiles and progress in PostgreSQL](decisions/0008-store-profiles-and-progress-in-postgresql.md)
+- [ADR 0009: Host on Azure App Service in Norway East](decisions/0009-host-on-azure-app-service.md)
 
 The [seed and random-source proposal](proposals/seed-and-random-source.md) is retained for evaluation with the first generator. It is not an accepted ADR or a finalized compatibility contract.
 
@@ -96,8 +98,8 @@ The [seed and random-source proposal](proposals/seed-and-random-source.md) is re
 - Backend project boundaries and domain interfaces
 - Exercise Format v1 and its compatibility rules
 - Generator and validator registration and versioning
-- Persistence and database technology
+- Database schema, retention, and deletion rules within PostgreSQL (ADR 0008)
 - Localization storage and delivery
 - Authentication and recovery mechanisms, and learner/parent/teacher relationships
-- Deployment and hosting
+- Operational monitoring, infrastructure as code, and service tiers on Azure (ADR 0009)
 - Whether content or visualizations ever warrant separate repositories
