@@ -1,0 +1,6 @@
+{
+  "$schema": "../../schemas/skill.schema.json",
+  "schemaVersion": "0.1",
+  "id": "geometry.pythagorean-theorem",
+  "prerequisites": ["numbers.square-roots", "geometry.area-perimeter"]
+}

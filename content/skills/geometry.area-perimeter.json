@@ -1,0 +1,6 @@
+{
+  "$schema": "../../schemas/skill.schema.json",
+  "schemaVersion": "0.1",
+  "id": "geometry.area-perimeter",
+  "prerequisites": ["numbers.integer-operations"]
+}
