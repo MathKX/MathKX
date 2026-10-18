@@ -16,6 +16,7 @@ The [exercise capability model](../architecture/exercise-capability-model.md#9-m
 - Uncertainty should be represented honestly; absence of evidence is not evidence of failure.
 - A temporary mistake should not erase established progress.
 - Practice should not become repetitive simply to increase a score.
+- Learners may request more practice, repeat familiar work, or adjust challenge. These choices alone do not increase or decrease mastery; interpret the actual task and response evidence, with support context, through the future learning model.
 - Revisited prerequisites should remain connected to the learner's stated goal.
 - Any mastery algorithm needs tests, observable behavior, and a documented rationale.
 

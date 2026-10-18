@@ -17,6 +17,42 @@ Formal examinations, invigilation, certificates, and institutional grading are n
 
 Learners should be able to request [visual help](exercise-experience.md#visual-help-on-request) during practice and supported self-checks where a model clarifies the task. Independent checks must make any transition to supported work explicit. Teaching support and accessibility accommodations are separate concerns; help use is recorded without automatically treating it as failure.
 
+## Authored and generated content
+
+MathKX supports both reviewed authored material and generated exercise instances. Authors can choose a fixed example or task when its particular values, explanation, dataset, or reasoning matter. They can also define an exercise family whose variations are produced by a named, deterministic generator in tested domain code. Fixed tasks, including investigations and proofs, do not need artificial randomization to be valid content.
+
+For example, a lesson can explain the authored example `4 + 4 = 8`, then offer generated addition questions within a reviewed range. Validation and any supplied hints, explanations, or visual models must match the generated question. Generation does not require AI, and the format must not force authored tasks through a generator.
+
+## More practice and learner control
+
+Learners can always request more practice for supported skills, including after completing a lesson, a practice session, or a self-check. Do not impose a lifetime exercise-count limit or lock practice because a skill is considered mastered. Session lengths can remain bounded; completing a session offers another session rather than making the learner continue indefinitely.
+
+Use clear actions, available in both first-release languages:
+
+| English | Norwegian Bokmål | Behavior |
+| --- | --- | --- |
+| Another question | En oppgave til | Continue with the selected skill and current challenge settings. |
+| More like this | Flere slike oppgaver | Prefer the same task family and comparable challenge, with other values or reviewed examples where available. |
+| Make it easier | Gjør det enklere | Request a less demanding supported variation; explain what changes. |
+| More challenge | Øk utfordringen | Request a more demanding supported variation; explain what changes. |
+| Check my understanding | Sjekk forståelsen min | Start a fresh, bounded self-check with an explicit scope and support policy. |
+
+Unlimited opportunities to practice do not promise infinitely many unique questions. A finite exercise family or authored collection will eventually repeat. Avoid recent repeats where practical, permit deliberate repetition, and explain when the available variants are exhausted. Offer repetition or related practice without silently switching the target skill or inventing unsupported content. An unsupported topic must be identified honestly rather than presented as an available generator.
+
+Recommendations may suggest moving on, revisiting a prerequisite, or taking a break, while leaving the learner in control. Further exercise count alone is not evidence of mastery.
+
+### Adjusting challenge
+
+Learners should be able to increase or decrease challenge during practice. Difficulty is relative to the task and learner, not a universal numbered ladder or a permanent label attached to a person. A change can involve number ranges and types, the number of reasoning steps, representation, unfamiliar context, or the amount of teaching support. Larger numbers alone do not define harder mathematics.
+
+Describe the change concretely, such as “Try addition within ten,” “Try adding across ten,” or “Include negative numbers.” If the change introduces a different objective or prerequisite skill, make that transition visible. Where no appropriate variation exists, explain the limit and offer relevant alternatives rather than generating outside reviewed constraints.
+
+Apply a requested challenge change to the next question by default, preserving the current answer and work. Keep visual help independently available according to the activity's support policy. Keyboard access, screen-reader support, zoom, and other accessibility accommodations must never be removed to increase difficulty.
+
+For a bounded self-check, establish the challenge and support policy before starting. A request to change them should explicitly start a different check or move into practice; it must not silently change what an existing result claims to measure.
+
+Record the actual task features and support used in the attempt context, separately from the learner's request for easier or harder work. That request does not itself establish ability or change mastery. Challenge selection must resolve to reproducible content: do not change generator parameters invisibly under the same definition ID, version, and seed. Exact variant encoding, difficulty calibration, and automatic adaptation remain open implementation decisions.
+
 ## Recommended lesson authoring approach
 
 Use version-controlled Markdown for authored explanations and worked examples, with a small metadata contract and controlled references to interactive components and exercise definitions. Render lessons within the MathKX learner experience so the learner can move between explanation, exploration, and practice without losing context.

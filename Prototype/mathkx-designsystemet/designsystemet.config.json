@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/@digdir/designsystemet/dist/config.schema.json",
+  "outDir": "./design-tokens",
+  "clean": true,
+  "themes": {
+    "mathkx": {
+      "colors": {
+        "accent": "#1F6B78",
+        "neutral": "#5C636B",
+        "ochre": "#B7772E"
+      },
+      "typography": { "fontFamily": "Atkinson Hyperlegible Next" },
+      "borderRadius": 8
+    }
+  }
+}

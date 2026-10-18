@@ -48,6 +48,8 @@ Mathematics does not belong to a particular curriculum. MathKX will represent sk
 
 Exercises should usually be reusable definitions capable of generating many deterministic instances. Content authors should be able to contribute useful material without needing deep application-code knowledge, while tested code handles mathematical logic that does not belong in data.
 
+Support reviewed authored examples and fixed tasks alongside generated practice. Learners can always ask for more practice in supported skills and request easier or more challenging variations. Finite question families may repeat; the goal is useful, learner-controlled practice rather than an endless count of supposedly unique questions. See [practice and challenge controls](design/learning-experience.md#more-practice-and-learner-control).
+
 ## Open collaboration
 
 MathKX is intended as an open-source project that developers, teachers, mathematics educators, translators, curriculum experts, students, and other contributors can improve together. Content should become discoverable, documented, schema-validated, testable, and reviewable through ordinary version-control workflows.

@@ -10,6 +10,8 @@ Completion is evidence of activity, not necessarily learning. Prefer experiences
 
 Difficulty should be responsive but purposeful. When a prerequisite gap blocks progress, help the learner repair it and reconnect the work to their original goal. Adaptation must remain explainable and should not trap a learner in endlessly easier material.
 
+Let learners request more practice and increase or decrease challenge within supported content. Explain what changes and preserve their work. Recommendations support learner choice; choosing easier work or repeating a familiar skill does not itself reduce mastery, and greater exercise count does not prove it.
+
 ## Make mathematics visible and interactive
 
 Use visual models and direct manipulation when they clarify a relationship or provide a meaningful way to answer. Do not add animation or interaction that distracts from the mathematical idea.

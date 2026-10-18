@@ -38,6 +38,10 @@ For the `4 + 4` example below, verify that a learner can focus the answer field,
 
 Hints should help a learner resume reasoning rather than immediately reveal an answer. Explanations should connect steps to concepts and may use a visualization or a different representation. Their exact content model and adaptation behavior are future decisions.
 
+## Continuing practice and changing challenge
+
+Provide a clear next-question action and learner controls for more similar practice, easier work, or more challenge. Follow the [practice and challenge policy](learning-experience.md#more-practice-and-learner-control): preserve current work, apply changes to the next question by default, identify changes of skill, and keep authored and generated tasks equally valid. A completed self-check should also offer further practice without altering the recorded check result.
+
 ## Visual help on request
 
 Visual explanations are a core teaching capability. Where a visual model clarifies the mathematics, an exercise should offer an explicit **Show visual help** action (**Vis visuell hjelp** in Norwegian Bokmål). Learners can answer directly or request the model before submitting; they do not need to make a mistake to receive help. Preserve their input and working when showing or hiding it.

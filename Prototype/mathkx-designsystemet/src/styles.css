@@ -1,0 +1,89 @@
+/* One documented entry point for Designsystemet + Tailwind (ADR 0007).
+   Layer order: Tailwind Preflight (base) < Designsystemet (ds) < Tailwind utilities.
+   Designsystemet therefore wins over Preflight, and layout utilities win over both. */
+@layer theme, base, ds, mathkx, components, utilities;
+
+@import '@digdir/designsystemet-css';
+@import './theme/mathkx.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+  --breakpoint-md: 46rem;   /* iPad portrait-ish and up */
+  --breakpoint-lg: 62rem;   /* iPad landscape / desktop */
+}
+
+@layer mathkx {
+  :root { --mkx-maxw: 72rem; --mkx-gutter: 1rem; --ds-font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; }
+  @media (min-width: 46rem) { :root { --mkx-gutter: 2rem; } }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
+  body {
+    margin: 0;
+    background: var(--ds-color-neutral-background-default);
+    color: var(--ds-color-neutral-text-default);
+    font-family: var(--ds-font-family);
+    line-height: 1.5;
+  }
+  .mkx-container { max-width: var(--mkx-maxw); margin-inline: auto; padding-inline: max(var(--mkx-gutter), env(safe-area-inset-left)); }
+  .mkx-prose { max-width: 42rem; }
+  .mkx-prose > * + * { margin-top: 1rem; }
+
+  /* Mathematics */
+  math { font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; font-size: 1.1em; }
+  math mi { font-family: Georgia, 'Times New Roman', serif; font-style: italic; }
+  math[display='block'] { font-size: 1.6em; margin-block: 1rem; }
+  .mkx-expr { font-size: clamp(2.25rem, 7vw, 3.5rem); font-weight: 600; letter-spacing: 0.02em; }
+  .mkx-expr math { font-size: 1em; }
+
+  /* Counters */
+  .mkx-counter {
+    --c-size: 2.75rem;
+    width: var(--c-size); height: var(--c-size); border-radius: calc(var(--c-size) * 0.22);
+    display: grid; place-items: center; font-weight: 700; font-size: 1.05rem;
+    box-sizing: border-box;
+  }
+  .mkx-counter[data-kind='a'] { background: var(--ds-color-accent-base-default); color: var(--ds-color-accent-base-contrast-default); border: 2px solid var(--ds-color-accent-base-default); }
+  .mkx-counter[data-kind='b'] {
+    background: var(--ds-color-ochre-surface-tinted);
+    color: var(--ds-color-ochre-text-default);
+    border: 3px solid var(--ds-color-ochre-border-strong);
+  }
+  .mkx-counter[data-kind='b']::before { content: ''; }
+  .mkx-counter[data-kind='empty'] { border: 2px dashed var(--ds-color-neutral-border-default); background: transparent; }
+  .mkx-counter[data-kind='removed'] {
+    border: 2px dashed var(--ds-color-neutral-border-default); color: var(--ds-color-neutral-text-subtle);
+    background: repeating-linear-gradient(135deg, transparent 0 6px, var(--ds-color-neutral-surface-hover) 6px 8px);
+  }
+  .mkx-counter[data-current='true'] { outline: 3px solid var(--ds-color-focus-outer); outline-offset: 2px; }
+  .mkx-counter .mkx-pip { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: currentColor; opacity: .55; }
+
+  .mkx-tenframe { display: grid; grid-template-columns: repeat(5, auto); gap: 0.4rem; padding: 0.6rem; border: 2px solid var(--ds-color-neutral-border-strong); border-radius: 0.9rem; background: var(--ds-color-neutral-background-default); width: max-content; }
+  .mkx-tenframe .mkx-counter { --c-size: clamp(2.2rem, 7vw, 2.9rem); }
+
+  .mkx-panel { background: var(--ds-color-neutral-background-tinted); border: 1px solid var(--ds-color-neutral-border-subtle); border-radius: 1rem; padding: 1.25rem; }
+  .mkx-panel-accent { background: var(--ds-color-accent-background-tinted); border: 1px solid var(--ds-color-accent-border-subtle); border-radius: 1rem; padding: 1.25rem; }
+
+  /* Balance */
+  .mkx-pan { min-height: 7.5rem; border: 2px solid var(--ds-color-neutral-border-strong); border-top: none; border-radius: 0 0 1.25rem 1.25rem; padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-content: flex-end; justify-content: center; background: var(--ds-color-neutral-surface-default); }
+  .mkx-xbox { min-width: 3.5rem; height: 4.25rem; border-radius: 0.6rem; display: grid; place-items: center; font: italic 700 1.6rem Georgia, serif; background: var(--ds-color-accent-base-default); color: var(--ds-color-accent-base-contrast-default); }
+  .mkx-unit { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: grid; place-items: center; font-weight: 700; background: var(--ds-color-ochre-surface-tinted); color: var(--ds-color-ochre-text-default); border: 3px solid var(--ds-color-ochre-border-strong); box-sizing: border-box; }
+  .mkx-unit[data-removed='true'] { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--ds-color-neutral-surface-hover) 6px 8px); border: 2px dashed var(--ds-color-neutral-border-default); color: var(--ds-color-neutral-text-subtle); text-decoration: line-through; }
+
+  .mkx-steps { counter-reset: step; }
+  .mkx-code { font-family: var(--font-mono); font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; background: var(--ds-color-neutral-background-tinted); border: 1px solid var(--ds-color-neutral-border-subtle); border-radius: 0.75rem; padding: 1rem; max-height: 55vh; overflow: auto; }
+  .mkx-id { font-family: var(--font-mono); font-size: clamp(1.4rem, 6vw, 2rem); letter-spacing: 0.08em; font-weight: 500; }
+
+  /* Lesson table */
+  .mkx-table { border-collapse: collapse; }
+  .mkx-table td, .mkx-table th { border: 1px solid var(--ds-color-neutral-border-subtle); padding: 0.5rem 1rem; text-align: center; }
+  .mkx-table th { background: var(--ds-color-neutral-background-tinted); font-weight: 600; }
+
+  :focus-visible { outline: 3px solid var(--ds-color-focus-outer); outline-offset: 2px; }
+  [tabindex='-1']:focus { outline: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mkx-fade { animation: mkx-fade .25s ease-out; }
+    @keyframes mkx-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  }
+}
