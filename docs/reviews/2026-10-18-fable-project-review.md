@@ -7,6 +7,21 @@
 
 This report is an outside analysis, not a decision record. Where it recommends something, the project's own ADR process in `docs/architecture/decisions/` remains the place to decide it.
 
+## Integration notes
+
+The report below is preserved as a historical review of `bfaefe8`, not as the current implementation plan. Foundation integration retains the repository hygiene files, contributor guidance, illustrative seven-skill registry, schema/reference/cycle validation, and CI. Validator regression tests now also cover conflicting exercise identities and invalid document shapes.
+
+The following current requirements take precedence over recommendations in this report:
+
+- [Profiles and optional email recovery](../architecture/decisions/0006-support-profiles-without-personal-details.md) require saved progress across sessions and devices. Section 7's local-storage-only recommendation is superseded; local state is sufficient only for a prototype, not the released profile feature.
+- The [vision](../vision.md) establishes coverage through university mathematics, Norwegian and English in the first release, and iPads as a primary learner device.
+- The [learning experience](../design/learning-experience.md) includes lessons, exploration, practice, and checks of understanding, with a proposed Markdown authoring workflow. [Visual help](../design/exercise-experience.md#visual-help-on-request) is available on request where appropriate.
+- [ADR 0007](../architecture/decisions/0007-use-designsystemet-and-tailwind.md) selects Designsystemet and Tailwind. Custom mathematics components retain their accessibility and domain boundaries.
+- The randomness work remains a [proposal](../architecture/proposals/seed-and-random-source.md), with rejection and boundary tests required before adoption. ADR numbers suggested in this historical report are not reserved.
+- The prototype's Pythagoras story and seed graph remain illustrative. They do not mandate the first lesson, a complete taxonomy, mastery percentages, or automatic prerequisite diagnosis. The first lesson/exercise slice should validate the bilingual, visual, touch-accessible learner journey alongside tested domain code.
+
+Licenses and a private conduct-reporting contact remain explicit maintainer decisions. No license or contact is inferred by this integration.
+
 ---
 
 ## 1. Summary
@@ -169,7 +184,7 @@ The prototype shows square roots moving from 41 to 68 percent and the Pythagorea
 ## 7. What I would not do yet
 
 - **Do not pick a mastery algorithm.** The slice should emit evidence events and display raw outcomes. A real learner using the system for a few weeks will say more about what mastery should mean than any model chosen now.
-- **Do not add authentication or persistence beyond local storage.** The first learner is one person on one device. Anonymous, local-first use is consistent with the privacy principle and avoids the largest category of premature infrastructure.
+- **Superseded recommendation — do not add authentication or persistence beyond local storage.** This was based on the old one-person, one-device assumption. See the integration notes and ADR 0006 for the current saved-profile requirement.
 - **Do not add a symbolic algebra engine.** Exact rationals and scalar validation carry the whole first slice. The model phases symbolic equivalence as "later" for good reasons.
 - **Do not write another large design document.** The capability model is sufficient input for v1. The next design artifact should be a schema or a type, produced because code needed it.
 - **Do not build an authoring tool.** Pull requests against JSON validated in CI are the authoring tool until there is content enough to need more.

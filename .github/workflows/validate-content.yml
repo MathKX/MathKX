@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate:
-    name: Schema and reference checks
+    name: Validator tests and content checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -27,3 +27,6 @@ jobs:
 
       - name: Validate content
         run: npm run validate
+
+      - name: Test validator regressions
+        run: npm test

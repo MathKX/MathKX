@@ -8,11 +8,12 @@ The repository will remain a monorepo. The intended application stack is:
 
 - ASP.NET Core and C# for backend capabilities and mathematical domain logic
 - React and TypeScript for the web learner experience and interactive visualizations
+- Designsystemet for standard UI components and theming, with Tailwind CSS for responsive layout and composition (ADR 0007)
 
 No application projects have been scaffolded yet. When implementation begins, a likely top-level organization is:
 
 ```text
-content/       versioned skills, exercise definitions, and curriculum mappings
+content/       versioned skills, exercises, and future lessons and curriculum mappings
 schemas/       machine-readable validation for contributed content
 tools/         repository tooling such as the content validation script
 src/backend/   .NET application and domain code (not yet created)
@@ -65,14 +66,16 @@ Content should be reviewable through normal pull requests and accessible to cont
 - safe, valid generator output; and
 - agreement between generated answers and validators.
 
-The first two checks exist: a validation script under `tools/` validates every content file against its schema, resolves skill references, and rejects prerequisite cycles. It runs locally with `npm run validate` and in GitHub Actions on every pull request. Generator, translation, and answer-agreement checks will be added as the things they check come into existence.
+The current validation script under `tools/` checks JSON schemas, unique skill IDs and exercise `(id, version)` pairs, skill references, and prerequisite cycles. Run it with `npm run validate`; run its regression tests with `npm test`. Both run in GitHub Actions on every pull request. Generator references, translation completeness, generated-value safety, and answer agreement are not yet checked.
 
 ## Cross-cutting constraints
 
 - Internationalization begins with stable identifiers and clean content boundaries; the localization storage mechanism is undecided.
+- Norwegian and English are first-release requirements for the learner interface and released learning content. Localized variants share skill, lesson, and exercise identities; switching language preserves progress and canonical mathematical state. See the [language scope](../vision.md#first-release-languages) for the working locale assumptions.
 - Accessibility requirements apply to every interaction, including mathematical visualizations.
-- Learner privacy favors minimal collection, anonymous use where practical, and no advertising profiling.
-- Authentication, persistence, hosting, AI usage, and production infrastructure remain outside the current architecture decision set.
+- Learner profiles must support sign-in and saved progress across sessions and devices without required personal details. Email recovery is optional; see ADR 0006 below.
+- Learner privacy favors minimal collection and no advertising profiling. Anonymous profile setup does not establish complete anonymity for network traffic or operational data.
+- Authentication mechanisms, persistence technology, hosting, AI usage, and production infrastructure remain outside the current architecture decision set. Durable progress storage is required for profiles; its implementation is undecided.
 
 ## Decision records
 
@@ -83,7 +86,10 @@ Accepted decisions are documented in:
 - [ADR 0003: Use data-driven exercise definitions](decisions/0003-data-driven-exercise-definitions.md)
 - [ADR 0004: Make exercise generation deterministic](decisions/0004-deterministic-exercise-generation.md)
 - [ADR 0005: Separate exercise capability dimensions](decisions/0005-separate-exercise-capability-dimensions.md)
-- [ADR 0006: Seed representation and random source](decisions/0006-seed-and-random-source.md) (proposed)
+- [ADR 0006: Support profiles without personal details](decisions/0006-support-profiles-without-personal-details.md)
+- [ADR 0007: Use Designsystemet and Tailwind for the web UI](decisions/0007-use-designsystemet-and-tailwind.md)
+
+The [seed and random-source proposal](proposals/seed-and-random-source.md) is retained for evaluation with the first generator. It is not an accepted ADR or a finalized compatibility contract.
 
 ## Future decisions
 
@@ -92,6 +98,6 @@ Accepted decisions are documented in:
 - Generator and validator registration and versioning
 - Persistence and database technology
 - Localization storage and delivery
-- Authentication and learner/parent/teacher relationships
+- Authentication and recovery mechanisms, and learner/parent/teacher relationships
 - Deployment and hosting
 - Whether content or visualizations ever warrant separate repositories

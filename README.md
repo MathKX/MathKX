@@ -1,6 +1,6 @@
 # MathKX
 
-MathKX is an open-source adaptive mathematics learning platform focused on mastery, visual understanding, and reusable data-driven exercises.
+MathKX is an open-source adaptive mathematics learning platform aiming to cover mathematics from foundational arithmetic through university-level study, focused on mastery, visual understanding, and reusable data-driven exercises.
 
 The project starts from a simple premise: a useful learning system should do more than present worksheets online. It should build a picture of what a learner understands, notice when a missing prerequisite is blocking progress, and respond with appropriate exercises, explanations, and visual interactions.
 
@@ -12,6 +12,9 @@ The project starts from a simple premise: a useful learning system should do mor
 - Generated exercise instances are intended to be reproducible from a definition, version, and seed.
 - Visual and interactive mathematics is part of the learning model, not decoration.
 - Accessibility, internationalization, and learner privacy are architectural concerns from the beginning.
+- The first release will support Norwegian and English across the learner interface and released learning content.
+- iPads are a primary first-release device, with touch, on-screen keyboard, and actual-device accessibility checks.
+- Planned learner profiles retain progress without requiring personal details, with optional email recovery.
 - The experience should feel calm, modern, and age-appropriate—never patronizing.
 
 ## Conceptual model
@@ -28,11 +31,17 @@ Curriculum -> Competency goals -> Skills -> Exercise definitions
 
 Skills remain independent of curricula and may depend on other skills. This allows a curriculum to reference the same mathematical knowledge in different countries, languages, or grade systems, and eventually allows the learning engine to respond to prerequisite gaps.
 
+Content will grow around mathematical domains, topics, and prerequisite-linked skills. School grades and university courses provide contextual learning paths over those skills. University-level coverage is a long-term goal; the first implementation will prove a small, coherent set of skills and exercises.
+
+The [mathematics domain coverage](docs/learning/mathematics-domains.md) lists the intended domains, topics, and connections from foundational arithmetic through university study.
+
+The [learning experience](docs/design/learning-experience.md) covers explanations, exploration, practice, and checks of understanding, with a proposed Markdown lesson workflow for open contribution.
+
 ## Current status
 
-MathKX is in its **foundation and design stage**. This repository currently contains architectural and product documentation, preliminary skill and exercise-definition schemas, a small seed skill graph, one illustrative exercise definition, and a validation script that runs in CI. It does not yet contain a backend, frontend, learning engine, or production-ready content format.
+MathKX is in its **foundation and design stage**. This repository currently contains architectural and product documentation, preliminary skill and exercise-definition schemas, a small illustrative skill graph, one example exercise definition, design prototypes, and content validation with regression tests in CI. It does not yet contain a production application, learning engine, or stable content format.
 
-The intended direction is a monorepo with an ASP.NET Core/C# backend and a React/TypeScript frontend. Application projects will be introduced only when an implementation task makes their shape clear.
+The intended direction is a monorepo with an ASP.NET Core/C# backend and a React/TypeScript frontend using Designsystemet components and Tailwind CSS. Application projects will be introduced only when an implementation task makes their shape clear.
 
 ## Start reading
 
@@ -49,3 +58,5 @@ Repository-wide contributor and coding guidance lives in [AGENTS.md](AGENTS.md).
 ## Contributing
 
 MathKX is intended to welcome contributions from developers, educators, translators, curriculum experts, and learners. See [CONTRIBUTING.md](CONTRIBUTING.md) for the two contribution paths and how to run content validation locally. The project's license has not been chosen yet; it will be announced in a decision record. The documents above are the source of truth for the project's direction, and architectural changes are recorded as short decision records under [`docs/architecture/decisions`](docs/architecture/decisions/).
+
+Run `npm ci`, `npm test`, and `npm run validate` to install the tooling, test the validator, and check the current content. These checks do not establish mathematical correctness of generated exercises or translation completeness; those capabilities remain to be implemented.

@@ -12,6 +12,8 @@ It is located under `docs/architecture/` because its primary purpose is to set b
 
 ### Scope
 
+The product's long-term scope extends from foundational arithmetic through university-level mathematics; see the [vision](../vision.md#mathematical-scope). The scenarios and phases below are an initial capability foundation, not an exhaustive university syllabus. Advanced subjects will require additional representative scenarios and validated extensions as content is introduced; the existing limits on symbolic equivalence and automatic proof grading still apply.
+
 The model covers:
 
 - the purposes for which an exercise can be used;
@@ -144,6 +146,8 @@ The following activity families consolidate the preliminary list into mathematic
 ### Content domains are separate
 
 Arithmetic, algebra, geometry, functions, statistics, and probability are content domains, not activity types. The same activity—such as classify, construct, or justify—can apply in many domains. Curricula and grade levels remain outside both identities.
+
+The [mathematics domain coverage](../learning/mathematics-domains.md) expands this scope through university mathematics. Domain coverage and exercise capabilities evolve together: a topic needs appropriate representations, response artifacts, and validation before usable content can be delivered.
 
 ### Composition requirements
 

@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **[MAINTAINER: insert a contact method, for example an email address]**. All complaints will be reviewed and investigated promptly and fairly.
+The private reporting contact is not yet configured. Maintainers must publish a private reporting route before the enforcement process is operational. Do not post sensitive incident details in public issues. Once a reporting route is published, complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

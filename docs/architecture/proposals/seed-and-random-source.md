@@ -1,17 +1,19 @@
-# ADR 0006: Seed representation and random source
+# Proposal: Seed representation and random source
 
 **Status:** Proposed
 
+This proposal originated as a proposed ADR in Claude's foundation contribution. It remains outside the accepted decision set until validated with the first generator; accepted ADR 0006 covers learner profiles. Keeping it here preserves the technical work without assigning tentative choices an ADR number.
+
 ## Context
 
-[ADR 0004](0004-deterministic-exercise-generation.md) requires that an exercise definition ID, definition version, and seed reproduce the same exercise instance, and leaves the seed representation and random-number algorithm undecided. Every generator, golden-seed test, replay test, and bug report depends on those two choices, and changing them later invalidates all recorded seeds.
+[ADR 0004](../decisions/0004-deterministic-exercise-generation.md) requires that an exercise definition ID, definition version, and seed reproduce the same exercise instance, and leaves the seed representation and random-number algorithm undecided. Changes to these choices need an explicit compatibility strategy to preserve recorded instances.
 
 Two hazards shape the choice:
 
 - Platform random sources are not stable contracts. Microsoft documents that `System.Random` is not guaranteed to produce the same sequence across .NET versions, and its default algorithm changed in .NET 6. `Math.random` in JavaScript cannot be seeded at all.
 - Generation or preview may one day run in the browser as well as on the server. The algorithm must therefore be small enough to implement identically in C# and TypeScript and to verify with shared test vectors. JavaScript numbers cannot hold a 64-bit integer exactly, so the JSON representation of a seed must not be a JSON number.
 
-## Decision
+## Proposed contract
 
 ### Seed
 
@@ -47,6 +49,8 @@ return r mod n
 
 In 64-bit unsigned arithmetic, `2^64 mod n` equals `(0 - n) mod n` with wrapping subtraction. Rejection is extremely rare for small n, but the loop is part of the contract: implementations must consume the stream identically, including rejected draws.
 
+The pseudocode uses mathematical integers: `limit` can equal `2^64`, which does not fit in an unsigned 64-bit variable. A fixed-width implementation must handle that case explicitly (all raw values are accepted), or use wider arithmetic. It must not wrap the limit to zero. Switching to a different rejection interval would change stream consumption and is not an equivalent replay implementation.
+
 Higher-level operations such as choosing from a list, shuffling, or drawing a value from an inclusive range are built only from `nextBelow(n)` and must be specified, with test vectors, in the generator contract before the first generator ships. A Fisher–Yates shuffle, for example, must state its iteration direction. Floating-point draws are not part of this decision; exact rational arithmetic is the expected default in domain code.
 
 ### Prohibitions
@@ -78,7 +82,16 @@ Bounded draws, the first eight values of `nextBelow(n)` from a fresh stream:
 | `0` | 1000 | 535, 700, 679, 444, 747, 90, 913, 940 |
 | `1` | 7 | 2, 0, 1, 0, 5, 2, 0, 3 |
 
-No draw in these sequences was rejected. An implementation that produces these values in both C# and TypeScript may claim conformance with this decision.
+No draw in these sequences was rejected. These vectors are necessary examples, not sufficient evidence of conformance. Before adopting this proposal, the implementation tests must also cover rejection and boundary behavior:
+
+| Bound `n` | Injected raw outputs consumed by one draw | Expected result | Outputs consumed |
+| --- | --- | --- | --- |
+| `10` | `18446744073709551615`, `18446744073709551610`, `18446744073709551609` | `9` | 3 |
+| `1` | `18446744073709551615` | `0` | 1 |
+| `9223372036854775808` | `18446744073709551615` | `9223372036854775807` | 1 |
+| `18446744073709551615` | `18446744073709551615`, `18446744073709551614` | `18446744073709551614` | 2 |
+
+These injected streams test the bounded sampler independently of SplitMix64. Also test invalid bounds (`0`, negative, and greater than `2^64 - 1`), seed parsing at both limits, invalid seed syntax and range, state wraparound, and the next draw after a rejection. If a browser implementation is introduced, run the same fixtures there and in C#; browser-side generation is not required by this proposal.
 
 ## Consequences
 

@@ -5,6 +5,7 @@
 // 2. Every skill ID is unique.
 // 3. Every exercise "skill" and every skill "prerequisites" entry resolves to a defined skill.
 // 4. The skill prerequisite graph is acyclic.
+// 5. Every exercise (ID, version) pair is unique.
 //
 // Exit code 0 when everything passes, 1 on validation failures, 2 on tooling errors.
 // Usage: node tools/validate-content.mjs [--root <repo root>]
@@ -78,6 +79,7 @@ async function main() {
 
   const skills = new Map(); // id -> { file, prerequisites }
   const exercises = []; // { file, id, skill }
+  const exerciseIdentities = new Map(); // [id, version] -> file
 
   for (const file of files) {
     let data;
@@ -85,6 +87,11 @@ async function main() {
       data = await readJson(file);
     } catch (error) {
       fail(file, `invalid JSON: ${error.message}`);
+      continue;
+    }
+
+    if (data === null || typeof data !== "object" || Array.isArray(data)) {
+      fail(file, "content must be a JSON object");
       continue;
     }
 
@@ -121,6 +128,13 @@ async function main() {
       }
       skills.set(data.id, { file, prerequisites: data.prerequisites ?? [] });
     } else if (schemaName === EXERCISE_SCHEMA) {
+      const identity = JSON.stringify([data.id, data.version]);
+      if (exerciseIdentities.has(identity)) {
+        const other = path.relative(repoRoot, exerciseIdentities.get(identity)).replaceAll("\\", "/");
+        fail(file, `duplicate exercise identity ${data.id} version ${data.version}; also defined in ${other}`);
+        continue;
+      }
+      exerciseIdentities.set(identity, file);
       exercises.push({ file, id: data.id, skill: data.skill });
     }
   }

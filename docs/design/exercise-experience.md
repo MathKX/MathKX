@@ -2,6 +2,8 @@
 
 An exercise is a learning interaction, not merely a prompt plus a text box.
 
+The broader [learning experience](learning-experience.md) connects authored lessons, exploration, practice, and checks of understanding. Exercises can serve these different purposes with explicit support and evidence context.
+
 ## Possible anatomy
 
 A future exercise experience may include:
@@ -24,9 +26,49 @@ Each interaction needs accessible input, review, correction, and feedback behavi
 
 The [exercise capability model](../architecture/exercise-capability-model.md) defines the interaction and representation families, semantic response artifacts, per-family accessibility requirements, and recommended phases. UI components should emit those response artifacts rather than own mathematical validation.
 
+## Answering on iPad
+
+The complete answer flow must work with touch and an on-screen keyboard. Choose input behavior for the expected mathematical response, but do not assume a numeric keypad exposes every required character. Verify entry and correction of negative values, locale-appropriate decimals, and fractions when those forms are supported. Additional symbol controls may be needed for richer expressions; a dedicated mathematics keyboard remains a future component decision.
+
+Opening visual help, rotating the device, and changing window size must preserve the answer and revealed support. Keep the prompt, visual model, and answer control easy to move between when the keyboard reduces visible space. Visual exploration must not require precise finger placement: provide appropriate snapping, larger hit areas, or an equivalent direct-value control when the mathematical task permits them.
+
+For the `4 + 4` example below, verify that a learner can focus the answer field, enter `8`, reveal and hide the two groups of counters, and submit with the keyboard open. Repeat in portrait and landscape and with VoiceOver; any interactive counters must also have equivalent accessible operation.
+
 ## Hints and explanations
 
 Hints should help a learner resume reasoning rather than immediately reveal an answer. Explanations should connect steps to concepts and may use a visualization or a different representation. Their exact content model and adaptation behavior are future decisions.
+
+## Visual help on request
+
+Visual explanations are a core teaching capability. Where a visual model clarifies the mathematics, an exercise should offer an explicit **Show visual help** action (**Vis visuell hjelp** in Norwegian Bokmål). Learners can answer directly or request the model before submitting; they do not need to make a mistake to receive help. Preserve their input and working when showing or hiding it.
+
+Visual help must explain a mathematical relationship. Choose a representation suitable for the skill: grouped objects for early addition, a number line for signed arithmetic, fraction bars for fractions, area models for multiplication, or graphs for functions. Not every exercise needs every representation, and the author should specify the learning purpose of the selected model.
+
+### Addition example
+
+For `4 + 4 = ?`, initially show the expression, an answer field, a submit action, and the visual-help action. A learner can enter `8` immediately.
+
+Revealing help shows two clearly separated groups of four rounded square counters, a plus sign between them, and the question “How many altogether?” Each group can use a compact two-by-two layout. The groups have visible labels identifying the first and second group; spacing and labels convey their relationship without relying on color.
+
+The two groups represent the operands of the existing instance. A first reveal does not replace the answer field with `8` or mark the exercise complete. It lets the learner count or recognize the quantities. Further guided help may highlight counters one at a time or demonstrate combining the groups. If a later step explicitly reveals the total, treat it as an answer reveal rather than an independent answer.
+
+This is a proposed presentation for the first addition example, not a universal layout. Larger quantities need an appropriate grouped or place-value representation rather than an unreadable field of counters.
+
+### Help during checks of understanding
+
+Practice and supported self-checks may offer visual help on request. A check intended to observe independent work must state its support policy before starting. If a learner requests teaching help during such a check, offer a clear transition to supported work or an explanation after submission; never silently treat a helped response as independent evidence.
+
+Record which authored support was revealed and whether it was available before or after the response. Hiding help does not erase that history. Using teaching help is not an incorrect answer and does not prescribe a score deduction or mastery decrease. The future learning model decides how to interpret the observation.
+
+Accessible ways to perceive or operate the same task are not teaching hints. Screen-reader descriptions, keyboard operation, zoom, and reduced motion must remain available regardless of the check's hint policy and must not be counted as negative mastery evidence. If a visual model is itself the original question, viewing that model is not optional help usage.
+
+### Accessibility and implementation boundaries
+
+Provide the same mathematical information through an equivalent accessible representation: for the addition example, two labeled groups containing four individually navigable objects each, without announcing an extra answer that the visual presentation does not reveal. The help control must work by keyboard, announce its expanded state, preserve usable focus, and fit small screens. Any animation needs a static or step-controlled equivalent and reduced-motion support.
+
+Visual-help labels, instructions, and accessible descriptions must ship in Norwegian and English with the exercise. Derive operand counts and any explanation steps from the same canonical instance as the prompt and validator. The visual component renders that model; it does not independently generate a question or decide mathematical correctness. Content contributors should reference a named, tested representation and its configuration rather than code a separate visualization for every question.
+
+When implemented, verify direct answering, reveal/hide without loss of work, agreement between prompt and model across supported values, support-event recording, both languages, and keyboard and screen-reader operation.
 
 ## Open questions
 

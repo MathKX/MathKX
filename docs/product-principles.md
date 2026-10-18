@@ -34,9 +34,13 @@ Keyboard access, screen-reader support, semantic mathematics, contrast, color in
 
 Collect as little personal data as practical. Favor anonymous use where it can meet the need, require accounts only for clear benefits, and never base the product on advertising profiles of children.
 
+Saved learning progress must be available through profiles that require no real name, email address, or other identifying profile details. Offer email recovery as an explicit choice with equal learning capabilities for those who decline it. Help learners save their sign-in details and clearly explain the loss-of-access consequences when no recovery method is available.
+
 ## Build for many contexts
 
 Separate mathematical skills from curricula, grade levels, countries, and display languages. Begin with a real learner and an initial curriculum, but do not make either the universal domain model.
+
+Support a continuous learning journey from foundational arithmetic through university-level mathematics. Organize reusable content by mathematical domains, topics, and skills; map school grades and university courses onto that content. Grow coverage incrementally without making the first implementation depend on a complete syllabus.
 
 ## Grow through open contribution
 

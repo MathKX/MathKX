@@ -8,18 +8,20 @@ Before contributing, read [AGENTS.md](AGENTS.md). It lists the documents that de
 
 ### Content
 
-Skills, exercise definitions, and (later) curriculum mappings live under [`content/`](content/) as JSON that is validated against the schemas in [`schemas/`](schemas/). You do not need to know the application code to contribute content.
+Skills and exercise definitions live under [`content/`](content/) as JSON validated against the schemas in [`schemas/`](schemas/). Curriculum mappings and a Markdown-based lesson workflow are planned; see the [learning experience](docs/design/learning-experience.md). You do not need to know the application code to improve explanations or propose content.
 
-1. Read [content/README.md](content/README.md), the [exercise format](docs/architecture/exercise-format.md), and the [exercise capability model](docs/architecture/exercise-capability-model.md).
+1. Read [content/README.md](content/README.md), the [exercise capability model](docs/architecture/exercise-capability-model.md), and the [exercise format](docs/architecture/exercise-format.md).
 2. Add or change JSON files under `content/`. Use stable, language-neutral IDs. Keep examples small.
-3. Run the validation locally (see below). It checks schema validity, that every referenced skill exists, and that the skill prerequisite graph has no cycles.
+3. Run the validation locally (see below). It checks schema validity, unique skill IDs and exercise ID/version pairs, that every referenced skill exists, and that the skill prerequisite graph has no cycles.
 4. Open a pull request. The same validation runs in CI and must pass before review.
 
 The current `0.1` schema is exploratory. If a change you need does not fit it, open an issue describing the exercise rather than adding fields ad hoc; the capability model explains why.
 
+Released learning content must support Norwegian and English, including hints and accessible descriptions. Flag translations affected by a content change. Lesson formatting and translation tooling remain open; until those formats exist, suggest wording, examples, translations, or diagrams in an issue or documentation pull request. Shared mathematical skills must not be duplicated by language, grade, or curriculum.
+
 ### Code and documentation
 
-Application code does not exist yet. When it is introduced, it will follow the boundaries in [docs/architecture/architecture.md](docs/architecture/architecture.md): mathematical logic in deterministic, tested domain code; presentation separate from domain rules. Durable architectural choices are recorded as short ADRs in [`docs/architecture/decisions/`](docs/architecture/decisions/).
+Production application code has not been introduced. Repository tooling and design prototypes serve different purposes. Application work will follow the boundaries in [docs/architecture/architecture.md](docs/architecture/architecture.md): mathematical logic in deterministic, tested domain code; presentation separate from domain rules. Durable architectural choices are recorded as short ADRs in [`docs/architecture/decisions/`](docs/architecture/decisions/); tentative designs belong in [`docs/architecture/proposals/`](docs/architecture/proposals/).
 
 Documentation fixes are welcome at any time. If a change alters terminology, a schema, or a contributor workflow, update the corresponding document in the same pull request.
 
@@ -35,7 +37,15 @@ npm ci
 npm run validate
 ```
 
-The script validates every JSON file under `content/` against the schema it declares in `$schema`, then checks skill references and the prerequisite graph. It exits non-zero on the first category of failure it finds and prints the file and path responsible.
+The script validates every JSON file under `content/` against the schema it declares in `$schema`, then checks identities, skill references, and the prerequisite graph. It reports collected content errors with file paths and exits with code 1. Unexpected tooling errors exit with code 2.
+
+When changing the validator, also run:
+
+```bash
+npm test
+```
+
+The tests invoke the CLI against isolated fixtures, including conflicting exercise identities, invalid document shapes, and prerequisite errors. Both tests and content validation run in CI.
 
 ## Pull requests
 
@@ -50,4 +60,4 @@ This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
 
 ## Licensing
 
-The project's license has not been chosen yet. Until it is, contributions are accepted on the understanding that they will be released under the open-source license the maintainers select; a decision record will announce it.
+Code and content licenses have not been chosen yet. Maintainers need to publish explicit license and contribution terms before incorporating outside code or content contributions. This guide does not ask contributors to agree to an unspecified future license. Questions and improvement suggestions can be raised while that decision is pending.

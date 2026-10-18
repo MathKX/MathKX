@@ -11,6 +11,8 @@ This file applies to everything under `content/` in addition to the root [AGENTS
 - Write content so it can be localized and accessed with assistive technology. Do not use color or pointer input as the only carrier of meaning.
 - Run `npm run validate` after changing JSON; it checks schemas, skill references, and the prerequisite graph. Keep examples intentionally small.
 - Every exercise must reference a skill defined under `content/skills/`. Add the skill in the same change if it does not exist.
+- Exercise `(id, version)` pairs must be unique. Localized content must share mathematical identity rather than duplicate definitions under the same ID and version.
+- The first release requires Norwegian and English learning content, including help and accessible descriptions. The exploratory English-only example is not release-ready content; localization storage and validation remain to be designed.
 - Update the format documentation and schema together when their contract changes.
 
 The current schema and example are exploratory `0.1` artifacts, not a stable authoring contract.

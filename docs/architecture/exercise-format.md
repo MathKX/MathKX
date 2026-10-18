@@ -88,6 +88,8 @@ The intended conceptual identity is:
 
 Replaying that identity should recreate the same learner-facing instance. This supports bug reports, history, tests, sharing, and compact persistence. Format v1 must clarify how generator implementation changes preserve or advance that contract.
 
+Content validation rejects duplicate `(id, version)` definitions, including identical copies. Different versions may coexist. Localized presentation must not introduce competing definitions for the same mathematical identity; the localization storage contract remains open.
+
 ## Presentation and answers
 
 The definition should express semantic presentation intent rather than framework component names or layout details. A visualization such as `number-line` should resolve through a controlled registry to an accessible UI implementation.
