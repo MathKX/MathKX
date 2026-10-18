@@ -66,19 +66,37 @@ test('finite pools repeat honestly and challenge stops at the ends of the ladder
 });
 
 const run = (evs) => evs.map((e, i) => ({ seq: i + 1, delivery: 'd', ...e }));
-test('observations follow the order of events', () => {
-  assert.equal(summarizeDelivery(run([{ type: 'response', result: 'correct' }]), 'd').outcome, 'correctFirst');
-  assert.equal(summarizeDelivery(run([{ type: 'support', support: 'visual' }, { type: 'response', result: 'correct' }]), 'd').outcome, 'correctWithVisualHelp');
-  assert.equal(summarizeDelivery(run([{ type: 'response', result: 'incorrect' }, { type: 'response', result: 'correct' }]), 'd').outcome, 'correctAfterFeedback');
-  assert.equal(summarizeDelivery(run([{ type: 'support', support: 'answer-reveal' }, { type: 'response', result: 'correct' }]), 'd').outcome, 'correctAfterExplanation');
-  // Invalid input is not a mathematical failure
-  assert.equal(summarizeDelivery(run([{ type: 'response', result: 'invalid' }, { type: 'response', result: 'correct' }]), 'd').outcome, 'correctFirst');
-  // Explanation after a correct answer does not relabel it
-  const s = summarizeDelivery(run([{ type: 'response', result: 'correct' }, { type: 'support', support: 'explanation' }]), 'd');
-  assert.equal(s.outcome, 'correctFirst'); assert.equal(s.explanationAfter, true);
-  assert.equal(summarizeDelivery(run([{ type: 'skip' }]), 'd').outcome, 'skipped');
-  assert.equal(summarizeDelivery(run([]), 'd').outcome, 'unfinished');
-});
+// One row per event sequence: [description, events, outcome, tags]. DL-029 (help-first):
+// any reveal leads; then non-revealing help; then feedback-only retries.
+const R = (result) => ({ type: 'response', result });
+const S = (support, extra = {}) => ({ type: 'support', support, ...extra });
+const SEQUENCES = [
+  ['correct first', [R('correct')], 'correctFirst', []],
+  ['visual help, correct', [S('visual'), R('correct')], 'correctWithVisualHelp', ['visualBefore']],
+  ['feedback-only retry', [R('incorrect'), R('correct')], 'correctAfterFeedback', []],
+  ['wrong, visual help, correct (DL-029 scenario)', [R('incorrect'), S('visual'), R('correct')], 'correctWithVisualHelp', ['feedbackBefore', 'visualBefore']],
+  ['visual help, wrong, correct', [S('visual'), R('incorrect'), R('correct')], 'correctWithVisualHelp', ['feedbackBefore', 'visualBefore']],
+  ['wrong, counting without the last counter, correct', [R('incorrect'), S('visual'), S('counting'), R('correct')], 'correctWithVisualHelp', ['feedbackBefore', 'visualBefore']],
+  ['wrong, part of the explanation, correct', [R('incorrect'), S('explanation-open', { step: 0 }), R('correct')], 'correctWithHelp', ['feedbackBefore', 'explainPartBefore']],
+  ['wrong, lesson without this answer, correct', [R('incorrect'), S('lesson'), R('correct')], 'correctWithHelp', ['feedbackBefore', 'lessonBefore']],
+  ['visual and other help, correct', [S('visual'), S('lesson'), R('correct')], 'correctWithHelp', ['visualBefore', 'lessonBefore']],
+  ['reveal, correct', [S('answer-reveal'), R('correct')], 'correctAfterExplanation', ['reveal_explanation']],
+  ['wrong, visual help, counting all, correct', [R('incorrect'), S('visual'), S('counting-complete'), R('correct')], 'correctAfterExplanation', ['feedbackBefore', 'visualBefore', 'reveal_counting']],
+  ['invalid, correct', [R('invalid'), R('correct')], 'correctFirst', []],
+  ['invalid, visual help, correct', [R('invalid'), S('visual'), R('correct')], 'correctWithVisualHelp', ['visualBefore']],
+  ['wrong, correct, then visual help', [R('incorrect'), R('correct'), S('visual')], 'correctAfterFeedback', ['visualAfter']],
+  ['correct, then explanation', [R('correct'), S('explanation')], 'correctFirst', ['explainAfter']],
+  ['wrong only', [R('incorrect')], 'notYetCorrect', []],
+  ['skipped', [{ type: 'skip' }], 'skipped', []],
+  ['nothing', [], 'unfinished', []],
+];
+for (const [name, evs, outcome, tags] of SEQUENCES) {
+  test(`observations: ${name}`, () => {
+    const s = summarizeDelivery(run(evs), 'd');
+    assert.equal(s.outcome, outcome);
+    assert.deepEqual(s.tags, tags);
+  });
+}
 
 // ---- Round-03 review fixes ------------------------------------------------------
 
@@ -175,7 +193,7 @@ test('R03 summaries: tags do not repeat what the outcome already says', () => {
   const s = summarizeDelivery(run([{ type: 'response', result: 'incorrect' }, { type: 'support', support: 'explanation-open' }, { type: 'support', support: 'explanation-step', step: 3, reveals: true }, { type: 'response', result: 'correct' }]), 'd');
   // The answer was shown after an incorrect response but before the correct one
   assert.equal(s.outcome, 'correctAfterExplanation');
-  assert.deepEqual(s.tags, ['reveal_explanation']);
+  assert.deepEqual(s.tags, ['feedbackBefore', 'reveal_explanation']);
   // After a correct answer, the explanation is only a tag
   const after = summarizeDelivery(run([{ type: 'response', result: 'correct' }, { type: 'support', support: 'explanation-open' }, { type: 'support', support: 'explanation-step', step: 3, reveals: true }]), 'd');
   assert.equal(after.outcome, 'correctFirst'); assert.deepEqual(after.tags, ['explainAfter']); assert.ok(after.revealedAfter);
@@ -184,12 +202,13 @@ test('R03 summaries: tags do not repeat what the outcome already says', () => {
 // ---- Gemini round-03 ----------------------------------------------------------------
 
 test('Gemini: help after an incorrect answer is help while solving, not "after answering"', () => {
+  // Outcomes follow DL-029 (help-first); the wrong answer stays as a tag.
   const v = summarizeDelivery(run([{ type: 'response', result: 'incorrect' }, { type: 'support', support: 'visual' }, { type: 'response', result: 'correct' }]), 'd');
-  assert.equal(v.outcome, 'correctAfterFeedback');
-  assert.deepEqual(v.tags, ['visualBefore']);
+  assert.equal(v.outcome, 'correctWithVisualHelp');
+  assert.deepEqual(v.tags, ['feedbackBefore', 'visualBefore']);
   const e = summarizeDelivery(run([{ type: 'response', result: 'incorrect' }, { type: 'support', support: 'explanation-open' }, { type: 'response', result: 'correct' }]), 'd');
-  assert.equal(e.outcome, 'correctAfterFeedback');
-  assert.deepEqual(e.tags, ['explainPartBefore']);
+  assert.equal(e.outcome, 'correctWithHelp');
+  assert.deepEqual(e.tags, ['feedbackBefore', 'explainPartBefore']);
   assert.equal(e.explanationAfter, false);
   // Never both "answer shown" and "explanation opened after answering" for the same reveal
   const r = summarizeDelivery(run([{ type: 'response', result: 'incorrect' }, { type: 'support', support: 'explanation-open' }, { type: 'support', support: 'explanation-step', step: 3, reveals: true }, { type: 'response', result: 'correct' }]), 'd');

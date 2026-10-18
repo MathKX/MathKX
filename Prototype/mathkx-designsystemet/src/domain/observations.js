@@ -48,8 +48,21 @@ function chain(events, deliveryId) {
 
 /**
  * Summarize one delivery (one question shown once in one session).
- * Outcome order: an answer shown before the correct response wins; then an
- * earlier incorrect response; then help that did not show the answer.
+ *
+ * Outcome of the first correct response (DL-029, help-first):
+ *   1. any answer reveal before it            → correctAfterExplanation
+ *   2. non-revealing help other than visual   → correctWithHelp
+ *   3. visual help                            → correctWithVisualHelp
+ *   4. an earlier incorrect response only     → correctAfterFeedback
+ *   5. nothing                                → correctFirst
+ * An earlier incorrect response is kept as the tag `feedbackBefore` when the
+ * outcome does not already say it. Invalid input is never a retry, and support
+ * after the first correct response never changes the outcome.
+ *
+ * Feedback is implied by an incorrect response: a second response to the same
+ * delivery is only possible in practice and supported check mode, which always
+ * show mathematical feedback. An independent check saves one answer and shows no
+ * feedback, so it never reaches rule 4.
  */
 export function summarizeDelivery(events, deliveryId) {
   const ids = new Set(chain(events, deliveryId));
@@ -83,10 +96,12 @@ export function summarizeDelivery(events, deliveryId) {
     if (e.result === 'correct' && !outcome) {
       const sup = [...before];
       if (reveals.size) outcome = 'correctAfterExplanation';
-      else if (incorrectBefore > 0) outcome = 'correctAfterFeedback';
       else if (sup.some((x) => OTHER_HELP.has(x))) outcome = 'correctWithHelp';
       else if (sup.some((x) => VISUAL.has(x))) outcome = 'correctWithVisualHelp';
+      else if (incorrectBefore > 0) outcome = 'correctAfterFeedback';
       else outcome = 'correctFirst';
+      // The earlier wrong answer and its feedback stay visible (DL-029).
+      if (incorrectBefore > 0 && outcome !== 'correctAfterFeedback') tags.add('feedbackBefore');
     }
     if (e.result === 'incorrect') incorrectBefore++;
   }
@@ -96,15 +111,14 @@ export function summarizeDelivery(events, deliveryId) {
   const explanationAfter = explainAfterSeen;
   if (explanationAfter) tags.add('explainAfter');
   if (tags.has('explainPartBefore') && reveals.has('explanation')) tags.delete('explainPartBefore');
-  const visualBeforeCorrect = outcome === 'correctAfterFeedback' && responses.find((r) => r.result === 'correct')?.support.some((x) => VISUAL.has(x));
   return {
     delivery: deliveryId, outcome, responses, invalid, explanationAfter, revealedAfter,
-    revealSources: [...reveals], countedAll: before.has('counting-complete'), visualBeforeCorrect,
+    revealSources: [...reveals], countedAll: before.has('counting-complete'),
     tags: TAG_ORDER.filter((t) => tags.has(t)), events: evs,
   };
 }
 
-const TAG_ORDER = ['visualBefore', 'lessonBefore', 'explainPartBefore', 'reveal_explanation', 'reveal_counting', 'reveal_lesson', 'visualAfter', 'explainAfter'];
+const TAG_ORDER = ['feedbackBefore', 'visualBefore', 'lessonBefore', 'explainPartBefore', 'reveal_explanation', 'reveal_counting', 'reveal_lesson', 'visualAfter', 'explainAfter'];
 
 export const OUTCOMES = ['correctFirst', 'correctWithVisualHelp', 'correctWithHelp', 'correctAfterFeedback', 'correctAfterExplanation', 'notYetCorrect', 'skipped', 'unfinished'];
 /** Outcomes where the learner's own correct answer came before any answer was shown. */

@@ -251,18 +251,90 @@ const SCENARIOS = {
     await go(`/progress/${ADD}`);
     await expectText(T('progress.invalid1'));
   },
-  'C12 Touch targets are at least 44 px (lesson, practice with a pending change)': async ({ go, page, btn, T }) => {
+  'C12 Touch targets are at least 44 × 44 px (lesson, practice with a pending change)': async ({ go, page, btn, T }) => {
+    // DL-037: width as well as height (design-principles.md, "at least 44 by 44 CSS pixels").
     const measure = () => page.evaluate(() => [...document.querySelectorAll('main a, main button')].filter((el) => {
       const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
       if (!r.width || cs.visibility === 'hidden' || el.closest('p, li > p, td, .ds-paragraph, figcaption')) return false; // inline links in running text are exempt (WCAG 2.5.8)
-      return r.height < 44 && !el.closest('.mkx-prose');
-    }).map((el) => `${el.tagName.toLowerCase()} “${el.textContent.trim().slice(0, 30)}” ${Math.round(el.getBoundingClientRect().height)}px`));
+      return (r.width < 44 || r.height < 44) && !el.closest('.mkx-prose');
+    }).map((el) => { const r = el.getBoundingClientRect(); return `${el.tagName.toLowerCase()} “${el.textContent.trim().slice(0, 30) || el.getAttribute('aria-label')}” ${Math.round(r.width)}×${Math.round(r.height)}px`; }));
     await go('/lesson/number-bonds-to-ten');
     let small = await measure();
     await go(`/practice/${ADD}?variant=across-10`);
     await btn(T('practice.easier'), false).click();
     small = small.concat(await measure());
     if (small.length) throw new Error(`under 44 px: ${small.slice(0, 5).join('; ')}`);
+  },
+  'DL-029 Wrong answer, visual help, correct: "with visual help" everywhere, feedback tag kept': async ({ go, btn, submit, T, expectText, page }) => {
+    await go(`/practice/${ADD}?variant=within-10`); // 4 + 4
+    await submit('7');
+    await btn(T('ex.showHelp')).click(); // the groups only; no counting to the end
+    await submit('8');
+    await expectText(T('ex.outcome.correctWithVisualHelp'), 'banner does not lead with visual help');
+    await expectText(T('ex.outcome.feedbackNote'), 'banner lost the earlier feedback');
+    await expectText(T('support.feedbackBefore'), 'workspace lost the feedback tag');
+    await btn(T('practice.finish')).click();
+    // Only the list of exercises, not the label definitions on the progress page.
+    const checkSummary = async (where, headingId) => {
+      const main = await page.locator('section', { has: page.locator(`#${headingId}`) }).first().innerText();
+      if (!main.includes(T('outcome.correctWithVisualHelp'))) throw new Error(`${where}: no “${T('outcome.correctWithVisualHelp')}”`);
+      if (!main.includes(T('support.feedbackBefore'))) throw new Error(`${where}: no feedback tag`);
+      if (main.includes(T('outcome.correctAfterFeedback'))) throw new Error(`${where}: still says “${T('outcome.correctAfterFeedback')}”`);
+    };
+    await expectText(T('session.title'));
+    await checkSummary('session summary', 'sum-h');
+    await go('/home');
+    await expectText(T('home.recent'));
+    await checkSummary('My learning', 'recent-h');
+    await go(`/progress/${ADD}`);
+    await expectText(T('progress.sessions'));
+    await checkSummary('progress page', 'sess-h');
+  },
+  'DL-035 3 + 5 explanation: no accessible name gives the total before the revealing step': async ({ go, btn, T, page }) => {
+    await go(`/practice/${ADD}?variant=within-10`); // 4 + 4
+    await btn(T('practice.another')).click(); // 3 + 5, unanswered
+    await page.getByText('3 + 5', { exact: false }).first().waitFor();
+    await btn(T('ex.explain')).click();
+    await btn(T('ex.revealYes')).click();
+    await btn(T('help.nextStep')).click(); // step 2 of 3: the groups together, not yet counted
+    await page.getByText(T('help.step', { i: 2, n: 3 })).first().waitFor();
+    const names = await page.evaluate(() => {
+      const out = [];
+      const visible = (el) => !el.closest('[aria-hidden="true"], [hidden]');
+      for (const el of document.querySelectorAll('body *')) {
+        if (!visible(el)) continue;
+        for (const a of ['aria-label', 'alt', 'title']) { const v = el.getAttribute(a); if (v) out.push(v); }
+        const ids = el.getAttribute('aria-labelledby');
+        if (ids) out.push(ids.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? '').join(' '));
+      }
+      return out;
+    });
+    const tree = await page.locator('body').ariaSnapshot();
+    const leaks = [...names, ...tree.split('\n')].filter((x) => /(^|[^0-9])8([^0-9]|$)/.test(x));
+    if (leaks.length) throw new Error(`total 8 exposed before the reveal: ${leaks.slice(0, 3).join(' | ')}`);
+    // The operands are still named
+    if (!names.some((x) => x.includes(T('help.counterInGroup1', { i: 1, n: 3 }))) || !names.some((x) => x.includes(T('help.counterInGroup2', { i: 1, n: 5 })))) throw new Error('counter names lost the operands');
+  },
+  'DL-036 Check summary: “Worth revisiting” tag only where the card lists the item': async ({ go, btn, submit, T, page }) => {
+    await go('/check/check-addition');
+    await btn(T('check.start')).click();
+    await submit('11'); // 7 + 3, independent, not correct → Worth revisiting
+    await btn(T('check.skip')).click(); // 5 + 4, independent, skipped
+    await btn(T('check.needHelp')).click(); // 8 + 5 becomes supported practice
+    await btn(T('check.switchYes')).click();
+    await btn(T('ex.showHelp')).click();
+    await submit('13'); // solved with visual help
+    await btn(T('check.nextQuestion')).click();
+    await btn(T('check.skipLast')).click(); // 9 + 4, supported, skipped
+    await page.locator('#exp-h').waitFor();
+    const r = await page.evaluate((label) => {
+      const card = [...document.querySelectorAll('main h2')].find((h) => h.textContent.trim().startsWith(label))?.closest('.ds-card');
+      const listed = [...(card?.querySelectorAll('li') ?? [])].map((li) => li.querySelector('[aria-hidden="true"]')?.textContent.trim());
+      const tagged = [...document.querySelectorAll('main details summary')].filter((s) => s.textContent.includes(label)).map((s) => s.textContent.replace(label, '').trim());
+      return { listed, tagged };
+    }, T('check.independentNotYet'));
+    const norm = (a) => a.map((x) => (x ?? '').replace(/\s+/g, '')).sort();
+    if (JSON.stringify(norm(r.listed)) !== JSON.stringify(['7+3']) || JSON.stringify(norm(r.tagged)) !== JSON.stringify(['7+3'])) throw new Error(`card ${JSON.stringify(r.listed)} vs tags ${JSON.stringify(r.tagged)}`);
   },
   'G1 Explanation after an incorrect answer asks first and is recorded once': async ({ go, btn, submit, T, expectText, page }) => {
     await go(`/practice/${ADD}?variant=across-10`);

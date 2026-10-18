@@ -279,6 +279,41 @@ const en4 = {
   },
 };
 
+// Added after the round-04 review (DL-029, help-first outcome labels).
+const nb5 = {
+  support: { feedbackBefore: 'Tilbakemelding på et tidligere svar' },
+  help: { counterInGroup1: 'Første gruppe, brikke {i} av {n}', counterInGroup2: 'Andre gruppe, brikke {i} av {n}' },
+  outcomeDef: {
+    correctWithVisualHelp: 'Riktig svar etter at visuell hjelp var åpnet. Hjelp er en vanlig del av å lære. Hvis et tidligere svar ikke var riktig, vises det som et eget merke.',
+    correctWithHelp: 'Riktig svar etter hjelp som ikke viste svaret, for eksempel de første stegene i forklaringen eller leksjonen. Merkene viser hvilken hjelp, og om et tidligere svar ikke var riktig.',
+    correctAfterFeedback: 'Et tidligere svar var ikke riktig, og et senere svar var det, uten hjelp i mellomtiden.',
+  },
+  ex: {
+    outcome: {
+      correctWithVisualHelp: 'Riktig med visuell hjelp – en god måte å se sammenhengen på.',
+      correctWithHelp: 'Riktig med hjelp – hjelp er en vanlig del av å lære.',
+      feedbackNote: 'Du fikk også tilbakemelding på et tidligere svar.',
+    },
+  },
+};
+
+const en5 = {
+  support: { feedbackBefore: 'Feedback on an earlier answer' },
+  help: { counterInGroup1: 'First group, counter {i} of {n}', counterInGroup2: 'Second group, counter {i} of {n}' },
+  outcomeDef: {
+    correctWithVisualHelp: 'A correct answer after visual help was opened. Help is an ordinary part of learning. If an earlier answer was not correct, that is shown as a separate tag.',
+    correctWithHelp: 'A correct answer after help that did not show the answer, such as the first steps of the explanation or the lesson. The tags show which help, and whether an earlier answer was not correct.',
+    correctAfterFeedback: 'An earlier answer was not correct, and a later answer was, with no help in between.',
+  },
+  ex: {
+    outcome: {
+      correctWithVisualHelp: 'Correct with visual help – a good way to see how it fits together.',
+      correctWithHelp: 'Correct with help – help is an ordinary part of learning.',
+      feedbackNote: 'You also had feedback on an earlier answer.',
+    },
+  },
+};
+
 const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b)) o[k] = v && typeof v === 'object' && typeof a[k] === 'object' ? merge(a[k], v) : v; return o; };
-export const nb3x = merge(nb3, nb4);
-export const en3x = merge(en3, en4);
+export const nb3x = merge(merge(nb3, nb4), nb5);
+export const en3x = merge(merge(en3, en4), en5);

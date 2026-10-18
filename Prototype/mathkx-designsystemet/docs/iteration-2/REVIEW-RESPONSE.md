@@ -60,6 +60,20 @@ Not changed:
 - **Number tokens with a decimal comma** in `notation.js`. The tokenizer already reads `2,4` as one number (`/^\d+(?:[.,]\d+)?/`), so this was not a defect.
 - **Parts of the Gemini report do not match this code.** It describes a “doubles” help model, a file `src/styles/app.css`, routes such as `#/check/add-within-20`, and a balance step 4 that already substituted 4 for x at the baseline. None of these exist in the code. Each Gemini finding above was reproduced against the code before it was fixed.
 
+## Round-04 fixes
+
+Changes recorded in the [decision log](../../../../docs/reviews/round-01/decision-log.md) after the round-04 review, and nothing beyond them.
+
+| Row | Change | Check |
+| --- | --- | --- |
+| DL-029 | Help-first outcome labels: non-revealing help before the first correct answer gives “Correct with visual help” or “Correct with help”, even after a wrong answer; “Correct after feedback” is only for feedback-only retries; reveals still lead. The wrong answer stays visible as the new tag “Feedback on an earlier answer”, and the post-answer banner says so. | `npm test`: table of 18 event sequences; browser “DL-029” (banner, session summary, My learning, progress page; both languages) |
+| DL-035 | In the explanation's “together” step, counters are named by their place in their own group (“First group, counter 1 of 3”), not by the total. | browser “DL-035” (3 + 5, step 2 of 3: no accessible name or text in the accessibility tree contains 8; both languages) |
+| DL-036 | The check summary's “Worth revisiting” tag is shown only on the items the “Worth revisiting” card lists (independent, neither correct first nor skipped). | browser “DL-036” (wrong, skipped, switched-and-helped, skipped-last: the tag only on the wrong independent item) |
+| DL-037 | The touch-target check tests width as well as height (44 × 44). It found one element: the short breadcrumb “Øv” (21 × 44 px) in Bokmål. Breadcrumb links now have a 44 px minimum width. | browser “C12” on the lesson and practice pages, all four configurations |
+| DL-026, DL-028, DL-029 | `ASSUMPTIONS.md`: the four DL-026 rules, the DL-028 check policy and the help-first rule moved from “assumptions that should be confirmed” to “requirements the prototype follows”. | — |
+
+Round 04 confirmed the four decisions listed under “Decisions taken” below as DL-026.
+
 ## New outcome
 
 “Correct with help” / “Riktig med hjelp” covers help that does not show the answer and is not visual help: the first steps of an explanation, or a lesson that does not contain this exercise. Tags say which help was used. “Correct with visual help” is unchanged.

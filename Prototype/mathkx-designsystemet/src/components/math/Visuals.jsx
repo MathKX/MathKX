@@ -28,7 +28,11 @@ export function GroupsVisual({ a, b, mode }) {
         style={{ gridTemplateColumns: `repeat(${columnsFor(n)}, auto)`, border: '1px solid var(--ds-color-neutral-border-subtle)' }}>
         {Array.from({ length: n }, (_, i) => (
           <li key={i} className="m-0">
-            <Counter kind={i < a ? 'a' : 'b'} label={mode === 'numbered' ? `${i + 1}` : t('help.counter', { i: i + 1, n })}>
+            {/* Before the revealing step, a counter's name gives its place in its own group,
+                never the total (DL-035; exercise-experience.md: no answer in the accessible
+                version before the visual one shows it). */}
+            <Counter kind={i < a ? 'a' : 'b'} label={mode === 'numbered' ? `${i + 1}`
+              : i < a ? t('help.counterInGroup1', { i: i + 1, n: a }) : t('help.counterInGroup2', { i: i - a + 1, n: b })}>
               {mode === 'numbered' ? <span aria-hidden="true">{i + 1}</span> : undefined}
             </Counter>
           </li>

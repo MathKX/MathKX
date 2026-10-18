@@ -19,20 +19,27 @@
 
 - An explanation can be opened before answering, with the answer reveal made explicit (`exercise-experience.md`).
 - An easier/harder change is chosen now and applied to the next question; the current question and work stay (`learning-experience.md`).
-- Counting all the counters in visual help reveals the total and is recorded as an answer reveal (`exercise-experience.md`, addition example).
+- Counting all the counters in visual help reveals the total and is recorded as an answer reveal (`exercise-experience.md`, addition example; confirmed as [DL-026](../../../../docs/reviews/round-01/decision-log.md) rule 1).
+- **Lesson detours** ([DL-026](../../../../docs/reviews/round-01/decision-log.md) rule 2). A lesson counts as showing the answer only when it contains this exercise with its result, or a worked visual for the same values (`src/domain/disclosure.js`). The whole lesson is checked, not only the linked section, because the learner can scroll. Other lesson reading before answering is recorded as help (“Correct with help”).
+- **More like this** ([DL-026](../../../../docs/reviews/round-01/decision-log.md) rule 3) keeps the current variation. If an easier/harder change is pending, it is replaced, and the button and the notice say so.
+- **Finishing a session** ([DL-026](../../../../docs/reviews/round-01/decision-log.md) rule 4) keeps an unanswered question resumable from My learning, with its draft and support context.
+- **Self-check policy** ([DL-028](../../../../docs/reviews/round-01/decision-log.md)): independent by default, with no help inside the check; an explicit one-way switch to supported practice; answers saved before the switch stay independent; feedback at the end.
+- **Help-first outcome labels** ([DL-029](../../../../docs/reviews/round-01/decision-log.md)). When non-revealing teaching help comes before the first correct answer, the outcome is “Correct with visual help” or “Correct with help”, even after an earlier wrong answer. “Correct after feedback” is only for retries with feedback and no help. Any answer reveal (“Answered after the answer was shown”) takes precedence over both. Invalid input is never a retry. Help opened after the first correct answer never changes the outcome. The earlier wrong answer stays visible as the tag “Feedback on an earlier answer”. Feedback is implied by an incorrect response: a second response is only possible in practice and supported check mode, which always show feedback.
 
 ## Assumptions that should be confirmed
 
-1. Independent self-checks without in-check help, plus an explicit switch to supported practice, is the right default policy for the first release.
-2. Moving on from an unanswered question counts as “skipped”; finishing a session with an unanswered question counts as “unfinished”, and that question stays resumable from My learning with its draft and support context.
+Numbers are kept stable because the decision log refers to them; settled items are marked as moved.
+
+1. *Moved to requirements: self-check policy (DL-028).*
+2. Moving on from an unanswered question counts as “skipped”; finishing a session with an unanswered question counts as “unfinished”. (That it stays resumable is now a requirement, DL-026 rule 4.)
 3. “Lesson viewed” (opened) is enough lesson history; no reading-progress tracking.
 4. The suggested “more challenge” rule (three first-response successes in a row) is acceptable wording-wise as a suggestion, not a threshold.
 5. Guest work should be imported only by explicit choice at sign-in and keep a visible origin label.
 6. The notation grammar (TeX-like subset) is a sensible starting point for lesson authors; square roots, matrices and alignment are deliberately excluded for now.
 7. The learner ID is a username, not a secret; the password is the only secret in the prototype.
 8. **Explanation steps.** Opening the explanation is help; reaching a step marked `reveals` is an answer reveal. Opening and closing it before that step gives “Correct with help”.
-9. **Lesson detours.** A lesson counts as showing the answer only when it contains this exercise with its result, or a worked visual for the same values (`src/domain/disclosure.js`). The whole lesson is checked, not only the linked section, because the learner can scroll. Other lesson reading before answering is recorded as help (“Correct with help”).
-10. **More like this** keeps the current variation. If an easier/harder change is pending, it is replaced, and the button and the notice say so.
+9. *Moved to requirements: lesson detours (DL-026 rule 2).*
+10. *Moved to requirements: More like this (DL-026 rule 3).*
 11. **“While solving” versus “after”.** Support is described relative to the first correct answer. Help used after an incorrect answer counts as help while solving.
 12. **The profile is created when step 1 is submitted**, before the learner confirms they saved the ID, so an interrupted setup keeps the ID and guest work. The setup banner asks the learner to finish.
 13. **Changing a confirmed recovery email** keeps the old address in use until the new one is confirmed.
@@ -54,16 +61,16 @@
 The checks can be run again from the prototype folder:
 
 ```bash
-npm test                 # domain checks (node --test): 16 tests
+npm test                 # domain checks (node --test): 33 tests
 npm run build
 npx playwright install chromium   # once
-npm run test:browser     # 20 browser scenarios + axe, 4 configurations
+npm run test:browser     # 23 browser scenarios + axe, 4 configurations
 ```
 
-- **Domain checks** (`tests/domain.test.mjs`): notation, locale number parsing, the 8 + 5 steps, explanation/validator agreement for every prototype instance, no answer before the revealing step, refusal outside supported values, finite pools and the ladder, observation ordering, and the round-03 cases (check sessions and suggestions, lesson disclosure in both languages, counting and explanation reveals, the balance check step, check segments, resumed questions, tags).
-- **Browser checks** (`tests/browser/review-checks.mjs`): 20 scenarios that repeat the reviewers' steps (Claude, Codex and Gemini), in Chromium (Playwright) on the built file, in four configurations: Bokmål 820 × 1180 light, English 390 × 844 dark, English 1180 × 820 light, Bokmål 390 × 844 dark. Selectors come from the app's own strings, so each scenario runs in both languages. They fail on console errors.
-- **Accessibility:** axe-core 4.10 (WCAG 2 A/AA, 2.1 AA, best practice) on 13 routes, with visual help open on the practice page, in all four configurations: no violations. Plus checks for missing `aria-labelledby` targets, sideways page scroll at 390 px, and 44 px targets on the lesson page.
-- **Last run:** 18 October 2026 in the cloud workspace: 16/16 domain tests, 80/80 browser checks. The browser checks were also run against a deliberately broken build to confirm that they catch the crash and the lesson reveal.
+- **Domain checks** (`tests/domain.test.mjs`): notation, locale number parsing, the 8 + 5 steps, explanation/validator agreement for every prototype instance, no answer before the revealing step, refusal outside supported values, finite pools and the ladder, observation outcomes as a table of event sequences (DL-029), and the round-03 cases (check sessions and suggestions, lesson disclosure in both languages, counting and explanation reveals, the balance check step, check segments, resumed questions, tags).
+- **Browser checks** (`tests/browser/review-checks.mjs`): 23 scenarios that repeat the reviewers' steps (Claude, Codex and Gemini in round 03; DL-029, DL-035 and DL-036 after round 04), in Chromium (Playwright) on the built file, in four configurations: Bokmål 820 × 1180 light, English 390 × 844 dark, English 1180 × 820 light, Bokmål 390 × 844 dark. Selectors come from the app's own strings, so each scenario runs in both languages. They fail on console errors.
+- **Accessibility:** axe-core 4.10 (WCAG 2 A/AA, 2.1 AA, best practice) on 13 routes, with visual help open on the practice page, in all four configurations: no violations. Plus checks for missing `aria-labelledby` targets, sideways page scroll at 390 px, 44 × 44 px targets on the lesson and practice pages (DL-037), and no accessible name giving the total before the revealing step of the 3 + 5 explanation (DL-035).
+- **Last run:** 18 October 2026 in the cloud workspace, round-04 fixes: 33/33 domain tests, 92/92 browser checks (23 scenarios × 4 configurations). The browser checks were also run against deliberately broken builds to confirm that they catch the round-03 crash and lesson reveal and the four round-04 defects.
 - **Not covered by the scripts:** the three-wrong-codes lock, recovery, the ID-reminder download, and the artifact host wrapper. These were checked by hand in Chromium during iteration 2 only.
 
 ## What still needs people or devices
