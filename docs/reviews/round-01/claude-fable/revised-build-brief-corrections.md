@@ -8,7 +8,7 @@
 
 Four things happened between the revised brief (baseline `d08ebba`) and this addendum, and each one narrows what still needs correcting:
 
-1. **Owner decisions.** ADR 0008 (PostgreSQL) and ADR 0009 (Azure App Service, Norway East) are accepted. Gemini's proposal to assign ADR 0008 to the random-source proposal is stale; if that proposal is accepted it becomes ADR 0010.
+1. **Owner decisions.** ADR 0008 (PostgreSQL) and ADR 0009 (Azure App Service, Norway East) are accepted. Gemini's proposal to assign ADR 0008 to the random-source proposal is stale; if that proposal is accepted it takes the next free ADR number (0011; ADR 0010 is the licence decision).
 2. **Authoritative documents updated** (commit `7fe5b26`). `docs/learning/mastery.md#progress-tracking-before-a-mastery-algorithm` and `docs/design/exercise-experience.md#explaining-why-the-result-follows` now settle the result and support semantics that Codex R2 and Gemini R02-002/003 argued about. The revised brief's §5 and §6 tables are superseded by those documents wherever they differ.
 3. **Codex's round-02 synthesis** already assigns dispositions to Gemini R02-001 to 010 and lists Gemini's incorrect citations. I agree with every disposition there; §B below records my position per item rather than repeating the synthesis.
 4. **Prototype iteration 2 and its round-03 fixes** (commits `a6a3aba`, `b8ec545`). Most of the prototype defects Gemini found in round 02, and the round-03 findings from Claude, Codex, and Gemini, are reported fixed in the prototype's [review response](../../../../Prototype/mathkx-designsystemet/docs/iteration-2/REVIEW-RESPONSE.md), with domain tests I ran and browser tests I did not. The build brief therefore no longer needs to carry prototype bug fixes; it needs to carry the *rules* those fixes embody into the production contracts.
@@ -76,14 +76,14 @@ The two skills from the revised brief (`numbers.number-bonds-to-ten` as advisory
 | Order | Backlog item | Verification carried with it |
 | --- | --- | --- |
 | 1 | Skills added to `content/skills/`; lesson moved under `content/lessons/<id>/` with `lesson.json`, `nb.md`, `en.md`; pilot schemas (§F); validator extended | `npm run validate`, validator tests |
-| 2 | C# `SeededRandom` with the proposal's fixtures; `addition-pair` generator version 1; definitions `within-10` and `crossing-ten`; validator with the prototype's misconception codes; result type (§E) | `dotnet test`: fixtures, golden seeds, property test per definition, agreement, replay fixture, boundary fixtures `4 + 4`, `9 + 9`, `19 + 1` |
+| 2 | C# `SeededRandom` with the proposal's fixtures; `addition-pair` generator version 1; definition `within-10` (`crossing-ten` follows in row 7); validator with the prototype's misconception codes; result type (§E) | `dotnet test`: fixtures, golden seeds, property test per definition, agreement, replay fixture, boundary fixtures `4 + 4`, `9 + 9`, `19 + 1` |
 | 3 | Thin API: instance and validate | Contract tests; private data stays server-side |
 | 4 | Web app: shell, counters, ten-frame, notation renderer, dictionaries; strings outside dictionaries removed | Dictionary parity test; status rendering exhaustive |
-| 5 | Practice flow for `within-10`: help before answering, answer, feedback, another question | Component tests: state survives language switch and resize |
+| 5 | Practice flow for `within-10`: help before answering, answer, feedback, another question; minimum observation recording per delivery in browser storage (instance reference, ordered submissions, support events) | Component tests: state survives language switch and resize; a recorded delivery replays |
 | 6 | Lesson rendering with a standard parser plus the `:::visual`, `:::example`, `:::practice` directives | Both lesson files render; GitHub shows the tables |
 | — | **First deliverable complete** | |
 | 7 | `crossing-ten` definition, make-ten help, challenge transitions, honest "no further variation" at the ends | Replay fixture across a challenge change |
-| 8 | Observations and derived labels (§E), per delivery, idempotent submissions | Unit tests for every outcome in §E |
+| 8 | Derived outcome labels and summaries (§E) over the observations recorded in row 5; idempotent submissions | Unit tests for every outcome in §E |
 | 9 | Repeat avoidance by canonical instance, bounded, with "Repeat this question" | Test: no repeat within the window; deliberate repeat works; exhausted pool repeats honestly |
 | 10 | CI: `dotnet test`, `npm test`, `npm run validate`, web build | Green on a pull request |
 | 11 | Bilingual walkthrough script (revised brief §7) recorded | Checklist |
@@ -121,12 +121,12 @@ One observation per **delivery** of an instance (a deliberate later repeat of th
 
 ### Outcome of a delivery
 
-Derived from the sequence, with "while solving" meaning before the first `correct` submission:
+Derived from the sequence, with "while solving" meaning before the first `correct` submission. Precedence when several apply (owner decision DL-029): any reveal (`correctAfterExplanation`) first, then non-visual help (`correctWithHelp`), then visual help (`correctWithVisualHelp`), then a feedback-only retry (`correctAfterFeedback`), then `correctFirst`. An earlier wrong answer stays visible as a tag whatever the outcome. `feedback-shown` is not a separately recorded event in practice and supported checks, where every incorrect result is shown: it is implied by an `incorrect` submission there, and an independent check never implies it. When no `correct` submission exists, the delivery's status is the highest in the order `review-needed`, then `partially-correct`, then `incorrect` among its mathematical submissions.
 
 | Sequence | Outcome (prototype name) | Wording |
 | --- | --- | --- |
 | First mathematical submission `correct`, no teaching support before it | `correctFirst` | "Correct on first response, no help" |
-| `correct` after an `incorrect` with `feedback-shown`, no teaching support | `correctAfterFeedback` | "Correct after feedback" |
+| `correct` after an `incorrect` (feedback implied), no teaching support | `correctAfterFeedback` | "Correct after feedback" |
 | `correct` after visual help, counting (not complete), or help steps | `correctWithVisualHelp` | "Correct with visual help" |
 | `correct` after non-visual help that did not reveal (explanation steps before the revealing one; a lesson without this answer) | `correctWithHelp` | "Correct with help" |
 | `correct` after any reveal (`counting-complete`, revealing `explanation-step`, `lesson-reveal`, `answer-reveal`) | `correctAfterExplanation` | "Answered after the answer was shown" |
@@ -151,6 +151,8 @@ Explicitly experimental, versioned `0.1-pilot`, not Format v1. The exploratory `
 | `exercise-definition.pilot.schema.json` | `id`, `version`, `skill`, `source: generated | fixed`, `generator {name, version}`, `parameters` validated per generator, `supportedRepresentations [{name, range}]`, `misconceptionCodes[]`, fixed instances when `source: fixed` | Generator name and version are registered; parameter bounds within the generator's declared domain; every representation's range covers the definition's value range; fixed instances validate against their own validator |
 | `skill.schema.json` (extend) | Optional per-skill `ladder[]` of definition IDs with localized sentences | Definitions exist and share the skill; ladder is acyclic and ordered |
 
+The directive attribute sets for `:::visual`, `:::example`, and `:::practice`, the supported notation grammar, the required front-matter fields, and the GFM delimiter-row rule are written into the lesson proposal as the author-facing pilot contract before the first lesson moves under `content/`; the field inventory in the round-04 synthesis (checklist 6) is the checklist for that work. The lesson `practice` entries and the `:::practice` directive reference a definition ID, not a skill and variant.
+
 CI also runs the dictionary key-parity test and flags learner-visible literals outside the dictionaries, scoped to text nodes and accessible-name attributes.
 
 ---
@@ -167,7 +169,7 @@ CI also runs the dictionary key-parity test and flags learner-visible literals o
 ## H. Decisions and conflicts
 
 - **D1, D2, D3** stand as stated in the revised brief §1. Codex (readiness) and Gemini (build-readiness) both recommend the same answers: the two scoped skills with explicit objectives, .NET domain plus thin API, number bonds and addition as the engineering pilot with equations next. The owner has not yet recorded them (decision log DL-004 to DL-006).
-- **Random-source proposal.** If accepted after the C# fixtures pass, it is **ADR 0010**; ADR 0008 is taken.
+- **Random-source proposal.** If accepted after the C# fixtures pass, it takes the next free ADR number (**0011**; ADR 0010 is the licence decision).
 - **`mastery.md` status sentence** ("the database … remain undecided") conflicts with accepted ADR 0008; a one-line reconciliation is needed (decision log DL-025).
 - **Prototype decisions awaiting confirmation** (from its `ASSUMPTIONS.md`): counting the last counter is a reveal; the lesson-disclosure rule; "More like this" replaces a pending change; a finished session keeps an unanswered question resumable; the profile is created at step 1 (decision log DL-026, DL-027).
 

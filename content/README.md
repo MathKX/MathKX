@@ -45,4 +45,6 @@ Different versions of an exercise may coexist, but two files must not define the
 
 Run it locally with `npm ci` followed by `npm run validate`. Run `npm test` for the validator regression suite. Both checks run in CI on every pull request. Validation does not yet verify that generators exist, that generated values are safe, or that answers validate correctly; those checks belong to later semantic tooling.
 
+Content under this directory is licensed under Creative Commons Attribution-ShareAlike 4.0 International; see [LICENSE](LICENSE) and [ADR 0010](../docs/architecture/decisions/0010-license-code-and-content.md).
+
 Read the [content contributor guidance](AGENTS.md) before adding content.

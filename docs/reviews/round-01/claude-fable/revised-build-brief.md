@@ -242,7 +242,7 @@ Authentication technology and credential format; password hashing and rate limit
 | --- | --- | --- | --- |
 | During the milestone | Owner, physical iPad | Task 12 checklist | Findings; no support claim |
 | After the milestone | The initial learner, if willing, 15 minutes with the addition practice; otherwise after milestone 2 with equations | Can they find the help button unprompted? Do they understand "Right with visual help" and "Right after feedback"? When they wanted help, was it useful? Did they ever want help and not find it? | Observations, including "help not needed" as a valid outcome |
-| After the milestone | One adult who did not grow up with "tiervenner" | The lesson in English, five questions, then the missing-part questions | Whether the framing sentence lands; whether any wording reads as childish |
+| After the milestone | One adult who did not grow up with "tiervenner" | The lesson in English, then five practice questions (the missing-part questions follow in milestone two) | Whether the framing sentence lands; whether any wording reads as childish |
 | Before milestone 2 | A mathematics educator | Objectives O1–O3, the two skills and their edge, the misconception codes and texts, the challenge sequence sentences | Written review in an issue |
 | Before release | A contributor new to the repository | Fix a wording in one language of the lesson, run validation, open a pull request | Done without touching application code |
 | Before release | Owner plus a screen-reader user if available | Full journey on iPad with VoiceOver and an external keyboard, both languages | Checklist with device and OS |

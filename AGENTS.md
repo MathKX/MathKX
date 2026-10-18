@@ -26,7 +26,7 @@ Content changes must also follow [content/AGENTS.md](content/AGENTS.md).
 - Use stable language-neutral identifiers; keep localization and curriculum mappings at their proper boundaries.
 - Treat accessibility and learner privacy as first-class requirements.
 - Keep the learner experience calm, encouraging, modern, and age-appropriate rather than childish.
-- Avoid prematurely deciding unresolved matters such as persistence, authentication, mastery algorithms, symbolic equivalence, hosting, or AI use.
+- Avoid prematurely deciding unresolved matters such as database schema and retention rules, authentication, mastery algorithms, symbolic equivalence, hosting operations and service tiers, or AI use. Storage (PostgreSQL, ADR 0008), hosting (Azure App Service in Norway East, ADR 0009), and licensing (ADR 0010) are decided.
 
 ## How to approach changes
 

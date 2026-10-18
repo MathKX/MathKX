@@ -11,7 +11,7 @@ These purposes describe how content is used. They do not require separate applic
 | Learn | Read an explanation, follow a worked example, inspect a diagram, and answer guided questions | Support is available throughout. Opening or completing a lesson is not proof of mastery. |
 | Explore | Change values, manipulate a model, make predictions, and observe relationships | Exploration can be ungraded. Actions are not automatically scored as correct or incorrect. |
 | Practice | Solve varied tasks with optional hints, feedback, and links back to explanations | Record the response and support used so later evidence interpretation can distinguish supported and independent work. |
-| Check understanding | Attempt a clearly scoped self-check or diagnostic set | Explain the allowed support and when feedback appears before starting. A check provides evidence, not a guaranteed diagnosis or mastery judgment. |
+| Check understanding | Attempt a clearly scoped self-check or diagnostic set | Explain the allowed support and when feedback appears before starting. The first-release default is an independent check: no teaching help inside the check, feedback at the end, and an explicit one-way switch to supported practice that leaves earlier answers independent (owner decision DL-028). A check provides evidence, not a guaranteed diagnosis or mastery judgment. |
 
 Formal examinations, invigilation, certificates, and institutional grading are not established requirements. Assessment here initially means checking understanding to guide learning. The precise assessment policy and mastery algorithm remain undecided.
 
@@ -25,14 +25,14 @@ For example, a lesson can explain the authored example `4 + 4 = 8`, then offer g
 
 ## More practice and learner control
 
-Learners can always request more practice for supported skills, including after completing a lesson, a practice session, or a self-check. Do not impose a lifetime exercise-count limit or lock practice because a skill is considered mastered. Session lengths can remain bounded; completing a session offers another session rather than making the learner continue indefinitely.
+Learners can always request more practice for supported skills, including after completing a lesson, a practice session, or a self-check. Do not impose a lifetime exercise-count limit or lock practice because a skill is considered mastered. Session lengths can remain bounded; completing a session offers another session rather than making the learner continue indefinitely. Finishing a session with an unanswered question keeps that question resumable, with the typed draft and the support already used, rather than making the end final (owner decision DL-026).
 
 Use clear actions, available in both first-release languages:
 
 | English | Norwegian Bokmål | Behavior |
 | --- | --- | --- |
 | Another question | En oppgave til | Continue with the selected skill and current challenge settings. |
-| More like this | Flere slike oppgaver | Prefer the same task family and comparable challenge, with other values or reviewed examples where available. |
+| More like this | Flere slike oppgaver | Prefer the same task family and comparable challenge, with other values or reviewed examples where available. It keeps the current variation; if an easier or harder change is pending, it replaces that change and says so visibly (owner decision DL-026). |
 | Make it easier | Gjør det enklere | Request a less demanding supported variation; explain what changes. |
 | More challenge | Øk utfordringen | Request a more demanding supported variation; explain what changes. |
 | Check my understanding | Sjekk forståelsen min | Start a fresh, bounded self-check with an explicit scope and support policy. |

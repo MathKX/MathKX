@@ -60,4 +60,4 @@ This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
 
 ## Licensing
 
-Code and content licenses have not been chosen yet. Maintainers need to publish explicit license and contribution terms before incorporating outside code or content contributions. This guide does not ask contributors to agree to an unspecified future license. Questions and improvement suggestions can be raised while that decision is pending.
+Code and documentation (including `tools/`, `schemas/`, prototype source, and `docs/`) are licensed under the MIT License, see [LICENSE](LICENSE). Learning content under `content/` is licensed under Creative Commons Attribution-ShareAlike 4.0 International, see [content/LICENSE](content/LICENSE). The decision is recorded in [ADR 0010](docs/architecture/decisions/0010-license-code-and-content.md). By contributing, you agree that your code and documentation contributions are licensed under MIT and your content contributions under CC BY-SA 4.0, and that you have the right to contribute them. Third-party material needs a compatible licence and attribution.
