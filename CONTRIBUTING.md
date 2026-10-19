@@ -54,6 +54,10 @@ The tests invoke the CLI against isolated fixtures, including conflicting exerci
 - Content changes should state which skill or scenario they serve.
 - Expect review from a mathematical, pedagogical, localization, or accessibility perspective as appropriate.
 
+## Specifications
+
+Features are specified before they are built, with GitHub Spec Kit, under [`specs/`](specs/). The [constitution](.specify/memory/constitution.md) governs every specification, and [specs/README.md](specs/README.md) lists the order of features and how to resume a checked-in specification on a fresh checkout.
+
 ## Conduct
 
 This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).

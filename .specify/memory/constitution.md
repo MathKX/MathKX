@@ -1,6 +1,6 @@
 # MathKX Constitution
 
-**Status:** Draft for owner review. Not ratified. Written in the consolidation step after design-review round 04 (decision log DL-001 to DL-039) from `AGENTS.md`, `docs/product-principles.md`, the accepted ADRs 0001 to 0010, and the learning and design documents. Specifications generated with GitHub Spec Kit must comply with this document once it is ratified; until then it is a proposal.
+**Status:** Ratified by the owner on 2026-10-18 (decision log DL-040). Written in the consolidation step after design-review round 04 (decision log DL-001 to DL-039) from `AGENTS.md`, `docs/product-principles.md`, the accepted ADRs 0001 to 0010, and the learning and design documents. Specifications generated with GitHub Spec Kit must comply with this document.
 
 ## Core Principles
 
@@ -57,6 +57,6 @@ The experience is calm, encouraging, modern, and age-appropriate for teenagers a
 
 ## Governance
 
-This constitution supersedes conflicting practice documents once ratified. It restates existing decisions; it does not create new requirements. Amendments require an owner decision recorded in the decision log, and an ADR when the change is architectural. Versioning follows semantic versioning: a major version for a removed or redefined principle, a minor version for a new principle or section, a patch for wording.
+This constitution supersedes conflicting practice documents. It restates existing decisions; it does not create new requirements. Amendments require an owner decision recorded in the decision log, and an ADR when the change is architectural. Versioning follows semantic versioning: a major version for a removed or redefined principle, a minor version for a new principle or section, a patch for wording.
 
-**Version:** 0.1.0 (draft) | **Ratified:** pending owner review | **Last amended:** 2026-10-18
+**Version:** 1.0.0 | **Ratified:** 2026-10-18 | **Last amended:** 2026-10-18
