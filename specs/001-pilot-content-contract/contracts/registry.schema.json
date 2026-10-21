@@ -48,10 +48,14 @@
     },
     "generator": {
       "type": "object",
-      "required": ["name", "version", "parameters", "produces"],
+      "required": ["name", "version", "relation", "parameters", "produces"],
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
+        "relation": {
+          "enum": ["sum-of-two-operands"],
+          "description": "Named quantity relation implemented by tools/lib/quantities.mjs; drives feasibility and the mapping from a, b to operand and sum."
+        },
         "parameters": {
           "type": "object",
           "description": "Parameter name -> the quantity it bounds and the domain a definition may choose within.",

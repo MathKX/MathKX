@@ -31,8 +31,8 @@
       "type": "object",
       "required": ["nb", "en"],
       "properties": {
-        "nb": { "type": "string", "pattern": "^[A-Za-z0-9._-]+\\.md$" },
-        "en": { "type": "string", "pattern": "^[A-Za-z0-9._-]+\\.md$" }
+        "nb": { "const": "nb.md" },
+        "en": { "const": "en.md" }
       },
       "additionalProperties": false
     }

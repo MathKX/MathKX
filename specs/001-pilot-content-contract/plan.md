@@ -74,7 +74,7 @@ content/
 ├── README.md                      # updated: layout, validation list, skill wording
 ├── AUTHORING.md                   # new: contributor guide for lessons, definitions, ladders
 ├── LICENSE
-├── _templates/                    # skipped by the validator (leading underscore)
+├── _templates/                    # the one directory the validator skips
 │   └── lesson/                    # lesson.json, nb.md, en.md, assets/.gitkeep with placeholders
 ├── registry/                      # new: reviewed lists of what code provides
 │   ├── generators.json
@@ -113,6 +113,7 @@ tools/
 │   ├── diagnostics.mjs               # failure collection and formatting
 │   ├── skills.mjs                    # registry of skills, prerequisite cycles, ladders
 │   ├── definitions.mjs               # pilot definitions, generator/validator/representation checks
+│   ├── quantities.mjs                # pilot quantity model: a, b -> operand, sum; feasibility
 │   ├── lessons.mjs                   # lesson folders, metadata, translations, pairing
 │   ├── markdown.mjs                  # unified pipeline, directive and table extraction
 │   ├── notation.mjs                  # pilot grammar tokenizer and normalizer

@@ -41,7 +41,7 @@ Container directives in the `remark-directive` form: a line `:::name{attr="value
 | `:::example{title="…" id="…"}` | `title` non-empty; `id` anchor-like, unique in the file | `title` | Markdown, may contain mathematics and lists | name + `id` |
 | `:::practice{definition="…" version="…"}` | `definition`: an exercise definition ID; `version`: integer ≥ 1 | none | empty | name + `definition` + `version` |
 
-Rules: unknown directive names and unknown or out-of-range attributes are reported; every `:::practice` directive corresponds to an entry in `lesson.json` `practice` and every entry has at least one directive; every `:::visual` `type` is listed in `lesson.json` `visuals`. The multiset of directive identities is identical across languages; order within the file may differ. Non-localized attributes of matched directives are identical; localized attributes are present and non-empty in each language and otherwise free.
+Rules: unknown directive names and unknown or out-of-range attributes are reported; for `groups` and `make-ten`, `a` and `b` are also checked together against the linked representation's `operand` and `sum` bounds (`groups` 9 + 9 and `make-ten` 2 + 2 are rejected, matching the prototype's `supports()`); every `:::practice` directive corresponds to an entry in `lesson.json` `practice` and every entry has at least one directive; every `:::visual` `type` is listed in `lesson.json` `visuals`. The multiset of directive identities is identical across languages; order within the file may differ. Non-localized attributes of matched directives are identical; localized attributes are present and non-empty in each language and otherwise free.
 
 ## Notation grammar
 

@@ -44,7 +44,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R6. Representation range coverage check
 
-**Decision**: Represent both a definition's domain and a representation's support as closed integer boxes over named quantities (`operand`, `sum`, and for the balance later `addend`, `total`). A definition passes when every declared representation's box contains the definition's box. The make-ten model's extra condition `10 − a ≤ b` is implied by `sum ≥ 11` when operands are at most 9, so boxes suffice for the pilot; representations may later declare named constraints if a model needs more than bounds.
+**Decision**: Represent both a definition's domain and a representation's support as closed integer boxes over named quantities (`operand`, `sum`, and for the balance later `addend`, `total`). A definition passes when every declared representation's box contains the definition's box. The make-ten model's extra condition `10 − a ≤ b` is implied by `sum ≥ 11` when operands are at most 9, so boxes suffice for the pilot; representations may later declare named constraints if a model needs more than bounds. Two refinements from PR review: a fixed task's point `{ a, b }` and a visual directive's `a`, `b` are mapped to `operand` and `sum` by the quantity model in `data-model.md` before containment is checked, so `4 + 4` with `groups` passes while `9 + 9` with `groups` and `2 + 2` with `make-ten` fail; and generated bounds must be feasible (operand 1–2 with sum 11–18 fits every box but produces no question), checked as `[2·operand.min, 2·operand.max]` intersecting `[sum.min, sum.max]`. The relation behind both is named `sum-of-two-operands` in the generator registry and implemented once in `tools/lib/quantities.mjs`, so the registry stays data and the tooling holds the one rule.
 
 **Rationale**: FR-011 and DL-009 require the check. The range is stated once, on the representation entry in `content/registry/representations.json` (the spec's "Representation support" entity), and the definition lists representations by name; repeating the range inside every definition would create a second source of truth that could disagree with the component. Boxes are easy to author, easy to explain in a diagnostic ("definition allows sum up to 20, make-ten supports at most 18"), and match how the prototype's `supports()` is written.
 
@@ -56,7 +56,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 **Rationale**: Round-04 review of the spec and the field inventory require validator identity and a conformance check for fixed tasks. Shape conformance is what content tooling can honestly verify; whether the answer is mathematically right is a domain test in spec 002.
 
-**Alternatives considered**: Validating the fixed answer arithmetically in the Node tooling (rejected: duplicates mathematics outside the C# domain, against gate III).
+**Alternatives considered**: Validating the fixed answer arithmetically in the Node tooling (rejected: duplicates mathematics outside the C# domain, against gate III). Deriving `sum` from `a` and `b` for the coverage box (R6) is not this: it computes a range bound for a data check and never decides whether a learner's response is right.
 
 ## R8. Lesson metadata fields
 
@@ -88,7 +88,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R12. Template location and validator skipping
 
-**Decision**: The copyable lesson template lives at `content/_templates/lesson/`; the validator skips any path segment beginning with `_` under `content/`, and documents this.
+**Decision**: The copyable lesson template lives at `content/_templates/lesson/`; the validator skips exactly that one directory and documents this. Every other file under `content/`, including underscore-prefixed paths elsewhere, is discovered and checked (FR-016).
 
 **Rationale**: A template with placeholder values would otherwise fail validation on every run; keeping it next to the content it templates is where a contributor looks first.
 

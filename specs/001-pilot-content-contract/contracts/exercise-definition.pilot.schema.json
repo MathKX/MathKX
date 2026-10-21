@@ -60,11 +60,11 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": { "properties": { "source": { "const": "generated" } } },
+      "if": { "required": ["source"], "properties": { "source": { "const": "generated" } } },
       "then": { "required": ["generator"], "properties": { "generator": true, "instance": false } }
     },
     {
-      "if": { "properties": { "source": { "const": "fixed" } } },
+      "if": { "required": ["source"], "properties": { "source": { "const": "fixed" } } },
       "then": { "required": ["instance"], "properties": { "instance": true, "generator": false } }
     }
   ],

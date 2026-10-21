@@ -44,6 +44,8 @@ Expected: every existing validator test still passes, plus one test per failure 
 2. `npm run validate` → fails: `representations.help[0]: make-ten supports operand ≤ 9 and sum ≤ 18 but the definition allows operand ≤ 19 and sum ≤ 20`.
 3. Change `validator.name` to `nonexistent` → `validator: nonexistent@1 is not registered (expected one of: integer-answer@1)`.
 4. In the fixed example, set `instance.validation.answer` to `"eight"` → `instance.validation.answer: expected integer for validator integer-answer@1`.
+5. Set `operand` to 1–2 while keeping `sum` at 11–18 → `generator.parameters: no operand pair within 1–2 has a sum within 11–18`.
+6. In the fixed example, set `instance.prompt` to `{ "a": 9, "b": 9 }` → `representations.help[0]: groups supports sum 2–10 but the task has sum 18`.
 
 ## Scenario 3: a ladder (User Story 3)
 

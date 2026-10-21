@@ -33,7 +33,7 @@ A folder `content/lessons/<id>/` holding `lesson.json`, one Markdown file per re
 | `relatedLessons` | string[] | no | Each resolves to a lesson |
 | `practice` | Practice entry[] | yes (may be empty) | Each `definition`@`version` exists; warning if the definition's skill is not among `skills` |
 | `visuals` | string[] | no | Each is a registered visual-component type; every `:::visual` in the body must use a listed type |
-| `translations` | object `{ nb: string, en: string }` | yes | Both keys required; each names an existing file in the folder |
+| `translations` | object `{ nb: "nb.md", en: "en.md" }` | yes | Both keys required with exactly these file names (FR-001), so the two languages can never resolve to one file; each file must exist. Any other `*.md` in the folder is reported as an unsupported language file |
 | `check` | — | forbidden | Reported as "not part of the pilot" |
 
 **Practice entry**: `{ definition: string, version: integer ≥ 1 }`.
@@ -56,7 +56,7 @@ Container directive `:::name{attr="value" …}` … `:::` (closing fence require
 
 | Directive | Attributes | Localized? | Identity for pairing |
 | --- | --- | --- | --- |
-| `:::visual` | `type` (registered component), plus the component's attributes (for `ten-frame-explorer`: `start` integer 0–10; for `make-ten`: `a`, `b` integers within the representation's bounds; for `groups`: `a`, `b`) | none localized | name + `type` + all attributes |
+| `:::visual` | `type` (registered component), plus the component's attributes (for `ten-frame-explorer`: `start` integer 0–10; for `groups` and `make-ten`: `a`, `b` integers 1–9). When the component links a representation, `a` and `b` are also checked together: the point box from the quantity model must lie inside the representation's `supports` (so `groups` 9 + 9 and `make-ten` 2 + 2 fail) | none localized | name + `type` + all attributes |
 | `:::example` | `title` (string, non-empty), `id` (anchor-like, unique in the file) | `title` localized | name + `id` |
 | `:::practice` | `definition` (string), `version` (integer ≥ 1) | none localized | name + `definition` + `version` |
 
@@ -78,7 +78,19 @@ Each `:::practice` directive must match an entry in `lesson.json.practice` and e
 | `representations` | `{ help: string[], explanation: string[] }` | yes | Each name registered; each representation's support box contains the definition's domain box |
 | `misconceptionCodes` | string[] | yes (may be empty) | Each registered and emitted by the named validator |
 
-**Definition domain box**: for `generated`, the bounds in `generator.parameters` (for `addition-pair`: `operand.min/max`, `sum.min/max`); for `fixed`, the point given by `instance.prompt`.
+**Definition domain box**: for `generated`, the bounds in `generator.parameters` (for `addition-pair`: `operand.min/max`, `sum.min/max`); for `fixed`, the point box derived from `instance.prompt` by the quantity model below. A generated definition must also be feasible: at least one operand pair in the operand range has a sum in the sum range.
+
+## Quantity model (pilot)
+
+Registries and definitions speak about quantities by name. The pilot has one relation, named `sum-of-two-operands`, which generators declare in `relation` and which `tools/lib/quantities.mjs` implements. Representations' `supports` and generators' `parameters` are keyed by `operand` and `sum`; prompts and visual directives carry the concrete values `a` and `b`.
+
+| Quantity | Meaning | Derived from a point `{ a, b }` |
+| --- | --- | --- |
+| `a`, `b` | The two operands as shown to the learner | given |
+| `operand` | The range that covers both operands | `[min(a, b), max(a, b)]` |
+| `sum` | `a + b` | `[a + b, a + b]` |
+
+Rules: a box is contained in another when every quantity's `[min, max]` lies inside the other's; generated bounds are feasible when `[2·operand.min, 2·operand.max]` intersects `[sum.min, sum.max]`. Deriving `sum` from `a` and `b` here is range bookkeeping for coverage checks, not answer validation, which stays in the domain code (research R7).
 
 ## Registries (`content/registry/*.json`)
 
@@ -86,7 +98,7 @@ All share `$schema` → `schemas/registry.schema.json`, `schemaVersion: "0.1-pil
 
 | File | `kind` | Entry fields |
 | --- | --- | --- |
-| `generators.json` | `generators` | `name`, `version`, `parameters` (map of parameter name → `{ quantity, min, max }` domain), `produces` (quantities emitted, e.g. `a`, `b`, `sum`) |
+| `generators.json` | `generators` | `name`, `version`, `relation` (named quantity relation the tooling implements; pilot: `sum-of-two-operands`), `parameters` (map of parameter name → `{ quantity, min, max }` domain), `produces` (quantities emitted, e.g. `a`, `b`, `sum`) |
 | `validators.json` | `validators` | `name`, `version`, `artifact` (`{ type: "integer", min?, max? }` in the pilot), `emits` (misconception codes) |
 | `representations.json` | `representations` | `name`, `role` (`help`, `explanation`, or both), `reads` (quantities), `supports` (box: quantity → `{ min, max }`) |
 | `visual-components.json` | `visual-components` | `type`, `attributes` (map of attribute → `{ type: "integer" \| "string", min?, max? }`), `representation` (optional link to a representation name) |
