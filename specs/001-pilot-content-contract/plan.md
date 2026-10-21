@@ -63,7 +63,7 @@ specs/001-pilot-content-contract/
 │   ├── directives-and-notation.md
 │   └── diagnostics.md
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks), not created here
+└── tasks.md             # Phase 2 (/speckit-tasks): 47 tasks in eight phases
 ```
 
 ### Source Code (repository root)
