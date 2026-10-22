@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Lesson (pilot)",
+  "description": "Draft contract for specs/001. Pilot shared metadata for one lesson folder: language-neutral identity, skill and practice references, embedded visual types, and the translation files. Per-language title and objective live in each Markdown file's front matter. Experimental 0.1-pilot; not Exercise Format v1.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "status", "skills", "practice", "translations"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "description": "Equals the lesson folder name."
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["draft", "pilot", "released"] },
+    "skills": { "type": "array", "$ref": "#/$defs/idList", "minItems": 1 },
+    "prerequisites": { "$ref": "#/$defs/idList" },
+    "relatedSkills": { "$ref": "#/$defs/idList" },
+    "relatedLessons": { "$ref": "#/$defs/idList" },
+    "practice": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/definitionRef" }
+    },
+    "visuals": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+      "uniqueItems": true
+    },
+    "translations": {
+      "type": "object",
+      "required": ["nb", "en"],
+      "properties": {
+        "nb": { "const": "nb.md" },
+        "en": { "const": "en.md" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "idList": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+      "uniqueItems": true
+    },
+    "definitionRef": {
+      "type": "object",
+      "required": ["definition", "version"],
+      "properties": {
+        "definition": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+        "version": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

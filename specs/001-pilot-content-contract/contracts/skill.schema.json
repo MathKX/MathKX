@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Skill",
+  "description": "Draft of the extended skill schema for specs/001. A skill carries its stable identity, its prerequisite edges, and optionally an ordered challenge ladder of its own exercise definitions with a learner-facing step description per release language. Names, descriptions, and curriculum mappings for the skill itself still live elsewhere.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "prerequisites"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "description": "Stable, language-neutral skill ID such as numbers.square-roots. Must not encode a country, curriculum, grade, or display language."
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "IDs of skills this skill depends on. The graph across all skills must be acyclic.",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+      "uniqueItems": true
+    },
+    "ladder": {
+      "type": "array",
+      "description": "Ordered from least to most demanding. Each entry names one of this skill's exercise definitions; 'Make it easier' and 'More challenge' move to the adjacent entry.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["definition", "version", "description"],
+        "properties": {
+          "definition": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+          "version": { "type": "integer", "minimum": 1 },
+          "description": {
+            "type": "object",
+            "required": ["nb", "en"],
+            "properties": {
+              "nb": { "type": "string", "minLength": 1 },
+              "en": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
