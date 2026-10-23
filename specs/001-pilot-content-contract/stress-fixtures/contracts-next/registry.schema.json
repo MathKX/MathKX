@@ -64,7 +64,7 @@
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
-        "relation": { "$ref": "#/$defs/name", "description": "Optional named quantity relation implemented in tooling (pilot: sum-of-two-operands)." },
+        "relation": { "enum": ["sum-of-two-operands"], "description": "Optional named quantity relation; the enum lists implemented relations (pilot: sum-of-two-operands)." },
         "scale": { "type": "integer", "minimum": 1, "description": "Added: fixed denominator for scaled-integer parameters (10 means tenths). Keeps parameters integers." },
         "constraints": { "$ref": "#/$defs/nameList", "description": "Added: named constraints the generator can enforce; definitions pick from this list." },
         "parameters": { "type": "object", "additionalProperties": { "$ref": "#/$defs/parameterDomain" } },

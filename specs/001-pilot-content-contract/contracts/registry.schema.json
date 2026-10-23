@@ -69,8 +69,8 @@
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
         "relation": {
-          "$ref": "#/$defs/name",
-          "description": "Optional named quantity relation implemented by tools/lib/quantities.mjs (pilot: sum-of-two-operands). When present it drives the feasibility check and the mapping from a, b to operand and sum; generators that pick from reviewed tables declare none."
+          "enum": ["sum-of-two-operands"],
+          "description": "Optional named quantity relation. The enum lists exactly the relations tools/lib/quantities.mjs implements, so an unimplemented name is a schema violation; adding a relation adds a value here and its implementation in the same change. When present it drives the feasibility check and the mapping from a, b to operand and sum; generators that pick from reviewed tables declare none."
         },
         "constraints": {
           "$ref": "#/$defs/nameList",

@@ -57,6 +57,7 @@ Status words: **carried** (the pilot expresses it), **deferred** (not in the pil
 | Notation grammar | documented subset; unsupported reported, never dropped | additive by design: new constructs extend the grammar version; S7's `f="2x + 1"` already parses |
 | Directive attributes | `integer`, `string` | `decimal`, `expression`, enumeration values are added enum values |
 | Directive bodies | only `:::example` has a body | component registry `body` (`markdown` or `steps`) for S15 |
+| Visual coverage check (T026) | box from attributes `a`, `b` via the pilot relation; a linked component with other attributes is reported as unmapped | deferred: a named quantity derivation per visual-component entry (S6 `equation` → `solution`, `coefficient`; S8 `xMin`…`yMax` → `x`, `y`), additive |
 | Cross-language pairing | identity and normalized mathematics | unchanged by any scenario |
 
 ## Evolution rule proposed for the contract

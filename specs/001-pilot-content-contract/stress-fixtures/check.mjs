@@ -2,6 +2,9 @@
 // and against ./contracts-next (the proposed additive extensions), using the same Ajv
 // configuration as tools/validate-content.mjs. Usage, from the repository root:
 //   node specs/001-pilot-content-contract/stress-fixtures/check.mjs [--json]
+// Advanced fixtures are expected to fail the pilot schemas. Two invariants must hold and
+// the process exits 1 when either is broken: the pilot-control set passes both schema sets,
+// and every fixture passes the projection. With --json, stdout is one JSON document.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,8 +57,24 @@ for (const scenario of scenarios) {
   }
 }
 
+const violations = [];
+for (const [scenario, files] of Object.entries(report)) {
+  for (const [file, outcome] of Object.entries(files)) {
+    if (scenario === "pilot-control" && outcome.pilot !== "ok") violations.push(`pilot-control/${file} must pass the pilot contracts`);
+    if (scenario === "pilot-control" && sets.next && outcome.next !== "ok") violations.push(`pilot-control/${file} must pass the projection`);
+    if (scenario !== "pilot-control" && sets.next && outcome.next !== "ok") violations.push(`${scenario}/${file} must pass the projection`);
+  }
+}
+const all = Object.values(report).flatMap((files) => Object.values(files));
+const summary = {
+  pilotRejected: all.filter((o) => o.pilot !== "ok").length,
+  nextRejected: sets.next ? all.filter((o) => o.next !== "ok").length : null,
+  files: all.length,
+  violations,
+};
+
 if (process.argv.includes("--json")) {
-  console.log(JSON.stringify(report, null, 2));
+  process.stdout.write(JSON.stringify({ report, summary }, null, 2) + "\n");
 } else {
   for (const [scenario, files] of Object.entries(report)) {
     console.log(`\n## ${scenario}`);
@@ -67,7 +86,8 @@ if (process.argv.includes("--json")) {
       }
     }
   }
+  console.log(`\npilot contracts: ${summary.pilotRejected} of ${summary.files} file(s) rejected; next contracts: ${sets.next ? `${summary.nextRejected} file(s) rejected` : "not present"}`);
+  for (const v of violations) console.log(`INVARIANT BROKEN: ${v}`);
+  console.log(violations.length ? "stress check failed" : "stress check passed");
 }
-const pilotFailures = Object.values(report).flatMap((files) => Object.values(files)).filter((o) => o.pilot !== "ok").length;
-const nextFailures = Object.values(report).flatMap((files) => Object.values(files)).filter((o) => o.next && o.next !== "ok").length;
-console.log(`\npilot contracts: ${pilotFailures} file(s) rejected; next contracts: ${sets.next ? `${nextFailures} file(s) rejected` : "not present"}`);
+process.exitCode = violations.length ? 1 : 0;
