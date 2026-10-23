@@ -79,6 +79,10 @@ The [lesson structure and Markdown proposal](proposals/lesson-markdown-and-deliv
 - Learner privacy favors minimal collection and no advertising profiling. Anonymous profile setup does not establish complete anonymity for network traffic or operational data.
 - Profiles and progress are stored in PostgreSQL (ADR 0008), and the application is hosted on Azure App Service in Norway East (ADR 0009), so learner data stays in that region. Authentication mechanisms, session handling, retention and deletion rules, and AI usage remain outside the current architecture decision set.
 
+## Diagrams
+
+Two draw.io diagrams in [diagrams/](diagrams/README.md) picture the system shape described here and the content data model from spec 001. They follow decisions; they do not make them.
+
 ## Decision records
 
 Accepted decisions are documented in:
