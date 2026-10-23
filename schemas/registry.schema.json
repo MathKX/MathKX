@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Capability Registry (pilot)",
+  "description": "Pilot contract (specs/001). One file per kind under content/registry/. Registries are reviewed data listing what tested code provides: generators, validators, representations, visual components, and misconception codes, with names, versions, parameter domains, artifact shapes, and supported ranges. They carry no logic. Domain tests in later features assert that the code matches them.",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "entries"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "kind": { "enum": ["generators", "validators", "representations", "visual-components", "misconception-codes"] },
+    "entries": { "type": "array", "minItems": 1 }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "generators" } } },
+      "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/generator" } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "validators" } } },
+      "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/validator" } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "representations" } } },
+      "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/representation" } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "visual-components" } } },
+      "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/visualComponent" } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "misconception-codes" } } },
+      "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/misconceptionCode" } } } }
+    }
+  ],
+  "$defs": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "nameList": { "type": "array", "items": { "$ref": "#/$defs/name" }, "uniqueItems": true },
+    "quantity": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+    "artifact": {
+      "description": "Response-artifact shape a validator accepts: one oneOf branch per kind, discriminated by type. The pilot has integer only; later kinds (rational, decimal with scale, point, ordered-partition, mapping…) add a branch and never change an existing one.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "integer" },
+            "min": { "type": "integer" },
+            "max": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "box": {
+      "type": "object",
+      "description": "Quantity -> closed integer bounds.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["min", "max"],
+        "properties": { "min": { "type": "integer" }, "max": { "type": "integer" } },
+        "additionalProperties": false
+      }
+    },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version", "parameters", "produces"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "type": "integer", "minimum": 1 },
+        "relation": {
+          "enum": ["sum-of-two-operands"],
+          "description": "Optional named quantity relation. The enum lists exactly the relations tools/lib/quantities.mjs implements, so an unimplemented name is a schema violation; adding a relation adds a value here and its implementation in the same change. When present it drives the feasibility check and the mapping from a, b to operand and sum; generators that pick from reviewed tables declare none."
+        },
+        "constraints": {
+          "$ref": "#/$defs/nameList",
+          "description": "Named constraints the generator can enforce beyond bounds (for example integer-solution). A definition may list a subset. The pilot generator declares none."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Parameter name -> the quantity it bounds and the domain a definition may choose within.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["quantity", "min", "max"],
+            "properties": {
+              "kind": { "const": "integer-range", "description": "Discriminator for the parameter domain kind; may be omitted. The pilot has this one kind; a later kind (for example an enumeration) adds a oneOf branch." },
+              "quantity": { "$ref": "#/$defs/quantity" },
+              "min": { "type": "integer" },
+              "max": { "type": "integer" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "produces": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "validator": {
+      "type": "object",
+      "required": ["name", "version", "artifact", "emits"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "type": "integer", "minimum": 1 },
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "emits": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "representation": {
+      "type": "object",
+      "required": ["name", "role", "reads", "supports"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "role": { "type": "array", "items": { "enum": ["help", "explanation"] }, "minItems": 1, "uniqueItems": true },
+        "reads": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "minItems": 1, "uniqueItems": true },
+        "supports": { "$ref": "#/$defs/box" }
+      },
+      "additionalProperties": false
+    },
+    "visualComponent": {
+      "type": "object",
+      "required": ["type", "attributes"],
+      "properties": {
+        "type": { "$ref": "#/$defs/name" },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["integer", "string"] },
+              "min": { "type": "integer" },
+              "max": { "type": "integer" },
+              "required": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "representation": { "$ref": "#/$defs/name" }
+      },
+      "additionalProperties": false
+    },
+    "misconceptionCode": {
+      "type": "object",
+      "required": ["code", "validator"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" },
+        "validator": { "$ref": "#/$defs/name" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.addition.crossing-ten",
+  "version": 1,
+  "skill": "numbers.addition-within-20",
+  "source": "generated",
+  "validator": {
+    "name": "integer-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "addition-pair",
+    "version": 1,
+    "parameters": {
+      "operand": {
+        "min": 2,
+        "max": 9
+      },
+      "sum": {
+        "min": 11,
+        "max": 18
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "make-ten"
+    ],
+    "explanation": [
+      "make-ten"
+    ]
+  },
+  "misconceptionCodes": [
+    "add.oneGroup",
+    "add.concat",
+    "add.offByOne",
+    "add.subtracted",
+    "add.generic"
+  ]
+}

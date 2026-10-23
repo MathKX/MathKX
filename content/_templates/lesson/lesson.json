@@ -1,0 +1,15 @@
+{
+  "$schema": "../../../schemas/lesson.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "<lesson-id>",
+  "version": 1,
+  "status": "draft",
+  "skills": ["<skill-id>"],
+  "prerequisites": [],
+  "relatedSkills": [],
+  "relatedLessons": [],
+  "practice": [{ "definition": "<definition-id>", "version": 1 }],
+  "visuals": ["ten-frame-explorer"],
+  "translations": { "nb": "nb.md", "en": "en.md" },
+  "_comment": "Copy this folder to content/lessons/<lesson-id>/ and replace every <placeholder>. Field by field: id equals the folder name (lowercase, dots and hyphens). version is an integer you raise when the lesson changes meaningfully. status is draft, pilot, or released; released requires both translations. skills lists the skill IDs the lesson teaches (content/skills/). prerequisites, relatedSkills, and relatedLessons are optional lists of skill or lesson IDs. practice lists the exercise definitions (content/exercises/) the lesson's :::practice directives use, by id and version; every entry needs a directive in each language and every directive needs an entry. visuals lists the registered visual component types (content/registry/visual-components.json) the body may embed. translations is fixed to nb.md and en.md. Delete this _comment line before validating: the schema allows no other fields, and this one is here only to explain them."
+}

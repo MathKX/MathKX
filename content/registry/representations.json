@@ -1,0 +1,64 @@
+{
+  "$schema": "../../schemas/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "groups",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "a",
+        "b"
+      ],
+      "supports": {
+        "operand": {
+          "min": 1,
+          "max": 9
+        },
+        "sum": {
+          "min": 2,
+          "max": 10
+        }
+      }
+    },
+    {
+      "name": "make-ten",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "a",
+        "b"
+      ],
+      "supports": {
+        "operand": {
+          "min": 1,
+          "max": 9
+        },
+        "sum": {
+          "min": 11,
+          "max": 18
+        }
+      }
+    },
+    {
+      "name": "ten-frame-explorer",
+      "role": [
+        "explanation"
+      ],
+      "reads": [
+        "start"
+      ],
+      "supports": {
+        "start": {
+          "min": 0,
+          "max": 10
+        }
+      }
+    }
+  ]
+}

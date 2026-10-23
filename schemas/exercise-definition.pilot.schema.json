@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Exercise Definition (pilot)",
+  "description": "Pilot contract (specs/001). A generated family (registered generator plus bounded parameters) or a fixed authored task, with the validator that judges responses, the representations that may show it and their coverage, and the misconception codes the validator may emit. Experimental 0.1-pilot; the exploratory 0.1 exercise schema is unchanged and separate.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "skill", "source", "validator", "representations", "misconceptionCodes"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "skill": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "source": { "enum": ["generated", "fixed"] },
+    "validator": { "$ref": "#/$defs/namedVersion" },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version", "parameters"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+        "version": { "type": "integer", "minimum": 1 },
+        "parameters": {
+          "type": "object",
+          "description": "Parameter name -> domain choice. Keys and bounds are checked against the generator registry, not by this schema.",
+          "additionalProperties": { "$ref": "#/$defs/bounds" }
+        },
+        "constraints": {
+          "$ref": "#/$defs/nameList",
+          "description": "Named constraints from the generator's declared list that this family requires; checked against the registry."
+        }
+      },
+      "additionalProperties": false
+    },
+    "instance": {
+      "type": "object",
+      "required": ["prompt", "validation"],
+      "properties": {
+        "prompt": {
+          "type": "object",
+          "description": "Authored prompt data in the shape the declared representations read (for the pilot: a and b as integers). Any JSON is allowed here; the validator checks the quantities each representation reads are present.",
+          "additionalProperties": true
+        },
+        "validation": {
+          "type": "object",
+          "description": "Private data for the named validator; its shape is checked against the validator registry."
+        }
+      },
+      "additionalProperties": false
+    },
+    "representations": {
+      "type": "object",
+      "required": ["help", "explanation"],
+      "properties": {
+        "help": { "$ref": "#/$defs/nameList" },
+        "explanation": { "$ref": "#/$defs/nameList" }
+      },
+      "additionalProperties": false
+    },
+    "misconceptionCodes": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "required": ["source"], "properties": { "source": { "const": "generated" } } },
+      "then": { "required": ["generator"], "properties": { "generator": true, "instance": false } }
+    },
+    {
+      "if": { "required": ["source"], "properties": { "source": { "const": "fixed" } } },
+      "then": { "required": ["instance"], "properties": { "instance": true, "generator": false } }
+    }
+  ],
+  "$defs": {
+    "namedVersion": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+        "version": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "bounds": {
+      "type": "object",
+      "description": "Pilot parameter domain kind: a closed integer range. kind may be omitted; later kinds add a oneOf branch here.",
+      "required": ["min", "max"],
+      "properties": {
+        "kind": { "const": "integer-range" },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "nameList": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Lesson structure, Markdown, and delivery
 
-Status: proposal for the first lesson implementation. The initial product direction is to show lessons inside MathKX and defer a separate Hugo learning site. The file layout and syntax below must be proven with a small bilingual lesson before becoming stable content contracts.
+Status: proposal, partly implemented. The folder layout, the three directives, and the bilingual pairing below were proven with the number-bonds lesson and implemented as the pilot content contract by [spec 001](../../../specs/001-pilot-content-contract/spec.md); the contract's open points are settled there: metadata fields (`status`, `skills`, `prerequisites`, `relatedSkills`, `relatedLessons`, `visuals`, `translations`), `practice` entries that name an exercise definition and version rather than a skill and variant, and the split of the earlier `related` list into `relatedSkills` and `relatedLessons`. The authoritative field list is [content/AUTHORING.md](../../../content/AUTHORING.md). The in-app renderer and delivery remain proposals. The initial product direction is to show lessons inside MathKX and defer a separate Hugo learning site.
 
 ## One learning experience and one source
 

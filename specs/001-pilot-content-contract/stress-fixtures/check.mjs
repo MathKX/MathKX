@@ -1,7 +1,7 @@
 // Validates every stress fixture against the draft contracts in ../contracts (the pilot)
 // and against ./contracts-next (the proposed additive extensions), using the same Ajv
 // configuration as tools/validate-content.mjs. Usage, from the repository root:
-//   node specs/001-pilot-content-contract/stress-fixtures/check.mjs [--json]
+//   node specs/001-pilot-content-contract/stress-fixtures/check.mjs [--json] [--schemas <dir>]
 // Advanced fixtures are expected to fail the pilot schemas. Two invariants must hold and
 // the process exits 1 when either is broken: the pilot-control set passes both schema sets,
 // and every fixture passes the projection. With --json, stdout is one JSON document.
@@ -12,8 +12,10 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const schemasArg = process.argv.indexOf("--schemas");
 const schemaSets = {
-  pilot: path.join(here, "..", "contracts"),
+  // --schemas <dir> validates against another schema directory, for example the final schemas/ copies.
+  pilot: schemasArg !== -1 ? path.resolve(process.argv[schemasArg + 1]) : path.join(here, "..", "contracts"),
   next: path.join(here, "contracts-next"),
 };
 
