@@ -1,0 +1,45 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "fractions.three-quarters-linked",
+  "version": 1,
+  "skill": "fractions.as-numbers",
+  "source": "fixed",
+  "validator": {
+    "name": "rational-linked",
+    "version": 1
+  },
+  "instance": {
+    "prompt": {
+      "numerator": 3,
+      "denominator": 4
+    },
+    "validation": {
+      "bar": {
+        "numerator": 3,
+        "denominator": 4
+      },
+      "point": {
+        "numerator": 3,
+        "denominator": 4
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "fraction-bar"
+    ],
+    "explanation": [
+      "fraction-bar",
+      "number-line"
+    ],
+    "response": [
+      "fraction-bar",
+      "number-line"
+    ]
+  },
+  "misconceptionCodes": [
+    "frac.unequalParts",
+    "frac.tickCount"
+  ]
+}

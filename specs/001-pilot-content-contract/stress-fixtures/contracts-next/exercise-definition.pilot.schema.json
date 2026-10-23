@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Exercise Definition (stress-test projection, not a contract)",
+  "description": "A projection of contracts/exercise-definition.pilot.schema.json used only by the stress test. Every change is additive: parameter domains gain a oneOf branch, generator gains optional constraints, fixed prompts accept any JSON, representations gain an optional response list, and three optional top-level fields (pool, interaction, composition) are sketched as extension points. The added shapes are illustrative, not decided.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "skill", "source", "validator", "representations", "misconceptionCodes"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "skill": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "source": { "enum": ["generated", "fixed"] },
+    "validator": { "$ref": "#/$defs/namedVersion" },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version", "parameters"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+        "version": { "type": "integer", "minimum": 1 },
+        "parameters": { "type": "object", "additionalProperties": { "$ref": "#/$defs/parameterChoice" } },
+        "constraints": { "$ref": "#/$defs/nameList" }
+      },
+      "additionalProperties": false
+    },
+    "instance": {
+      "type": "object",
+      "required": ["prompt", "validation"],
+      "properties": {
+        "prompt": { "type": "object", "description": "Authored prompt data in the shape the declared representations read; any JSON.", "additionalProperties": true },
+        "validation": { "type": "object", "description": "Private data for the named validator; shape checked against the validator registry." }
+      },
+      "additionalProperties": false
+    },
+    "pool": {
+      "type": "array",
+      "description": "Sketch (S4): authored option sets a generator selects from; items carry stable IDs, display forms, and canonical values.",
+      "items": {
+        "type": "object",
+        "required": ["id", "items"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+          "items": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["id", "display", "value"], "properties": { "id": { "type": "string" }, "display": { "type": "string" }, "value": {} }, "additionalProperties": false } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "interaction": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "description": "Sketch (S8): named interaction when it is not typed entry." },
+    "composition": {
+      "type": "object",
+      "description": "Sketch (S7): a task built from parts the generator derives from one model.",
+      "required": ["parts", "task"],
+      "properties": {
+        "parts": { "$ref": "#/$defs/nameList" },
+        "task": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+        "arity": { "enum": ["one-to-one", "many-to-one"] }
+      },
+      "additionalProperties": false
+    },
+    "representations": {
+      "type": "object",
+      "required": ["help", "explanation"],
+      "properties": {
+        "help": { "$ref": "#/$defs/nameList" },
+        "explanation": { "$ref": "#/$defs/nameList" },
+        "response": { "$ref": "#/$defs/nameList" }
+      },
+      "additionalProperties": false
+    },
+    "misconceptionCodes": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    { "if": { "required": ["source"], "properties": { "source": { "const": "generated" } } }, "then": { "required": ["generator"], "properties": { "generator": true, "instance": false } } },
+    { "if": { "required": ["source"], "properties": { "source": { "const": "fixed" } } }, "then": { "required": ["instance"], "properties": { "instance": true, "generator": false } } }
+  ],
+  "$defs": {
+    "namedVersion": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": { "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" }, "version": { "type": "integer", "minimum": 1 } },
+      "additionalProperties": false
+    },
+    "parameterChoice": {
+      "oneOf": [
+        { "type": "object", "required": ["min", "max"], "properties": { "kind": { "const": "integer-range" }, "min": { "type": "integer" }, "max": { "type": "integer" } }, "additionalProperties": false },
+        { "type": "object", "required": ["kind", "values"], "properties": { "kind": { "const": "enumeration" }, "values": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "anyOf": [{ "type": "integer" }, { "type": "string" }] } } }, "additionalProperties": false }
+      ]
+    },
+    "nameList": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" }, "uniqueItems": true }
+  }
+}

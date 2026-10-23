@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Capability Registry (stress-test projection, not a contract)",
+  "description": "A projection of contracts/registry.schema.json used only by the stress test to prove that the extension points are additive: every change here adds a oneOf branch, an enum value, or an optional field, and every pilot registry file stays valid. The added branches are illustrative shapes for scenarios S1, S3, S4, S6, S7, S8, S15 and decimals; they are not decided and must not be copied into schemas/ without their own specification.",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "entries"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "kind": { "enum": ["generators", "validators", "representations", "visual-components", "misconception-codes"] },
+    "entries": { "type": "array", "minItems": 1 }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "generators" } } }, "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/generator" } } } } },
+    { "if": { "properties": { "kind": { "const": "validators" } } }, "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/validator" } } } } },
+    { "if": { "properties": { "kind": { "const": "representations" } } }, "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/representation" } } } } },
+    { "if": { "properties": { "kind": { "const": "visual-components" } } }, "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/visualComponent" } } } } },
+    { "if": { "properties": { "kind": { "const": "misconception-codes" } } }, "then": { "properties": { "entries": { "type": "array", "items": { "$ref": "#/$defs/misconceptionCode" } } } } }
+  ],
+  "$defs": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "nameList": { "type": "array", "items": { "$ref": "#/$defs/name" }, "uniqueItems": true },
+    "quantity": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+    "box": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["min", "max"],
+        "properties": { "min": { "type": "integer" }, "max": { "type": "integer" } },
+        "additionalProperties": false
+      }
+    },
+    "parameterDomain": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Pilot kind: a closed integer range on a named quantity. kind may be omitted.",
+          "required": ["quantity", "min", "max"],
+          "properties": {
+            "kind": { "const": "integer-range" },
+            "quantity": { "$ref": "#/$defs/quantity" },
+            "min": { "type": "integer" },
+            "max": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Added kind: a finite set of integers or names the definition may choose from.",
+          "required": ["kind", "values"],
+          "properties": {
+            "kind": { "const": "enumeration" },
+            "quantity": { "$ref": "#/$defs/quantity" },
+            "values": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "anyOf": [{ "type": "integer" }, { "type": "string" }] } }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version", "parameters", "produces"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "type": "integer", "minimum": 1 },
+        "relation": { "$ref": "#/$defs/name", "description": "Optional named quantity relation implemented in tooling (pilot: sum-of-two-operands)." },
+        "scale": { "type": "integer", "minimum": 1, "description": "Added: fixed denominator for scaled-integer parameters (10 means tenths). Keeps parameters integers." },
+        "constraints": { "$ref": "#/$defs/nameList", "description": "Added: named constraints the generator can enforce; definitions pick from this list." },
+        "parameters": { "type": "object", "additionalProperties": { "$ref": "#/$defs/parameterDomain" } },
+        "produces": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "oneOf": [
+        { "type": "object", "required": ["type"], "properties": { "type": { "const": "integer" }, "min": { "type": "integer" }, "max": { "type": "integer" } }, "additionalProperties": false },
+        { "type": "object", "required": ["type"], "properties": { "type": { "const": "rational" }, "parts": { "$ref": "#/$defs/nameList" } }, "additionalProperties": false },
+        { "type": "object", "required": ["type", "scale"], "properties": { "type": { "const": "decimal" }, "scale": { "type": "integer", "minimum": 1 }, "tolerance": { "type": "object", "required": ["absolute"], "properties": { "absolute": { "type": "integer", "minimum": 0, "description": "In scaled units, so it stays an integer." } }, "additionalProperties": false } }, "additionalProperties": false },
+        { "type": "object", "required": ["type", "components"], "properties": { "type": { "const": "point" }, "components": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "minItems": 2 }, "partial": { "type": "array", "items": { "$ref": "#/$defs/quantity" } } }, "additionalProperties": false },
+        { "type": "object", "required": ["type", "of"], "properties": { "type": { "const": "ordered-partition" }, "of": { "$ref": "#/$defs/name" } }, "additionalProperties": false },
+        { "type": "object", "required": ["type", "from", "to", "arity"], "properties": { "type": { "const": "mapping" }, "from": { "$ref": "#/$defs/name" }, "to": { "$ref": "#/$defs/name" }, "arity": { "enum": ["one-to-one", "many-to-one"] } }, "additionalProperties": false },
+        { "type": "object", "required": ["type", "criteria"], "properties": { "type": { "const": "derivation-repair" }, "criteria": { "$ref": "#/$defs/nameList" } }, "additionalProperties": false }
+      ]
+    },
+    "validator": {
+      "type": "object",
+      "required": ["name", "version", "artifact", "emits"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "type": "integer", "minimum": 1 },
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "emits": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "representation": {
+      "type": "object",
+      "required": ["name", "role", "reads", "supports"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "role": { "type": "array", "items": { "enum": ["help", "explanation", "response"] }, "minItems": 1, "uniqueItems": true },
+        "reads": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "minItems": 1, "uniqueItems": true },
+        "supports": { "$ref": "#/$defs/box" },
+        "constraints": { "$ref": "#/$defs/nameList", "description": "Added: named constraints beyond bounds that the component needs (implemented in code)." }
+      },
+      "additionalProperties": false
+    },
+    "visualComponent": {
+      "type": "object",
+      "required": ["type", "attributes"],
+      "properties": {
+        "type": { "$ref": "#/$defs/name" },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["integer", "string", "decimal", "expression"] },
+              "min": { "type": "integer" },
+              "max": { "type": "integer" },
+              "required": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "body": { "enum": ["markdown", "steps"], "description": "Added: what the directive body carries, when a component takes authored content." },
+        "representation": { "$ref": "#/$defs/name" }
+      },
+      "additionalProperties": false
+    },
+    "misconceptionCode": {
+      "type": "object",
+      "required": ["code", "validator"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" },
+        "validator": { "$ref": "#/$defs/name" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

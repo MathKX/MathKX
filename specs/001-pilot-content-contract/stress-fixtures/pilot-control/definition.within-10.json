@@ -1,0 +1,41 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.addition.within-10",
+  "version": 1,
+  "skill": "numbers.addition-within-20",
+  "source": "generated",
+  "validator": {
+    "name": "integer-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "addition-pair",
+    "version": 1,
+    "parameters": {
+      "operand": {
+        "min": 1,
+        "max": 9
+      },
+      "sum": {
+        "min": 2,
+        "max": 10
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "groups"
+    ],
+    "explanation": [
+      "groups"
+    ]
+  },
+  "misconceptionCodes": [
+    "add.oneGroup",
+    "add.concat",
+    "add.offByOne",
+    "add.subtracted",
+    "add.generic"
+  ]
+}

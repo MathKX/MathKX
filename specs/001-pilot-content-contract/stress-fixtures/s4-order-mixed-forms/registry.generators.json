@@ -1,0 +1,23 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "authored-set-pick",
+      "version": 1,
+      "parameters": {
+        "set": {
+          "kind": "enumeration",
+          "values": [
+            "mixed-a",
+            "mixed-b"
+          ]
+        }
+      },
+      "produces": [
+        "items"
+      ]
+    }
+  ]
+}

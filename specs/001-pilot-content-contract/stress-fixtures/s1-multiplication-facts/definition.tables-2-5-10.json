@@ -1,0 +1,49 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.multiplication-facts.tables-2-5-10",
+  "version": 1,
+  "skill": "numbers.multiplication-facts",
+  "source": "generated",
+  "validator": {
+    "name": "integer-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "fact-family-pick",
+    "version": 1,
+    "parameters": {
+      "table": {
+        "kind": "enumeration",
+        "values": [
+          2,
+          5,
+          10
+        ]
+      },
+      "factor": {
+        "min": 1,
+        "max": 10
+      },
+      "form": {
+        "kind": "enumeration",
+        "values": [
+          "product",
+          "missing-factor"
+        ]
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "equal-groups"
+    ],
+    "explanation": [
+      "equal-groups"
+    ]
+  },
+  "misconceptionCodes": [
+    "mult.addedInstead",
+    "mult.offByOneGroup"
+  ]
+}

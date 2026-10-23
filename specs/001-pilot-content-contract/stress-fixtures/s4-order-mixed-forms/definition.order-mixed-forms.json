@@ -1,0 +1,105 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "rational.order-mixed-forms",
+  "version": 1,
+  "skill": "rational.compare-forms",
+  "source": "generated",
+  "validator": {
+    "name": "ordered-groups",
+    "version": 1
+  },
+  "generator": {
+    "name": "authored-set-pick",
+    "version": 1,
+    "parameters": {
+      "set": {
+        "kind": "enumeration",
+        "values": [
+          "mixed-a",
+          "mixed-b"
+        ]
+      }
+    }
+  },
+  "pool": [
+    {
+      "id": "mixed-a",
+      "items": [
+        {
+          "id": "i1",
+          "display": "0.6",
+          "value": {
+            "numerator": 3,
+            "denominator": 5
+          }
+        },
+        {
+          "id": "i2",
+          "display": "5/8",
+          "value": {
+            "numerator": 5,
+            "denominator": 8
+          }
+        },
+        {
+          "id": "i3",
+          "display": "60%",
+          "value": {
+            "numerator": 3,
+            "denominator": 5
+          }
+        },
+        {
+          "id": "i4",
+          "display": "2/3",
+          "value": {
+            "numerator": 2,
+            "denominator": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "mixed-b",
+      "items": [
+        {
+          "id": "i1",
+          "display": "0.25",
+          "value": {
+            "numerator": 1,
+            "denominator": 4
+          }
+        },
+        {
+          "id": "i2",
+          "display": "3/10",
+          "value": {
+            "numerator": 3,
+            "denominator": 10
+          }
+        },
+        {
+          "id": "i3",
+          "display": "25%",
+          "value": {
+            "numerator": 1,
+            "denominator": 4
+          }
+        }
+      ]
+    }
+  ],
+  "representations": {
+    "help": [
+      "number-line-readonly"
+    ],
+    "explanation": [
+      "number-line-readonly"
+    ]
+  },
+  "misconceptionCodes": [
+    "rat.digitCompare",
+    "rat.percentScale"
+  ]
+}

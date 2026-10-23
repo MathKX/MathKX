@@ -1,0 +1,28 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "decimal-number-line",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "a",
+        "b"
+      ],
+      "supports": {
+        "operand": {
+          "min": 1,
+          "max": 99
+        },
+        "sum": {
+          "min": 2,
+          "max": 100
+        }
+      }
+    }
+  ]
+}

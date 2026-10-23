@@ -1,0 +1,38 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.decimal-add.tenths",
+  "version": 1,
+  "skill": "numbers.decimals-add",
+  "source": "generated",
+  "validator": {
+    "name": "decimal-tolerance",
+    "version": 1
+  },
+  "generator": {
+    "name": "decimal-sum",
+    "version": 1,
+    "parameters": {
+      "operand": {
+        "min": 1,
+        "max": 99
+      },
+      "sum": {
+        "min": 2,
+        "max": 100
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "decimal-number-line"
+    ],
+    "explanation": [
+      "decimal-number-line"
+    ]
+  },
+  "misconceptionCodes": [
+    "dec.alignedRight",
+    "dec.ignoredPoint"
+  ]
+}

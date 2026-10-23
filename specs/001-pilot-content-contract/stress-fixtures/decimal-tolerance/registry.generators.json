@@ -1,0 +1,30 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "decimal-sum",
+      "version": 1,
+      "relation": "sum-of-two-operands",
+      "scale": 10,
+      "parameters": {
+        "operand": {
+          "quantity": "operand",
+          "min": 1,
+          "max": 999
+        },
+        "sum": {
+          "quantity": "sum",
+          "min": 2,
+          "max": 1998
+        }
+      },
+      "produces": [
+        "a",
+        "b",
+        "sum"
+      ]
+    }
+  ]
+}

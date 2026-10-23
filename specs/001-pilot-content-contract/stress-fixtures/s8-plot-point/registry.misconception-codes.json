@@ -1,0 +1,15 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "misconception-codes",
+  "entries": [
+    {
+      "code": "geo.swappedCoordinates",
+      "validator": "point-equality"
+    },
+    {
+      "code": "geo.signDirection",
+      "validator": "point-equality"
+    }
+  ]
+}

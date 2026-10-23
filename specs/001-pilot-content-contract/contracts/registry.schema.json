@@ -35,7 +35,23 @@
   ],
   "$defs": {
     "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "nameList": { "type": "array", "items": { "$ref": "#/$defs/name" }, "uniqueItems": true },
     "quantity": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+    "artifact": {
+      "description": "Response-artifact shape a validator accepts: one oneOf branch per kind, discriminated by type. The pilot has integer only; later kinds (rational, decimal with scale, point, ordered-partition, mapping…) add a branch and never change an existing one.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "integer" },
+            "min": { "type": "integer" },
+            "max": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "box": {
       "type": "object",
       "description": "Quantity -> closed integer bounds.",
@@ -48,13 +64,17 @@
     },
     "generator": {
       "type": "object",
-      "required": ["name", "version", "relation", "parameters", "produces"],
+      "required": ["name", "version", "parameters", "produces"],
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
         "relation": {
-          "enum": ["sum-of-two-operands"],
-          "description": "Named quantity relation implemented by tools/lib/quantities.mjs; drives feasibility and the mapping from a, b to operand and sum."
+          "$ref": "#/$defs/name",
+          "description": "Optional named quantity relation implemented by tools/lib/quantities.mjs (pilot: sum-of-two-operands). When present it drives the feasibility check and the mapping from a, b to operand and sum; generators that pick from reviewed tables declare none."
+        },
+        "constraints": {
+          "$ref": "#/$defs/nameList",
+          "description": "Named constraints the generator can enforce beyond bounds (for example integer-solution). A definition may list a subset. The pilot generator declares none."
         },
         "parameters": {
           "type": "object",
@@ -63,6 +83,7 @@
             "type": "object",
             "required": ["quantity", "min", "max"],
             "properties": {
+              "kind": { "const": "integer-range", "description": "Discriminator for the parameter domain kind; may be omitted. The pilot has this one kind; a later kind (for example an enumeration) adds a oneOf branch." },
               "quantity": { "$ref": "#/$defs/quantity" },
               "min": { "type": "integer" },
               "max": { "type": "integer" }
@@ -80,16 +101,7 @@
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
-        "artifact": {
-          "type": "object",
-          "required": ["type"],
-          "properties": {
-            "type": { "enum": ["integer"] },
-            "min": { "type": "integer" },
-            "max": { "type": "integer" }
-          },
-          "additionalProperties": false
-        },
+        "artifact": { "$ref": "#/$defs/artifact" },
         "emits": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
       },
       "additionalProperties": false

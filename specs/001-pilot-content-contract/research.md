@@ -86,6 +86,14 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 **Rationale**: DL-004 and the spec's User Story 5; the prototype is a design artefact that other sessions maintain, and its content continues to serve the usability script.
 
+## R13. Contract evolution, checked by stress fixtures
+
+**Decision**: Before implementation, author seven capability-model scenarios (S1, S3, S4, S6, S7, S8, S15) and a decimal task under the pilot contract as fixtures, validate them with Ajv against the pilot contracts and against a projection that only adds branches, enum values, and optional fields, and record the outcomes in `stress-fixtures/README.md` and `contract-trace.md`. Apply to the pilot contract only the adjustments that cost nothing now and remove a hard-coded assumption: `relation` optional, a `kind` discriminator on parameter domains, named `constraints` on generators and definitions, free-form fixed prompt data, and validator artifacts as one branch per kind.
+
+**Rationale**: The owner asked for confidence that the data model supports more advanced mathematics before code exists. The fixtures show every gap is closable additively with the pilot content unchanged (the control set passes before and after), and the existing `0.1` linear-equation example fits the adjusted pilot shape (S6 passes). The projection is a proof, not a proposal: its added shapes stay out of `schemas/` until a feature needs them, so the pilot does not pre-empt Format v1, symbolic equivalence, or localization storage.
+
+**Alternatives considered**: Widening the pilot schema to cover rationals, expressions, pools, and composition now (rejected: the validator would accept what no code implements, and the constitution says not to decide those matters inside this spec). Leaving the contract as merged (rejected: `relation` required and number-only prompts would have forced a breaking change for the first non-addition generator).
+
 ## R12. Template location and validator skipping
 
 **Decision**: The copyable lesson template lives at `content/_templates/lesson/`; the validator skips exactly that one directory and documents this. Every other file under `content/`, including underscore-prefixed paths elsewhere, is discovered and checked (FR-016).

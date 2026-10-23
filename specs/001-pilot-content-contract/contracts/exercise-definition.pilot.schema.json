@@ -20,8 +20,12 @@
         "version": { "type": "integer", "minimum": 1 },
         "parameters": {
           "type": "object",
-          "description": "Parameter name -> bounds. Keys and bounds are checked against the generator registry, not by this schema.",
+          "description": "Parameter name -> domain choice. Keys and bounds are checked against the generator registry, not by this schema.",
           "additionalProperties": { "$ref": "#/$defs/bounds" }
+        },
+        "constraints": {
+          "$ref": "#/$defs/nameList",
+          "description": "Named constraints from the generator's declared list that this family requires; checked against the registry."
         }
       },
       "additionalProperties": false
@@ -32,8 +36,8 @@
       "properties": {
         "prompt": {
           "type": "object",
-          "description": "Quantities the representations read, for example a and b.",
-          "additionalProperties": { "type": "number" }
+          "description": "Authored prompt data in the shape the declared representations read (for the pilot: a and b as integers). Any JSON is allowed here; the validator checks the quantities each representation reads are present.",
+          "additionalProperties": true
         },
         "validation": {
           "type": "object",
@@ -80,8 +84,10 @@
     },
     "bounds": {
       "type": "object",
+      "description": "Pilot parameter domain kind: a closed integer range. kind may be omitted; later kinds add a oneOf branch here.",
       "required": ["min", "max"],
       "properties": {
+        "kind": { "const": "integer-range" },
         "min": { "type": "integer" },
         "max": { "type": "integer" }
       },

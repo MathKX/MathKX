@@ -1,0 +1,19 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "misconception-codes",
+  "entries": [
+    {
+      "code": "lin.added",
+      "validator": "integer-answer"
+    },
+    {
+      "code": "lin.copied",
+      "validator": "integer-answer"
+    },
+    {
+      "code": "lin.substitute",
+      "validator": "integer-answer"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.addition.four-plus-four",
+  "version": 1,
+  "skill": "numbers.addition-within-20",
+  "source": "fixed",
+  "validator": {
+    "name": "integer-answer",
+    "version": 1
+  },
+  "instance": {
+    "prompt": {
+      "a": 4,
+      "b": 4
+    },
+    "validation": {
+      "answer": 8
+    }
+  },
+  "representations": {
+    "help": [
+      "groups"
+    ],
+    "explanation": [
+      "groups"
+    ]
+  },
+  "misconceptionCodes": [
+    "add.oneGroup",
+    "add.concat",
+    "add.offByOne",
+    "add.subtracted",
+    "add.generic"
+  ]
+}

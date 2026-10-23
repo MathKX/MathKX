@@ -1,0 +1,17 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "number-line-readonly",
+      "role": [
+        "explanation"
+      ],
+      "reads": [
+        "items"
+      ],
+      "supports": {}
+    }
+  ]
+}

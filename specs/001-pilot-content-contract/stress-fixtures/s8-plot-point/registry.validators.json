@@ -1,0 +1,26 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "point-equality",
+      "version": 1,
+      "artifact": {
+        "type": "point",
+        "components": [
+          "x",
+          "y"
+        ],
+        "partial": [
+          "x",
+          "y"
+        ]
+      },
+      "emits": [
+        "geo.swappedCoordinates",
+        "geo.signDirection"
+      ]
+    }
+  ]
+}

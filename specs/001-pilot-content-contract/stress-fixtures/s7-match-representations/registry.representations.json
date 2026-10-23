@@ -1,0 +1,49 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "value-table",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "slope",
+        "intercept"
+      ],
+      "supports": {
+        "slope": {
+          "min": -5,
+          "max": 5
+        },
+        "intercept": {
+          "min": -10,
+          "max": 10
+        }
+      }
+    },
+    {
+      "name": "function-graph",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "slope",
+        "intercept"
+      ],
+      "supports": {
+        "slope": {
+          "min": -5,
+          "max": 5
+        },
+        "intercept": {
+          "min": -10,
+          "max": 10
+        }
+      }
+    }
+  ]
+}

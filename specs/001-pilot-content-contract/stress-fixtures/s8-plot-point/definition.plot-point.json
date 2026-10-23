@@ -1,0 +1,45 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "geometry.plot-point.integer-grid",
+  "version": 1,
+  "skill": "geometry.coordinate-pairs",
+  "source": "generated",
+  "validator": {
+    "name": "point-equality",
+    "version": 1
+  },
+  "generator": {
+    "name": "point-in-range",
+    "version": 1,
+    "parameters": {
+      "x": {
+        "min": -5,
+        "max": 5
+      },
+      "y": {
+        "min": -5,
+        "max": 5
+      }
+    },
+    "constraints": [
+      "not-on-axis"
+    ]
+  },
+  "interaction": "point-placement",
+  "representations": {
+    "help": [
+      "coordinate-plane"
+    ],
+    "explanation": [
+      "coordinate-plane"
+    ],
+    "response": [
+      "coordinate-plane"
+    ]
+  },
+  "misconceptionCodes": [
+    "geo.swappedCoordinates",
+    "geo.signDirection"
+  ]
+}

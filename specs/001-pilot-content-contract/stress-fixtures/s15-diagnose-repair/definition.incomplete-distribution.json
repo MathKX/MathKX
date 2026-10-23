@@ -1,0 +1,53 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "algebra.diagnose.incomplete-distribution",
+  "version": 1,
+  "skill": "algebra.equivalence-reasoning",
+  "source": "fixed",
+  "validator": {
+    "name": "derivation-repair",
+    "version": 1
+  },
+  "instance": {
+    "prompt": {
+      "steps": [
+        {
+          "id": "s1",
+          "expression": "2(x + 3) = 14"
+        },
+        {
+          "id": "s2",
+          "expression": "2x + 3 = 14"
+        },
+        {
+          "id": "s3",
+          "expression": "2x = 11"
+        },
+        {
+          "id": "s4",
+          "expression": "x = 5.5"
+        }
+      ]
+    },
+    "validation": {
+      "firstInvalid": "s2",
+      "reason": "alg.incompleteDistribution",
+      "corrected": "2x + 6 = 14"
+    }
+  },
+  "representations": {
+    "help": [
+      "derivation-list"
+    ],
+    "explanation": [
+      "derivation-list"
+    ],
+    "response": [
+      "derivation-list"
+    ]
+  },
+  "misconceptionCodes": [
+    "alg.incompleteDistribution"
+  ]
+}

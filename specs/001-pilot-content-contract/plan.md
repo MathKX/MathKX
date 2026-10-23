@@ -62,8 +62,10 @@ specs/001-pilot-content-contract/
 │   ├── registry.schema.json              # generators, validators, representations, components, codes
 │   ├── directives-and-notation.md
 │   └── diagnostics.md
+├── contract-trace.md    # capability-model dimensions mapped to pilot fields and extension points
+├── stress-fixtures/     # scenario fixtures, check.mjs, contracts-next projection, recorded outcomes
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks): 47 tasks in eight phases
+└── tasks.md             # Phase 2 (/speckit-tasks): 48 tasks in eight phases
 ```
 
 ### Source Code (repository root)

@@ -1,0 +1,46 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "fraction-bar",
+      "role": [
+        "help",
+        "explanation",
+        "response"
+      ],
+      "reads": [
+        "numerator",
+        "denominator"
+      ],
+      "supports": {
+        "numerator": {
+          "min": 0,
+          "max": 12
+        },
+        "denominator": {
+          "min": 2,
+          "max": 12
+        }
+      }
+    },
+    {
+      "name": "number-line",
+      "role": [
+        "explanation",
+        "response"
+      ],
+      "reads": [
+        "numerator",
+        "denominator"
+      ],
+      "supports": {
+        "denominator": {
+          "min": 2,
+          "max": 12
+        }
+      }
+    }
+  ]
+}

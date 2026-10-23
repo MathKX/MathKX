@@ -1,0 +1,46 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "fact-family-pick",
+      "version": 1,
+      "parameters": {
+        "table": {
+          "kind": "enumeration",
+          "values": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "factor": {
+          "quantity": "factor",
+          "min": 1,
+          "max": 10
+        },
+        "form": {
+          "kind": "enumeration",
+          "values": [
+            "product",
+            "missing-factor",
+            "commuted"
+          ]
+        }
+      },
+      "produces": [
+        "a",
+        "b",
+        "product",
+        "missing"
+      ]
+    }
+  ]
+}

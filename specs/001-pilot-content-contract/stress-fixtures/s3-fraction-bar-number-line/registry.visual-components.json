@@ -1,0 +1,47 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "visual-components",
+  "entries": [
+    {
+      "type": "fraction-bar",
+      "attributes": {
+        "numerator": {
+          "type": "integer",
+          "min": 0,
+          "max": 12,
+          "required": true
+        },
+        "denominator": {
+          "type": "integer",
+          "min": 2,
+          "max": 12,
+          "required": true
+        }
+      },
+      "representation": "fraction-bar"
+    },
+    {
+      "type": "number-line",
+      "attributes": {
+        "from": {
+          "type": "integer",
+          "required": true
+        },
+        "to": {
+          "type": "integer",
+          "required": true
+        },
+        "denominator": {
+          "type": "integer",
+          "min": 2,
+          "max": 12
+        },
+        "linked": {
+          "type": "string"
+        }
+      },
+      "representation": "number-line"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "visual-components",
+  "entries": [
+    {
+      "type": "derivation-list",
+      "attributes": {},
+      "body": "steps",
+      "representation": "derivation-list"
+    }
+  ]
+}

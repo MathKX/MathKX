@@ -1,0 +1,43 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "algebra.linear-equations.basic",
+  "version": 2,
+  "skill": "algebra.linear-equations",
+  "source": "generated",
+  "validator": {
+    "name": "integer-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "linear-equation",
+    "version": 1,
+    "parameters": {
+      "solution": {
+        "min": -10,
+        "max": 10
+      },
+      "coefficient": {
+        "min": 2,
+        "max": 8
+      }
+    },
+    "constraints": [
+      "integer-solution",
+      "coefficient-nonzero"
+    ]
+  },
+  "representations": {
+    "help": [
+      "equation-balance"
+    ],
+    "explanation": [
+      "equation-balance"
+    ]
+  },
+  "misconceptionCodes": [
+    "lin.added",
+    "lin.copied",
+    "lin.substitute"
+  ]
+}

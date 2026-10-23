@@ -1,0 +1,21 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "integer-answer",
+      "version": 1,
+      "artifact": {
+        "type": "integer",
+        "min": -100,
+        "max": 100
+      },
+      "emits": [
+        "lin.added",
+        "lin.copied",
+        "lin.substitute"
+      ]
+    }
+  ]
+}

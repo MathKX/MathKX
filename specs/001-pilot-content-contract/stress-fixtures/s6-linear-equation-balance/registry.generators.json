@@ -1,0 +1,31 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "linear-equation",
+      "version": 1,
+      "parameters": {
+        "solution": {
+          "quantity": "solution",
+          "min": -20,
+          "max": 20
+        },
+        "coefficient": {
+          "quantity": "coefficient",
+          "min": 1,
+          "max": 12
+        }
+      },
+      "constraints": [
+        "integer-solution",
+        "coefficient-nonzero"
+      ],
+      "produces": [
+        "equation",
+        "solution"
+      ]
+    }
+  ]
+}
