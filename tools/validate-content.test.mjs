@@ -758,3 +758,13 @@ test("attributes a closing fence to one container and accepts fences inside bloc
   expectFailure(result, /en\.md:\d+ directive example: directive example is not closed \(a closing ::: line\)/);
   assert.doesNotMatch(result.output, /directive visual is not closed/);
 });
+
+test("accepts a directive inside a list item and a longer closing fence", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const listed = '- :::visual{type="ten-frame-explorer" start="6"}\n  :::\n\n';
+  const longer = ':::visual{type="ten-frame-explorer" start="7"}\n::::\n\n';
+  const mutate = (s) => s.replace("## Øv {#practice}", listed + longer + "## Øv {#practice}").replace("## Practise {#practice}", listed + longer + "## Practise {#practice}");
+  await f.lesson("my-lesson", { nb: mutate(NB), en: mutate(EN) });
+  expectPass(f.run());
+});

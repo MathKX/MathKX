@@ -102,17 +102,17 @@ export function parseLessonMarkdown(text) {
 
 // remark also closes a container at the end of the file or of an enclosing block, and a single
 // fence line can close only one directive. A container counts as closed when its last source
-// line is a fence with the same number of colons as its opener (ignoring blockquote markers and
-// indentation) and no inner container has already claimed that line. Inner containers start
-// later, so they are resolved first.
+// line is a fence with at least as many colons as its opener (micromark's rule), ignoring
+// blockquote markers, list markers, and indentation, and no inner container has already claimed
+// that line. Inner containers start later, so they are resolved first.
 function markClosedContainers(directives, lines) {
-  const strip = (text) => (text ?? "").replace(/^(?:\s*>)*\s*/, "");
+  const strip = (text) => (text ?? "").replace(/^(?:\s*(?:>|[-*+]|\d{1,9}[.)]))*\s*/, "");
   const claimed = new Set();
   const containers = directives.filter((d) => d.form === "container" && d.line && d.endLine).sort((a, b) => b.line - a.line);
   for (const d of containers) {
     const opener = /^(:{3,})/.exec(strip(lines[d.line - 1]));
-    const fence = strip(lines[d.endLine - 1]).trim();
-    const closes = opener && fence === opener[1] && !claimed.has(d.endLine);
+    const fence = /^(:{3,})\s*$/.exec(strip(lines[d.endLine - 1]));
+    const closes = opener && fence && fence[1].length >= opener[1].length && !claimed.has(d.endLine);
     if (closes) claimed.add(d.endLine);
     d.closed = Boolean(closes);
   }
