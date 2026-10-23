@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/skill.schema.json",
+  "schemaVersion": "0.1",
+  "id": "numbers.addition-within-20",
+  "prerequisites": [
+    "numbers.number-bonds-to-ten"
+  ],
+  "ladder": [
+    {
+      "definition": "numbers.addition.within-10",
+      "version": 1,
+      "description": {
+        "nb": "Pluss innenfor ti med grupper.",
+        "en": "Addition within ten with groups."
+      }
+    },
+    {
+      "definition": "numbers.addition.crossing-ten",
+      "version": 1,
+      "description": {
+        "nb": "Over ti: lag ti først.",
+        "en": "Across ten: make ten first."
+      }
+    }
+  ]
+}

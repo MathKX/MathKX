@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../schemas/lesson.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "number-bonds-to-ten",
+  "version": 1,
+  "status": "pilot",
+  "skills": [
+    "numbers.number-bonds-to-ten",
+    "numbers.addition-within-20"
+  ],
+  "practice": [
+    {
+      "definition": "numbers.addition.within-10",
+      "version": 1
+    },
+    {
+      "definition": "numbers.addition.crossing-ten",
+      "version": 1
+    }
+  ],
+  "visuals": [
+    "ten-frame-explorer",
+    "make-ten"
+  ],
+  "translations": {
+    "nb": "nb.md",
+    "en": "en.md"
+  }
+}

@@ -1,50 +1,55 @@
 # Content
 
-This area holds version-controlled MathKX learning content. The current JSON content is machine-validated; see [Validation](#validation). Lesson authoring and its validation workflow remain to be implemented.
+This area holds version-controlled MathKX learning content: skills, exercise definitions, lessons, and the registries of what the code provides. Everything here is machine-validated; see [Validation](#validation). The [authoring guide](AUTHORING.md) explains every field and rule.
 
 ## Layout
 
 ```text
 content/
-  skills/       curriculum-independent mathematical skills and their prerequisites
-  lessons/      authored explanations and worked examples linked to skills (not yet created)
-  exercises/    reusable exercise definitions
+  skills/       curriculum-independent mathematical skills, their prerequisites, and optional challenge ladders
+  exercises/    exercise definitions: generated families and fixed tasks (examples/ holds the exploratory 0.1 fixture)
+  lessons/      one folder per lesson: lesson.json, nb.md, en.md, assets/
+  registry/     reviewed lists of generators, validators, representations, visual components, and misconception codes
+  _templates/   copyable lesson template with placeholders (the only folder the check skips)
   curricula/    competency goals and mappings from curricula to skills (not yet created)
 ```
 
-Directories are created when they contain real content. `lessons/` and `curricula/` do not exist yet. Lessons have a proposed layout awaiting implementation and validation; the curriculum format remains to be designed.
+Directories are created when they contain real content. The curriculum format remains to be designed.
 
 ### Skills
 
-Each file under `skills/` defines one skill: its stable, language-neutral ID and the IDs of the skills it depends on. Nothing else. Names, descriptions, and curriculum mappings are localized or jurisdiction-specific and will live elsewhere. The schema is [`schemas/skill.schema.json`](../schemas/skill.schema.json).
+Each file under `skills/` defines one skill: its stable, language-neutral ID, the IDs of the skills it depends on, and optionally a `ladder` of its exercise definitions from easiest to hardest with a learner-facing sentence per language. Names, descriptions, and curriculum mappings are localized or jurisdiction-specific and will live elsewhere. The schema is [`schemas/skill.schema.json`](../schemas/skill.schema.json).
 
-The current seven skills form a small seed graph around one learner story: the Pythagorean theorem and the square roots it depends on. The graph is illustrative content, not an approved taxonomy. Skill granularity and the meaning of a prerequisite edge are still open questions in the [learning model](../docs/learning/learning-model.md) and the [skill graph](../docs/learning/skill-graph.md) document; edges here should be reviewed and revised as real exercises are written against them.
+The skills form a small seed graph: the Pythagorean theorem and the square roots it depends on, plus the first milestone's `numbers.number-bonds-to-ten` and `numbers.addition-within-20`. The graph is illustrative content, not an approved taxonomy. Skill granularity and the meaning of a prerequisite edge are still open questions in the [learning model](../docs/learning/learning-model.md) and the [skill graph](../docs/learning/skill-graph.md) document.
 
 ### Exercises
 
-`exercises/` holds exercise definitions in the exploratory `0.1` format described in the [exercise format](../docs/architecture/exercise-format.md). At present it contains one illustrative definition. Read the [exercise capability model](../docs/architecture/exercise-capability-model.md) before adding or extending definitions.
+`exercises/numbers/` holds the pilot definitions in the `0.1-pilot` format: two generated addition families and one fixed worked example, validated against the registries. `exercises/examples/` keeps the exploratory `0.1` fixture described in the [exercise format](../docs/architecture/exercise-format.md), unchanged. Read the [exercise capability model](../docs/architecture/exercise-capability-model.md) before adding or extending definitions.
 
 ### Lessons and languages
 
-The proposed [learning experience](../docs/design/learning-experience.md) uses Markdown lessons with controlled references to interactive components and exercise families. The [lesson structure and Markdown proposal](../docs/architecture/proposals/lesson-markdown-and-delivery.md) places shared metadata in `lesson.json`, translations in `nb.md` and `en.md`, and optional assets in one folder per lesson. Show lessons inside MathKX and defer a separate Hugo learning site.
+Lessons follow the [learning experience](../docs/design/learning-experience.md): Markdown with controlled references to interactive components and exercise families. Shared metadata lives in `lesson.json`, translations in `nb.md` and `en.md`, assets in one folder per lesson. The pilot lesson is `lessons/number-bonds-to-ten/`. The format is the pilot contract from [spec 001](../specs/001-pilot-content-contract/spec.md); the in-app renderer arrives with a later feature.
 
-The format, renderer, schema, and preview workflow remain to be implemented and validated with the first bilingual lesson. Contributors should not infer a stable syntax or existing lesson validation from this proposal. Real lesson JSON must follow the schema requirements below.
+The first learner release requires Norwegian and English for all released lessons, exercises, hints, feedback, and accessibility text. Localized variants share mathematical identities and learner progress. The check compares each lesson's two languages by anchors, directives, and mathematics, never by prose. The English-only `0.1` exercise is an exploratory fixture, not release-ready content.
 
-The first learner release requires Norwegian and English for all released lessons, exercises, hints, feedback, and accessibility text. Localized variants share mathematical identities and learner progress. The English-only `0.1` exercise is an exploratory fixture, not release-ready content. Translation storage and completeness checks will be introduced with the first content format that supports them.
+### Registries
+
+`registry/` lists what tested code provides, as reviewed data: names, versions, parameter domains, response shapes, and supported ranges. They carry no logic. A registry changes only together with the code it describes.
 
 ## Validation
 
-Every JSON file under `content/` must name its schema in `$schema` with a relative path into [`schemas/`](../schemas/). The validation script checks:
+Every JSON file under `content/` (except `_templates/`) must name its schema in `$schema` with a relative path into [`schemas/`](../schemas/). The validation script checks:
 
-1. each file against the schema it declares;
-2. that skill IDs and exercise `(id, version)` pairs are unique;
-3. that every exercise `skill` and every skill prerequisite resolves to a defined skill; and
-4. that the prerequisite graph has no cycles.
+1. each file against the schema it declares, and that the schema is one it knows;
+2. that the registries are internally consistent;
+3. that skill IDs, lesson IDs, and exercise `(id, version)` pairs are unique;
+4. that every reference resolves: skills, prerequisites, related skills and lessons, practice definitions, ladder definitions, generators, validators, representations, visual components, misconception codes, assets, and anchors;
+5. that the prerequisite graph has no cycles and ladders refer to the skill's own definitions;
+6. that generated families stay within their generator's domain, admit at least one task, and are covered by every representation they list; that fixed tasks fit their validator's artifact;
+7. that each lesson's two languages share anchors, directives, and mathematics, with tables, images, directives, and notation well formed.
 
-Different versions of an exercise may coexist, but two files must not define the same ID and version, even with identical contents. Non-object JSON is reported as a content error alongside errors in other files.
-
-Run it locally with `npm ci` followed by `npm run validate`. Run `npm test` for the validator regression suite. Both checks run in CI on every pull request. Validation does not yet verify that generators exist, that generated values are safe, or that answers validate correctly; those checks belong to later semantic tooling.
+Run it locally with `npm ci` followed by `npm run validate`. Run `npm test` for the validator regression suite. Both checks run in CI on every pull request. Validation does not run generators or validators; whether generated values are safe and answers validate correctly is checked by the domain tests that arrive with the application.
 
 Content under this directory is licensed under Creative Commons Attribution-ShareAlike 4.0 International; see [LICENSE](LICENSE) and [ADR 0010](../docs/architecture/decisions/0010-license-code-and-content.md).
 
-Read the [content contributor guidance](AGENTS.md) before adding content.
+Read the [content contributor guidance](AGENTS.md) and the [authoring guide](AUTHORING.md) before adding content.
