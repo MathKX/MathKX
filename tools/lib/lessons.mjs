@@ -12,6 +12,8 @@ import { missingSkillOptions } from "./skills.mjs";
 
 const LANGUAGES = ["nb", "en"];
 const DIRECTIVES = ["visual", "example", "practice"];
+const EXAMPLE_ATTRIBUTES = ["title", "id"];
+const PRACTICE_ATTRIBUTES = ["definition", "version"];
 const FRONT_MATTER_KEYS = ["title", "objective"];
 
 const exists = async (file) => stat(file).then(() => true, () => false);
@@ -120,10 +122,13 @@ async function checkTranslation(file, parsed, { folder, data, practiceKeys, regi
   // Images and links.
   const isExternal = (url) => /^(?:[a-z]+:)?\/\//i.test(url) || /^(mailto|tel):/i.test(url);
   for (const image of parsed.images) {
-    if (image.alt.trim() === "") error(`image ${image.url} has no alternative text`, { line: image.line, field: "image" });
+    const shown = image.url ?? `[${image.reference}]`;
+    if (image.alt.trim() === "") error(`image ${shown} has no alternative text`, { line: image.line, field: "image" });
+    if (image.url === null) { error(`image reference [${image.reference}] has no definition`, { line: image.line, field: "image", expected: `a line like [${image.reference}]: assets/file.svg` }); continue; }
     if (!isExternal(image.url) && !(await exists(path.join(folder, image.url)))) error(`image ${image.url} does not exist`, { line: image.line, field: "image", expected: "a file under the lesson's assets/" });
   }
   for (const link of parsed.links) {
+    if (link.url === null) { error(`link reference [${link.reference}] has no definition`, { line: link.line, field: "link" }); continue; }
     if (isExternal(link.url)) continue;
     if (link.url.startsWith("#")) {
       if (!anchors.has(link.url.slice(1))) error(`link ${link.url} does not match an anchor in this file`, { line: link.line, field: "link" });
@@ -139,9 +144,13 @@ async function checkTranslation(file, parsed, { folder, data, practiceKeys, regi
     const at = { line: d.line };
     if (d.form !== "container") { error(`directive ${d.name} is not a container directive`, { ...at, field: "directive", expected: ":::name{...} on its own line, a body, and a closing ::: line" }); continue; }
     if (!DIRECTIVES.includes(d.name)) { error(`unknown directive ${d.name}`, { ...at, field: "directive", expected: `one of: ${DIRECTIVES.join(", ")}` }); continue; }
+    if (!d.closed) error(`directive ${d.name} is not closed`, { ...at, field: `directive ${d.name}`, expected: "a closing ::: line" });
     if (d.name === "visual") checkVisual(d, { error, data, registries });
     if (d.name === "example") {
       const field = `directive example{id="${d.attributes.id ?? ""}"}`;
+      for (const name of Object.keys(d.attributes)) {
+        if (!EXAMPLE_ATTRIBUTES.includes(name)) error(`attribute ${name} is not declared for example directives`, { ...at, field, expected: `one of: ${EXAMPLE_ATTRIBUTES.join(", ")}` });
+      }
       if (!d.attributes.id) error("example directive needs an id attribute", { ...at, field: "directive example" });
       else if (exampleIds.has(d.attributes.id)) error(`example id ${d.attributes.id} is used twice`, { ...at, field });
       else exampleIds.add(d.attributes.id);
@@ -150,6 +159,9 @@ async function checkTranslation(file, parsed, { folder, data, practiceKeys, regi
     if (d.name === "practice") {
       const { definition, version } = d.attributes;
       const field = `directive practice{definition="${definition ?? ""}" version="${version ?? ""}"}`;
+      for (const name of Object.keys(d.attributes)) {
+        if (!PRACTICE_ATTRIBUTES.includes(name)) error(`attribute ${name} is not declared for practice directives`, { ...at, field, expected: `one of: ${PRACTICE_ATTRIBUTES.join(", ")}` });
+      }
       if (!definition || !version) { error("practice directive needs definition and version attributes", { ...at, field: "directive practice" }); continue; }
       if (!/^[1-9]\d*$/.test(version)) { error(`version must be a positive integer, got "${version}"`, { ...at, field }); continue; }
       const key = versioned(definition, Number(version));

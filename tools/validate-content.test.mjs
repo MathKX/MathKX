@@ -674,3 +674,67 @@ test("rejects a ladder entry missing a language and an empty ladder", async (t) 
     /addition-within-20\.json schema violation: \/ladder\/0\/description must have required property 'en'/,
     /number-bonds-to-ten\.json schema violation: \/ladder must NOT have fewer than 1 items/);
 });
+
+// ---------------------------------------------------------------------------------------------
+// PR 20 review: order-free visual matching, heading and introductory mathematics, references,
+// unknown directive attributes, unterminated containers
+
+test("matches repeated visuals as a multiset regardless of order", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const extraNb = ':::visual{type="ten-frame-explorer" start="1"}\n:::\n\n:::visual{type="ten-frame-explorer" start="2"}\n:::\n\n';
+  const extraEn = ':::visual{type="ten-frame-explorer" start="2"}\n:::\n\n:::visual{type="ten-frame-explorer" start="1"}\n:::\n\n';
+  await f.lesson("my-lesson", { nb: NB.replace("## Hvorfor? {#why}", extraNb + "## Hvorfor? {#why}"), en: EN.replace("## Why? {#why}", extraEn + "## Why? {#why}") });
+  expectPass(f.run());
+});
+
+test("checks mathematics inside headings", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.lesson("my-lesson", { en: EN.replace("## What are number bonds? {#what}", "## What are number bonds, $\\sqrt{2}$ and $2 + 2 = 4$? {#what}") });
+  expectFailure(f.run(),
+    /en\.md:\d+ section \{#what\}: unsupported notation "\\sqrt" in \$\\sqrt\{2\}\$/,
+    /en\.md:\d+ section \{#what\}: expression 2\+2=4 has no counterpart in nb\.md/);
+});
+
+test("compares mathematics that appears before the first heading", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.lesson("my-lesson", {
+    nb: NB.replace("## Hva er tiervenner? {#what}", "Først: $1 + 1 = 2$.\n\n## Hva er tiervenner? {#what}"),
+    en: EN.replace("## What are number bonds? {#what}", "First: $2 + 2 = 4$.\n\n## What are number bonds? {#what}"),
+  });
+  expectFailure(f.run(),
+    /nb\.md:\d+ section \(before the first heading\): expression 1\+1=2 has no counterpart in en\.md \(en\.md has 2\+2=4\)/,
+    /en\.md:\d+ section \(before the first heading\): expression 2\+2=4 has no counterpart in nb\.md/);
+});
+
+test("resolves reference-style images and links before checking them", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  // An undefined reference such as ![x][nodef] is plain text in CommonMark, so only defined references reach the checks.
+  const tail = "\n![][missing]\n\n[missing]: assets/nonexistent.svg\n\nSee [the other][other].\n\n[other]: nonexistent.md\n";
+  await f.lesson("my-lesson", { en: EN + tail });
+  expectFailure(f.run(),
+    /en\.md:\d+ image: image assets\/nonexistent\.svg has no alternative text/,
+    /en\.md:\d+ image: image assets\/nonexistent\.svg does not exist/,
+    /en\.md:\d+ link: link nonexistent\.md does not exist/);
+});
+
+test("rejects unknown attributes on example and practice directives", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const mutate = (s) => s.replace('id="example"}', 'id="example" bogus="x"}').replace('version="1"}', 'version="1" bogus="y"}');
+  await f.lesson("my-lesson", { nb: mutate(NB), en: mutate(EN) });
+  expectFailure(f.run(),
+    /en\.md:\d+ directive example\{id="example"\}: attribute bogus is not declared for example directives \(one of: title, id\)/,
+    /en\.md:\d+ directive practice\{definition="numbers\.addition\.within-10" version="1"\}: attribute bogus is not declared for practice directives \(one of: definition, version\)/);
+});
+
+test("requires a closing fence on container directives", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const unterminated = (s) => s.replace(':::practice{definition="numbers.addition.within-10" version="1"}\n:::\n', ':::practice{definition="numbers.addition.within-10" version="1"}\n');
+  await f.lesson("my-lesson", { nb: unterminated(NB), en: unterminated(EN) });
+  expectFailure(f.run(), /nb\.md:\d+ directive practice: directive practice is not closed \(a closing ::: line\)/, /en\.md:\d+ directive practice: directive practice is not closed/);
+});

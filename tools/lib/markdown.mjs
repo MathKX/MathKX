@@ -29,6 +29,10 @@ export function parseLessonMarkdown(text) {
   const links = [];
   const pipeParagraphs = [];
 
+  // Reference-style images and links resolve through the definition table.
+  const definitions = new Map();
+  visit(tree, "definition", (node) => definitions.set(node.identifier, node.url));
+
   let section = BEFORE_FIRST_HEADING;
   for (const node of tree.children) {
     if (node.type === "yaml") {
@@ -46,7 +50,7 @@ export function parseLessonMarkdown(text) {
       const heading = { level: node.depth, text: raw.replace(ANCHOR, "").trim(), anchor: match?.[1] ?? null, line: line(node) };
       headings.push(heading);
       if (heading.anchor && (heading.level === 2 || heading.level === 3)) section = heading.anchor;
-      continue;
+      // Fall through: a heading's inline children (mathematics, links) are checked like any other.
     }
     if (node.type === "paragraph") {
       const start = node.position.start.line, end = node.position.end.line;
@@ -57,16 +61,21 @@ export function parseLessonMarkdown(text) {
       switch (child.type) {
         case "containerDirective":
         case "leafDirective":
-        case "textDirective":
+        case "textDirective": {
+          const container = child.type === "containerDirective";
+          // remark closes a container at end of file as well; the contract requires a closing ::: line.
+          const closed = container && (lines[child.position.end.line - 1] ?? "").trim() === ":::";
           directives.push({
             name: child.name,
-            form: child.type === "containerDirective" ? "container" : child.type === "leafDirective" ? "leaf" : "text",
+            form: container ? "container" : child.type === "leafDirective" ? "leaf" : "text",
             attributes: { ...(child.attributes ?? {}) },
             line: line(child),
             section,
-            body: child.type === "containerDirective" ? toString(child).trim() : "",
+            closed,
+            body: container ? toString(child).trim() : "",
           });
           break;
+        }
         case "inlineMath":
         case "math":
           math.push({ value: child.value, display: child.type === "math", line: line(child), section });
@@ -74,8 +83,14 @@ export function parseLessonMarkdown(text) {
         case "image":
           images.push({ url: child.url, alt: child.alt ?? "", line: line(child), section });
           break;
+        case "imageReference":
+          images.push({ url: definitions.get(child.identifier) ?? null, reference: child.identifier, alt: child.alt ?? "", line: line(child), section });
+          break;
         case "link":
           links.push({ url: child.url, line: line(child), section });
+          break;
+        case "linkReference":
+          links.push({ url: definitions.get(child.identifier) ?? null, reference: child.identifier, line: line(child), section });
           break;
         default:
       }

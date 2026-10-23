@@ -2,6 +2,7 @@
 // directives by identity, non-localized attributes, and per-section normalized mathematics.
 // Prose, sentence order, directive order, and localized attributes are never compared.
 import path from "node:path";
+import { BEFORE_FIRST_HEADING } from "./markdown.mjs";
 import { normalize } from "./notation.mjs";
 
 export const LOCALIZED_ATTRIBUTES = { example: ["title"] };
@@ -42,6 +43,10 @@ export function comparePair(base, other, diagnostics) {
     return map;
   };
   const baseGroups = groups(base), otherGroups = groups(other);
+  const nonLocalized = (d) => {
+    const localized = LOCALIZED_ATTRIBUTES[d.name] ?? [];
+    return JSON.stringify(Object.entries(d.attributes).filter(([k]) => !localized.includes(k)).sort());
+  };
   for (const [key, list] of baseGroups) {
     const others = otherGroups.get(key) ?? [];
     if (others.length !== list.length) {
@@ -49,8 +54,15 @@ export function comparePair(base, other, diagnostics) {
       diagnostics.error(base.file, `directive ${key} appears ${list.length} time(s) here and ${others.length} time(s) in ${otherName}`, { line: d.line, field: "directive" });
       continue;
     }
-    list.forEach((d, i) => {
-      const o = others[i];
+    // Match complete identities (all non-localized attributes) as a multiset, order free; only the
+    // leftovers are paired by position so that a changed attribute is reported with both values.
+    const leftBase = [], leftOther = [...others];
+    for (const d of list) {
+      const i = leftOther.findIndex((o) => nonLocalized(o) === nonLocalized(d));
+      if (i === -1) leftBase.push(d); else leftOther.splice(i, 1);
+    }
+    leftBase.forEach((d, i) => {
+      const o = leftOther[i];
       const localized = LOCALIZED_ATTRIBUTES[d.name] ?? [];
       const keys = new Set([...Object.keys(d.attributes), ...Object.keys(o.attributes)]);
       for (const attribute of keys) {
@@ -82,14 +94,15 @@ export function comparePair(base, other, diagnostics) {
   const baseMath = bySection(base), otherMath = bySection(other);
   const sections = new Set([...baseMath.keys(), ...otherMath.keys()]);
   for (const section of sections) {
-    if (!baseAnchors.has(section) || !otherAnchors.has(section)) continue; // anchor mismatch already reported
+    const introduction = section === BEFORE_FIRST_HEADING;
+    if (!introduction && (!baseAnchors.has(section) || !otherAnchors.has(section))) continue; // anchor mismatch already reported
     const a = [...(baseMath.get(section) ?? [])], b = [...(otherMath.get(section) ?? [])];
     const unmatchedA = [], unmatchedB = [...b];
     for (const x of a) {
       const i = unmatchedB.findIndex((y) => y.value === x.value);
       if (i === -1) unmatchedA.push(x); else unmatchedB.splice(i, 1);
     }
-    const field = `section {#${section}}`;
+    const field = `section ${introduction ? section : `{#${section}}`}`;
     const list = (items, name) => (items.length ? `${name} has ${items.map((i) => i.value).join(", ")}` : `${name} has no unmatched expression`);
     for (const x of unmatchedA) diagnostics.error(base.file, `expression ${x.value} has no counterpart in ${otherName}`, { line: x.line, field, expected: list(unmatchedB, otherName) });
     for (const y of unmatchedB) diagnostics.error(other.file, `expression ${y.value} has no counterpart in ${baseName}`, { line: y.line, field, expected: list(unmatchedA, baseName) });
