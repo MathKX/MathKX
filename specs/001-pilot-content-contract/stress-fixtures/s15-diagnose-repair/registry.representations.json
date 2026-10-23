@@ -1,0 +1,19 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "derivation-list",
+      "role": [
+        "help",
+        "explanation",
+        "response"
+      ],
+      "reads": [
+        "steps"
+      ],
+      "supports": {}
+    }
+  ]
+}

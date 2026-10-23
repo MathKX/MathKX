@@ -1,0 +1,22 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "decimal-tolerance",
+      "version": 1,
+      "artifact": {
+        "type": "decimal",
+        "scale": 10,
+        "tolerance": {
+          "absolute": 0
+        }
+      },
+      "emits": [
+        "dec.alignedRight",
+        "dec.ignoredPoint"
+      ]
+    }
+  ]
+}

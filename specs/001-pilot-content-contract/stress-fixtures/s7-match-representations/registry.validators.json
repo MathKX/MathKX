@@ -1,0 +1,21 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "mapping",
+      "version": 1,
+      "artifact": {
+        "type": "mapping",
+        "from": "part-id",
+        "to": "part-id",
+        "arity": "one-to-one"
+      },
+      "emits": [
+        "fn.slopeInterceptSwap",
+        "fn.scaleMisread"
+      ]
+    }
+  ]
+}

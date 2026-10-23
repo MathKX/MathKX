@@ -1,0 +1,38 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "linear-family",
+      "version": 1,
+      "parameters": {
+        "slope": {
+          "quantity": "slope",
+          "min": -5,
+          "max": 5
+        },
+        "intercept": {
+          "quantity": "intercept",
+          "min": -10,
+          "max": 10
+        },
+        "count": {
+          "quantity": "count",
+          "min": 2,
+          "max": 4
+        }
+      },
+      "constraints": [
+        "slope-nonzero",
+        "distinct-graphs"
+      ],
+      "produces": [
+        "functions",
+        "tables",
+        "equations",
+        "graphs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "ordered-groups",
+      "version": 1,
+      "artifact": {
+        "type": "ordered-partition",
+        "of": "item-id"
+      },
+      "emits": [
+        "rat.digitCompare",
+        "rat.percentScale"
+      ]
+    }
+  ]
+}

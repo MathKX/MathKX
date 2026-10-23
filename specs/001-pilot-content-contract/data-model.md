@@ -73,8 +73,8 @@ Each `:::practice` directive must match an entry in `lesson.json.practice` and e
 | `skill` | string | yes | Resolves to a skill |
 | `source` | `"generated"` \| `"fixed"` | yes | Selects which of `generator` or `instance` is required |
 | `validator` | `{ name: string, version: integer }` | yes | Registered at that version |
-| `generator` | `{ name: string, version: integer, parameters: object }` | when `source: generated`; forbidden when `fixed` | Registered at that version; every parameter key declared by the generator; every bound within the generator's domain; `min ≤ max` |
-| `instance` | `{ prompt: object, validation: object }` | when `source: fixed`; forbidden when `generated` | `validation` conforms to the validator's artifact shape; `prompt` carries the quantities the declared representations read |
+| `generator` | `{ name: string, version: integer, parameters: object, constraints?: name[] }` | when `source: generated`; forbidden when `fixed` | Registered at that version; every parameter key declared by the generator; every bound within the generator's domain; `min ≤ max`; each parameter domain carries an optional `kind` (`integer-range`, the only pilot kind); every constraint name is one the generator declares |
+| `instance` | `{ prompt: object, validation: object }` | when `source: fixed`; forbidden when `generated` | `validation` conforms to the validator's artifact shape; `prompt` is any JSON object and must carry the quantities the declared representations read (integers `a`, `b` in the pilot) |
 | `representations` | `{ help: string[], explanation: string[] }` | yes | Each name registered; each representation's support box contains the definition's domain box |
 | `misconceptionCodes` | string[] | yes (may be empty) | Each registered and emitted by the named validator |
 
@@ -82,7 +82,7 @@ Each `:::practice` directive must match an entry in `lesson.json.practice` and e
 
 ## Quantity model (pilot)
 
-Registries and definitions speak about quantities by name. The pilot has one relation, named `sum-of-two-operands`, which generators declare in `relation` and which `tools/lib/quantities.mjs` implements. Representations' `supports` and generators' `parameters` are keyed by `operand` and `sum`; prompts and visual directives carry the concrete values `a` and `b`.
+Registries and definitions speak about quantities by name. The pilot has one relation, named `sum-of-two-operands`, which a generator may declare in `relation` and which `tools/lib/quantities.mjs` implements; a generator without a relation (one that picks from a reviewed table, for example) gets no feasibility check beyond `min ≤ max`. Representations' `supports` and generators' `parameters` are keyed by `operand` and `sum`; prompts and visual directives carry the concrete values `a` and `b`.
 
 | Quantity | Meaning | Derived from a point `{ a, b }` |
 | --- | --- | --- |
@@ -98,8 +98,8 @@ All share `$schema` → `schemas/registry.schema.json`, `schemaVersion: "0.1-pil
 
 | File | `kind` | Entry fields |
 | --- | --- | --- |
-| `generators.json` | `generators` | `name`, `version`, `relation` (named quantity relation the tooling implements; pilot: `sum-of-two-operands`), `parameters` (map of parameter name → `{ quantity, min, max }` domain), `produces` (quantities emitted, e.g. `a`, `b`, `sum`) |
-| `validators.json` | `validators` | `name`, `version`, `artifact` (`{ type: "integer", min?, max? }` in the pilot), `emits` (misconception codes) |
+| `generators.json` | `generators` | `name`, `version`, `relation?` (named quantity relation the tooling implements; pilot: `sum-of-two-operands`), `constraints?` (named constraints the generator enforces; pilot: none), `parameters` (map of parameter name → `{ kind?: integer-range, quantity, min, max }` domain), `produces` (quantities emitted, e.g. `a`, `b`, `sum`) |
+| `validators.json` | `validators` | `name`, `version`, `artifact` (one branch per kind discriminated by `type`; `{ type: "integer", min?, max? }` is the only pilot branch), `emits` (misconception codes) |
 | `representations.json` | `representations` | `name`, `role` (`help`, `explanation`, or both), `reads` (quantities), `supports` (box: quantity → `{ min, max }`) |
 | `visual-components.json` | `visual-components` | `type`, `attributes` (map of attribute → `{ type: "integer" \| "string", min?, max? }`), `representation` (optional link to a representation name) |
 | `misconception-codes.json` | `misconception-codes` | `code`, `validator` (name) |
@@ -122,6 +122,10 @@ Definition ──skill──> Skill ;  Definition ──validator──> Validat
 Definition(generated) ──generator──> Generator@version
 Definition ──representations──> Representation* ;  Definition ──misconceptionCodes──> Code* (emitted by its Validator)
 ```
+
+## Contract evolution
+
+The pilot contract is deliberately narrow. The stress test in [stress-fixtures/](stress-fixtures/README.md) and the [contract trace](contract-trace.md) show how it grows without breaking existing files: every closed set is a discriminator or enum that may gain values (`artifact.type`, parameter `kind`, representation `role`, attribute `type`); every pilot-only assumption is optional (`relation`, `constraints`); new capabilities (authored pools, interaction names, composition, response representations) arrive as optional fields with their own specification. `schemaVersion` stays `0.1-pilot` while changes are additive; removing or re-typing a field bumps it. The stress fixtures are rerun whenever a contract changes and the control set must pass.
 
 ## State
 

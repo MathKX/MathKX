@@ -1,0 +1,15 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "misconception-codes",
+  "entries": [
+    {
+      "code": "mult.addedInstead",
+      "validator": "integer-answer"
+    },
+    {
+      "code": "mult.offByOneGroup",
+      "validator": "integer-answer"
+    }
+  ]
+}

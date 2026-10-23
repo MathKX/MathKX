@@ -1,0 +1,31 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "generators",
+  "entries": [
+    {
+      "name": "point-in-range",
+      "version": 1,
+      "parameters": {
+        "x": {
+          "quantity": "x",
+          "min": -10,
+          "max": 10
+        },
+        "y": {
+          "quantity": "y",
+          "min": -10,
+          "max": 10
+        }
+      },
+      "constraints": [
+        "not-on-axis"
+      ],
+      "produces": [
+        "x",
+        "y",
+        "label"
+      ]
+    }
+  ]
+}

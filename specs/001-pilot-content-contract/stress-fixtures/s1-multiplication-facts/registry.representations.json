@@ -1,0 +1,28 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "equal-groups",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "a",
+        "b"
+      ],
+      "supports": {
+        "factor": {
+          "min": 1,
+          "max": 10
+        },
+        "product": {
+          "min": 1,
+          "max": 100
+        }
+      }
+    }
+  ]
+}

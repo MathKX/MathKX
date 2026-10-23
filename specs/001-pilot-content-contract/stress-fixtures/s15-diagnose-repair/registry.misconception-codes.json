@@ -1,0 +1,11 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "misconception-codes",
+  "entries": [
+    {
+      "code": "alg.incompleteDistribution",
+      "validator": "derivation-repair"
+    }
+  ]
+}

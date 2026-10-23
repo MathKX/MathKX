@@ -1,0 +1,41 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "visual-components",
+  "entries": [
+    {
+      "type": "function-graph",
+      "attributes": {
+        "f": {
+          "type": "expression",
+          "required": true
+        },
+        "xMin": {
+          "type": "integer",
+          "required": true
+        },
+        "xMax": {
+          "type": "integer",
+          "required": true
+        }
+      },
+      "representation": "function-graph"
+    },
+    {
+      "type": "value-table",
+      "attributes": {
+        "f": {
+          "type": "expression",
+          "required": true
+        },
+        "from": {
+          "type": "integer"
+        },
+        "to": {
+          "type": "integer"
+        }
+      },
+      "representation": "value-table"
+    }
+  ]
+}

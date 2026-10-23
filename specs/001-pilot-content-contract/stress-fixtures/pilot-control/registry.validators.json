@@ -1,0 +1,23 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "integer-answer",
+      "version": 1,
+      "artifact": {
+        "type": "integer",
+        "min": 0,
+        "max": 40
+      },
+      "emits": [
+        "add.oneGroup",
+        "add.concat",
+        "add.offByOne",
+        "add.subtracted",
+        "add.generic"
+      ]
+    }
+  ]
+}

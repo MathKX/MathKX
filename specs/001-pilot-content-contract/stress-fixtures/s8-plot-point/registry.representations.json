@@ -1,0 +1,29 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "representations",
+  "entries": [
+    {
+      "name": "coordinate-plane",
+      "role": [
+        "help",
+        "explanation",
+        "response"
+      ],
+      "reads": [
+        "x",
+        "y"
+      ],
+      "supports": {
+        "x": {
+          "min": -10,
+          "max": 10
+        },
+        "y": {
+          "min": -10,
+          "max": 10
+        }
+      }
+    }
+  ]
+}

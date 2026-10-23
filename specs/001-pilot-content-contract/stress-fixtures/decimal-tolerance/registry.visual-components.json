@@ -1,0 +1,25 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "visual-components",
+  "entries": [
+    {
+      "type": "decimal-number-line",
+      "attributes": {
+        "from": {
+          "type": "decimal",
+          "required": true
+        },
+        "to": {
+          "type": "decimal",
+          "required": true
+        },
+        "step": {
+          "type": "decimal",
+          "required": true
+        }
+      },
+      "representation": "decimal-number-line"
+    }
+  ]
+}

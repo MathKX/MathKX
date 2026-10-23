@@ -1,0 +1,22 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "derivation-repair",
+      "version": 1,
+      "artifact": {
+        "type": "derivation-repair",
+        "criteria": [
+          "first-invalid-step",
+          "reason-code",
+          "corrected-step-equivalent"
+        ]
+      },
+      "emits": [
+        "alg.incompleteDistribution"
+      ]
+    }
+  ]
+}

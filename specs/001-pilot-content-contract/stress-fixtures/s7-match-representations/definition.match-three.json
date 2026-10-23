@@ -1,0 +1,57 @@
+{
+  "$schema": "../../contracts/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "functions.linear.match-three",
+  "version": 1,
+  "skill": "functions.linear-representations",
+  "source": "generated",
+  "validator": {
+    "name": "mapping",
+    "version": 1
+  },
+  "generator": {
+    "name": "linear-family",
+    "version": 1,
+    "parameters": {
+      "slope": {
+        "min": -3,
+        "max": 3
+      },
+      "intercept": {
+        "min": -5,
+        "max": 5
+      },
+      "count": {
+        "min": 3,
+        "max": 3
+      }
+    },
+    "constraints": [
+      "slope-nonzero",
+      "distinct-graphs"
+    ]
+  },
+  "composition": {
+    "parts": [
+      "tables",
+      "equations",
+      "graphs"
+    ],
+    "task": "match",
+    "arity": "one-to-one"
+  },
+  "representations": {
+    "help": [
+      "value-table",
+      "function-graph"
+    ],
+    "explanation": [
+      "value-table",
+      "function-graph"
+    ]
+  },
+  "misconceptionCodes": [
+    "fn.slopeInterceptSwap",
+    "fn.scaleMisread"
+  ]
+}

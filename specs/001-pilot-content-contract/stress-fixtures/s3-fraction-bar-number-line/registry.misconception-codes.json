@@ -1,0 +1,15 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "misconception-codes",
+  "entries": [
+    {
+      "code": "frac.unequalParts",
+      "validator": "rational-linked"
+    },
+    {
+      "code": "frac.tickCount",
+      "validator": "rational-linked"
+    }
+  ]
+}

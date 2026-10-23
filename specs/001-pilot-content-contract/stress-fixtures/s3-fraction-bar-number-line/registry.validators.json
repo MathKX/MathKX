@@ -1,0 +1,22 @@
+{
+  "$schema": "../../contracts/registry.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "kind": "validators",
+  "entries": [
+    {
+      "name": "rational-linked",
+      "version": 1,
+      "artifact": {
+        "type": "rational",
+        "parts": [
+          "bar",
+          "point"
+        ]
+      },
+      "emits": [
+        "frac.unequalParts",
+        "frac.tickCount"
+      ]
+    }
+  ]
+}
