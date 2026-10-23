@@ -738,3 +738,23 @@ test("requires a closing fence on container directives", async (t) => {
   await f.lesson("my-lesson", { nb: unterminated(NB), en: unterminated(EN) });
   expectFailure(f.run(), /nb\.md:\d+ directive practice: directive practice is not closed \(a closing ::: line\)/, /en\.md:\d+ directive practice: directive practice is not closed/);
 });
+
+test("uses the first definition of a duplicated reference label, as renderers do", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const tail = "\n![Frame][ref]\n\n[ref]: assets/missing.svg\n\n[ref]: assets/ten-frame-3-7.svg\n";
+  await f.lesson("my-lesson", { en: EN + tail });
+  expectFailure(f.run(), /en\.md:\d+ image: image assets\/missing\.svg does not exist/);
+});
+
+test("attributes a closing fence to one container and accepts fences inside blockquotes", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const nested = ':::example{title="Nested" id="nested"}\nText.\n\n:::visual{type="ten-frame-explorer" start="3"}\n:::\n\n';
+  const quoted = '> :::visual{type="ten-frame-explorer" start="5"}\n> :::\n\n';
+  const mutate = (s) => s.replace("## Øv {#practice}", nested + quoted + "## Øv {#practice}").replace("## Practise {#practice}", nested + quoted + "## Practise {#practice}");
+  await f.lesson("my-lesson", { nb: mutate(NB), en: mutate(EN) });
+  const result = f.run();
+  expectFailure(result, /en\.md:\d+ directive example: directive example is not closed \(a closing ::: line\)/);
+  assert.doesNotMatch(result.output, /directive visual is not closed/);
+});

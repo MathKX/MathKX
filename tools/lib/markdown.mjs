@@ -29,9 +29,10 @@ export function parseLessonMarkdown(text) {
   const links = [];
   const pipeParagraphs = [];
 
-  // Reference-style images and links resolve through the definition table.
+  // Reference-style images and links resolve through the definition table; as in CommonMark,
+  // the first definition of a label wins.
   const definitions = new Map();
-  visit(tree, "definition", (node) => definitions.set(node.identifier, node.url));
+  visit(tree, "definition", (node) => { if (!definitions.has(node.identifier)) definitions.set(node.identifier, node.url); });
 
   let section = BEFORE_FIRST_HEADING;
   for (const node of tree.children) {
@@ -63,15 +64,14 @@ export function parseLessonMarkdown(text) {
         case "leafDirective":
         case "textDirective": {
           const container = child.type === "containerDirective";
-          // remark closes a container at end of file as well; the contract requires a closing ::: line.
-          const closed = container && (lines[child.position.end.line - 1] ?? "").trim() === ":::";
           directives.push({
             name: child.name,
             form: container ? "container" : child.type === "leafDirective" ? "leaf" : "text",
             attributes: { ...(child.attributes ?? {}) },
             line: line(child),
+            endLine: child.position?.end.line ?? null,
             section,
-            closed,
+            closed: !container, // containers are resolved below
             body: container ? toString(child).trim() : "",
           });
           break;
@@ -96,5 +96,24 @@ export function parseLessonMarkdown(text) {
       }
     });
   }
+  markClosedContainers(directives, lines);
   return { frontMatter, headings, directives, math, images, links, pipeParagraphs };
+}
+
+// remark also closes a container at the end of the file or of an enclosing block, and a single
+// fence line can close only one directive. A container counts as closed when its last source
+// line is a fence with the same number of colons as its opener (ignoring blockquote markers and
+// indentation) and no inner container has already claimed that line. Inner containers start
+// later, so they are resolved first.
+function markClosedContainers(directives, lines) {
+  const strip = (text) => (text ?? "").replace(/^(?:\s*>)*\s*/, "");
+  const claimed = new Set();
+  const containers = directives.filter((d) => d.form === "container" && d.line && d.endLine).sort((a, b) => b.line - a.line);
+  for (const d of containers) {
+    const opener = /^(:{3,})/.exec(strip(lines[d.line - 1]));
+    const fence = strip(lines[d.endLine - 1]).trim();
+    const closes = opener && fence === opener[1] && !claimed.has(d.endLine);
+    if (closes) claimed.add(d.endLine);
+    d.closed = Boolean(closes);
+  }
 }
