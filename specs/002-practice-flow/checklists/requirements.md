@@ -17,7 +17,7 @@
 - [x] Requirements are testable and unambiguous — FR-001 to FR-025 each name an observable condition
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined — 29 scenarios across five stories
+- [x] All acceptance scenarios are defined — 30 scenarios across five stories
 - [x] Edge cases are identified — eleven listed
 - [x] Scope is clearly bounded — Assumptions name what stays in specs 003, 004, 005, and F9
 - [x] Dependencies and assumptions identified
