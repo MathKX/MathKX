@@ -8,11 +8,11 @@ Specifications follow the backlog order recorded in the decision log (feature ve
 
 | Spec | Decision-log feature | Scope |
 | --- | --- | --- |
-| [001-pilot-content-contract](001-pilot-content-contract/spec.md) | F1 | Schemas, folder layout, directive and notation rules, and validator checks for lessons, exercise definitions, and skill ladders |
-| 002 (planned) | F2, F3, F4 | The first learner-visible practice loop: domain generator and validator, thin API, web practice flow; establishes the application layout |
+| [001-pilot-content-contract](001-pilot-content-contract/spec.md) | F1 | Schemas, folder layout, directive and notation rules, and validator checks for lessons, exercise definitions, and skill ladders (implemented, PR 20) |
+| [002-practice-flow](002-practice-flow/spec.md) | F2, F3, F4 | The first learner-visible practice loop: domain generator and validator, thin service, web practice flow with help-first feedback, the ladder transitions between the two milestone definitions, and the minimum guest session record with derived outcomes; establishes the application layout |
 | 003 (planned) | F5 | Lesson rendering and the detour back to an exercise |
-| 004 (planned) | F6 | Observations and honest progress |
-| 005 (planned) | F7 | Challenge ladder, repeats, and session controls, including the crossing-ten definition |
+| 004 (planned) | F6 | The progress view across skills and lessons, "Lesson viewed" history, and replay of recorded deliveries |
+| 005 (planned) | F7 | Repeat avoidance, "Repeat this question", and further session controls |
 | 006 (later) | F8 | Self-checks, after milestone one |
 | F9 | — | Profiles, recovery, and persistence: a design proposal first, then a specification |
 
