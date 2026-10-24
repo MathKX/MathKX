@@ -1,20 +1,26 @@
-// The lesson page in this feature: title and objective from the front matter for the active language and
-// the practice entries from lesson.json. The Markdown body arrives with spec 003.
-import { useEffect, useState } from "react";
+// The lesson page (specs/003): title and objective from the lesson metadata, then the translation's Markdown
+// rendered by the lesson chunk, with the practice entries where the lesson places them.
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { LessonDetail, PracticeApi, SkillDto } from "../api/types";
 import { practiceApi } from "../api/client";
-import { translate } from "../i18n";
-import { useRouter } from "../router";
+import { translate, type Lang } from "../i18n";
 import { useStore } from "../state/store";
+import { PracticeEntry } from "../lesson/PracticeEntry";
+import { Placeholder } from "../lesson/Placeholder";
+import type { LessonComponents } from "../lesson/render";
+
+const LessonView = lazy(() => import("../lesson/LessonView"));
 
 export function LessonPage({ id, api = practiceApi }: { id: string; api?: PracticeApi }) {
-  const { state, startPractice } = useStore();
-  const { navigate } = useRouter();
+  const { state } = useStore();
   const lang = state.language;
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
   const [skills, setSkills] = useState<Record<string, SkillDto>>({});
   const [failed, setFailed] = useState(false);
+  const [contents, setContents] = useState<{ id: string; byLang: Partial<Record<Lang, string>> }>({ id, byLang: {} });
+  const [contentFailed, setContentFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,40 +42,74 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
     };
   }, [api, id]);
 
+  // Each language's content is requested once per visit and kept, so switching back is immediate.
+  const cached = contents.id === id ? contents.byLang[lang] : undefined;
+  useEffect(() => {
+    if (cached !== undefined) return;
+    let cancelled = false;
+    setContentFailed(false);
+    api
+      .getLessonContent(id, lang)
+      .then((content) => {
+        if (!cancelled) setContents((prev) => ({ id, byLang: { ...(prev.id === id ? prev.byLang : {}), [lang]: content.markdown } }));
+      })
+      .catch(() => {
+        if (!cancelled) setContentFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, id, lang, cached, attempt]);
+
+  // While the selected language loads, keep showing the other one, so the section can be restored after.
+  const shown: { lang: Lang; markdown: string } | null = useMemo(() => {
+    if (contents.id !== id) return null;
+    if (cached !== undefined) return { lang, markdown: cached };
+    const other = (Object.entries(contents.byLang) as [Lang, string][])[0];
+    return other ? { lang: other[0], markdown: other[1] } : null;
+  }, [contents, id, lang, cached]);
+
+  const practiceEntry = useCallback(
+    (attributes: Record<string, string>, key: string) => {
+      const entry = lesson?.practice.find((p) => p.definition === attributes.definition && String(p.version) === attributes.version);
+      if (!entry) return <Placeholder key={key} lang={lang} />;
+      const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
+      return <PracticeEntry key={key} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
+    },
+    [lesson, skills, lang],
+  );
+  const components: LessonComponents = useMemo(
+    () => ({
+      visual: (_attributes, key) => <Placeholder key={key} lang={lang} />,
+      practice: practiceEntry,
+    }),
+    [practiceEntry, lang],
+  );
+
   if (failed) return <Paragraph>{translate(lang, "lesson.notFound")}</Paragraph>;
   if (!lesson) return <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
 
+  const loading = <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
   return (
-    <article className="mkx-prose" data-testid="lesson-page">
+    <article className="mkx-prose mkx-lesson" data-testid="lesson-page">
       <Heading level={1} data-size="lg">
         {lesson.titles[lang]}
       </Heading>
       <Paragraph data-size="lg">{lesson.objectives[lang]}</Paragraph>
-      <Paragraph data-size="sm">{translate(lang, "lesson.bodyLater")}</Paragraph>
-      <Heading level={2} data-size="md">
-        {translate(lang, "lesson.practiceHeading")}
-      </Heading>
-      <ul className="mkx-practice-entries">
-        {lesson.practice.map((entry) => {
-          const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
-          const description = ladder?.description[lang] ?? entry.definition;
-          return (
-            <li key={`${entry.definition}@${entry.version}`}>
-              <Button
-                variant="primary"
-                data-size="md"
-                className="mkx-target"
-                data-testid={`practice-${entry.definition}`}
-                onClick={() => {
-                  void startPractice(entry.skill, { definition: entry.definition, version: entry.version }).then(() => navigate(`/practice/${encodeURIComponent(entry.skill)}`));
-                }}
-              >
-                {translate(lang, "lesson.practise", { description })}
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+      {contentFailed && !shown ? (
+        <div role="alert" className="mkx-placeholder">
+          <Paragraph>{translate(lang, "lesson.contentFailed")}</Paragraph>
+          <Button variant="secondary" data-size="md" className="mkx-target" onClick={() => setAttempt((n) => n + 1)}>
+            {translate(lang, "lesson.retry")}
+          </Button>
+        </div>
+      ) : shown ? (
+        <Suspense fallback={loading}>
+          <LessonView lessonId={lesson.id} lang={shown.lang} markdown={shown.markdown} components={components} />
+        </Suspense>
+      ) : (
+        loading
+      )}
     </article>
   );
 }

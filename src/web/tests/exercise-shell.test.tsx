@@ -145,7 +145,7 @@ describe("the practice screen", () => {
     const kinds = stored.value.deliveries[0].events.map((e: { kind?: string; type: string }) => e.kind ?? e.type);
     expect(kinds).toEqual(["lesson-opened", "ended"]);
     expect(stored.value.resumable.draft).toBe("5");
-    await user.click(screen.getByTestId("practice-numbers.addition.within-10"));
+    await user.click(await screen.findByTestId("practice-numbers.addition.within-10"));
     await screen.findByTestId("prompt");
     expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("5");
     stored = JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}");

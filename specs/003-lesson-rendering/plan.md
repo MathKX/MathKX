@@ -94,8 +94,10 @@ src/web/
 ├── src/lesson/                           # NEW, loaded as its own chunk
 │   ├── parse.ts                          # the remark stack, anchors, directive attributes
 │   ├── render.tsx                        # mdast -> React, placeholders for anything unsupported
+│   ├── LessonView.tsx                    # the lazily loaded chunk entry
+│   ├── Placeholder.tsx                   # the visible stand-in, outside the chunk
 │   ├── notation.ts                       # TypeScript port of the pilot grammar -> MathML tree
-│   ├── Notation.tsx                      # <math> rendering, inline and display
+│   ├── MathNotation.tsx                  # <math> rendering, inline and display
 │   ├── sections.ts                       # section in view, restore after a language switch
 │   └── contribute.ts                     # source and issue links (no learner data)
 ├── src/components/math/TenFrameExplorer.tsx, StepVisual.tsx   # NEW: lesson visuals on the existing TenFrame/Groups/MakeTen

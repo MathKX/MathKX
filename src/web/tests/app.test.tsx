@@ -10,12 +10,13 @@ describe("App", () => {
     expect(screen.getByTestId("app-root")).toBeTruthy();
   });
 
-  it("shows a lesson's title, objective, and practice entries from the front matter and metadata", async () => {
+  it("shows a lesson's title, objective, body, and practice entries in the selected language", async () => {
     render(<App api={createFakeApi()} initialPath="/lessons/number-bonds-to-ten" />);
     await screen.findByTestId("lesson-page");
     expect(screen.getByText("Tiervenner")).toBeTruthy();
     expect(screen.getByText("Du lærer tiervennene.")).toBeTruthy();
-    expect(screen.getByText("Leksjonsteksten kommer i en senere utgave.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 2, name: /Hva er tiervenner\?/ })).toBeTruthy();
     expect((await screen.findByTestId("practice-numbers.addition.within-10")).textContent).toBe("Øv: Summen er høyst 10.");
+    expect(document.documentElement.lang).toBe("nb");
   });
 });

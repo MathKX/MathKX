@@ -11,6 +11,9 @@ declare module "react" {
       mn: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
       mo: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
       mi: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      msup: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      msub: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      mfrac: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }

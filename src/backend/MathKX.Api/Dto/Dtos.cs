@@ -80,6 +80,8 @@ public sealed record LessonDto(
     IReadOnlyList<string> Visuals,
     LocalizedDto Translations);
 
+public sealed record LessonContentDto(string Id, int Version, string Language, string Markdown);
+
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
 public sealed record SkillDto(string Id, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder);

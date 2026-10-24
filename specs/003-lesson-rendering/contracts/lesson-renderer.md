@@ -31,7 +31,7 @@ Rendering walks the tree and returns React elements; there is no HTML string any
 
 ## Notation
 
-`notation.ts` is a TypeScript port of `tools/lib/notation.mjs` returning the same tree; `Notation.tsx` renders it as MathML Core inside `<math display="inline">` or `<math display="block">`: `row` as `<mrow>`, `mn`, `mi`, `mo`, `sup` as `<msup>`, `sub` as `<msub>`, `frac` as `<mfrac>`, `prime` as `<msup>` with `′`. Authored decimal marks are kept; `-` shows as `−` and `*` as `·`. No `aria-label`: the MathML is read by assistive technology in the page language. An expression the port cannot parse renders the placeholder with the source text and "This expression could not be shown." `notation.test.ts` runs every expression in both pilot files and every example in the notation contract through both implementations and compares trees and normalized strings.
+`notation.ts` is a TypeScript port of `tools/lib/notation.mjs` returning the same tree; `MathNotation.tsx` renders it as MathML Core inside `<math display="inline">` or `<math display="block">`: `row` as `<mrow>`, `mn`, `mi`, `mo`, `sup` as `<msup>`, `sub` as `<msub>`, `frac` as `<mfrac>`, `prime` as `<msup>` with `′`. Authored decimal marks are kept; `-` shows as `−` and `*` as `·`. No `aria-label`: the MathML is read by assistive technology in the page language. An expression the port cannot parse renders the placeholder with the source text and "This expression could not be shown." `notation.test.ts` runs every expression in both pilot files and every example in the notation contract through both implementations and compares trees and normalized strings.
 
 ## Visual components
 

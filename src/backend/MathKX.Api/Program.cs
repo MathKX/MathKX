@@ -15,7 +15,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 builder.Services.AddProblemDetails();
-builder.Services.AddSingleton<ContentCatalog>(_ => ContentLoader.Load(ContentRoot.Resolve(builder.Configuration)));
+builder.Services.AddSingleton(_ => new ContentLocation(ContentRoot.Resolve(builder.Configuration)));
+builder.Services.AddSingleton<ContentCatalog>(services => ContentLoader.Load(services.GetRequiredService<ContentLocation>().Root));
 builder.Services.AddSingleton(GeneratorRegistry.Default());
 builder.Services.AddSingleton<InstanceResolver>();
 builder.Services.AddSingleton<IntegerAnswerValidator>();
