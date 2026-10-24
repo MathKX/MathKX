@@ -39,11 +39,25 @@ app.MapValidations();
 app.MapSteps();
 
 // The built learner app, when present in wwwroot: static files plus a history-API fallback that never
-// shadows /api/* (an unknown API route stays a 404 problem, not the app shell).
+// shadows /api/* (an unknown API route stays a 404 problem, not the app shell). The shell is always
+// revalidated so a deploy is picked up at once; the content-hashed files under /assets/ never change.
 if (Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "assets")))
 {
     app.UseDefaultFiles();
-    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = context =>
+        {
+            if (context.Context.Request.Path.StartsWithSegments("/assets"))
+            {
+                context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            }
+            else if (context.File.Name == "index.html")
+            {
+                context.Context.Response.Headers.CacheControl = "no-cache";
+            }
+        },
+    });
     app.MapFallback(context =>
     {
         if (context.Request.Path.StartsWithSegments("/api"))
@@ -53,6 +67,7 @@ if (Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(ap
         }
 
         context.Response.ContentType = "text/html; charset=utf-8";
+        context.Response.Headers.CacheControl = "no-cache";
         return context.Response.SendFileAsync(Path.Combine(app.Environment.WebRootPath!, "index.html"));
     });
 }
