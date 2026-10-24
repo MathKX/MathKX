@@ -12,7 +12,7 @@ Key `mathkx.guest.v1` in `localStorage`, value the `SessionRecord` of [data-mode
 | --- | --- | --- |
 | `submission` | `submissionId`, `originalText`, `value`, `status` (`correct` \| `incorrect` \| `partially-correct` \| `review-needed`), `code` | Mathematical submissions only |
 | `input-guidance` | `submissionId`, `originalText`, `code` | `invalid-response` results; never a retry |
-| `support` | `kind` ∈ { `visual-help-opened`, `help-step`, `counting`, `counting-complete`, `explanation-open`, `explanation-step` (+ `reveals: boolean`), `lesson-opened`, `lesson-reveal`, `answer-reveal` }, `step?` | `feedback-shown` is implied by an `incorrect` submission in practice and is not recorded (DL-032) |
+| `support` | `kind` ∈ { `visual-help-opened`, `help-step`, `counting`, `counting-complete`, `explanation-open`, `explanation-step` (+ `reveals: boolean`), `lesson-opened`, `lesson-reveal`, `answer-reveal` }, `step?` | `reveals` on a step is the flag the service returned with that step; `feedback-shown` is implied by an `incorrect` submission in practice and is not recorded (DL-032); `lesson-reveal` and `answer-reveal` are in the set for later features and are never produced by this one |
 | `challenge-request` | `request` ∈ { `easier`, `harder`, `another`, `same` }, `outcome` ∈ { `requested`, `applied`, `cleared`, `unavailable` } | Never evidence about the learner |
 | `skipped` | — | Learner moved on with no mathematical submission |
 | `ended` | — | Session ended; a draft makes the delivery resumable |

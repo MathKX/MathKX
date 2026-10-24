@@ -7,7 +7,7 @@ Part of [plan.md](../plan.md) Phase 1. A thin, stateless JSON service. No authen
 - Seeds are decimal strings matching `^(0|[1-9][0-9]*)$` within the unsigned 64-bit range, never numbers. A fixed task is addressed with `-` as the seed.
 - Versions are positive integers.
 - Language is a query parameter `lang=nb|en` where a response contains localized content; it never affects mathematics.
-- Private data (the sum, `instance.validation`) is never present in any response except the completed equation inside a `correct` validation result.
+- Private data (the sum, `instance.validation`) is never present in any response except the completed equation inside a `correct` validation result and a step whose `reveals` flag is true, which the learner app fetches only when the learner advances to it and records as a reveal.
 
 ## `GET /api/lessons`
 
@@ -67,6 +67,24 @@ Resolves a question. Deterministic: the same path always returns the same body.
 
 For a fixed task (`/api/instances/numbers.addition.four-plus-four/1/-`) `identity.seed` is absent and `generator` is absent. Errors: `404 unknown-definition` (ID or version), `400 invalid-seed` (syntax or range). The response never contains `sum`.
 
+## `GET /api/instances/{definitionId}/{version}/{seed}/steps/{kind}/{index}`
+
+Delivers one step of guided visual help (`kind=help`) or of the worked explanation (`kind=explanation`) for the instance, built by the domain's step models for the representation the definition lists for that role. Steps are fetched one at a time as the learner advances; the app records `help-step` or `explanation-step` with the returned `reveals` flag, and `counting-complete` when the last help step of `groups` is reached.
+
+```json
+{
+  "kind": "explanation",
+  "representation": "make-ten",
+  "index": 1,
+  "count": 3,
+  "reveals": false,
+  "visual": { "frame": ["a","a","a","a","a","a","a","a","b","b"], "split": { "need": 2, "rest": 3 } },
+  "text": { "code": "explain.makeTen.split", "values": { "a": 8, "b": 5, "need": 2, "rest": 3 } }
+}
+```
+
+The final step carries `"reveals": true` and may include `sum` in `values` (`"text": { "code": "explain.makeTen.total", "values": { "ten": 10, "rest": 3, "sum": 13 } }`). No step with `"reveals": false` contains `sum`. Errors: `404 unknown-definition`, `400 invalid-seed`, `404 unknown-step` (index out of range or a kind the definition's representations do not offer).
+
 ## `POST /api/validations`
 
 ```json
@@ -90,7 +108,7 @@ The service re-resolves the instance from the identity (never trusting operands 
 ## Determinism and privacy tests (contract tests)
 
 1. Two calls to the same instance path return byte-identical bodies; the same after restarting the service.
-2. No instance body, lesson body, or skill body contains the key `sum` or `validation`; incorrect and invalid validation results contain no `sum`.
+2. No instance body, lesson body, or skill body contains the key `sum` or `validation`; incorrect and invalid validation results contain no `sum`; no step with `reveals: false` contains `sum`, and every representation's step sequence has exactly one revealing step, the last.
 3. Validation with the same identity and artifact twice returns identical bodies.
 4. Resolving with `lang=nb` and `lang=en` returns identical mathematics.
 5. Invalid seeds (`-1`, `01`, `abc`, `18446744073709551616`) return `400 invalid-seed`; unknown versions return `404 unknown-definition`.

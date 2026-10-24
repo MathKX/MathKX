@@ -4,7 +4,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R1. Backend layout and target framework
 
-**Decision**: One solution `src/backend/MathKX.sln` with four projects: `MathKX.Domain` (class library, no package references), `MathKX.Api` (ASP.NET Core minimal API), `MathKX.Domain.Tests` and `MathKX.Api.Tests` (xUnit). Target `net10.0` (the current long-term-support release; SDK 10.0.302 is installed; Azure App Service Linux supports it). A `Directory.Build.props` sets nullable reference types, warnings as errors, and the MIT package metadata.
+**Decision**: One solution `src/backend/MathKX.sln` with five projects: `MathKX.Domain` (class library, no package references: random source, generator, validator, step models, and the content record types), `MathKX.Content` (loads `content/` from disk with `System.Text.Json` and YamlDotNet for front matter), `MathKX.Api` (ASP.NET Core minimal API), `MathKX.Domain.Tests` and `MathKX.Api.Tests` (xUnit; the content loader's tests live with the domain tests). Target `net10.0` (the current long-term-support release; SDK 10.0.302 is installed; Azure App Service Linux supports it). A `Directory.Build.props` sets nullable reference types, warnings as errors, and the MIT package metadata.
 
 **Rationale**: DL-005 asks for a domain library with tests and a thin API; keeping the domain free of framework references is what lets the generator and validator be reused by a future re-validation job or a command-line fixture runner. .NET 10 avoids an upgrade before the first release.
 
@@ -12,11 +12,11 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R2. Content at runtime
 
-**Decision**: The service loads `content/` once at startup from `MathKX:ContentRoot` (default `../../../content` relative to the API project in development; the publish step copies `content/` next to the binaries). It parses registries, skills, definitions, and `lesson.json` with `System.Text.Json` into records that mirror the `0.1-pilot` schemas, and reads `title` and `objective` from each translation's front matter with a minimal two-key reader (the `---` fences, `key: value` lines). It does not re-validate schemas: the content checks in CI already guarantee them, and the loader fails fast with the file path on any missing field.
+**Decision**: The service loads `content/` once at startup from `MathKX:ContentRoot` (default `../../../content` relative to the API project in development; the publish step copies `content/` next to the binaries). `MathKX.Content` parses registries, skills, definitions, and `lesson.json` with `System.Text.Json` into records that mirror the `0.1-pilot` schemas, and reads `title` and `objective` from each translation's front matter with YamlDotNet, the same YAML the content validator accepts (quoted scalars, folded `>-` blocks, inline comments). Tests cover those three cases. It does not re-validate schemas: the content checks in CI already guarantee them, and the loader fails fast with the file path on any missing field.
 
 **Rationale**: Spec FR-005 makes `content/` the runtime source; copying it into the deployable keeps one artefact (ADR 0009). The front-matter reader covers exactly what the temporary lesson page needs (spec Assumptions); the Markdown and YAML stack for the body renderer is spec 003's decision.
 
-**Alternatives considered**: A YAML library (rejected for two keys). Embedding content into the assembly (rejected: contributors could not change content without rebuilding).
+**Alternatives considered**: A two-key line reader (rejected in review: it would mis-render quoted scalars, folded blocks, and comments that the validator accepts, silently narrowing the authoring contract). Embedding content into the assembly (rejected: contributors could not change content without rebuilding).
 
 ## R3. Random source and bounded sampling
 
@@ -76,11 +76,19 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R10. Mathematical components
 
-**Decision**: Port `Counters` (groups help with counting and the "How many altogether?" step), `MakeTen` (the ten-frame make-ten model), `TenFrame`, and `MathExpr` from the prototype to TypeScript components under `src/web/src/components/math/`, keeping their accessible-name rules (no total before reveal, DL-035) and their step model. The components receive the instance's operands and the representation name from the service and compute nothing mathematical beyond layout counts.
+**Decision**: Port `Counters` (groups help with counting and the "How many altogether?" step), `MakeTen` (the ten-frame make-ten model), `TenFrame`, and `MathExpr` from the prototype to TypeScript components under `src/web/src/components/math/`, keeping their accessible-name rules (no total before reveal, DL-035). The components render the instance's operands and, for guided help and worked explanations, the step state the service delivers one step at a time (R15); they compute nothing mathematical beyond layout counts.
 
 **Rationale**: ADR 0007 asks for MathKX components on the shared theme; the prototype's are reviewed and tested (33 domain and 92 browser checks), including the DL-035 fix.
 
 **Alternatives considered**: Rewriting from scratch (rejected: the review findings would have to be rediscovered).
+
+## R15. Step models for help and explanations, delivered one step at a time
+
+**Decision**: The domain owns deterministic step models per representation (`MathKX.Domain.Explanations`): for `groups`, help steps "show the two groups", "count the first group", "count the second group", "count all" (the last reveals the total); for `make-ten`, explanation steps "eight needs two to make ten" (`need = 10 − a`), "split five into two and three" (`rest = b − need`), "ten and three" (reveals `sum`), each with the visual state, a text code with values, and a `reveals` flag. The service exposes them one step at a time at `GET /api/instances/{definitionId}/{version}/{seed}/steps/{kind}/{index}` (`kind` is `help` or `explanation`); a step's values include the total only when its `reveals` flag is true. The learner app fetches a step only when the learner advances to it, records `help-step` or `explanation-step` with the returned `reveals` flag (and `counting-complete` for the groups' last help step), and renders the delivered state. The initial instance response stays answer-free.
+
+**Rationale**: Visual help and worked explanations need derived quantities and reveal timing that gate III keeps out of the client; delivering steps individually is what lets FR-009 hold (nothing containing the answer reaches the browser before the learner's own explicit advance, and that advance is the reveal event the observation model records). The step texts are codes resolved by the dictionaries, like feedback.
+
+**Alternatives considered**: Deriving `need` and `rest` in the components (rejected: mathematics in the UI). Returning all steps in one response (rejected: the total would reach the browser before any reveal, contradicting FR-009 and DL-035). Including the explanation in the validation result (rejected: an explanation must be reachable after an incorrect result too, FR-013, and a result is not a teaching sequence).
 
 ## R11. End-to-end checks
 

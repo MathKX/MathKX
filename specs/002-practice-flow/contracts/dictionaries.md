@@ -9,6 +9,7 @@ Part of [plan.md](../plan.md) Phase 1. Implements FR-023 and DL-038.
 | Namespace | Holds |
 | --- | --- |
 | `nav`, `lesson`, `practice`, `record` | Screen labels and controls, including "Show visual help" / "Vis visuell hjelp", "Another question" / "En oppgave til", "More like this" / "Flere slike oppgaver", "Make it easier" / "Gjør det enklere", "More challenge" / "Øk utfordringen" |
+| `explain` | One entry per step text code the domain's step models emit (`explain.groups.*`, `explain.makeTen.*`), with `{a}`, `{b}`, `{need}`, `{rest}`, `{sum}` placeholders; a parity test asserts every code the domain emits has an entry |
 | `feedback` | One entry per feedback code: `correct`, `add.oneGroup`, `add.concat`, `add.offByOne`, `add.subtracted`, `add.generic`, `invalid.empty`, `invalid.notAnInteger`; texts are the prototype's, with `{v}`, `{a}`, `{b}`, `{sum}` placeholders |
 | `status` | Wording for every validation status, including the reserved `partially-correct` and `review-needed` |
 | `outcome`, `tag` | Labels of `contracts/observations.md` |

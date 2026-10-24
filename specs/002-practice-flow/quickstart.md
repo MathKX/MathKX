@@ -42,7 +42,7 @@ Expected: the six end-to-end checks of `contracts/learner-app.md` pass against t
 
 1. On `4 + 4`, press "Show visual help": two labelled groups of four appear; the field is empty; nothing says 8.
 2. Type `8`, submit: "Correct. 4 + 4 = 8."
-3. Press "Another question"; on `3 + 5` type `3`: the one-group feedback appears, the field keeps `3`; change to `8`: correct.
+3. Press "Another question"; on `3 + 5` type `3`: the one-group feedback appears, the field keeps `3`; press "Show explanation" and step to the end: the total is shown and the app says so; change to `8`: correct, and the record later shows "Answered after the answer was shown".
 4. Type `abc` on the next question: input guidance; the record later shows no attempt for it.
 5. Switch language with help open and a draft typed: everything stays, all labels change.
 

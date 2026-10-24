@@ -12,7 +12,7 @@ Phase 1 output for [plan.md](plan.md). Three layers: the content records the dom
 | `Validator` (registry) | `content/registry/validators.json` | `name`, `version`, `artifact { type, min, max }`, `emits[]` |
 | `Representation` (registry) | `content/registry/representations.json` | `name`, `role[]`, `reads[]`, `supports` |
 | `LessonMetadata` | `content/lessons/<id>/lesson.json` | `id`, `version`, `status`, `skills`, `practice[]`, `visuals`, `translations` |
-| `LessonFrontMatter` | `content/lessons/<id>/nb.md`, `en.md` | `title`, `objective` per language |
+| `LessonFrontMatter` | `content/lessons/<id>/nb.md`, `en.md` | `title`, `objective` per language, read with YAML semantics (quoted scalars, folded blocks, comments) |
 
 The loader fails at startup, naming the file, when a definition names an unregistered generator, validator, or representation, or when the `0.1` example schema is encountered (it is skipped by name, never resolved).
 
@@ -28,6 +28,7 @@ The loader fails at startup, naming the file, when a definition names an unregis
 | `FeedbackCode` | `correct`, `add.oneGroup`, `add.concat`, `add.offByOne`, `add.subtracted`, `add.generic`, `invalid.notAnInteger`, `invalid.empty` | The `add.*` codes are exactly the registry's; the `invalid.*` codes are input guidance, not misconceptions |
 | `ValidationResult` | `Status`, `Code`, `Values` (map: `a`, `b`, `sum` only when `Status == Correct`, `v` the submitted value), `ValidatorName`, `ValidatorVersion` | `sum` appears only in a correct result (the completed equation); never in incorrect or invalid results |
 | `IGenerator` | `Name`, `Version`, `Generate(definition, seed) -> (a, b)`, `PoolSize(definition)` | Implemented by `AdditionPairGenerator` only |
+| `StepModel` | `Kind` (`help` \| `explanation`), `Representation`, `Index`, `Count`, `Reveals` (bool), `Visual` (representation-specific state: counted counters, ten-frame cells, highlighted parts), `Text { Code, Values }` | Built deterministically from the instance by `StepModels.For(instance, representation, kind)`; `Values` contains `sum` only when `Reveals` is true; the last `groups` help step and the last `make-ten` explanation step reveal |
 | `InstanceResolver` | `Resolve(identity) -> Instance` | Looks up the definition at the pinned version, the generator at the definition's pinned version, and the representations; fixed tasks read `instance.prompt` |
 
 ## Service shapes (`MathKX.Api`)
@@ -63,7 +64,8 @@ question-shown ──open help──> help-open (same question; draft kept)
 question-shown | help-open ──submit readable──> judged(correct | incorrect)
 question-shown | help-open ──submit unreadable──> question-shown (+ input-guidance event)
 judged(incorrect) ──edit and submit──> judged(…)
-judged(correct) ──open explanation──> judged(correct) (+ support event, tag only)
+judged(correct) ──open explanation──> judged(correct) (+ explanation-open, explanation-step events; tags only)
+judged(incorrect) ──open explanation──> judged(incorrect) (+ explanation-open, explanation-step events with reveals from the service; the field stays editable; a reveal before the next correct submission yields correctAfterExplanation)
 any ──Make it easier / More challenge──> same state, ladder.pending set (or "unavailable" notice at the ends)
 any ──Another question──> question-shown with the pending definition if set, else the current; previous delivery gets `skipped` if it had no submission
 any ──More like this──> question-shown in the current definition; pending cleared with notice

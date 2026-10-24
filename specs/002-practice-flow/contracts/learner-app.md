@@ -20,10 +20,10 @@ Anatomy (exercise-experience "Possible anatomy" and "Addition example"):
 1. The ladder sentence for the current definition (from the skill's ladder) and, when a change is pending, the notice "Next question: …".
 2. The expression (`4 + 4 = ?`) rendered by `MathExpr` with an accessible spoken form ("4 plus 4. What is the sum?").
 3. The answer field (numeric keyboard hint on touch devices), the submit action, and "Show visual help" (toggle; announces expanded state).
-4. The help panel when open: `Counters` (groups) for `within-10`, `MakeTen` for `crossing-ten`, with step controls; the counting step marks `counting-complete` as a reveal and shows "The answer has been shown".
-5. The result area after a submission: the status wording and the feedback text for the code; for `incorrect`, the field stays editable with "Change your answer and check again"; for `correct`, the completed equation and the "Show explanation" action.
+4. The help panel when open: `Counters` (groups) for `within-10`, `MakeTen` for `crossing-ten`. Opening it shows the operands only (recorded as `visual-help-opened`); each "Next step" fetches one help step from the service and records `help-step` with its `reveals` flag; the groups' last step (count all) is `counting-complete`, a reveal, and shows "The answer has been shown".
+5. The result area after a submission: the status wording and the feedback text for the code; for `incorrect`, the field stays editable with "Change your answer and check again"; for `correct`, the completed equation. After either result the "Show explanation" action is available (FR-013): it records `explanation-open`, then each step fetched from the service records `explanation-step` with its `reveals` flag; a revealing step before the next correct submission makes that submission "Answered after the answer was shown"; after a correct submission the explanation is a tag only.
 6. The controls row: "Another question", "More like this", "Make it easier", "More challenge". At the ladder's ends the corresponding control stays enabled and pressing it shows the honest message without changing anything.
-7. A link to the lesson (recorded as `lesson-opened`; the disclosure rule of DL-026 applies only when the lesson contains this instance, which the number-bonds lesson does for `8 + 5` and `4 + 4`: the learner is warned and may choose visual help instead).
+7. A link to the lesson, recorded as `lesson-opened`, which is non-revealing support in this feature: the lesson route shows only the title, objective, and practice entries, so nothing it presents can show this instance's answer. The disclosure rule of DL-026 (warn when the lesson shows this instance's result, record `lesson-reveal`) is implemented with the body renderer in spec 003, matched against the content actually rendered; this feature never records `lesson-reveal`.
 
 ## State preservation
 
@@ -40,6 +40,7 @@ The store holds: current delivery and instance, draft text, help open and step, 
 ## End-to-end checks (`e2e/practice.spec.ts`)
 
 1. Keyboard only: open the lesson, start practice, open help, answer, read feedback, next question.
+7. After an incorrect answer, open the explanation, step to the revealing step, correct the answer: the record shows "Answered after the answer was shown"; after a correct answer, opening the explanation leaves the outcome unchanged with the "explanation opened after answering" tag (spec User Story 1, scenario 8).
 2. Accessibility tree: with help open for `4 + 4`, no accessible name or text contains `8` until the counting step completes.
 3. Language switch mid-question keeps the question, draft, and help state; every visible string changes.
 4. Ladder: "More challenge" from `within-10` shows the crossing-ten sentence and a make-ten help on the next question; at the top, the honest message.

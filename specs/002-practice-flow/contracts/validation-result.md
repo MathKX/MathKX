@@ -35,7 +35,7 @@ The order is the prototype's and is part of the contract (a `4 + 4` answered `8`
 ValidationResult { status, code, values, validator { name: "integer-answer", version: 1 } }
 ```
 
-`values` carries `a`, `b`, `v` for incorrect results and `a`, `b`, `sum`, `v` for a correct one. The sum appears only in a correct result, where it is the completed equation the learner has just produced. The feedback text is resolved by the learner app from `code` and `values` in the active language (`contracts/dictionaries.md`).
+`values` carries `a`, `b`, `v` for incorrect results and `a`, `b`, `sum`, `v` for a correct one. The sum appears in a result only when it is correct, where it is the completed equation the learner has just produced; the only other place the service ever sends it is a revealing step of the worked explanation or guided help (`contracts/api.md`). The feedback text is resolved by the learner app from `code` and `values` in the active language (`contracts/dictionaries.md`).
 
 ## Statuses
 
