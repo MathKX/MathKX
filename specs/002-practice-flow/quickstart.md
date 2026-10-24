@@ -36,7 +36,7 @@ Expected: dictionary parity, literal scan, outcome derivation (every row and tag
 cd src/web && npm run e2e
 ```
 
-Expected: the six end-to-end checks of `contracts/learner-app.md` pass against the running service.
+Expected: the seven end-to-end checks of `contracts/learner-app.md` pass against the running service.
 
 ## Scenario 1: practise with help before answering (User Story 1)
 
