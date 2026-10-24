@@ -41,11 +41,11 @@ A learner, working as a guest in the browser in Norwegian Bokmål or English, op
 
 ### User Story 2 - A maintainer can reproduce any question exactly (Priority: P1)
 
-A maintainer or tester takes the identity of any delivered question, the definition ID, its version, and the seed, and obtains the identical question again: in the other language, after the learner has changed challenge level and come back, after the service has been restarted, and after a newer generator version exists. The answer and the feedback for a given input are also identical. Nothing a learner receives before submitting contains the answer.
+A maintainer or tester takes the identity of any delivered question, the definition ID, its version, and the seed, and obtains the identical question again: in the other language, after the learner has changed challenge level and come back, after the service has been restarted, and after a newer generator version exists. The answer and the feedback for a given input are also identical. Nothing a learner receives unsolicited contains the answer: a question, a lesson, a skill, a non-revealing step, or an incorrect or invalid result never carries it, and only a correct submission or a revealing step the learner explicitly advanced to shows it.
 
 **Why this priority**: Reproducibility is the trust contract of the whole platform (ADR 0004) and the precondition for honest progress records and for later re-validation of guest work; the capability model requires it to be proved with fixtures before a generator ships (DL-034).
 
-**Independent Test**: An automated suite resolves `(numbers.addition.crossing-ten, 1, seed 42)` in four conditions (Norwegian, English, after two "Make it easier" moves and return, with a hypothetical generator version 2 registered) and asserts identical operands; a second fixture shows that a definition pinned to version 2 yields different operands for the same seed while version 1 definitions are unchanged; a contract test asserts the answer never appears in any data delivered to the learner before submission.
+**Independent Test**: An automated suite resolves `(numbers.addition.crossing-ten, 1, seed 42)` in four conditions (Norwegian, English, after two "Make it easier" moves and return, with a hypothetical generator version 2 registered) and asserts identical operands; a second fixture shows that a definition pinned to version 2 yields different operands for the same seed while version 1 definitions are unchanged; a contract test asserts the answer never appears in a question, lesson, or skill response, a non-revealing step, or an incorrect or invalid result, and that a revealing step is delivered only when explicitly requested.
 
 **Acceptance Scenarios**:
 
