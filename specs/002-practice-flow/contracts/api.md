@@ -115,4 +115,4 @@ The service re-resolves the instance from the identity (never trusting operands 
 
 ## Static learner app
 
-In production the service serves `src/web/dist` at `/` with history-API fallback for the app's routes; `/api/*` is never shadowed. In development the Vite server proxies `/api` to the service.
+In production the service serves `src/web/dist` at `/` with history-API fallback for the app's routes; `/api/*` is never shadowed, and a missing file under `/assets/` is a 404 rather than the shell. App routes may contain dots (skill IDs such as `numbers.addition-within-20`). In development the Vite server proxies `/api` to the service.

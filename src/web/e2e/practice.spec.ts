@@ -189,4 +189,14 @@ test.describe("practice flow", () => {
     await expect(items.nth(1)).toContainText("Forklaring åpnet etter svaret");
     await expect(page.getByTestId("record-summary")).not.toContainText("%");
   });
+
+  test("8. loading a practice address directly (reload, bookmark, shared link) shows the practice screen", async ({ page }) => {
+    await startPractice(page);
+    // The skill ID has a dot in its last segment, which the service must not take for a file request.
+    const response = await page.goto(PRACTICE);
+    expect(response?.status()).toBe(200);
+    expect(response?.headers()["content-type"]).toContain("text/html");
+    await expect(page.getByTestId("practice-page")).toBeVisible();
+    await expect(page.getByTestId("prompt")).toBeVisible();
+  });
 });

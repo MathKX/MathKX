@@ -43,7 +43,8 @@ app.MapVisuals();
 // The built learner app, when present in wwwroot: static files plus a history-API fallback that never
 // shadows /api/* (an unknown API route stays a 404 problem, not the app shell). The shell is always
 // revalidated so a deploy is picked up at once; the content-hashed files under /assets/ never change.
-if (Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "assets")))
+var servesApp = Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "assets"));
+if (servesApp)
 {
     app.UseDefaultFiles();
     app.UseStaticFiles(new StaticFileOptions
@@ -60,9 +61,20 @@ if (Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(ap
             }
         },
     });
-    app.MapFallback(context =>
+}
+
+// Routing runs after the static files: static files step aside for any request that matched an endpoint, so
+// an existing file must be served before the fallback's catch-all can claim it.
+app.UseRouting();
+
+if (servesApp)
+{
+    // Every other path is a learner-app route, including ones whose last segment has a dot, such as
+    // /practice/numbers.addition-within-20 (the default {*path:nonfile} pattern would take it for a file).
+    // A missing /assets/ file stays a 404, so a stale shell fails visibly instead of loading HTML as script.
+    app.MapFallback("{*path}", context =>
     {
-        if (context.Request.Path.StartsWithSegments("/api"))
+        if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/assets"))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return Task.CompletedTask;
