@@ -1,0 +1,10 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { App } from "../src/App";
+
+describe("App", () => {
+  it("renders the application root", () => {
+    render(<App />);
+    expect(screen.getByTestId("app-root")).toBeTruthy();
+  });
+});

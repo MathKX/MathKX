@@ -72,7 +72,7 @@ specs/002-practice-flow/
 
 ```text
 src/backend/
-├── MathKX.sln
+├── MathKX.slnx
 ├── Directory.Build.props                 # net10.0, nullable, warnings as errors, MIT
 ├── MathKX.Domain/                        # no framework dependencies
 │   ├── Random/SplitMix64.cs              # the proposal's random source

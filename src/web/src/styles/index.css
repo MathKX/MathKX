@@ -1,0 +1,63 @@
+/* The one stylesheet entry point for Designsystemet + Tailwind (ADR 0007).
+
+   Cascade layers, lowest to highest precedence:
+     theme      Tailwind's design tokens (@theme)
+     base       Tailwind Preflight (the reset)
+     ds         Designsystemet CSS and the MathKX theme tokens
+     mathkx     MathKX component styles (mathematical representations, layout helpers)
+     components Tailwind component layer (unused today)
+     utilities  Tailwind utilities for layout, spacing, and composition
+
+   Designsystemet therefore wins over Preflight, so the reset never restyles its controls, rendered
+   lesson headings and lists, or mathematical diagrams; layout utilities win over both. Keep every
+   @import here; do not import framework CSS from components. */
+@layer theme, base, ds, mathkx, components, utilities;
+
+@import "@digdir/designsystemet-css" layer(ds);
+@import "./theme.css" layer(ds);
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --breakpoint-md: 46rem; /* iPad portrait and up */
+  --breakpoint-lg: 62rem; /* iPad landscape and desktop */
+}
+
+@layer mathkx {
+  :root {
+    --mkx-maxw: 72rem;
+    --mkx-gutter: 1rem;
+    --mkx-target: 44px; /* minimum touch target, width and height */
+  }
+  @media (min-width: 46rem) {
+    :root { --mkx-gutter: 2rem; }
+  }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
+  body {
+    margin: 0;
+    background: var(--ds-color-neutral-background-default);
+    color: var(--ds-color-neutral-text-default);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+  .mkx-container {
+    max-width: var(--mkx-maxw);
+    margin-inline: auto;
+    padding-inline: max(var(--mkx-gutter), env(safe-area-inset-left));
+  }
+  .mkx-prose { max-width: 42rem; }
+  .mkx-prose > * + * { margin-top: 1rem; }
+  .mkx-target { min-width: var(--mkx-target); min-height: var(--mkx-target); }
+
+  /* Mathematics */
+  math { font-family: var(--font-sans); font-size: 1.1em; }
+  math mi { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+  math[display="block"] { font-size: 1.6em; margin-block: 1rem; }
+  .mkx-expr { font-size: clamp(2.25rem, 7vw, 3.5rem); font-weight: 600; letter-spacing: 0.02em; }
+  .mkx-expr math { font-size: 1em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}

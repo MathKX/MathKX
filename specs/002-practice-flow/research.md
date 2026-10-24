@@ -4,7 +4,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R1. Backend layout and target framework
 
-**Decision**: One solution `src/backend/MathKX.sln` with five projects: `MathKX.Domain` (class library, no package references: random source, generator, validator, step models, and the content record types), `MathKX.Content` (loads `content/` from disk with `System.Text.Json` and YamlDotNet for front matter), `MathKX.Api` (ASP.NET Core minimal API), `MathKX.Domain.Tests` and `MathKX.Api.Tests` (xUnit; the content loader's tests live with the domain tests). Target `net10.0` (the current long-term-support release; SDK 10.0.302 is installed; Azure App Service Linux supports it). A `Directory.Build.props` sets nullable reference types, warnings as errors, and the MIT package metadata.
+**Decision**: One solution `src/backend/MathKX.slnx` with five projects: `MathKX.Domain` (class library, no package references: random source, generator, validator, step models, and the content record types), `MathKX.Content` (loads `content/` from disk with `System.Text.Json` and YamlDotNet for front matter), `MathKX.Api` (ASP.NET Core minimal API), `MathKX.Domain.Tests` and `MathKX.Api.Tests` (xUnit; the content loader's tests live with the domain tests). Target `net10.0` (the current long-term-support release; SDK 10.0.302 is installed; Azure App Service Linux supports it). A `Directory.Build.props` sets nullable reference types, warnings as errors, and the MIT package metadata.
 
 **Rationale**: DL-005 asks for a domain library with tests and a thin API; keeping the domain free of framework references is what lets the generator and validator be reused by a future re-validation job or a command-line fixture runner. .NET 10 avoids an upgrade before the first release.
 
@@ -100,7 +100,7 @@ Phase 0 output for [plan.md](plan.md). Each entry records a decision, why, and w
 
 ## R12. Continuous integration
 
-**Decision**: A new workflow `.github/workflows/build-and-test.yml` with two jobs: `backend` (set up .NET 10, `dotnet test src/backend/MathKX.sln`) and `web` (Node 22, `npm ci` and `npm test` and `npm run build` in `src/web`, then start the service and run Playwright). The existing content workflow is unchanged. Both run on pull requests and pushes to `main`.
+**Decision**: A new workflow `.github/workflows/build-and-test.yml` with two jobs: `backend` (set up .NET 10, `dotnet test src/backend/MathKX.slnx`) and `web` (Node 22, `npm ci` and `npm test` and `npm run build` in `src/web`, then start the service and run Playwright). The existing content workflow is unchanged. Both run on pull requests and pushes to `main`.
 
 **Rationale**: FR-025 and SC-007; separate jobs keep the content checks fast and let each stack cache its own dependencies.
 

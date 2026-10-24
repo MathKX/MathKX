@@ -21,7 +21,7 @@ The service listens on its configured port and reads `content/` from the reposit
 ## Test
 
 ```bash
-dotnet test src/backend/MathKX.sln
+dotnet test src/backend/MathKX.slnx
 ```
 
 Expected: the random-source vectors, bounded-sampler vectors and injected rejection streams, golden seeds, property tests, boundary fixtures, replay fixture, validator precedence, registry agreement, and the service contract tests all pass.

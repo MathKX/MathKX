@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="MathKX.Api.Tests/MathKX.Api.Tests.csproj" />
+  <Project Path="MathKX.Api/MathKX.Api.csproj" />
+  <Project Path="MathKX.Content/MathKX.Content.csproj" />
+  <Project Path="MathKX.Domain.Tests/MathKX.Domain.Tests.csproj" />
+  <Project Path="MathKX.Domain/MathKX.Domain.csproj" />
+</Solution>
