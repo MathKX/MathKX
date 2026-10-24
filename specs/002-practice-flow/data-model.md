@@ -43,7 +43,7 @@ See [contracts/api.md](contracts/api.md). The DTOs are projections of the domain
 | `Delivery` | `id` (client UUID), `instance { definitionId, version, seed?, generatorVersion?, validatorName, validatorVersion, a, b }`, `purpose: "practice"`, `provenance: "guest"`, `startedAt`, `events: Event[]` | One per resolved instance; a deliberate later repeat is a new delivery |
 | `Event` (discriminated by `type`) | `submission { submissionId, originalText, value?, status, code }` (mathematical statuses only) · `input-guidance { submissionId, originalText, code }` · `support { kind, step?, reveals? }` with `kind` from the addendum's named set · `challenge-request { request: easier \| harder \| another \| same, outcome: requested \| applied \| cleared \| unavailable }` · `skipped` · `ended` | Ordered by insertion; `submissionId` duplicates are dropped |
 | `Outcome` | `correctFirst`, `correctAfterFeedback`, `correctWithVisualHelp`, `correctWithHelp`, `correctAfterExplanation`, `notYetCorrect`, `skipped`, `unfinished`, `partiallyCorrect`, `notAssessed`, or `none` (only input guidance) | Derived, never stored; see [contracts/observations.md](contracts/observations.md) |
-| `Tag` | `feedbackBefore`, `visualBefore`, `lessonBefore`, `explainPartBefore`, `revealExplanation`, `revealCounting`, `revealLesson`, `visualAfter`, `explainAfter` | Derived with the outcome |
+| `Tag` | `feedbackBefore`, `visualBefore`, `lessonBefore`, `explainPartBefore`, `revealExplanation`, `revealCounting`, `revealHelp`, `revealLesson`, `visualAfter`, `explainAfter` | Derived with the outcome |
 | `Summary` | `questions`, `counts: Record<Outcome, number>` | Counts only; no ratios |
 
 ## Relationships

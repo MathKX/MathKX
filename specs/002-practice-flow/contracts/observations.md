@@ -21,8 +21,8 @@ A `submission` or `input-guidance` whose `submissionId` already exists in the de
 
 ## Classes of support
 
-- **Reveal**: `counting-complete`, `explanation-step` with `reveals: true`, `lesson-reveal`, `answer-reveal`.
-- **Visual help**: `visual-help-opened`, `help-step`, `counting`.
+- **Reveal**: `counting-complete`, `help-step` with `reveals: true` (the last help step of any representation, for example make-ten's), `explanation-step` with `reveals: true`, `lesson-reveal`, `answer-reveal`.
+- **Visual help**: `visual-help-opened`, `help-step` with `reveals: false`, `counting`.
 - **Other (non-visual, non-revealing) help**: `explanation-open`, `explanation-step` with `reveals: false`, `lesson-opened`.
 
 ## Outcome
@@ -39,7 +39,7 @@ Walk the events in order. "Before" means before the first `correct` submission.
    - else any earlier `incorrect` submission → `correctAfterFeedback`;
    - else `correctFirst`.
 
-Tags, all derived: `feedbackBefore` when an `incorrect` preceded the first `correct` and the outcome is not `correctAfterFeedback`; `visualBefore`, `lessonBefore`, `explainPartBefore` for the respective support before; `revealCounting`, `revealExplanation`, `revealLesson` for the reveal source before; `visualAfter`, `explainAfter` for support after the first `correct`. `explainPartBefore` is dropped when `revealExplanation` is present. Support after the first `correct` never changes the outcome. `input-guidance` never influences the outcome.
+Tags, all derived: `feedbackBefore` when an `incorrect` preceded the first `correct` and the outcome is not `correctAfterFeedback`; `visualBefore`, `lessonBefore`, `explainPartBefore` for the respective support before; `revealCounting` (groups' `counting-complete`), `revealHelp` (a revealing `help-step` of another representation), `revealExplanation`, `revealLesson` for the reveal source before; `visualAfter`, `explainAfter` for support after the first `correct`. `explainPartBefore` is dropped when `revealExplanation` is present. Support after the first `correct` never changes the outcome. `input-guidance` never influences the outcome.
 
 ## Labels (dictionary keys)
 
@@ -64,4 +64,4 @@ The Norwegian wordings are the prototype's where it has them and are content for
 
 ## Tests (`src/web/tests/outcomes.test.ts`)
 
-One case per outcome row and per tag, plus: help closed without counting → `correctWithVisualHelp`; counting the last counter → `correctAfterExplanation`; explanation after correct → unchanged outcome with `explainAfter`; input guidance then correct → `correctFirst`; duplicate `submissionId` → one submission; resumable delivery → `unfinished`.
+One case per outcome row and per tag, plus: help closed without counting → `correctWithVisualHelp`; counting the last counter → `correctAfterExplanation`; make-ten help stepped to its revealing last step, then correct → `correctAfterExplanation` with `revealHelp`; make-ten help stopped before the last step, then correct → `correctWithVisualHelp`; explanation after correct → unchanged outcome with `explainAfter`; input guidance then correct → `correctFirst`; duplicate `submissionId` → one submission; resumable delivery → `unfinished`.
