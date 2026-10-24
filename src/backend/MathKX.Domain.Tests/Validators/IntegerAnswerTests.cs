@@ -38,6 +38,8 @@ public sealed class IntegerAnswerTests
     [InlineData("7.5", FeedbackCodes.InvalidNotAnInteger)]
     [InlineData("1 3", FeedbackCodes.InvalidNotAnInteger)]
     [InlineData("+8", FeedbackCodes.InvalidNotAnInteger)]
+    [InlineData("2147483648", FeedbackCodes.InvalidNotAnInteger)] // beyond Int32
+    [InlineData("-2147483649", FeedbackCodes.InvalidNotAnInteger)]
     public void Unreadable_input_is_input_guidance_not_a_retry(string text, string code)
     {
         var result = Validator.Validate(InstanceOf(4, 4), ResponseArtifact.ReadInteger(text));
@@ -60,6 +62,10 @@ public sealed class IntegerAnswerTests
     [InlineData(3, 5, 20, ValidationStatus.Incorrect, FeedbackCodes.Generic)]
     [InlineData(3, 5, -2, ValidationStatus.Incorrect, FeedbackCodes.Generic)]
     [InlineData(1, 2, 1, ValidationStatus.Incorrect, FeedbackCodes.OneGroup)] // oneGroup before offByOne
+    [InlineData(4, 4, -2147483640, ValidationStatus.Incorrect, FeedbackCodes.Generic)] // v - sum would be Int32.MinValue
+    [InlineData(4, 4, int.MinValue, ValidationStatus.Incorrect, FeedbackCodes.Generic)]
+    [InlineData(4, 4, int.MaxValue, ValidationStatus.Incorrect, FeedbackCodes.Generic)]
+    [InlineData(3, 5, int.MinValue, ValidationStatus.Incorrect, FeedbackCodes.Generic)]
     public void Chooses_exactly_one_code_in_precedence_order(int a, int b, int answer, ValidationStatus status, string code)
     {
         var result = Validator.Validate(InstanceOf(a, b), ResponseArtifact.ReadInteger(answer.ToString(System.Globalization.CultureInfo.InvariantCulture)));

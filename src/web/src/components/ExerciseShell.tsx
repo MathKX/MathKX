@@ -32,13 +32,8 @@ export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined 
     void store.submit();
   };
 
-  const onToggleHelp = async () => {
-    const wasOpen = state.helpOpen;
-    await store.toggleHelp();
-    if (!wasOpen && state.helpStep < 0 && state.helpSteps.length === 0) {
-      // Opening shows the operands only; the first step is fetched when the learner asks for it.
-    }
-  };
+  // Opening help shows the operands only; the first step is fetched when the learner asks for it.
+  const onToggleHelp = () => void store.toggleHelp();
 
   return (
     <div className="mkx-exercise" data-testid="exercise-shell">
@@ -66,7 +61,7 @@ export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined 
             className="mkx-target"
             aria-expanded={state.helpOpen}
             aria-controls={`${fieldId}-help`}
-            onClick={() => void onToggleHelp()}
+            onClick={onToggleHelp}
             data-testid="toggle-help"
           >
             {translate(lang, state.helpOpen ? "practice.hideHelp" : "practice.showHelp")}
@@ -125,10 +120,8 @@ export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined 
 
       {lessonHref ? (
         <p>
-          <Link to={lessonHref} className="mkx-lesson-link">
-            <span onClick={() => store.openLesson()} data-testid="to-lesson">
-              {translate(lang, "practice.toLesson")}
-            </span>
+          <Link to={lessonHref} className="mkx-lesson-link" onActivate={() => store.openLesson()} data-testid="to-lesson">
+            {translate(lang, "practice.toLesson")}
           </Link>
         </p>
       ) : null}

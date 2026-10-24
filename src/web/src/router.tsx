@@ -24,15 +24,26 @@ export function RouterProvider({ children, initialPath }: { children: ReactNode;
 
 export const useRouter = () => useContext(RouterContext);
 
-export function Link({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
+interface LinkProps {
+  to: string;
+  children: ReactNode;
+  className?: string;
+  /** Runs on every activation of the link, pointer or keyboard, before the navigation. */
+  onActivate?: () => void;
+  "data-testid"?: string;
+}
+
+export function Link({ to, children, className, onActivate, "data-testid": testId }: LinkProps) {
   const { navigate } = useRouter();
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (event.defaultPrevented) return;
+    onActivate?.(); // Enter on the focused anchor arrives here as a click, like a pointer press
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     navigate(to);
   };
   return (
-    <a href={to} onClick={onClick} className={className}>
+    <a href={to} onClick={onClick} className={className} data-testid={testId}>
       {children}
     </a>
   );

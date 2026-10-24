@@ -28,9 +28,27 @@ export interface FakeOptions {
   failValidate?: boolean;
 }
 
-export function createFakeApi(options: FakeOptions = {}): PracticeApi & { calls: string[] } {
+type Method = "getInstance" | "getStep" | "validate";
+
+/** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
+export interface FakeControls {
+  calls: string[];
+  hold(method: Method): void;
+  release(method: Method): void;
+  /** Methods that throw while listed here. */
+  fail: Set<Method>;
+}
+
+export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeControls {
   const pairs: Record<string, [number, number]> = { "numbers.addition.within-10": [4, 4], "numbers.addition.crossing-ten": [8, 5], ...options.pairs };
   const calls: string[] = [];
+  const held = new Set<Method>();
+  const waiting: Record<Method, (() => void)[]> = { getInstance: [], getStep: [], validate: [] };
+  const fail = new Set<Method>();
+  const gate = async (method: Method) => {
+    if (fail.has(method)) throw new Error(`${method} failed`);
+    if (held.has(method)) await new Promise<void>((resolve) => waiting[method].push(resolve));
+  };
   const instanceOf = (identity: Identity): InstanceDto => {
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
     const pair: [number, number] = bySeed ?? pairs[identity.definitionId] ?? [3, 5];
@@ -78,6 +96,12 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & { calls:
   };
   return {
     calls,
+    fail,
+    hold: (method) => held.add(method),
+    release(method) {
+      held.delete(method);
+      waiting[method].splice(0).forEach((resolve) => resolve());
+    },
     getLessons: async () => {
       calls.push("getLessons");
       const summary: LessonSummary = { id: LESSON.id, version: LESSON.version, status: LESSON.status, skills: LESSON.skills, titles: LESSON.titles, practice: LESSON.practice };
@@ -94,12 +118,14 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & { calls:
     },
     getInstance: async (definitionId, version, seed) => {
       calls.push(`getInstance ${definitionId}@${version} ${seed ?? "-"}`);
+      await gate("getInstance");
       const identity: Identity = { definitionId, version };
       if (seed !== null) identity.seed = seed;
       return instanceOf(identity);
     },
     getStep: async (identity, kind, index) => {
       calls.push(`getStep ${kind} ${index}`);
+      await gate("getStep");
       const step = steps(instanceOf(identity), kind)[index];
       if (!step) throw new Error("unknown-step");
       return step;
@@ -107,6 +133,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & { calls:
     validate: async (identity, originalText, submissionId) => {
       calls.push(`validate ${originalText}`);
       if (options.failValidate) throw new Error("unreachable");
+      await gate("validate");
       const { a, b } = instanceOf(identity);
       const trimmed = originalText.trim();
       const base = { validator: { name: "integer-answer", version: 1 }, submissionId };

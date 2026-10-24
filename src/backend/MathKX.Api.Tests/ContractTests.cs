@@ -77,6 +77,19 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         Assert.Equal("sub-1", a.RootElement.GetProperty("submissionId").GetString());
     }
 
+    [Theory]
+    [InlineData("-2147483640")] // v - sum would overflow Int32 for 4 + 4
+    [InlineData("-2147483648")]
+    [InlineData("2147483647")]
+    public async Task Extreme_integers_get_typed_feedback_instead_of_a_server_error(string text)
+    {
+        using var client = _factory.CreateClient();
+        using var result = await Validate(client, "numbers.addition.four-plus-four", 1, null, text);
+        Assert.Equal("incorrect", result.RootElement.GetProperty("status").GetString());
+        Assert.Equal("add.generic", result.RootElement.GetProperty("code").GetString());
+        Assert.DoesNotContain(PropertyNames(result.RootElement.GetRawText()), n => n == "sum");
+    }
+
     [Fact]
     public async Task Language_never_changes_the_mathematics()
     {

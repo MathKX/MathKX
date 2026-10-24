@@ -44,7 +44,7 @@ public sealed class IntegerAnswerValidator
             return Result(ValidationStatus.Incorrect, FeedbackCodes.Concat, a, b, v);
         }
 
-        if (Math.Abs(v - sum) == 1)
+        if (Math.Abs((long)v - sum) == 1) // widened: v spans the whole Int32 range, so the Int32 difference can overflow
         {
             return Result(ValidationStatus.Incorrect, FeedbackCodes.OffByOne, a, b, v);
         }
