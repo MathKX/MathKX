@@ -1,0 +1,96 @@
+{
+  "generator": "addition-pair@1",
+  "note": "Golden seeds, frozen once reviewed. Changing a value means a new generator version. Seed 42 is checked by hand in AdditionPairTests against the proposal\u0027s raw vector (13679457532755275413 mod N).",
+  "definitions": {
+    "numbers.addition.within-10@1": {
+      "poolSize": 45,
+      "seeds": {
+        "0": [
+          4,
+          2
+        ],
+        "1": [
+          1,
+          6
+        ],
+        "2": [
+          7,
+          2
+        ],
+        "7": [
+          2,
+          4
+        ],
+        "42": [
+          4,
+          5
+        ],
+        "100": [
+          9,
+          1
+        ],
+        "4096": [
+          2,
+          8
+        ],
+        "65535": [
+          8,
+          2
+        ],
+        "1234567890123456789": [
+          3,
+          3
+        ],
+        "18446744073709551615": [
+          4,
+          3
+        ]
+      }
+    },
+    "numbers.addition.crossing-ten@1": {
+      "poolSize": 36,
+      "seeds": {
+        "0": [
+          5,
+          7
+        ],
+        "1": [
+          4,
+          9
+        ],
+        "2": [
+          8,
+          4
+        ],
+        "7": [
+          4,
+          7
+        ],
+        "42": [
+          3,
+          8
+        ],
+        "100": [
+          5,
+          8
+        ],
+        "4096": [
+          5,
+          7
+        ],
+        "65535": [
+          9,
+          8
+        ],
+        "1234567890123456789": [
+          6,
+          5
+        ],
+        "18446744073709551615": [
+          5,
+          8
+        ]
+      }
+    }
+  }
+}
