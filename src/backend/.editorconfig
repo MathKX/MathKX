@@ -15,5 +15,5 @@ indent_size = 2
 dotnet_sort_system_directives_first = true
 csharp_style_namespace_declarations = file_scoped:warning
 csharp_prefer_braces = true:suggestion
-dotnet_style_require_accessibility_modifiers = always:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 dotnet_diagnostic.CA1062.severity = none

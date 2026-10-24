@@ -1,10 +1,26 @@
 // MathKX practice service: a thin, stateless host in front of the mathematics domain.
-// Endpoints, content loading, and the static learner app arrive with tasks T013, T021, T027, T035.
+using MathKX.Api;
+using MathKX.Content;
+using MathKX.Domain.Content;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddProblemDetails();
+builder.Services.AddSingleton<ContentCatalog>(_ => ContentLoader.Load(ContentRoot.Resolve(builder.Configuration)));
 
 var app = builder.Build();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
+app.MapGet("/api/health", (ContentCatalog catalog) => Results.Ok(new
+{
+    status = "ok",
+    skills = catalog.Skills.Count,
+    definitions = catalog.Definitions.Count,
+    lessons = catalog.Lessons.Count,
+    registries = 5,
+}));
 
 app.Run();
 
