@@ -197,3 +197,55 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         }
     }
 }
+
+/// <summary>Step delivery: one step per request, exactly one revealing step per sequence, the last.</summary>
+public sealed class StepContractTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public StepContractTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
+
+    [Theory]
+    [InlineData("numbers.addition.within-10", "5", "help")]
+    [InlineData("numbers.addition.within-10", "5", "explanation")]
+    [InlineData("numbers.addition.crossing-ten", "42", "help")]
+    [InlineData("numbers.addition.crossing-ten", "42", "explanation")]
+    [InlineData("numbers.addition.four-plus-four", "-", "help")]
+    [InlineData("numbers.addition.four-plus-four", "-", "explanation")]
+    public async Task Only_the_last_step_reveals_and_only_it_carries_the_sum(string definition, string seed, string kind)
+    {
+        using var client = _factory.CreateClient();
+        var first = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{definition}/1/{seed}/steps/{kind}/0"));
+        var count = first.RootElement.GetProperty("count").GetInt32();
+        Assert.True(count >= 3);
+
+        for (var index = 0; index < count; index++)
+        {
+            var body = await client.GetStringAsync($"/api/instances/{definition}/1/{seed}/steps/{kind}/{index}");
+            using var step = JsonDocument.Parse(body);
+            var reveals = step.RootElement.GetProperty("reveals").GetBoolean();
+            Assert.Equal(index == count - 1, reveals);
+            var hasSum = body.Contains("\"sum\"", StringComparison.Ordinal) || body.Contains("\"total\"", StringComparison.Ordinal) || body.Contains("\"countedAll\"", StringComparison.Ordinal);
+            Assert.Equal(reveals, hasSum);
+        }
+
+        var outOfRange = await client.GetAsync($"/api/instances/{definition}/1/{seed}/steps/{kind}/{count}");
+        Assert.Equal(HttpStatusCode.NotFound, outOfRange.StatusCode);
+    }
+
+    [Fact]
+    public async Task Unknown_kinds_and_bad_seeds_use_the_contract_codes()
+    {
+        using var client = _factory.CreateClient();
+        var kind = await client.GetAsync("/api/instances/numbers.addition.within-10/1/5/steps/other/0");
+        Assert.Equal(HttpStatusCode.NotFound, kind.StatusCode);
+        using var kindProblem = JsonDocument.Parse(await kind.Content.ReadAsStringAsync());
+        Assert.Equal("unknown-step", kindProblem.RootElement.GetProperty("code").GetString());
+
+        var seed = await client.GetAsync("/api/instances/numbers.addition.within-10/1/01/steps/help/0");
+        Assert.Equal(HttpStatusCode.BadRequest, seed.StatusCode);
+    }
+}

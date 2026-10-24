@@ -36,6 +36,7 @@ app.MapGet("/api/health", (ContentCatalog catalog) => Results.Ok(new
 app.MapContent();
 app.MapInstances();
 app.MapValidations();
+app.MapSteps();
 
 app.Run();
 

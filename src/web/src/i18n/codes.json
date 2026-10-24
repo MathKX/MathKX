@@ -1,0 +1,50 @@
+{
+  "feedback": [
+    "correct",
+    "add.oneGroup",
+    "add.concat",
+    "add.offByOne",
+    "add.subtracted",
+    "add.generic",
+    "invalid.empty",
+    "invalid.notAnInteger"
+  ],
+  "status": ["correct", "incorrect", "invalid-response", "partially-correct", "review-needed"],
+  "outcome": [
+    "correctFirst",
+    "correctAfterFeedback",
+    "correctWithVisualHelp",
+    "correctWithHelp",
+    "correctAfterExplanation",
+    "partiallyCorrect",
+    "notAssessed",
+    "notYetCorrect",
+    "skipped",
+    "unfinished"
+  ],
+  "tag": [
+    "feedbackBefore",
+    "visualBefore",
+    "lessonBefore",
+    "explainPartBefore",
+    "revealExplanation",
+    "revealCounting",
+    "revealHelp",
+    "revealLesson",
+    "visualAfter",
+    "explainAfter"
+  ],
+  "stepText": [
+    "explain.groups.show",
+    "explain.groups.countFirst",
+    "explain.groups.countSecond",
+    "explain.groups.countAll",
+    "explain.groups.twoGroups",
+    "explain.groups.combine",
+    "explain.groups.total",
+    "explain.makeTen.frame",
+    "explain.makeTen.need",
+    "explain.makeTen.split",
+    "explain.makeTen.total"
+  ]
+}

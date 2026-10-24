@@ -83,3 +83,18 @@ public sealed record LessonDto(
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
 public sealed record SkillDto(string Id, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder);
+
+public sealed record StepTextDto(string Code, IReadOnlyDictionary<string, object> Values);
+
+public sealed record StepDto(
+    string Kind,
+    string Representation,
+    int Index,
+    int Count,
+    bool Reveals,
+    IReadOnlyDictionary<string, object> Visual,
+    StepTextDto Text)
+{
+    public static StepDto From(MathKX.Domain.Explanations.StepModel step) =>
+        new(step.Kind, step.Representation, step.Index, step.Count, step.Reveals, step.Visual, new StepTextDto(step.Text.Code, step.Text.Values));
+}
