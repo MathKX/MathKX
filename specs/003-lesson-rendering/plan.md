@@ -64,7 +64,7 @@ specs/003-lesson-rendering/
 │   ├── lesson-renderer.md   # Markdown and directive mapping, notation, sections, contribution links, accessibility
 │   └── detour.md            # the gate, the notice, recording, the way back, lessonAfter, end-to-end checks
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks)
+└── tasks.md             # Phase 2 (/speckit-tasks): 59 tasks in eight phases
 ```
 
 ### Source Code (repository root)
