@@ -74,7 +74,7 @@ type Action =
   | { type: "language"; language: Lang }
   | { type: "kept"; kept: boolean }
   | { type: "ladder"; skillId: string; entries: LadderEntry[]; current: DefinitionRef }
-  | { type: "question"; instance: InstanceDto; delivery: Delivery; resumedFrom?: Resumable; applied?: PendingChange }
+  | { type: "question"; instance: InstanceDto; delivery: Delivery; resumedFrom?: Resumable; applied?: PendingChange; clearPending?: boolean }
   | { type: "draft"; draft: string }
   // Asynchronous responses carry the id of the delivery they were requested for. A response that arrives after
   // the learner moved on is recorded on that delivery and never changes the screen of the current one.
@@ -82,6 +82,7 @@ type Action =
   | { type: "result"; result: ValidationResponse; event: Event; deliveryId: string }
   | { type: "event"; event: Event; deliveryId?: string }
   | { type: "help"; open: boolean }
+  // A step is recorded as support only when it is presented, so the reducer records it together with showing it.
   | { type: "helpStep"; step: StepDto; deliveryId: string }
   | { type: "explanation"; open: boolean }
   | { type: "explanationStep"; step: StepDto; deliveryId: string }
@@ -111,8 +112,8 @@ function reducer(state: State, action: Action): State {
     case "ladder":
       return { ...state, skillId: action.skillId, ladder: { entries: action.entries, current: action.current, pending: state.ladder.pending } };
     case "question": {
-      // The applied challenge change and the clearing of the pending choice commit together with the question
-      // that was actually loaded; a failed load leaves the pending choice in place.
+      // The applied challenge change, the clearing of the pending choice, and an explicit selection's ladder
+      // position commit together with the question that was actually loaded; a failed load changes none of them.
       const applied = action.applied;
       const withApplied = applied
         ? updateCurrent(state, (d) => recordEvent(d, { type: "challenge-request", request: applied.request, outcome: "applied" }))
@@ -141,7 +142,7 @@ function reducer(state: State, action: Action): State {
         ladder: {
           ...state.ladder,
           current: { definition: action.instance.identity.definitionId, version: action.instance.identity.version },
-          pending: applied ? null : state.ladder.pending,
+          pending: applied || action.clearPending ? null : state.ladder.pending,
         },
       };
     }
@@ -158,14 +159,22 @@ function reducer(state: State, action: Action): State {
       return updateDelivery(state, action.deliveryId ?? state.currentDeliveryId, (d) => recordEvent(d, action.event));
     case "help":
       return { ...state, helpOpen: action.open };
-    case "helpStep":
-      if (!isCurrent(state, action.deliveryId)) return state;
-      return { ...state, helpSteps: [...state.helpSteps.slice(0, action.step.index), action.step], helpStep: action.step.index };
+    case "helpStep": {
+      if (!isCurrent(state, action.deliveryId)) return state; // never presented: nothing shown, nothing recorded
+      const { step } = action;
+      const events: Event[] = [{ type: "support", kind: "help-step", step: step.index, reveals: step.reveals }];
+      if (step.reveals && step.representation === "groups") events.push({ type: "support", kind: "counting-complete" });
+      const recorded = updateCurrent(state, (d) => events.reduce(recordEvent, d));
+      return { ...recorded, helpSteps: [...state.helpSteps.slice(0, step.index), step], helpStep: step.index };
+    }
     case "explanation":
       return { ...state, explanationOpen: action.open };
-    case "explanationStep":
+    case "explanationStep": {
       if (!isCurrent(state, action.deliveryId)) return state;
-      return { ...state, explanationSteps: [...state.explanationSteps.slice(0, action.step.index), action.step], explanationStep: action.step.index };
+      const { step } = action;
+      const recorded = updateCurrent(state, (d) => recordEvent(d, { type: "support", kind: "explanation-step", step: step.index, reveals: step.reveals }));
+      return { ...recorded, explanationSteps: [...state.explanationSteps.slice(0, step.index), step], explanationStep: step.index };
+    }
     case "pending":
       return { ...state, ladder: { ...state.ladder, pending: action.pending } };
     case "notice":
@@ -248,14 +257,17 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     return { id: newId(), instance: d, purpose: "practice", provenance: "guest", startedAt: new Date().toISOString(), events: [] };
   }, []);
 
-  /** Loads a fresh question; returns whether it became the current one. `applied` is the pending change it fulfils. */
+  /**
+   * Loads a fresh question; returns whether it became the current one. `applied` is the pending change it fulfils;
+   * `clearPending` drops a pending change an explicit selection supersedes. Both take effect only with the question.
+   */
   const load = useCallback(
-    async (ref: DefinitionRef, fixed: boolean, applied?: PendingChange): Promise<boolean> => {
+    async (ref: DefinitionRef, fixed: boolean, commit: { applied?: PendingChange; clearPending?: boolean } = {}): Promise<boolean> => {
       const token = ++loadToken.current;
       try {
         const instance = await api.getInstance(ref.definition, ref.version, fixed ? null : newSeed());
         if (token !== loadToken.current) return false; // superseded by a later request
-        dispatch({ type: "question", instance, delivery: toDelivery(instance), ...(applied ? { applied } : {}) });
+        dispatch({ type: "question", instance, delivery: toDelivery(instance), ...commit });
         return true;
       } catch {
         if (token === loadToken.current) dispatch({ type: "loadError", failed: true });
@@ -296,9 +308,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
           preferred !== undefined && (!ref || ref.definition !== preferred.definition || ref.version !== preferred.version);
         if (current.skillId === skillId && current.instance && current.currentDeliveryId) {
           if (!preferred || !differsFrom(current.ladder.current)) return; // already in progress
-          dispatch({ type: "ladder", skillId, entries: current.ladder.entries, current: preferred });
-          dispatch({ type: "pending", pending: null });
-          await load(preferred, false);
+          // The ladder position and the dropped pending change commit with the loaded question; on failure the
+          // question in progress and its ladder position stay as they were, and the selection can be retried.
+          await load(preferred, false, { clearPending: true });
           return;
         }
         const skill = await api.getSkill(skillId);
@@ -324,7 +336,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const applying = request === "another" && pending ? pending : null;
         const target: DefinitionRef | null = applying ?? current.ladder.current;
         if (!target) return;
-        await load(target, false, applying ?? undefined); // the applied event and the clearing commit with the question
+        await load(target, false, applying ? { applied: applying } : {}); // the applied event and the clearing commit with the question
       },
       setDraft: (draft) => dispatch({ type: "draft", draft }),
       async submit() {
@@ -361,9 +373,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const index = current.helpStep + 1;
         if (current.helpSteps[0] && index >= current.helpSteps[0].count) return;
         const step = await api.getStep(current.instance.identity, "help", index);
-        dispatch({ type: "helpStep", step, deliveryId });
-        dispatch({ type: "event", event: { type: "support", kind: "help-step", step: index, reveals: step.reveals }, deliveryId });
-        if (step.reveals && step.representation === "groups") dispatch({ type: "event", event: { type: "support", kind: "counting-complete" }, deliveryId });
+        dispatch({ type: "helpStep", step, deliveryId }); // shown and recorded together, or neither
       },
       async toggleExplanation() {
         const current = latest.current;
@@ -381,8 +391,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const index = current.explanationStep + 1;
         if (current.explanationSteps[0] && index >= current.explanationSteps[0].count) return;
         const step = await api.getStep(current.instance.identity, "explanation", index);
-        dispatch({ type: "explanationStep", step, deliveryId });
-        dispatch({ type: "event", event: { type: "support", kind: "explanation-step", step: index, reveals: step.reveals }, deliveryId });
+        dispatch({ type: "explanationStep", step, deliveryId }); // shown and recorded together, or neither
       },
       requestChallenge(request) {
         const current = latest.current;
