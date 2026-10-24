@@ -40,8 +40,9 @@ Phase 1 of [plan.md](plan.md). Entities this feature adds or changes, by layer. 
 | `InstanceDto` in the store (changed) | gains `lessons?` | Absent on instances stored before this feature: the lesson page re-resolves the identity before deciding |
 | `Delivery` (changed) | gains `originLessonId?` | Set on the first delivery when practice starts from a lesson's practice entry (`startPractice(skillId, preferred, originLessonId)`); copied to every later delivery of the same practice run, including after a reload; unset when practice starts from the practice route; selects the practice screen's lesson link (`contracts/detour.md`); not an event and not evidence; deliveries stored before this feature have none |
 | Current question (derived, not stored) | the current delivery when it has no `correct` submission and no `skipped` event | Wider than spec 002's `resumable`, which covers only questions without any submission |
-| `LessonVisit` (new, in memory, not persisted) | `lessonId`, `deliveryId` (or none), `detour` (bool), `discloses` (bool), `gate` (`closed`, `open`), `origin` (`question-link`, `other`), `shown` (bool), `bannerDismissed` (bool), `sectionAnchor` | Created on entering a lesson route, discarded on leaving it; `shown` turns true on the first render of the lesson content and triggers at most one recording |
-| `lessonLinkOrigin` (new, in memory, one-shot) | set to `question-link` by the practice screen's lesson link immediately before navigation | Consumed by the next `LessonVisit`; lets an opening after a correct answer be recorded only when it came from the question |
+| `LessonVisit` (new, in memory, not persisted) | `lessonId`, `deliveryId` (or none), `detour` (bool), `discloses` (bool), `gate` (`closed`, `open`), `fromQuestion` (bool, read from the address when the visit starts), `shown` (bool), `bannerDismissed` (bool), `sectionAnchor` | Created on entering a lesson route, discarded on leaving it; `shown` turns true on the first render of the lesson content and triggers at most one recording |
+| `from=question` (new, an address parameter, not stored) | part of the practice screen's lesson link target, `/lessons/{id}?from=question` | Read when a visit starts, then removed with `history.replaceState`; a modified click carries it into the new tab and leaves the source tab unchanged; lets an opening after a correct answer be recorded only when it came from the question. There is no in-memory origin marker |
+| `pendingHelpOpen` (new, in memory) | the delivery ID for which "Show visual help instead" was chosen | Consumed when the practice view mounts and presents that delivery, by calling `toggleHelp()` (which records `visual-help-opened`); dropped if that delivery is no longer current |
 | `Event` (unchanged set) | `support` with `lesson-opened` or `lesson-reveal` | Recorded only by the visit rule in `contracts/detour.md` |
 | `Tag` (changed) | gains `lessonAfter` | Derived from `lesson-opened` after the first `correct`; ordered after `explainAfter` |
 
@@ -50,14 +51,14 @@ Phase 1 of [plan.md](plan.md). Entities this feature adds or changes, by layer. 
 ```text
 enter /lessons/:id
   ├─ no current question, or the lesson does not list its definition ─> ordinary reading: load and show; record nothing
-  │                                                                       (origin question-link and an answered question: record lesson-opened as later support once shown)
+  │                                                                       (reached with from=question and an answered question: record lesson-opened as later support once shown)
   └─ current question and the lesson lists its definition (detour)
        ├─ instance lacks lessons ─> re-resolve the identity, then decide
        ├─ discloses = false ─> gate open ─> load ─> shown ─> record lesson-opened
        └─ discloses = true  ─> gate closed: notice, no request for the lesson
              ├─ Open the lesson anyway ─> gate open ─> load ─> shown ─> record lesson-reveal
              │                                         └─ load fails or learner leaves first ─> record nothing
-             ├─ Show visual help instead ─> helpOpen = true, go to practice ─> help records as in spec 002
+             ├─ Show visual help instead ─> pendingHelpOpen, go to practice ─> on mount toggleHelp() records visual-help-opened
              └─ Cancel ─> go to practice; record nothing
 leave the route ─> visit discarded; the question stays current, with its draft and support state
 ```

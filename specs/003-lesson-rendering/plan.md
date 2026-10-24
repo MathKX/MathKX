@@ -101,7 +101,8 @@ src/web/
 ├── src/components/math/TenFrameExplorer.tsx, StepVisual.tsx   # NEW: lesson visuals on the existing TenFrame/Groups/MakeTen
 ├── src/components/LessonGate.tsx, ReturnBanner.tsx            # NEW: the notice and the way back
 ├── src/pages/LessonPage.tsx              # CHANGED: gate, body, practice entries in place, links
-├── src/components/ExerciseShell.tsx      # CHANGED: lesson link from the instance's lessons, origin flag
+├── src/components/ExerciseShell.tsx      # CHANGED: lesson link from the instance's lessons, ?from=question in its target
+├── src/router.tsx                        # CHANGED: routes match on the path; the query string is exposed
 ├── src/state/store.tsx, observations.ts, outcomes.ts   # CHANGED: visit state, recording when shown, lessonAfter
 ├── src/api/client.ts, types.ts           # CHANGED: new calls and fields
 ├── src/i18n/nb.ts, en.ts                 # CHANGED: lesson, notice, banner, explorer, contribution strings
