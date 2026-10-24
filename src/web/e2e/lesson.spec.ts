@@ -129,3 +129,93 @@ test.describe("the detour from a question to its lesson", () => {
     await expect(page.getByTestId("prompt")).toBeVisible();
   });
 });
+
+test.describe("the lesson page: chunk, keyboard, targets, zoom (specs/003 T054, T055)", () => {
+  test("6. the practice route does not load the lesson chunk; opening the lesson does", async ({ page }) => {
+    const chunks: string[] = [];
+    page.on("request", (request) => {
+      if (/\/assets\/LessonView-[^/]*\.js$/.test(request.url())) chunks.push(request.url());
+    });
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto("/practice/numbers.addition-within-20");
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    expect(chunks).toHaveLength(0);
+    await page.getByTestId("to-lesson").click();
+    await expect(page.locator("[data-testid=lesson-content], [data-testid=lesson-gate]").first()).toBeVisible();
+    if (await page.getByTestId("lesson-gate").count()) await page.getByTestId("gate-open").click();
+    await expect(page.getByTestId("lesson-content")).toBeVisible();
+    expect(chunks.length).toBeGreaterThan(0);
+  });
+
+  test("7. keyboard only: Tab reaches the lesson's controls in order, each with visible focus", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await expect(page.getByTestId("step-visual-make-ten")).toBeVisible();
+    const reached = new Set<string>();
+    for (let i = 0; i < 80; i++) {
+      await page.keyboard.press("Tab");
+      const focus = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        if (!el || el === document.body) return null;
+        const shown = el.matches("input[type=radio]") ? (el.closest("label") as HTMLElement) : el;
+        const style = getComputedStyle(shown);
+        const visible = (style.outlineStyle !== "none" && style.outlineWidth !== "0px") || style.boxShadow !== "none";
+        const name = el.dataset.testid ?? (el.matches("input[type=radio]") ? "explorer-choice" : el.closest(".mkx-section-link") ? "section-link" : el.closest(".mkx-lesson-footer") ? `footer:${el.textContent}` : el.tagName.toLowerCase());
+        return { name, visible };
+      });
+      if (!focus) continue;
+      expect(focus.visible, `${focus.name} shows focus`).toBe(true);
+      reached.add(focus.name.startsWith("practice-") ? "practice-entry" : focus.name.startsWith("explorer-") ? "explorer-choice" : focus.name);
+    }
+    for (const control of ["section-link", "explorer-choice", "step-visual-next", "practice-entry", "footer:Rediger leksjonen", "footer:Foreslå en forbedring"]) {
+      expect([...reached], control).toContain(control);
+    }
+    // The explorer and the step visual work from the keyboard alone.
+    await page.getByTestId("explorer-3").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("explorer-sentence")).toHaveText("4 og 6 blir 10.");
+    await page.getByTestId("step-visual-next").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("step-visual-text")).toContainText("2");
+  });
+
+  test("8. the lesson's controls are at least 44 by 44 at the iPad viewport", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "ipad", "iPad viewport only");
+    await startOn(page, "numbers.addition.crossing-ten", "100");
+    await page.getByTestId("to-lesson").click();
+    await expect(page.getByTestId("lesson-gate")).toBeVisible();
+    const check = async (locator: ReturnType<Page["locator"]>, label: string) => {
+      const count = await locator.count();
+      expect(count, label).toBeGreaterThan(0);
+      for (let i = 0; i < count; i++) {
+        const box = await locator.nth(i).boundingBox();
+        expect(box, `${label} ${i}`).not.toBeNull();
+        expect(box!.width, `${label} ${i} width`).toBeGreaterThanOrEqual(44);
+        expect(box!.height, `${label} ${i} height`).toBeGreaterThanOrEqual(44);
+      }
+    };
+    await check(page.getByTestId("lesson-gate").getByRole("button"), "notice button");
+    await check(page.getByTestId("return-to-question"), "back to your question");
+    await check(page.getByTestId("return-dismiss"), "dismiss");
+    await page.getByTestId("gate-open").click();
+    await expect(page.getByTestId("step-visual-make-ten")).toBeVisible();
+    await check(page.locator(".mkx-explorer__choice"), "explorer choice");
+    await check(page.getByTestId("step-visual-make-ten").getByRole("button"), "step button");
+    await check(page.locator("[data-testid^=practice-numbers]"), "practice entry");
+    await check(page.locator(".mkx-section-link"), "section link");
+    await check(page.getByTestId("lesson-contribute").getByRole("link"), "contribution link");
+  });
+
+  test("9. at 200 percent zoom the page does not scroll sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "desktop viewport only");
+    await page.setViewportSize({ width: 640, height: 400 }); // 1280 by 800 at 200 percent
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await expect(page.getByTestId("step-visual-make-ten")).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+});

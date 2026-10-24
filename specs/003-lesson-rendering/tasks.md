@@ -175,8 +175,8 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T054 [P] Confirm the lesson renderer is a separate chunk in the `npm run build` output of `src/web` and the practice route does not load it (network log in a Playwright check added to `src/web/e2e/lesson.spec.ts`)
-- [ ] T055 [P] Add a keyboard-only and 200 percent zoom pass of the lesson page to `src/web/e2e/lesson.spec.ts`: every control reachable in order with visible focus, the explorer and the step visual operable, no horizontal page scroll at 1024 pixels except inside the table container, controls at least 44 by 44 on the iPad project (FR-021, SC-006)
+- [X] T054 [P] Confirm the lesson renderer is a separate chunk in the `npm run build` output of `src/web` and the practice route does not load it (network log in a Playwright check added to `src/web/e2e/lesson.spec.ts`)
+- [X] T055 [P] Add a keyboard-only and 200 percent zoom pass of the lesson page to `src/web/e2e/lesson.spec.ts`: every control reachable in order with visible focus, the explorer and the step visual operable, no horizontal page scroll at 1024 pixels except inside the table container, controls at least 44 by 44 on the iPad project (FR-021, SC-006)
 - [ ] T056 Update `README.md` "Current status" and the spec 003 row of `specs/README.md` to say lesson rendering and the detour are implemented
 - [ ] T057 Run line 1 of the bilingual walkthrough script (revised brief §7) in both languages and record the result as a new dated file under `docs/reviews/walkthroughs/`, referencing the spec 002 walkthrough's "partial" line (SC-005); note what still needs a physical iPad with VoiceOver
 - [ ] T058 Run the five quickstart scenarios by hand, correct any quoted wording in `specs/003-lesson-rendering/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time there (SC-008)

@@ -113,7 +113,7 @@
   .mkx-lesson-body ol:not([class]) { list-style: decimal; }
   .mkx-lesson-body ul:not([class]) { list-style: disc; }
   .mkx-lesson-body :is(ol, ul):not([class]) > li + li { margin-top: 0.35rem; }
-  .mkx-section-link { margin-inline-start: 0.35rem; text-decoration: none; color: var(--ds-color-neutral-text-subtle); opacity: 0.6; }
+  .mkx-section-link { display: inline-flex; align-items: center; justify-content: center; min-width: var(--mkx-target); min-height: var(--mkx-target); vertical-align: middle; text-decoration: none; color: var(--ds-color-neutral-text-subtle); opacity: 0.6; }
   .mkx-section-link:hover, .mkx-section-link:focus-visible { opacity: 1; }
   .mkx-lesson-image { max-width: 100%; height: auto; }
   .mkx-math-display { overflow-x: auto; }
@@ -135,6 +135,7 @@
   .mkx-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .mkx-explorer { display: grid; gap: 0.75rem; margin: 0; }
   .mkx-explorer .mkx-ten-frame { justify-self: start; }
+  .mkx-lesson-footer a { display: inline-flex; align-items: center; min-height: var(--mkx-target); }
   .mkx-lesson-footer { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--ds-color-neutral-border-subtle); font-size: 0.9rem; }
   .mkx-explorer__choices { display: flex; flex-wrap: wrap; gap: 0.35rem; border: 0; padding: 0; margin: 0; }
   .mkx-explorer__choices legend { margin-bottom: 0.35rem; font-weight: 600; }
