@@ -23,6 +23,17 @@ export const nb = {
     taskNotDone: "Ikke ferdig:",
     status: { draft: "Utkast", pilot: "Pilot", released: "Utgitt" },
   },
+  detour: {
+    noticeTitle: "Leksjonen viser svaret på {prompt}",
+    noticeBody: "Hvis du åpner den nå, blir svaret ditt registrert som besvart etter at svaret ble vist. Du kan også få visuell hjelp med oppgaven i stedet.",
+    openAnyway: "Åpne leksjonen likevel",
+    helpInstead: "Vis visuell hjelp i stedet",
+    cancel: "Avbryt",
+    back: "Tilbake til oppgaven",
+    backLabel: "Tilbake til oppgaven: {spoken}",
+    dismiss: "Lukk",
+    bannerRegion: "Oppgave i gang",
+  },
   practice: {
     title: "Øving",
     question: "Hva er {a} + {b}?",
@@ -109,6 +120,7 @@ export const nb = {
     revealLesson: "Svaret vist i leksjonen",
     visualAfter: "Visuell hjelp etter svaret",
     explainAfter: "Forklaring åpnet etter svaret",
+    lessonAfter: "Leksjon åpnet etter svaret",
   },
   explain: {
     "explain.groups.show": "To grupper: {a} og {b}. Hvor mange er det til sammen?",

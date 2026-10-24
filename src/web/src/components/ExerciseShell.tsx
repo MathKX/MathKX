@@ -120,7 +120,9 @@ export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined 
 
       {lessonHref ? (
         <p>
-          <Link to={lessonHref} className="mkx-lesson-link" onActivate={() => store.openLesson()} data-testid="to-lesson">
+          {/* The origin travels in the address, so a modified click (new tab) carries it and the source tab is
+              unchanged; the lesson page records the opening once the lesson is shown (specs/003 contracts/detour.md). */}
+          <Link to={`${lessonHref}?from=question`} className="mkx-lesson-link" data-testid="to-lesson">
             {translate(lang, "practice.toLesson")}
           </Link>
         </p>

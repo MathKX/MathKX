@@ -2,24 +2,42 @@
 import { createContext, useContext, useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 interface RouterState {
+  /** The path only; routes never see the query or fragment. */
   path: string;
-  navigate(path: string): void;
+  /** The query string of the current address, including its "?" (or ""). */
+  search: string;
+  navigate(to: string): void;
+  /** Replaces the current address without a new history entry (used to drop a consumed query). */
+  replace(to: string): void;
 }
 
-const RouterContext = createContext<RouterState>({ path: "/", navigate: () => undefined });
+const RouterContext = createContext<RouterState>({ path: "/", search: "", navigate: () => undefined, replace: () => undefined });
+
+/** Splits an address into its path and its query string; a fragment is dropped. */
+export function splitAddress(address: string): { path: string; search: string } {
+  const withoutHash = address.split("#")[0] ?? "";
+  const q = withoutHash.indexOf("?");
+  return q < 0 ? { path: withoutHash || "/", search: "" } : { path: withoutHash.slice(0, q) || "/", search: withoutHash.slice(q) };
+}
+
+const currentAddress = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
 
 export function RouterProvider({ children, initialPath }: { children: ReactNode; initialPath?: string }) {
-  const [path, setPath] = useState(initialPath ?? (typeof window !== "undefined" ? window.location.pathname : "/"));
+  const [address, setAddress] = useState(() => splitAddress(initialPath ?? currentAddress()));
   useEffect(() => {
-    const onPop = () => setPath(window.location.pathname);
+    const onPop = () => setAddress(splitAddress(currentAddress()));
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
-  const navigate = (next: string) => {
-    if (typeof window !== "undefined" && next !== window.location.pathname) window.history.pushState(null, "", next);
-    setPath(next);
+  const navigate = (to: string) => {
+    if (typeof window !== "undefined" && to !== currentAddress()) window.history.pushState(null, "", to);
+    setAddress(splitAddress(to));
   };
-  return <RouterContext.Provider value={{ path, navigate }}>{children}</RouterContext.Provider>;
+  const replace = (to: string) => {
+    if (typeof window !== "undefined") window.history.replaceState(null, "", to);
+    setAddress(splitAddress(to));
+  };
+  return <RouterContext.Provider value={{ ...address, navigate, replace }}>{children}</RouterContext.Provider>;
 }
 
 export const useRouter = () => useContext(RouterContext);
@@ -56,8 +74,8 @@ export type Route =
   | { name: "record" }
   | { name: "unknown" };
 
-export function matchRoute(path: string): Route {
-  const parts = path.split("/").filter(Boolean).map(decodeURIComponent);
+export function matchRoute(address: string): Route {
+  const parts = splitAddress(address).path.split("/").filter(Boolean).map(decodeURIComponent);
   if (parts.length === 0) return { name: "lessons" };
   if (parts[0] === "lessons" && parts[1]) return { name: "lesson", id: parts[1] };
   if (parts[0] === "practice" && parts[1]) return { name: "practice", skillId: parts[1] };

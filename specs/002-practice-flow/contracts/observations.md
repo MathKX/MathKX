@@ -39,7 +39,7 @@ Walk the events in order. "Before" means before the first `correct` submission.
    - else any earlier `incorrect` submission → `correctAfterFeedback`;
    - else `correctFirst`.
 
-Tags, all derived: `feedbackBefore` when an `incorrect` preceded the first `correct` and the outcome is not `correctAfterFeedback`; `visualBefore`, `lessonBefore`, `explainPartBefore` for the respective support before; `revealCounting` (groups' `counting-complete`), `revealHelp` (a revealing `help-step` of another representation), `revealExplanation`, `revealLesson` for the reveal source before; `visualAfter`, `explainAfter` for support after the first `correct`. `explainPartBefore` is dropped when `revealExplanation` is present. Support after the first `correct` never changes the outcome. `input-guidance` never influences the outcome.
+Tags, all derived: `feedbackBefore` when an `incorrect` preceded the first `correct` and the outcome is not `correctAfterFeedback`; `visualBefore`, `lessonBefore`, `explainPartBefore` for the respective support before; `revealCounting` (groups' `counting-complete`), `revealHelp` (a revealing `help-step` of another representation), `revealExplanation`, `revealLesson` for the reveal source before; `visualAfter`, `explainAfter` for support after the first `correct`, and `lessonAfter` for a `lesson-opened` after it (added by spec 003). `explainPartBefore` is dropped when `revealExplanation` is present. Support after the first `correct` never changes the outcome. `input-guidance` never influences the outcome.
 
 ## Labels (dictionary keys)
 
@@ -64,4 +64,4 @@ The Norwegian wordings are the prototype's where it has them and are content for
 
 ## Tests (`src/web/tests/outcomes.test.ts`)
 
-One case per outcome row and per tag, plus: help closed without counting → `correctWithVisualHelp`; counting the last counter → `correctAfterExplanation`; make-ten help stepped to its revealing last step, then correct → `correctAfterExplanation` with `revealHelp`; make-ten help stopped before the last step, then correct → `correctWithVisualHelp`; explanation after correct → unchanged outcome with `explainAfter`; input guidance then correct → `correctFirst`; duplicate `submissionId` → one submission; resumable delivery → `unfinished`.
+One case per outcome row and per tag, plus: help closed without counting → `correctWithVisualHelp`; counting the last counter → `correctAfterExplanation`; make-ten help stepped to its revealing last step, then correct → `correctAfterExplanation` with `revealHelp`; make-ten help stopped before the last step, then correct → `correctWithVisualHelp`; explanation after correct → unchanged outcome with `explainAfter`; lesson opened after correct → unchanged outcome with `lessonAfter` (added by spec 003); input guidance then correct → `correctFirst`; duplicate `submissionId` → one submission; resumable delivery → `unfinished`.

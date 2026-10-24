@@ -32,7 +32,8 @@
     "revealHelp",
     "revealLesson",
     "visualAfter",
-    "explainAfter"
+    "explainAfter",
+    "lessonAfter"
   ],
   "stepText": [
     "explain.groups.show",

@@ -5,7 +5,7 @@ import type { InstanceDto, LadderEntry, PracticeApi, StepDto, ValidationResponse
 import { newSeed, practiceApi } from "../api/client";
 import type { Lang } from "../i18n";
 import { createStorage, type Storage } from "./storage";
-import { hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
+import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
 
 export interface DefinitionRef {
   definition: string;
@@ -92,6 +92,7 @@ type Action =
   | { type: "notice"; notice: State["notice"] }
   | { type: "loadError"; failed: boolean }
   | { type: "present" }
+  | { type: "instanceLessons"; deliveryId: string; lessons: NonNullable<InstanceDto["lessons"]> }
   | { type: "end" }
   | { type: "clear" };
 
@@ -187,6 +188,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, loadError: action.failed };
     case "present":
       return state.presenting ? state : { ...state, presenting: true };
+    case "instanceLessons":
+      return isCurrent(state, action.deliveryId) && state.instance ? { ...state, instance: { ...state.instance, lessons: action.lessons } } : state;
     case "end": {
       if (!state.currentDeliveryId || !state.instance) return { ...state, presenting: false };
       const current = state.deliveries.find((d) => d.id === state.currentDeliveryId);
@@ -215,7 +218,12 @@ export interface StoreApi {
   toggleExplanation(): Promise<void>;
   nextExplanationStep(): Promise<void>;
   requestChallenge(request: "easier" | "harder"): void;
-  openLesson(): void;
+  /** Records the lesson visit on the delivery it began with, once the lesson content is shown (specs/003). */
+  lessonShown(visit: { deliveryId: string | null; detour: boolean; discloses: boolean; fromQuestion: boolean }): void;
+  /** "Show visual help instead": help opens through toggleHelp() when the practice view next presents this question. */
+  showHelpInstead(): void;
+  /** Re-resolves the current question when it was stored before instances carried their lessons; false on failure. */
+  ensureInstanceLessons(): Promise<boolean>;
   endSession(): void;
   clearRecord(): void;
   dismissNotice(): void;
@@ -243,6 +251,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const latest = useRef(state);
   latest.current = state;
   const loadToken = useRef(0); // only the most recent instance request may become the current question
+  const pendingHelpOpen = useRef<string | null>(null); // "Show visual help instead", for this delivery
 
   useEffect(() => {
     const kept = store.save(persistedOf(state));
@@ -302,33 +311,59 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     [api],
   );
 
+  // Opening help is recorded on this one path (spec 002), whether the learner pressed "Show visual help" or chose
+  // "Show visual help instead" on a lesson's notice (specs/003 contracts/detour.md).
+  const openHelp = useCallback(() => {
+    dispatch({ type: "help", open: true });
+    dispatch({ type: "event", event: { type: "support", kind: "visual-help-opened" } });
+  }, []);
+
+  /** Carries out "Show visual help instead" once the practice view presents that same question; drops it otherwise. */
+  const consumePendingHelp = useCallback(() => {
+    const wanted = pendingHelpOpen.current;
+    pendingHelpOpen.current = null;
+    const current = latest.current;
+    if (wanted && wanted === current.currentDeliveryId && !current.helpOpen && (current.instance?.representations.help.length ?? 0) > 0) openHelp();
+  }, [openHelp]);
+
+  const startPracticeOnly = useCallback(
+    async (skillId: string, preferred?: DefinitionRef) => {
+      dispatch({ type: "present" }); // the practice view is mounted (its unmount dispatches "end")
+      const current = latest.current;
+      // An explicitly chosen variation (a lesson's practice button) that differs from the one in progress or
+      // the one that would be resumed replaces it; the practice route itself passes no preference and resumes.
+      const differsFrom = (ref: DefinitionRef | null | undefined) =>
+        preferred !== undefined && (!ref || ref.definition !== preferred.definition || ref.version !== preferred.version);
+      if (current.skillId === skillId && current.instance && current.currentDeliveryId) {
+        if (!preferred || !differsFrom(current.ladder.current)) return; // already in progress
+        // The ladder position and the dropped pending change commit with the loaded question; on failure the
+        // question in progress and its ladder position stay as they were, and the selection can be retried.
+        await load(preferred, false, { clearPending: true });
+        return;
+      }
+      const skill = await api.getSkill(skillId);
+      const first = preferred ?? (skill.ladder[0] ? { definition: skill.ladder[0].definition, version: skill.ladder[0].version } : null);
+      if (!first) return;
+      dispatch({ type: "ladder", skillId, entries: skill.ladder, current: first });
+      const resumable = current.resumable;
+      const resumableDelivery = resumable ? current.deliveries.find((d) => d.id === resumable.deliveryId) : undefined;
+      const resumeFits = resumableDelivery ? !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
+      if (resumable && resumeFits && (await resume(resumable))) return;
+      await load(first, false);
+    },
+    [api, load, resume],
+  );
+
   const value = useMemo<StoreApi>(
     () => ({
       state,
       setLanguage: (language) => dispatch({ type: "language", language }),
       async startPractice(skillId, preferred) {
-        dispatch({ type: "present" }); // the practice view is mounted (its unmount dispatches "end")
-        const current = latest.current;
-        // An explicitly chosen variation (a lesson's practice button) that differs from the one in progress or
-        // the one that would be resumed replaces it; the practice route itself passes no preference and resumes.
-        const differsFrom = (ref: DefinitionRef | null | undefined) =>
-          preferred !== undefined && (!ref || ref.definition !== preferred.definition || ref.version !== preferred.version);
-        if (current.skillId === skillId && current.instance && current.currentDeliveryId) {
-          if (!preferred || !differsFrom(current.ladder.current)) return; // already in progress
-          // The ladder position and the dropped pending change commit with the loaded question; on failure the
-          // question in progress and its ladder position stay as they were, and the selection can be retried.
-          await load(preferred, false, { clearPending: true });
-          return;
+        try {
+          await startPracticeOnly(skillId, preferred);
+        } finally {
+          consumePendingHelp();
         }
-        const skill = await api.getSkill(skillId);
-        const first = preferred ?? (skill.ladder[0] ? { definition: skill.ladder[0].definition, version: skill.ladder[0].version } : null);
-        if (!first) return;
-        dispatch({ type: "ladder", skillId, entries: skill.ladder, current: first });
-        const resumable = current.resumable;
-        const resumableDelivery = resumable ? current.deliveries.find((d) => d.id === resumable.deliveryId) : undefined;
-        const resumeFits = resumableDelivery ? !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
-        if (resumable && resumeFits && (await resume(resumable))) return;
-        await load(first, false);
       },
       async nextQuestion(request) {
         const current = latest.current;
@@ -370,8 +405,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
           dispatch({ type: "help", open: false });
           return;
         }
-        dispatch({ type: "help", open: true });
-        dispatch({ type: "event", event: { type: "support", kind: "visual-help-opened" } });
+        openHelp();
       },
       async nextHelpStep() {
         const current = latest.current;
@@ -414,8 +448,28 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         dispatch({ type: "pending", pending: { definition: target.definition, version: target.version, request } });
         dispatch({ type: "notice", notice: null });
       },
-      openLesson() {
-        dispatch({ type: "event", event: { type: "support", kind: "lesson-opened" } });
+      lessonShown({ deliveryId, detour, discloses, fromQuestion }) {
+        const delivery = deliveryId ? latest.current.deliveries.find((d) => d.id === deliveryId) : undefined;
+        if (!delivery || !deliveryId) return;
+        // The recording table of specs/003 contracts/detour.md: one event, only once the lesson is shown.
+        const kind = detour ? (discloses ? "lesson-reveal" : "lesson-opened") : fromQuestion && hasCorrect(delivery) ? "lesson-opened" : null;
+        if (kind) dispatch({ type: "event", event: { type: "support", kind }, deliveryId });
+      },
+      showHelpInstead() {
+        pendingHelpOpen.current = latest.current.currentDeliveryId;
+      },
+      async ensureInstanceLessons() {
+        const current = latest.current;
+        const deliveryId = current.currentDeliveryId;
+        if (!current.instance || !deliveryId || current.instance.lessons) return true;
+        const { definitionId, version, seed } = current.instance.identity;
+        try {
+          const instance = await api.getInstance(definitionId, version, seed ?? null);
+          dispatch({ type: "instanceLessons", deliveryId, lessons: instance.lessons ?? [] });
+          return true;
+        } catch {
+          return false; // the caller keeps the lesson behind the notice rather than guess
+        }
       },
       endSession: () => dispatch({ type: "end" }),
       clearRecord() {
@@ -424,7 +478,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       },
       dismissNotice: () => dispatch({ type: "notice", notice: null }),
     }),
-    [api, load, resume, state, store],
+    [api, load, state, store, startPracticeOnly, consumePendingHelp, openHelp],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

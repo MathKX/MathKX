@@ -22,6 +22,17 @@ export const en = {
     taskNotDone: "Not done:",
     status: { draft: "Draft", pilot: "Pilot", released: "Released" },
   },
+  detour: {
+    noticeTitle: "This lesson shows the answer to {prompt}",
+    noticeBody: "If you open it now, your answer will be recorded as given after the answer was shown. You can also get visual help with the question instead.",
+    openAnyway: "Open the lesson anyway",
+    helpInstead: "Show visual help instead",
+    cancel: "Cancel",
+    back: "Back to your question",
+    backLabel: "Back to your question: {spoken}",
+    dismiss: "Dismiss",
+    bannerRegion: "Question in progress",
+  },
   practice: {
     title: "Practice",
     question: "What is {a} + {b}?",
@@ -108,6 +119,7 @@ export const en = {
     revealLesson: "Answer shown in the lesson",
     visualAfter: "Visual help after answering",
     explainAfter: "Explanation opened after answering",
+    lessonAfter: "Lesson opened after answering",
   },
   explain: {
     "explain.groups.show": "Two groups: {a} and {b}. How many altogether?",
