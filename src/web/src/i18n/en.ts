@@ -20,6 +20,10 @@ export const en = {
     tableScroll: "Table: {columns}",
     taskDone: "Done:",
     taskNotDone: "Not done:",
+    explorerLabel: "Choose how many are filled",
+    explorerPair: "{filled} and {partner} make 10.",
+    previousStep: "Previous step",
+    visualFailed: "This illustration could not be loaded.",
     status: { draft: "Draft", pilot: "Pilot", released: "Released" },
   },
   detour: {

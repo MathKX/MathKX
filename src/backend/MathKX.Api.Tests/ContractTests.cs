@@ -377,6 +377,75 @@ public sealed class StepContractTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Empty(fixedTask.RootElement.GetProperty("lessons").EnumerateArray());
     }
 
+    // specs/003 contracts/api.md, contract tests 4 and 5: lesson visuals.
+
+    [Theory]
+    [InlineData("make-ten", 8, 5, "numbers.addition.crossing-ten", "explanation")]
+    [InlineData("groups", 4, 4, "numbers.addition.four-plus-four", "explanation")]
+    public async Task A_lesson_visual_steps_through_the_same_model_as_a_question_with_those_operands(string type, int a, int b, string definition, string kind)
+    {
+        using var client = _factory.CreateClient();
+        using var visual = JsonDocument.Parse(await client.GetStringAsync($"/api/visuals/{type}?a={a}&b={b}"));
+        var steps = visual.RootElement.GetProperty("steps").EnumerateArray().ToList();
+        Assert.Equal(type, visual.RootElement.GetProperty("type").GetString());
+        Assert.True(steps.Count >= 3);
+        Assert.True(steps[^1].GetProperty("reveals").GetBoolean());
+
+        // A question with the same operands: crossing-ten seed 100 is 5 + 8, so find 8 + 5 by walking seeds; the fixed task is 4 + 4.
+        var seed = definition.EndsWith("four-plus-four", StringComparison.Ordinal) ? "-" : await SeedFor(client, definition, a, b);
+        for (var index = 0; index < steps.Count; index++)
+        {
+            var step = await client.GetStringAsync($"/api/instances/{definition}/1/{seed}/steps/{kind}/{index}");
+            Assert.Equal(step, steps[index].GetRawText());
+        }
+    }
+
+    [Theory]
+    [InlineData("/api/visuals/groups?a=9&b=9")]
+    [InlineData("/api/visuals/make-ten?a=2&b=2")]
+    [InlineData("/api/visuals/make-ten?a=8")]
+    [InlineData("/api/visuals/make-ten?a=eight&b=5")]
+    [InlineData("/api/visuals/groups?a=0&b=4")]
+    public async Task Values_a_visual_cannot_show_are_unsupported(string path)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("unsupported-values", problem.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task An_unregistered_visual_is_unknown_and_the_explorer_has_eleven_states()
+    {
+        using var client = _factory.CreateClient();
+        var unknown = await client.GetAsync("/api/visuals/balance?a=1&b=2");
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        using var problem = JsonDocument.Parse(await unknown.Content.ReadAsStringAsync());
+        Assert.Equal("unknown-visual", problem.RootElement.GetProperty("code").GetString());
+
+        var body = await client.GetStringAsync("/api/visuals/ten-frame-explorer");
+        using var explorer = JsonDocument.Parse(body);
+        var states = explorer.RootElement.GetProperty("states").EnumerateArray().ToList();
+        Assert.Equal(11, states.Count);
+        Assert.All(states, s => Assert.Equal(10, s.GetProperty("filled").GetInt32() + s.GetProperty("partner").GetInt32()));
+        Assert.Equal(body, await client.GetStringAsync("/api/visuals/ten-frame-explorer"));
+    }
+
+    private static async Task<string> SeedFor(HttpClient client, string definition, int a, int b)
+    {
+        for (var seed = 0; seed < 5000; seed++)
+        {
+            using var document = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{definition}/1/{seed}"));
+            if (document.RootElement.GetProperty("a").GetInt32() == a && document.RootElement.GetProperty("b").GetInt32() == b)
+            {
+                return seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
+        throw new InvalidOperationException($"no seed gives {a} + {b} for {definition}");
+    }
+
     private static string RepositoryContentRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

@@ -16,6 +16,8 @@ import { Placeholder } from "../lesson/Placeholder";
 import type { LessonComponents } from "../lesson/render";
 import { LessonGate } from "../components/LessonGate";
 import { ReturnBanner } from "../components/ReturnBanner";
+import { StepVisual } from "../components/math/StepVisual";
+import { TenFrameExplorer } from "../components/math/TenFrameExplorer";
 
 const LessonView = lazy(() => import("../lesson/LessonView"));
 
@@ -137,13 +139,23 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
     },
     [lesson, skills, lang],
   );
-  const components: LessonComponents = useMemo(
-    () => ({
-      visual: (_attributes, key) => <Placeholder key={key} lang={lang} />,
-      practice: practiceEntry,
-    }),
-    [practiceEntry, lang],
+  // Visuals load their models only here, inside the rendered lesson, so nothing is requested behind the notice.
+  const visual = useCallback(
+    (attributes: Record<string, string>, key: string) => {
+      const n = (name: string) => Number.parseInt(attributes[name] ?? "", 10);
+      switch (attributes.type) {
+        case "ten-frame-explorer":
+          return <TenFrameExplorer key={key} start={Number.isNaN(n("start")) ? 0 : n("start")} lang={lang} api={api} />;
+        case "make-ten":
+        case "groups":
+          return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <StepVisual key={key} type={attributes.type} a={n("a")} b={n("b")} lang={lang} api={api} />;
+        default:
+          return <Placeholder key={key} lang={lang} />;
+      }
+    },
+    [api, lang],
   );
+  const components: LessonComponents = useMemo(() => ({ visual, practice: practiceEntry }), [visual, practiceEntry]);
 
   if (failed) return <Paragraph>{translate(lang, "lesson.notFound")}</Paragraph>;
   if (!lesson || !visit) return <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;

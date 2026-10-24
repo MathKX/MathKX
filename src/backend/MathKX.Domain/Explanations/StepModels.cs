@@ -84,11 +84,20 @@ public static class StepModels
             throw new UnsupportedStepsException(representation, kind);
         }
 
+        return ForValues(instance.A, instance.B, representation, kind);
+    }
+
+    /// <summary>
+    /// The steps for two operands: the single source for a question's help and explanation and for a lesson's
+    /// visual with authored values (specs/003 FR-008), so the two can never disagree.
+    /// </summary>
+    public static IReadOnlyList<StepModel> ForValues(int a, int b, string representation, StepKind kind)
+    {
         var steps = (representation, kind) switch
         {
-            ("groups", StepKind.Help) => GroupsHelp(instance),
-            ("groups", StepKind.Explanation) => GroupsExplanation(instance),
-            ("make-ten", _) => MakeTen(instance),
+            ("groups", StepKind.Help) => GroupsHelp(a, b),
+            ("groups", StepKind.Explanation) => GroupsExplanation(a, b),
+            ("make-ten", _) => MakeTen(a, b),
             _ => throw new UnsupportedStepsException(representation, kind),
         };
 
@@ -100,9 +109,8 @@ public static class StepModels
 
     private static Dictionary<string, object> V(params (string Key, object Value)[] pairs) => pairs.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
 
-    private static List<Raw> GroupsHelp(Instance x)
+    private static List<Raw> GroupsHelp(int a, int b)
     {
-        var (a, b) = (x.A, x.B);
         return
         [
             new(false, V(("countedFirst", 0), ("countedSecond", 0)), new StepText("explain.groups.show", V(("a", a), ("b", b)))),
@@ -112,9 +120,8 @@ public static class StepModels
         ];
     }
 
-    private static List<Raw> GroupsExplanation(Instance x)
+    private static List<Raw> GroupsExplanation(int a, int b)
     {
-        var (a, b) = (x.A, x.B);
         return
         [
             new(false, V(("combined", false)), new StepText("explain.groups.twoGroups", V(("a", a), ("b", b)))),
@@ -123,9 +130,8 @@ public static class StepModels
         ];
     }
 
-    private static List<Raw> MakeTen(Instance x)
+    private static List<Raw> MakeTen(int a, int b)
     {
-        var (a, b) = (x.A, x.B);
         var need = 10 - a;
         var rest = b - need;
         string[] Frame(int filled, int marked) => Enumerable.Range(0, 10).Select(i => i < filled ? "a" : i < filled + marked ? "b" : "empty").ToArray();

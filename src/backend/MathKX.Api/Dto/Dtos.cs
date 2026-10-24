@@ -87,6 +87,12 @@ public sealed record LessonDto(
 
 public sealed record LessonContentDto(string Id, int Version, string Language, string Markdown);
 
+public sealed record VisualStepsDto(string Type, int A, int B, IReadOnlyList<StepDto> Steps);
+
+public sealed record TenFrameExplorerStateDto(int Filled, int Partner);
+
+public sealed record TenFrameExplorerDto(string Type, IReadOnlyList<TenFrameExplorerStateDto> States);
+
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
 public sealed record SkillDto(string Id, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder);

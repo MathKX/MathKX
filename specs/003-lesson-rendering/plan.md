@@ -12,7 +12,7 @@ Render the pilot lesson inside the learner app and make the route between a ques
 
 **Language/Version**: C# on .NET 10 for the domain, the content loader, and the service (as spec 002); TypeScript 5.9 with React 19 for the learner app
 
-**Primary Dependencies**: Backend: Markdig (MIT) in `MathKX.Content` only, for finding mathematics in lesson Markdown, pinned exactly at implementation; the domain stays dependency-free. Web: `unified` 11.0.5, `remark-parse` 11.0.0, `remark-gfm` 4.0.1, `remark-frontmatter` 5.0.0, `remark-directive` 4.0.0, `remark-math` 6.0.0, `unist-util-visit` 5.1.0, `mdast-util-to-string` 4.0.0 and `@types/mdast`, the exact versions the root content tooling pins (research R1). No Markdown-to-HTML library, no KaTeX or MathJax.
+**Primary Dependencies**: Backend: Markdig 1.4.0 (MIT) in `MathKX.Content` only, for finding mathematics in lesson Markdown (the newest release older than two weeks at implementation; 1.5.0 was a day old); the domain stays dependency-free. Web: `unified` 11.0.5, `remark-parse` 11.0.0, `remark-gfm` 4.0.1, `remark-frontmatter` 5.0.0, `remark-directive` 4.0.0, `remark-math` 6.0.0, `unist-util-visit` 5.1.0, `mdast-util-to-string` 4.0.0 and `@types/mdast`, the exact versions the root content tooling pins (research R1). No Markdown-to-HTML library, no KaTeX or MathJax.
 
 **Storage**: None new. Lesson content comes from `content/` through the service's startup snapshot; the detour and visit state live in the existing guest store (`localStorage`, `mathkx.guest.v1`), with the persisted shape extended compatibly.
 

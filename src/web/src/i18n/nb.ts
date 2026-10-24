@@ -21,6 +21,10 @@ export const nb = {
     tableScroll: "Tabell: {columns}",
     taskDone: "Ferdig:",
     taskNotDone: "Ikke ferdig:",
+    explorerLabel: "Velg hvor mange som er fylt",
+    explorerPair: "{filled} og {partner} blir 10.",
+    previousStep: "Forrige steg",
+    visualFailed: "Denne illustrasjonen kunne ikke lastes.",
     status: { draft: "Utkast", pilot: "Pilot", released: "Utgitt" },
   },
   detour: {

@@ -38,6 +38,7 @@ app.MapContent();
 app.MapInstances();
 app.MapValidations();
 app.MapSteps();
+app.MapVisuals();
 
 // The built learner app, when present in wwwroot: static files plus a history-API fallback that never
 // shadows /api/* (an unknown API route stays a 404 problem, not the app shell).
