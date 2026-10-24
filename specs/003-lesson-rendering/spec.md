@@ -41,7 +41,7 @@ A learner, as a guest in Norwegian Bokmål or English, opens the number-bonds le
 3. **Given** the expressions `$3 + 7 = 10$` and `$$8 + 5 = 8 + 2 + 3 = 10 + 3 = 13$$`, **When** they are shown, **Then** they read as mathematics, inline and as a display line respectively, with the minus and multiplication signs and the decimal mark as authored, and a screen reader reads them as mathematics in the selected language.
 4. **Given** the illustration of a ten-frame with 3 and 7, **When** it is shown, **Then** it carries the selected language's description from the source as its text alternative.
 5. **Given** the worked example "Worked example: 8 + 5", **When** it is shown, **Then** it appears as a distinct, titled block with its numbered steps and its display line, linkable by its id.
-6. **Given** the lesson in Norwegian scrolled to "Hvorfor er dette nyttig?", **When** the learner switches to English, **Then** the English lesson is shown at "Why is this useful?" and nothing the learner was doing elsewhere in the app is lost.
+6. **Given** the lesson in Norwegian scrolled to "Hvorfor er det nyttig?", **When** the learner switches to English, **Then** the English lesson is shown at "Why is this useful?" and nothing the learner was doing elsewhere in the app is lost.
 
 ---
 
