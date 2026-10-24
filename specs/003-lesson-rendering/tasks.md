@@ -8,6 +8,8 @@
 
 **Organization**: Tasks are grouped by user story in priority order, except that User Story 4 (practice entries and the lesson link) follows User Story 2, because its link reads the `lessons` field User Story 2 adds to the instance. User Story 1 renders the `:::practice` entries itself (spec SC-001 counts them, and spec 002's end-to-end checks press them), so User Story 4 only replaces the hard-coded lesson link and adds the origin lesson.
 
+**Deployment**: every push to `main` deploys to production (`.github/workflows/deploy.yml`: the build-and-test and content workflows, then `dotnet publish` with `content/` and the learner app, then Azure App Service and a health check). What reaches `main` must therefore be honest on its own. Phase 3 alone is not: the lesson would show `8 + 5 = 13` while the existing link still records a plain `lesson-opened` at click, so a learner's later correct answer would read "Correct with help" instead of "Answered after the answer was shown". Phases 1–5 (Setup, Foundational, US1, US2, US3) therefore reach `main` together as the first release; US4, US5, and the polish tasks may follow as separate merges. Work on a branch and merge only at those boundaries.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies on incomplete tasks)
@@ -179,6 +181,8 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 - [ ] T057 Run line 1 of the bilingual walkthrough script (revised brief §7) in both languages and record the result as a new dated file under `docs/reviews/walkthroughs/`, referencing the spec 002 walkthrough's "partial" line (SC-005); note what still needs a physical iPad with VoiceOver
 - [ ] T058 Run the five quickstart scenarios by hand, correct any quoted wording in `specs/003-lesson-rendering/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time there (SC-008)
 - [ ] T059 Record the first contributor check (SC-007) as an open human validation item in the pull-request description: a contributor who has not seen the code edits a sentence, previews, and validates; findings recorded, not scored
+- [ ] T060 [P] Extend `src/backend/scripts/smoke-published.sh` (run by the backend job and therefore before every deploy): from the published service started outside the checkout, `GET /api/lessons/number-bonds-to-ten/content/en` returns the lesson's Markdown and `GET /api/lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg` returns `image/svg+xml`, proving the deploy package carries the lesson files and assets
+- [ ] T061 After the first release (Phases 1–5) has deployed, run quickstart scenarios 1 and 3 against the production URL from the deploy job's `environment.url`, in both languages, and add the result to the walkthrough file of T057; record any difference from the local run
 
 ---
 
@@ -193,7 +197,7 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 - **US3 (Phase 5)**: needs Phase 3 only (independent of US2); T040–T042 in parallel; T043 → T044; T045 → T046
 - **US4 (Phase 6)**: needs Phase 4 (`instance.lessons`); T047 ∥ T048; T049 → T050
 - **US5 (Phase 7)**: needs Phase 3 only; T051, then T052; T053 any time
-- **Polish (Phase 8)**: after the stories it checks; T054 ∥ T055; T056–T059 last
+- **Polish (Phase 8)**: after the stories it checks; T054 ∥ T055; T060 before the first release merge (it guards the deploy); T061 after that release has deployed; T056–T059 last
 
 ### Within Each Story
 
@@ -207,7 +211,7 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 - Phase 3: T009 ∥ T010 ∥ T011 ∥ T012; then T013 ∥ T014 ∥ T015 ∥ T017 ∥ T018 ∥ T020 ∥ T021
 - Phase 4: T022 ∥ T023 ∥ T024 ∥ T025 ∥ T026 ∥ T027 ∥ T028; T029 (backend) alongside T032 (web); T033 ∥ T034 ∥ T037 ∥ T038
 - Phases 5 and 7 can run in parallel with Phase 4 after Phase 3 (US3 touches `StepModels.cs`, `VisualsEndpoints.cs`, and the math components; US5 touches `contribute.ts` and the docs; both also edit `LessonPage.tsx` and the dictionaries, so land those edits as separate commits)
-- Phase 8: T054 ∥ T055
+- Phase 8: T054 ∥ T055 ∥ T060
 
 ---
 
@@ -231,23 +235,27 @@ Task: "Visit state and recording in src/web/src/state/store.tsx"                
 
 ## Implementation Strategy
 
-### MVP First (Phases 1–3)
+### MVP First (Phases 1–3, on the branch)
 
 1. Setup and the snapshot additions
 2. US1: the lesson renders in both languages with its practice entries
-3. **STOP and VALIDATE**: quickstart scenario 1; the walkthrough's line 1 can pass apart from the visuals; spec 002's checks still pass
+3. **STOP and VALIDATE** locally: quickstart scenario 1; the walkthrough's line 1 can pass apart from the visuals; spec 002's checks still pass. Do not merge yet: on `main` this would deploy a lesson that can show an answer without recording a reveal (see "Deployment" above).
 
-### Incremental Delivery
+### First release (Phases 1–5, one merge to `main`)
 
 1. US2: the gate, honest recording, the way back → quickstart scenarios 2 and 3
-2. US3: the visuals → scenario 4 (first half)
-3. US4: the derived lesson link and origin lesson → scenario 4 (second half)
-4. US5: contribution links and preview docs → scenario 5
-5. Polish: chunking, keyboard and zoom pass, docs, walkthrough, measurements
+2. US3: the visuals → scenario 4 (first half); the production lesson then has no placeholders
+3. T060 (the published package carries lesson files and assets), then merge; the deploy runs; T061 checks production
+
+### Later merges
+
+1. US4: the derived lesson link and origin lesson → scenario 4 (second half)
+2. US5: contribution links and preview docs → scenario 5
+3. Polish: chunking, keyboard and zoom pass, docs, walkthrough, measurements
 
 ### Single-Contributor Order
 
-T001–T008, then US1 (T009–T021), US2 (T022–T039), US3 (T040–T046), US4 (T047–T050), US5 (T051–T053), Polish (T054–T059).
+T001–T008, then US1 (T009–T021), US2 (T022–T039), US3 (T040–T046), T060, first release merge, T061, then US4 (T047–T050), US5 (T051–T053), Polish (T054–T059).
 
 ---
 

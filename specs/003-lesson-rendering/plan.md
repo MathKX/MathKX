@@ -18,7 +18,7 @@ Render the pilot lesson inside the learner app and make the route between a ques
 
 **Testing**: `dotnet test` (disclosure fixtures for all 81 pilot instances, the lesson-facts agreement fixture, visual step models, contract tests for the new endpoints and the instance field); `npm test` in `src/web` (renderer against both pilot files, notation agreement with `tools/lib/notation.mjs`, parse agreement with `tools/lib/markdown.mjs`, gate and recording, `lessonAfter`, dictionaries and literals); `npm test` at the root (the lesson-facts agreement fixture through the validator's parser); Playwright `e2e/lesson.spec.ts` on the desktop and iPad projects
 
-**Target Platform**: As spec 002: iPad Safari and desktop browsers with MathML Core support (Safari, Firefox, Chromium 109 and later); the service on Linux
+**Target Platform**: As spec 002: iPad Safari and desktop browsers with MathML Core support (Safari, Firefox, Chromium 109 and later); the service on Azure App Service (Linux), deployed by `.github/workflows/deploy.yml` on every push to `main` after the tests and content checks pass, so each merge of this feature goes to production (`tasks.md` "Deployment" sets the merge boundaries)
 
 **Project Type**: Web application (the existing service and learner app; one deployable)
 
@@ -64,7 +64,7 @@ specs/003-lesson-rendering/
 │   ├── lesson-renderer.md   # Markdown and directive mapping, notation, sections, contribution links, accessibility
 │   └── detour.md            # the gate, the notice, recording, the way back, lessonAfter, end-to-end checks
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks): 59 tasks in eight phases
+└── tasks.md             # Phase 2 (/speckit-tasks): 61 tasks in eight phases
 ```
 
 ### Source Code (repository root)
