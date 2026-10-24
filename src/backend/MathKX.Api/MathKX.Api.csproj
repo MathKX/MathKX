@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MathKX.Content\MathKX.Content.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The learner app's build lands in wwwroot (see scripts/build-web.sh); nothing is checked in there. -->
+    <MathKXWebDist>..\..\web\dist</MathKXWebDist>
+  </PropertyGroup>
+
+  <!-- One deployable (ADR 0009): the published output carries the repository content/ beside the binaries
+       (research R2) and the built learner app under wwwroot/ when it has been built. -->
+  <ItemGroup>
+    <Content Include="..\..\..\content\**" Exclude="..\..\..\content\_templates\**" LinkBase="content" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+  <Target Name="CopyWebDistToWwwroot" BeforeTargets="Build" Condition="Exists('$(MathKXWebDist)\index.html')">
+    <ItemGroup>
+      <_WebDistFiles Include="$(MathKXWebDist)\**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebDistFiles)" DestinationFiles="@(_WebDistFiles->'wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

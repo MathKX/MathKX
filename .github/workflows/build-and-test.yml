@@ -1,0 +1,112 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (dotnet test, publish smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore src/backend/MathKX.slnx
+
+      - name: Build
+        run: dotnet build src/backend/MathKX.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test src/backend/MathKX.slnx --configuration Release --no-build
+
+      - name: Publish smoke (content beside the binaries, run outside the checkout)
+        run: bash src/backend/scripts/smoke-published.sh
+
+  web:
+    name: Web (typecheck, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/web
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  e2e:
+    name: End to end (Playwright against the service)
+    runs-on: ubuntu-latest
+    needs: [backend, web]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: src/web
+
+      - name: Build the learner app
+        run: npm run build
+        working-directory: src/web
+
+      - name: Build the service (copies the app into wwwroot)
+        run: dotnet build src/backend/MathKX.Api --configuration Debug
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: src/web
+
+      - name: Run the end-to-end checks
+        run: npm run e2e
+        working-directory: src/web
+        env:
+          CI: "true"
+
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: src/web/playwright-report
+          retention-days: 7
