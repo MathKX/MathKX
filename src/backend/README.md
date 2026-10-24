@@ -23,6 +23,12 @@ dotnet test src/backend/MathKX.slnx
 bash src/backend/scripts/smoke-published.sh   # publishes to a temp folder and runs it outside the checkout
 ```
 
+## Deploy
+
+`.github/workflows/deploy.yml` runs on every push to `main` (and on manual dispatch). It runs the build-and-test and content-validation workflows, then builds the learner app, publishes the service with the app in `wwwroot/` and `content/` beside the binaries, deploys the folder to the `mathkx` App Service (resource group `evkx`, Norway East), and polls `/api/health`.
+
+Azure sign-in uses GitHub OIDC; no secret is stored. The user-assigned managed identity `id-mathkx-deploy` (resource group `evkx`) trusts only `repo:MathKX/MathKX:environment:production` and holds Website Contributor on the web app alone. The GitHub `production` environment accepts deployments from `main` only and holds `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` as variables. Basic-auth publishing is disabled on the web app, so publish profiles do not work.
+
 ## Rules the tests enforce
 
 - **No platform randomness in generation or validation.** `SplitMix64` and `BoundedSampler` implement the seed proposal exactly, and every raw, bounded, and injected-rejection vector in that document is a test. Generators receive their stream from the caller.

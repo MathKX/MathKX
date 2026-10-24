@@ -1,0 +1,92 @@
+name: Deploy
+
+# Deploys main to the Azure App Service after the tests and content validation pass (ADR 0009).
+# Azure sign-in uses GitHub OIDC with a user-assigned managed identity; no secret is stored.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Build and test
+    uses: ./.github/workflows/build-and-test.yml
+
+  validate:
+    name: Validate content
+    uses: ./.github/workflows/validate-content.yml
+
+  deploy:
+    name: Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    needs: [test, validate]
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: src/web
+
+      - name: Build the learner app
+        run: npm run build
+        working-directory: src/web
+
+      # Build first so the learner app is in wwwroot when publish evaluates the project.
+      - name: Build the service (copies the app into wwwroot)
+        run: dotnet build src/backend/MathKX.Api --configuration Release
+
+      - name: Publish the service
+        run: dotnet publish src/backend/MathKX.Api --configuration Release --output publish --nologo
+
+      - name: Check the package carries the app and content
+        run: |
+          test -f publish/wwwroot/index.html || { echo "learner app missing from wwwroot"; exit 1; }
+          test -f publish/content/registry/generators.json || { echo "content/ missing beside the binaries"; exit 1; }
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: mathkx
+          package: publish
+
+      - name: Check the deployed service is healthy
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS "${{ steps.deploy.outputs.webapp-url }}/api/health"; then exit 0; fi
+            sleep 10
+          done
+          echo "health check did not pass"; exit 1

@@ -1,9 +1,9 @@
 name: Build and test
 
+# Runs on pull requests; on main it runs as part of deploy.yml, which deploys only when it passes.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
