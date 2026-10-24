@@ -2,7 +2,7 @@
 // one-line display rule, placeholders instead of raw markup, safe links and images, and the section kept across
 // a language switch.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../src/App";
 import { visit } from "unist-util-visit";
@@ -238,5 +238,35 @@ describe("the contribution links", () => {
     await screen.findByTestId("lesson-gate");
     expect(screen.queryByRole("link", { name: "Rediger leksjonen" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Foreslå en forbedring" })).toBeNull();
+  });
+});
+
+describe("the contribution links belong to the rendered lesson (review of PR 34)", () => {
+  it("are part of the rendered lesson content, so they cannot appear before it", async () => {
+    window.localStorage.clear();
+    render(<App api={createFakeApi()} initialPath="/lessons/number-bonds-to-ten" />);
+    const content = await screen.findByTestId("lesson-content");
+    expect(within(content).getByRole("link", { name: "Rediger leksjonen" })).toBeTruthy();
+    expect(within(content).getByRole("link", { name: "Foreslå en forbedring" })).toBeTruthy();
+  });
+
+  it("follow the translation on screen while another one loads", async () => {
+    window.localStorage.clear();
+    const api = createFakeApi();
+    const user = userEvent.setup();
+    render(<App api={api} initialPath="/lessons/number-bonds-to-ten" />);
+    await screen.findByRole("heading", { level: 2, name: /Hva er tiervenner\?/ });
+    api.hold("getLessonContent");
+    await user.click(screen.getByTestId("lang-en"));
+    // Norwegian is still on screen: the links point at it, labelled in the interface language.
+    expect(screen.getByRole("heading", { level: 2, name: /Hva er tiervenner\?/ })).toBeTruthy();
+    const edit = screen.getByRole("link", { name: "Edit this lesson" });
+    expect(edit.getAttribute("href")).toMatch(/\/nb\.md$/);
+    const issue = new URL(screen.getByRole("link", { name: "Suggest an improvement" }).getAttribute("href") ?? "");
+    expect(issue.searchParams.get("body")).toContain("Language: nb");
+
+    api.release("getLessonContent");
+    await screen.findByRole("heading", { level: 2, name: /What are number bonds to ten\?/ });
+    expect(screen.getByRole("link", { name: "Edit this lesson" }).getAttribute("href")).toMatch(/\/en\.md$/);
   });
 });
