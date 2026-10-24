@@ -19,6 +19,9 @@ public sealed class BuiltAppFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Not Development: there, static web assets also serve the project's own wwwroot, so after a local build of
+        // the learner app "/" would return the real index.html instead of this one (CI never builds it there).
+        builder.UseEnvironment("Production");
         builder.UseWebRoot(_webRoot);
     }
 

@@ -1,4 +1,4 @@
-# Walkthrough: lesson rendering and the detour (spec 003), production
+# Walkthrough: lesson rendering and the detour (spec 003), production and local
 
 **Date**: 2026-10-24. **Who**: the implementing session (Claude Opus 5.5), not a learner. **What**: spec 003 task T061, quickstart scenarios 1 and 3 run against production after the first release (PR 30, merge commit `a040bb1`) deployed. Scenario 1 and the first half of scenario 3 ran on `a040bb1`; after review of PR 32, scenario 3 was completed in the missing language for each route on `41de5f3` (PR 31, which only changes cache headers for the app shell and assets, deployed in between). **Where**: `https://mathkx-fncxfxehfrd0fsfw.norwayeast-01.azurewebsites.net` (Azure App Service, Norway East; deploy run 40106387911, all five jobs and the health check passed), in the Chromium-based browser pane of the Claude desktop app on Windows 11 (Chrome 152), viewport 1024 by 768, light colour scheme, no reduced motion. Checks were made by clicking as a learner would and reading the page's DOM, its `localStorage` guest record, and the browser's resource timing for requests. **Not done**: a physical iPad, VoiceOver, or a learner session; T057 (walkthrough line 1, run locally) will add its result to this file.
 
@@ -48,3 +48,32 @@ Questions were reached by drawing with "Another question" until `5 + 8` (crossin
 - **Bug, not from spec 003**: loading a practice address directly, such as `/practice/numbers.addition-within-20` (a reload, a bookmark, or a shared link), returns a `404` problem response instead of the app. `MapFallback` in `src/backend/MathKX.Api/Program.cs` uses ASP.NET's default `{*path:nonfile}` pattern, which treats a last path segment containing a dot as a file, and every skill ID contains one. `/`, `/lessons/number-bonds-to-ten`, and `/record` load; navigation inside the app is unaffected. The fallback has been the same since spec 002, and no end-to-end check loads a practice address directly.
 - After PR 31 deployed, the app shell (`/`) is served with `Cache-Control: no-cache`.
 - The runs left a guest record of 143 questions (140 skipped while drawing questions, the two answered `5 + 8`, and the unanswered `3 + 7`) in this browser pane's storage for the production site. It is only in that browser, never on the server; "Mitt arbeid" → "Slett arbeidet mitt" clears it.
+
+## Walkthrough line 1, run locally (T057)
+
+**Where**: the built app served by the service (`dotnet run`, `http://localhost:5080`) from the branch after US4, US5, and the polish checks, in the same browser pane; the guest record for `localhost` was cleared first (it held only test data from this session).
+
+Line 1 of the revised brief §7 ("Open the lesson; headings, objective, table, and components read in the selected language"), which the spec 002 walkthrough recorded as "partial":
+
+| Element | nb | en |
+| --- | --- | --- |
+| Title and objective | "Tiervenner – tall som blir 10", "Du lærer hvilke tallpar …" | "Number bonds to ten", "You will learn which pairs …" |
+| Headings | "Hva er tiervenner?", "Alle tiervennene", "Utforsk i en tierramme", "Hvorfor er det nyttig?", "Prøv i tankene", "Øv" | "What are number bonds to ten?", "All the pairs", "Explore with a ten-frame", "Why is this useful?", "Try it in your head", "Practise" |
+| Table | "Par", "Regnestykke", 12 cells | "Pair", "Sum", 12 cells |
+| Mathematics and image | 15 expressions; Norwegian description | 15 expressions; English description |
+| Ten-frame explorer | "Velg hvor mange som er fylt", "3 og 7 blir 10." | "Choose how many are filled", "3 and 7 make 10." |
+| Make-ten step visual | "Steg 1 av 4 8 i tierrammen og 5 løse.", "Forrige steg", "Neste steg" | "Step 1 of 4 8 in the ten-frame and 5 loose.", "Previous step", "Next step" |
+| Worked example, practice entries, contribution links | "Gjennomgått eksempel: 8 + 5"; "Øv: …" ×2; "Rediger leksjonen", "Foreslå en forbedring" | "Worked example: 8 + 5"; "Practise: …" ×2; "Edit this lesson", "Suggest an improvement" |
+| Placeholders | 0 | 0 |
+
+**Result**: pass in both languages. With scenarios 1 and 3 in production above, spec SC-005 holds. Still to do on real devices: an iPad with VoiceOver reading the tables, the MathML, and both visuals.
+
+## Quickstart scenarios 2, 4, and 5, run locally (T058)
+
+| Scenario | Result | Notes |
+| --- | --- | --- |
+| 2: the detour without a reveal | pass | `6 + 5` with draft `1` and help at step 2; "To the lesson" opened the lesson without a notice, with "Back to your question 6 + 5 = ?"; returning restored the draft and "Step 2 of 4 6 needs 4 to make 10."; `11` gave "Correct with help" with "Visual help" and "Lesson opened" |
+| 4: visuals and practice entries | pass | Three ArrowRight presses moved the explorer from 3 to 6 ("6 and 4 make 10.", shown and announced, six places filled); Enter stepped the make-ten model to "Step 4 of 4 10 + 3 = 13." and back to step 3; the crossing-ten practice entry started practice with the lesson recorded as its origin and the lesson link pointing back to it |
+| 5: contribution and the local preview | pass, with one fix | The links point at the source and a prepared issue (also covered by the renderer tests). A sentence changed in `en.md` appeared after restarting the service, and `npm run validate` passed; the file was restored afterwards. Loading `/lessons/number-bonds-to-ten#why` directly did not land on the section in a real browser: the smooth scroll ran, then the illustration and the explorer loaded above it and pushed it 264 pixels down. A page-load fragment now scrolls instantly, which leaves the browser's scroll anchoring in charge; a new end-to-end check ("10.") fails with smooth scrolling and passes with the fix |
+
+Quoted wording in `quickstart.md` matches the dictionaries; the measured CI time is recorded there.

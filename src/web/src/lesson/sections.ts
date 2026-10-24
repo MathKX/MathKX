@@ -5,9 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const reducedMotion = () => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Scrolls to the section's heading without moving focus; the top of the page when it is missing. */
-export function restoreSection(anchor: string | null) {
+/** `instant` for a page load: no animation to watch, and it leaves the browser's scroll anchoring in charge. */
+export function restoreSection(anchor: string | null, instant = false) {
   const target = anchor ? document.getElementById(anchor) : null;
-  const behavior: ScrollBehavior = reducedMotion() ? "auto" : "smooth";
+  const behavior: ScrollBehavior = instant || reducedMotion() ? "auto" : "smooth";
   if (target && typeof target.scrollIntoView === "function") target.scrollIntoView({ block: "start", behavior });
   else if (typeof window.scrollTo === "function") window.scrollTo({ top: 0, behavior });
 }

@@ -42,7 +42,7 @@ export default function LessonView({ lessonId, lang, markdown, components, onSho
     } catch {
       return;
     }
-    if (document.getElementById(anchor)) restoreSection(anchor);
+    if (document.getElementById(anchor)) restoreSection(anchor, true);
   }, []);
 
   // After a language switch, show the section that was in view in the other language.

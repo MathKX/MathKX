@@ -80,4 +80,4 @@ On the Norwegian lesson, "Edit this lesson" opens `content/lessons/number-bonds-
 
 ## CI
 
-`build-and-test.yml` runs everything above on each pull request; the web job additionally runs `npm ci` at the root. Record the measured wall time here when the feature is implemented (spec SC-008, limit 10 minutes).
+`build-and-test.yml` runs everything above on each pull request; the web job additionally runs `npm ci` at the root. Measured on PR 33 (2026-10-24, with spec 003's first release on `main`): the build-and-test workflow took 2 min 0 s of wall time (web 32 s and backend 37 s in parallel, then end to end 75 s), and content validation 34 s alongside it (spec SC-008, limit 10 minutes). On `main`, `deploy.yml` runs both and then deploys.

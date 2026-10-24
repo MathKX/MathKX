@@ -219,3 +219,14 @@ test.describe("the lesson page: chunk, keyboard, targets, zoom (specs/003 T054, 
     expect(overflow).toBeLessThanOrEqual(0);
   });
 });
+
+test.describe("direct section links (specs/003 review of PR 30)", () => {
+  test("10. /lessons/…#why lands on that section once the lesson has rendered", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(`${LESSON}#why`);
+    await expect(page.locator("#why")).toBeVisible();
+    await expect.poll(async () => page.evaluate(() => Math.round(document.getElementById("why")!.getBoundingClientRect().top))).toBeLessThan(120);
+    await expect.poll(async () => page.evaluate(() => Math.round(document.getElementById("why")!.getBoundingClientRect().top))).toBeGreaterThanOrEqual(0);
+  });
+});
