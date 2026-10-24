@@ -47,6 +47,20 @@ npm test
 
 The tests invoke the CLI against isolated fixtures, including conflicting exercise identities, invalid document shapes, and prerequisite errors. Both tests and content validation run in CI.
 
+## Running the application and its tests
+
+The first practice loop lives in two application roots. The backend needs the .NET 10 SDK; the learner app needs Node.js 22.
+
+```bash
+dotnet test src/backend/MathKX.slnx
+```
+
+```bash
+cd src/web && npm ci && npm test && npm run build
+```
+
+To run the app, start the service with `dotnet run --project src/backend/MathKX.Api` and the learner app with `npm run dev` in `src/web`; the dev server proxies `/api` to the service. The end-to-end checks (`npm run e2e` in `src/web`) need a built app and service; see `src/web/README.md`. All three suites and the content checks run in CI on every pull request.
+
 ## Pull requests
 
 - Keep each pull request to one coherent change.

@@ -168,11 +168,11 @@ Backend under `src/backend/` (one solution, five projects), learner app under `s
 
 **Purpose**: Documentation, the walkthrough, and the measurements the spec asks for.
 
-- [ ] T047 [P] Write `src/backend/README.md` (solution layout, how content is located, `dotnet run`, `dotnet test`, the golden-seed review rule, the no-platform-random rule) and `src/web/README.md` (scripts, proxy, dictionaries and the two checks, how to add a math component)
-- [ ] T048 [P] Update `README.md` and `docs/architecture/architecture.md` ("System shape": `src/backend/` and `src/web/` now exist with their roles; the content check list unchanged) and `CONTRIBUTING.md` (how to run the three suites)
-- [ ] T049 [P] Record the walkthrough: add `docs/reviews/walkthroughs/2026-practice-flow-bilingual.md` with the revised brief §7 script and the two language columns ticked, device and browser noted; no learner-session claim beyond what was done
-- [ ] T050 Run the five quickstart scenarios by hand against the repository, correct any wording in `src/web/src/i18n/*.ts` or the contracts so the quoted texts match, and record the measured CI wall time in `specs/002-practice-flow/quickstart.md` (SC-007, under 10 minutes)
-- [ ] T051 Confirm the seed-proposal fixtures pass in CI and note in the pull-request description that DL-024's trigger for ADR 0011 is met; do not write the ADR in this feature (research R13)
+- [X] T047 [P] Write `src/backend/README.md` (solution layout, how content is located, `dotnet run`, `dotnet test`, the golden-seed review rule, the no-platform-random rule) and `src/web/README.md` (scripts, proxy, dictionaries and the two checks, how to add a math component)
+- [X] T048 [P] Update `README.md` and `docs/architecture/architecture.md` ("System shape": `src/backend/` and `src/web/` now exist with their roles; the content check list unchanged) and `CONTRIBUTING.md` (how to run the three suites)
+- [X] T049 [P] Record the walkthrough: add `docs/reviews/walkthroughs/2026-practice-flow-bilingual.md` with the revised brief §7 script and the two language columns ticked, device and browser noted; no learner-session claim beyond what was done
+- [X] T050 Run the five quickstart scenarios by hand against the repository, correct any wording in `src/web/src/i18n/*.ts` or the contracts so the quoted texts match, and record the measured CI wall time in `specs/002-practice-flow/quickstart.md` (SC-007, under 10 minutes)
+- [X] T051 Confirm the seed-proposal fixtures pass in CI and note in the pull-request description that DL-024's trigger for ADR 0011 is met; do not write the ADR in this feature (research R13)
 
 ---
 

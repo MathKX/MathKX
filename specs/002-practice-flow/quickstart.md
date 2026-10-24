@@ -68,4 +68,4 @@ Run the bilingual walkthrough script (revised build brief §7) in both languages
 
 ## CI
 
-`.github/workflows/build-and-test.yml` runs `dotnet test`, the web tests and build, and the Playwright checks on every pull request and push to `main`; `validate-content.yml` is unchanged. Expected total well under 10 minutes (spec SC-007); record the measured time here when the workflow first runs.
+`.github/workflows/build-and-test.yml` runs `dotnet test` and the publish smoke, the web typecheck, tests, and build, and the Playwright checks on every pull request and push to `main`; `validate-content.yml` is unchanged. Measured locally on 2026-10-24: `dotnet test` 115 tests in under 2 s of test time (about 15 s including build), `npm test` 55 tests in about 25 s, `npm run e2e` 13 checks in 6 s plus the service start. The first CI run of the three jobs is recorded in PR 24 (spec SC-007, limit 10 minutes).

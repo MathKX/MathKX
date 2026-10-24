@@ -39,9 +39,9 @@ The [learning experience](docs/design/learning-experience.md) covers explanation
 
 ## Current status
 
-MathKX is in its **foundation and design stage**. This repository currently contains architectural and product documentation, preliminary skill and exercise-definition schemas, a small illustrative skill graph, one example exercise definition, design prototypes, and content validation with regression tests in CI. It does not yet contain a production application, learning engine, or stable content format.
+MathKX is in its **first implementation stage**. This repository contains the product, learning, design, and architecture documentation; the pilot content contract with its schemas, registries, the first lesson, and the content validator (spec 001); and the first learner-visible practice loop (spec 002): a C# mathematics domain and thin service under `src/backend/`, and a React/TypeScript learner app with Designsystemet and Tailwind under `src/web/`, all with their tests in CI. It does not yet contain lesson rendering, profiles, persistence, or a stable content format; see [specs/README.md](specs/README.md) for the feature order.
 
-The intended direction is a monorepo with an ASP.NET Core/C# backend and a React/TypeScript frontend using Designsystemet components and Tailwind CSS. Application projects will be introduced only when an implementation task makes their shape clear.
+The stack is a monorepo with an ASP.NET Core/C# backend and a React/TypeScript frontend using Designsystemet components and Tailwind CSS (ADR 0007, DL-005). Each application root has its own README with how to run and test it.
 
 ## Start reading
 

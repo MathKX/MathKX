@@ -10,17 +10,19 @@ The repository will remain a monorepo. The intended application stack is:
 - React and TypeScript for the web learner experience and interactive visualizations
 - Designsystemet for standard UI components and theming, with Tailwind CSS for responsive layout and composition (ADR 0007)
 
-No application projects have been scaffolded yet. When implementation begins, a likely top-level organization is:
+The top-level organization, created by spec 001 (content and validator) and spec 002 (the first practice loop):
 
 ```text
-content/       versioned skills, exercises, and future lessons and curriculum mappings
+content/       versioned skills, exercise definitions, lessons, and the capability registries
 schemas/       machine-readable validation for contributed content
-tools/         repository tooling such as the content validation script
-src/backend/   .NET application and domain code (not yet created)
-src/web/       React application and reusable visual components (not yet created)
-tests/         cross-cutting validation where it does not belong beside a project (not yet created)
+tools/         repository tooling: the content validator and its regression tests
+src/backend/   MathKX.slnx: the C# mathematics domain, the content loader, the thin ASP.NET Core service, and their xUnit tests
+src/web/       the React/TypeScript learner app (Designsystemet + Tailwind) with vitest and Playwright checks
+specs/         GitHub Spec Kit specifications, plans, and task lists per feature
 docs/          product, learning, design, and architecture documentation
 ```
+
+The domain library has no framework references; the service resolves questions and validates answers and never sends private data to the learner; the learner app renders what the service returns and computes nothing mathematical. See [src/backend/README.md](../../src/backend/README.md) and [src/web/README.md](../../src/web/README.md).
 
 Directories should be created when they contain real work, not maintained as empty placeholders. [content/README.md](../../content/README.md) describes the layout inside `content/`.
 
