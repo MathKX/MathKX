@@ -14,6 +14,7 @@ public sealed class BuiltAppFactory : WebApplicationFactory<Program>
         Directory.CreateDirectory(Path.Combine(_webRoot, "assets"));
         File.WriteAllText(Path.Combine(_webRoot, "index.html"), "<!doctype html><script src=\"/assets/x-abc123.js\"></script>");
         File.WriteAllText(Path.Combine(_webRoot, "assets", "x-abc123.js"), "console.log('x');");
+        File.WriteAllText(Path.Combine(_webRoot, "favicon.svg"), "<svg xmlns=\"http://www.w3.org/2000/svg\"/>");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -49,6 +50,9 @@ public sealed class AppShellCacheTests : IClassFixture<BuiltAppFactory>
     [InlineData("/")]
     [InlineData("/index.html")]
     [InlineData("/lessons/x")]
+    [InlineData("/lessons/number-bonds-to-ten")]
+    [InlineData("/practice/numbers.addition-within-20")]
+    [InlineData("/record")]
     public async Task The_shell_is_always_revalidated(string path)
     {
         using var client = _factory.CreateClient();
@@ -86,5 +90,29 @@ public sealed class AppShellCacheTests : IClassFixture<BuiltAppFactory>
         var unknown = await client.GetAsync("/api/nothing-here");
         Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
         Assert.Null(unknown.Headers.CacheControl);
+    }
+
+    [Theory]
+    [InlineData("/api/does-not-exist")]
+    [InlineData("/api/does.not-exist")]
+    [InlineData("/assets/missing-abc123.js")]
+    public async Task Unknown_api_routes_and_missing_assets_are_a_404_problem_not_the_shell(string path)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.DoesNotContain("<!doctype html>", await response.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task An_existing_file_outside_assets_is_served_as_itself()
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync("/favicon.svg");
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("image/svg+xml", response.Content.Headers.ContentType?.MediaType);
     }
 }
