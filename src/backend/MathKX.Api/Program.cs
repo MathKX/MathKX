@@ -38,6 +38,25 @@ app.MapInstances();
 app.MapValidations();
 app.MapSteps();
 
+// The built learner app, when present in wwwroot: static files plus a history-API fallback that never
+// shadows /api/* (an unknown API route stays a 404 problem, not the app shell).
+if (Directory.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "assets")))
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.MapFallback(context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return Task.CompletedTask;
+        }
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        return context.Response.SendFileAsync(Path.Combine(app.Environment.WebRootPath!, "index.html"));
+    });
+}
+
 app.Run();
 
 /// <summary>Marker for integration tests (WebApplicationFactory).</summary>
