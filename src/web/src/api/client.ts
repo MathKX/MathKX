@@ -2,13 +2,16 @@ import {
   ApiError,
   type Identity,
   type InstanceDto,
+  type LessonContentDto,
   type LessonDetail,
   type LessonSummary,
   type PracticeApi,
   type SkillDto,
   type StepDto,
   type StepKind,
+  type TenFrameExplorerDto,
   type ValidationResponse,
+  type VisualStepsDto,
 } from "./types";
 
 const NO_SEED = "-";
@@ -52,6 +55,9 @@ export const practiceApi: PracticeApi = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ identity, artifact: { kind: "integer", originalText }, submissionId }),
     }),
+  getLessonContent: (id, lang) => request<LessonContentDto>(`/api/lessons/${encodeURIComponent(id)}/content/${encodeURIComponent(lang)}`),
+  getVisualSteps: (type, a, b) => request<VisualStepsDto>(`/api/visuals/${encodeURIComponent(type)}?a=${a}&b=${b}`),
+  getTenFrameExplorer: () => request<TenFrameExplorerDto>("/api/visuals/ten-frame-explorer"),
 };
 
 /** A fresh seed from the platform's cryptographic source: seed selection, not generation; never a secret. */

@@ -88,4 +88,68 @@ public sealed class ContentCatalogTests
         Assert.Equal("en.md", error.Path);
         Assert.Contains("objective", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Keeps_each_translation_and_the_lesson_assets()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+        const string id = "number-bonds-to-ten";
+        var folder = Path.Combine(RepositoryContent.Root, "lessons", id);
+
+        foreach (var language in new[] { "nb", "en" })
+        {
+            var translation = catalog.Translation(id, language);
+            Assert.Equal(language, translation.Language);
+            Assert.Equal($"{language}.md", translation.File);
+            Assert.Equal(File.ReadAllText(Path.Combine(folder, $"{language}.md")), translation.Markdown);
+            Assert.Equal(catalog.FrontMatter(id, language), translation.FrontMatter);
+        }
+
+        Assert.Equal(["ten-frame-3-7.svg"], catalog.Assets(id));
+    }
+
+    [Fact]
+    public void Finds_the_lessons_that_list_a_definition()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+
+        Assert.Equal(["number-bonds-to-ten"], catalog.LessonsForDefinition("numbers.addition.within-10@1").Select(l => l.Id));
+        Assert.Equal(["number-bonds-to-ten"], catalog.LessonsForDefinition("numbers.addition.crossing-ten@1").Select(l => l.Id));
+        Assert.Empty(catalog.LessonsForDefinition("numbers.addition.four-plus-four@1"));
+        Assert.Empty(catalog.LessonsForDefinition("numbers.addition.within-10@2"));
+    }
+
+    [Fact]
+    public void Ignores_dotfiles_in_assets()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", ".gitkeep"), "");
+
+        Assert.Equal(["ten-frame-3-7.svg"], ContentLoader.Load(content.Root).Assets("number-bonds-to-ten"));
+    }
+
+    [Theory]
+    [InlineData("bad name.svg")]
+    [InlineData("-dash.svg")]
+    public void Fails_fast_on_an_asset_name_outside_the_rule(string name)
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", name), "<svg/>");
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal($"lessons/number-bonds-to-ten/assets/{name}", error.Path);
+    }
+
+    [Fact]
+    public void Fails_fast_on_a_folder_inside_assets()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        Directory.CreateDirectory(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", "nested"));
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets/nested", error.Path);
+    }
 }

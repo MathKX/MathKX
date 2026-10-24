@@ -101,3 +101,6 @@ public sealed record LessonMetadata(
     Translations Translations);
 
 public sealed record LessonFrontMatter(string Title, string Objective);
+
+/// <summary>One translation of a lesson as authored: its file, full Markdown (front matter included), and front matter.</summary>
+public sealed record LessonTranslation(string Language, string File, string Markdown, LessonFrontMatter FrontMatter);

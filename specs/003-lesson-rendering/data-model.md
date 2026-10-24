@@ -7,7 +7,7 @@ Phase 1 of [plan.md](plan.md). Entities this feature adds or changes, by layer. 
 | Entity | Fields | Rules |
 | --- | --- | --- |
 | `LessonTranslation` (new) | `Language` (`nb`, `en`), `File` (`nb.md`), `Markdown` (full text with front matter), `FrontMatter` (existing `LessonFrontMatter`), `Facts` (`LessonFacts`) | One per language listed in `lesson.json` `translations`; loaded once at startup with the rest of the catalog |
-| `LessonAssets` (new) | `Names` (file names in the lesson's `assets/` folder, sorted) | Only regular files directly in `assets/`; names match `^[A-Za-z0-9][A-Za-z0-9._-]*$`; anything else fails the load with the path |
+| `LessonAssets` (new) | `Names` (file names in the lesson's `assets/` folder, sorted) | Only regular files directly in `assets/`; names match `^[A-Za-z0-9][A-Za-z0-9._-]*$`; dotfiles (`.gitkeep`, `.DS_Store`) are ignored and never listed or served; anything else fails the load with the path |
 | `ContentCatalog` (changed) | gains `Translations[(lessonId, language)]`, `Assets[lessonId]`, and `LessonsForDefinition(definitionKey)` (lessons whose `practice` lists `id@version`, ordered by lesson ID) | `FrontMatters` stays for existing callers |
 
 ## Lesson facts and disclosure (`MathKX.Domain.Lessons`)
