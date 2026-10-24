@@ -143,6 +143,54 @@ public sealed class ContentCatalogTests
     }
 
     [Fact]
+    public void Fails_fast_on_a_symlinked_asset()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        var outside = Path.Combine(content.Root, "outside-secret.txt");
+        File.WriteAllText(outside, "not lesson content");
+        var link = Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", "leak.svg");
+        if (!TryCreateLink(() => File.CreateSymbolicLink(link, outside)))
+        {
+            return; // this machine cannot create symbolic links (Windows without the privilege); CI on Linux runs it
+        }
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets/leak.svg", error.Path);
+        Assert.Contains("link", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Fails_fast_on_a_symlinked_assets_folder()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        var assets = Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets");
+        var elsewhere = Path.Combine(content.Root, "elsewhere");
+        Directory.Move(assets, elsewhere);
+        if (!TryCreateLink(() => Directory.CreateSymbolicLink(assets, elsewhere)))
+        {
+            return; // see above
+        }
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets", error.Path);
+    }
+
+    private static bool TryCreateLink(Action create)
+    {
+        try
+        {
+            create();
+            return true;
+        }
+        catch (Exception error) when (error is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    [Fact]
     public void Fails_fast_on_a_folder_inside_assets()
     {
         using var content = new TempContent();

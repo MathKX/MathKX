@@ -49,7 +49,8 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
 
   // The origin is read once; dropping it means a reload or a later history visit is not a visit from the question.
   useEffect(() => {
-    if (new URLSearchParams(search).has("from")) replace(path);
+    // Keep a section fragment (#why) when dropping the query, so a direct section link still lands there.
+    if (new URLSearchParams(search).has("from")) replace(`${path}${window.location.hash}`);
   }, [path, search, replace]);
 
   useEffect(() => {
@@ -181,7 +182,8 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
           }}
           onCancel={() => navigate(practiceHref)}
         />
-      ) : contentFailed && !shown ? (
+      ) : contentFailed && cached === undefined ? (
+        // The selected language failed: say so, even when another language is cached, rather than keep showing it.
         <div role="alert" className="mkx-placeholder" data-testid="lesson-content-failed">
           <Paragraph>{translate(lang, "lesson.contentFailed")}</Paragraph>
           <Button variant="secondary" data-size="md" className="mkx-target" onClick={() => setAttempt((n) => n + 1)}>

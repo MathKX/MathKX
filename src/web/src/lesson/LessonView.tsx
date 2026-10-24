@@ -31,6 +31,20 @@ export default function LessonView({ lessonId, lang, markdown, components, onSho
     onShown?.();
   }, [onShown]);
 
+  // A direct link to a section (/lessons/x#why): the browser's own fragment navigation ran before the lesson
+  // arrived, so scroll to it once the headings exist. Only a fragment that names an element in this lesson.
+  useLayoutEffect(() => {
+    const hash = window.location.hash;
+    if (hash.length <= 1) return;
+    let anchor: string;
+    try {
+      anchor = decodeURIComponent(hash.slice(1));
+    } catch {
+      return;
+    }
+    if (document.getElementById(anchor)) restoreSection(anchor);
+  }, []);
+
   // After a language switch, show the section that was in view in the other language.
   useLayoutEffect(() => {
     const before = previous.current;

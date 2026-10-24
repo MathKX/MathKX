@@ -110,6 +110,30 @@ describe("what the renderer refuses to pass through", () => {
   });
 });
 
+describe("a direct link to a section", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  it("scrolls to the fragment once the lesson has rendered (/lessons/x#why)", () => {
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    window.history.replaceState(null, "", "/lessons/number-bonds-to-ten#why");
+    view(lessonMarkdown("nb"), "nb");
+    expect(scrolled.map((e) => e.id)).toEqual(["why"]);
+  });
+
+  it("ignores a fragment that names nothing in the lesson", () => {
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    window.history.replaceState(null, "", "/lessons/number-bonds-to-ten#nowhere");
+    view(lessonMarkdown("en"), "en");
+    expect(scrolled).toEqual([]);
+  });
+});
+
 describe("the section in view across a language switch", () => {
   it("shows the same section in the other language (User Story 1 scenario 6)", () => {
     let report: ((entries: IntersectionObserverEntry[]) => void) | null = null;

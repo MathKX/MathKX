@@ -55,10 +55,22 @@ public static class ContentEndpoints
             return Problems.NotFound("unknown-asset", $"Lesson {id} has no asset {name}.");
         }
 
+        // The loader refused links; check again at request time in case the files changed on disk since startup.
+        var folder = Path.GetFullPath(Path.Combine(location.Root, "lessons", id, "assets"));
+        var file = new FileInfo(Path.Combine(folder, name));
+        if (!file.Exists
+            || file.LinkTarget is not null
+            || file.Attributes.HasFlag(FileAttributes.ReparsePoint)
+            || new DirectoryInfo(folder).LinkTarget is not null
+            || !string.Equals(Path.GetDirectoryName(file.FullName), folder, StringComparison.Ordinal))
+        {
+            return Problems.NotFound("unknown-asset", $"Lesson {id} has no asset {name}.");
+        }
+
         response.Headers.XContentTypeOptions = "nosniff";
         response.Headers.ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
         response.Headers.CacheControl = "no-cache";
-        return Results.File(Path.Combine(location.Root, "lessons", id, "assets", name), type);
+        return Results.File(file.FullName, type);
     }
 
     private static LessonSummaryDto Summary(ContentCatalog catalog, LessonMetadata lesson) => new(

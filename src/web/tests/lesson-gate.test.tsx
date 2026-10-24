@@ -136,6 +136,36 @@ describe("a detour to a lesson that shows the answer", () => {
   });
 });
 
+describe("loading the selected translation", () => {
+  it("shows the failure and a retry for the selected language even when another language is cached", async () => {
+    window.localStorage.clear();
+    const api = createFakeApi();
+    render(<App api={api} initialPath={lessonPath} />);
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { level: 2, name: /Hva er tiervenner\?/ });
+
+    api.fail.add("getLessonContent");
+    await user.click(screen.getByTestId("lang-en"));
+    const failed = await screen.findByTestId("lesson-content-failed");
+    expect(failed.textContent).toContain("The lesson text could not be loaded.");
+    expect(screen.queryByTestId("lesson-content")).toBeNull();
+    expect(document.documentElement.lang).toBe("en");
+
+    api.fail.delete("getLessonContent");
+    await user.click(within(failed).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("heading", { level: 2, name: /What are number bonds to ten\?/ })).toBeTruthy();
+  });
+
+  it("keeps a section fragment when it drops the question's origin from the address", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", `${lessonPath}?from=question#why`);
+    render(<App api={createFakeApi()} initialPath={`${lessonPath}?from=question#why`} />);
+    await screen.findByTestId("lesson-content");
+    expect(window.location.search).toBe("");
+    expect(window.location.hash).toBe("#why");
+  });
+});
+
 describe("visits that are not detours", () => {
   it("record nothing without a question, or for a lesson that does not list it (test 5)", async () => {
     window.localStorage.clear();

@@ -85,11 +85,19 @@ public static class ContentLoader
 
     /// <summary>
     /// The file names a lesson may serve from its assets/ folder (specs/003 data-model.md): regular files directly
-    /// inside, sorted ordinally; dotfiles are ignored; any other entry fails the load with its path.
+    /// inside, sorted ordinally; dotfiles are ignored; any other entry fails the load with its path. Links are refused,
+    /// the folder itself included: the asset endpoint streams these files, and a link would let a lesson expose a file
+    /// from anywhere on the server under a harmless name.
     /// </summary>
     private static IReadOnlyList<string> ListAssets(string folder, string root)
     {
-        if (!Directory.Exists(folder))
+        var folderInfo = new DirectoryInfo(folder);
+        if (folderInfo.LinkTarget is not null || (folderInfo.Exists && folderInfo.Attributes.HasFlag(FileAttributes.ReparsePoint)))
+        {
+            throw new ContentLoadException(Path.GetRelativePath(root, folder).Replace('\\', '/'), "assets/ may not be a link");
+        }
+
+        if (!folderInfo.Exists)
         {
             return [];
         }
@@ -104,6 +112,12 @@ public static class ContentLoader
             }
 
             var relative = Path.GetRelativePath(root, entry).Replace('\\', '/');
+            var info = new FileInfo(entry);
+            if (info.LinkTarget is not null || info.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new ContentLoadException(relative, "assets/ may not hold links");
+            }
+
             if (Directory.Exists(entry))
             {
                 throw new ContentLoadException(relative, "assets/ may only hold files, not folders");
