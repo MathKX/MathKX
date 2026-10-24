@@ -182,7 +182,7 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 - [ ] T058 Run the five quickstart scenarios by hand, correct any quoted wording in `specs/003-lesson-rendering/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time there (SC-008)
 - [ ] T059 Record the first contributor check (SC-007) as an open human validation item in the pull-request description: a contributor who has not seen the code edits a sentence, previews, and validates; findings recorded, not scored
 - [X] T060 [P] Extend `src/backend/scripts/smoke-published.sh` (run by the backend job and therefore before every deploy): from the published service started outside the checkout, `GET /api/lessons/number-bonds-to-ten/content/en` returns the lesson's Markdown and `GET /api/lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg` returns `image/svg+xml`, proving the deploy package carries the lesson files and assets
-- [ ] T061 After the first release (Phases 1–5) has deployed, run quickstart scenarios 1 and 3 against the production URL from the deploy job's `environment.url`, in both languages, and add the result to the walkthrough file of T057; record any difference from the local run
+- [X] T061 After the first release (Phases 1–5) has deployed, run quickstart scenarios 1 and 3 against the production URL from the deploy job's `environment.url`, in both languages, and add the result to the walkthrough file of T057; record any difference from the local run
 
 ---
 
