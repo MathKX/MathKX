@@ -261,4 +261,205 @@ public sealed class StepContractTests : IClassFixture<WebApplicationFactory<Prog
         var seed = await client.GetAsync("/api/instances/numbers.addition.within-10/1/01/steps/help/0");
         Assert.Equal(HttpStatusCode.BadRequest, seed.StatusCode);
     }
+
+    // specs/003 contracts/api.md, contract tests 2 and 3: lesson content and assets.
+
+    private const string Lesson = "/api/lessons/number-bonds-to-ten";
+
+    [Theory]
+    [InlineData("nb")]
+    [InlineData("en")]
+    public async Task Lesson_content_is_the_translation_as_authored(string language)
+    {
+        using var client = _factory.CreateClient();
+        var body = await client.GetStringAsync($"{Lesson}/content/{language}");
+        using var document = JsonDocument.Parse(body);
+        var root = document.RootElement;
+
+        Assert.Equal("number-bonds-to-ten", root.GetProperty("id").GetString());
+        Assert.Equal(1, root.GetProperty("version").GetInt32());
+        Assert.Equal(language, root.GetProperty("language").GetString());
+        var file = Path.Combine(RepositoryContentRoot(), "lessons", "number-bonds-to-ten", $"{language}.md");
+        Assert.Equal(File.ReadAllText(file), root.GetProperty("markdown").GetString());
+        Assert.Equal(body, await client.GetStringAsync($"{Lesson}/content/{language}"));
+    }
+
+    [Theory]
+    [InlineData("/api/lessons/no-such-lesson/content/en", "unknown-lesson")]
+    [InlineData(Lesson + "/content/de", "unknown-language")]
+    public async Task Unknown_lessons_and_languages_use_the_contract_codes(string path, string code)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(code, problem.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task An_asset_is_served_with_its_type_and_the_safety_headers()
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync($"{Lesson}/assets/ten-frame-3-7.svg");
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("image/svg+xml", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("nosniff", Assert.Single(response.Headers.GetValues("X-Content-Type-Options")));
+        Assert.Equal("default-src 'none'; style-src 'unsafe-inline'; sandbox", Assert.Single(response.Headers.GetValues("Content-Security-Policy")));
+        Assert.True(response.Headers.CacheControl?.NoCache);
+        var file = Path.Combine(RepositoryContentRoot(), "lessons", "number-bonds-to-ten", "assets", "ten-frame-3-7.svg");
+        Assert.Equal(File.ReadAllBytes(file), await response.Content.ReadAsByteArrayAsync());
+    }
+
+    [Theory]
+    [InlineData(Lesson + "/assets/..%2Flesson.json")]
+    [InlineData(Lesson + "/assets/lesson.json")]
+    [InlineData(Lesson + "/assets/ten-frame-3-7.SVG")]
+    [InlineData(Lesson + "/assets/missing.svg")]
+    [InlineData("/api/lessons/no-such-lesson/assets/ten-frame-3-7.svg")]
+    public async Task Anything_but_a_listed_asset_is_not_found(string path)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"practice\"", body, StringComparison.Ordinal);
+        if (body.Length > 0)
+        {
+            using var problem = JsonDocument.Parse(body);
+            Assert.Equal("unknown-asset", problem.RootElement.GetProperty("code").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task A_traversal_path_never_reaches_a_file_outside_assets()
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync($"{Lesson}/assets/../lesson.json");
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"practice\"", body, StringComparison.Ordinal);
+    }
+
+    // specs/003 contracts/api.md, contract test 1: the instance's lessons and their disclosure flags.
+
+    [Fact]
+    public async Task Every_pilot_instance_lists_the_lesson_with_the_recorded_disclosure()
+    {
+        var fixture = Path.Combine(Directory.GetParent(RepositoryContentRoot())!.FullName, "src", "backend", "MathKX.Domain.Tests", "Fixtures", "disclosure.number-bonds-to-ten.json");
+        using var table = JsonDocument.Parse(File.ReadAllText(fixture));
+        var disclosing = table.RootElement.GetProperty("disclosing").EnumerateArray()
+            .Select(e => (e.GetProperty("definition").GetString()!, e.GetProperty("a").GetInt32(), e.GetProperty("b").GetInt32()))
+            .ToHashSet();
+
+        using var client = _factory.CreateClient();
+        foreach (var (definition, pool) in new[] { ("numbers.addition.within-10", 45), ("numbers.addition.crossing-ten", 36) })
+        {
+            var seen = new HashSet<(int, int)>();
+            for (var seed = 0; seen.Count < pool && seed < 5000; seed++)
+            {
+                var body = await client.GetStringAsync($"/api/instances/{definition}/1/{seed}");
+                using var document = JsonDocument.Parse(body);
+                var root = document.RootElement;
+                var (a, b) = (root.GetProperty("a").GetInt32(), root.GetProperty("b").GetInt32());
+                seen.Add((a, b));
+
+                var lesson = Assert.Single(root.GetProperty("lessons").EnumerateArray());
+                Assert.Equal("number-bonds-to-ten", lesson.GetProperty("id").GetString());
+                Assert.Equal(disclosing.Contains((definition, a, b)), lesson.GetProperty("discloses").GetBoolean());
+                Assert.DoesNotContain("\"sum\"", body, StringComparison.Ordinal);
+                Assert.DoesNotContain("10 + 3", body, StringComparison.Ordinal);
+            }
+
+            Assert.Equal(pool, seen.Count);
+        }
+
+        using var fixedTask = JsonDocument.Parse(await client.GetStringAsync("/api/instances/numbers.addition.four-plus-four/1/-"));
+        Assert.Empty(fixedTask.RootElement.GetProperty("lessons").EnumerateArray());
+    }
+
+    // specs/003 contracts/api.md, contract tests 4 and 5: lesson visuals.
+
+    [Theory]
+    [InlineData("make-ten", 8, 5, "numbers.addition.crossing-ten", "explanation")]
+    [InlineData("groups", 4, 4, "numbers.addition.four-plus-four", "explanation")]
+    public async Task A_lesson_visual_steps_through_the_same_model_as_a_question_with_those_operands(string type, int a, int b, string definition, string kind)
+    {
+        using var client = _factory.CreateClient();
+        using var visual = JsonDocument.Parse(await client.GetStringAsync($"/api/visuals/{type}?a={a}&b={b}"));
+        var steps = visual.RootElement.GetProperty("steps").EnumerateArray().ToList();
+        Assert.Equal(type, visual.RootElement.GetProperty("type").GetString());
+        Assert.True(steps.Count >= 3);
+        Assert.True(steps[^1].GetProperty("reveals").GetBoolean());
+
+        // A question with the same operands: crossing-ten seed 100 is 5 + 8, so find 8 + 5 by walking seeds; the fixed task is 4 + 4.
+        var seed = definition.EndsWith("four-plus-four", StringComparison.Ordinal) ? "-" : await SeedFor(client, definition, a, b);
+        for (var index = 0; index < steps.Count; index++)
+        {
+            var step = await client.GetStringAsync($"/api/instances/{definition}/1/{seed}/steps/{kind}/{index}");
+            Assert.Equal(step, steps[index].GetRawText());
+        }
+    }
+
+    [Theory]
+    [InlineData("/api/visuals/groups?a=9&b=9")]
+    [InlineData("/api/visuals/make-ten?a=2&b=2")]
+    [InlineData("/api/visuals/make-ten?a=8")]
+    [InlineData("/api/visuals/make-ten?a=eight&b=5")]
+    [InlineData("/api/visuals/groups?a=0&b=4")]
+    public async Task Values_a_visual_cannot_show_are_unsupported(string path)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("unsupported-values", problem.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task An_unregistered_visual_is_unknown_and_the_explorer_has_eleven_states()
+    {
+        using var client = _factory.CreateClient();
+        var unknown = await client.GetAsync("/api/visuals/balance?a=1&b=2");
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        using var problem = JsonDocument.Parse(await unknown.Content.ReadAsStringAsync());
+        Assert.Equal("unknown-visual", problem.RootElement.GetProperty("code").GetString());
+
+        var body = await client.GetStringAsync("/api/visuals/ten-frame-explorer");
+        using var explorer = JsonDocument.Parse(body);
+        var states = explorer.RootElement.GetProperty("states").EnumerateArray().ToList();
+        Assert.Equal(11, states.Count);
+        Assert.All(states, s => Assert.Equal(10, s.GetProperty("filled").GetInt32() + s.GetProperty("partner").GetInt32()));
+        Assert.Equal(body, await client.GetStringAsync("/api/visuals/ten-frame-explorer"));
+    }
+
+    private static async Task<string> SeedFor(HttpClient client, string definition, int a, int b)
+    {
+        for (var seed = 0; seed < 5000; seed++)
+        {
+            using var document = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{definition}/1/{seed}"));
+            if (document.RootElement.GetProperty("a").GetInt32() == a && document.RootElement.GetProperty("b").GetInt32() == b)
+            {
+                return seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
+        throw new InvalidOperationException($"no seed gives {a} + {b} for {definition}");
+    }
+
+    private static string RepositoryContentRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir.FullName, "content");
+            if (Directory.Exists(Path.Combine(candidate, "registry")))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("content/ not found above the test assembly");
+    }
 }

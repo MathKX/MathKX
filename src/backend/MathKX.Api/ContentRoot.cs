@@ -1,5 +1,8 @@
 namespace MathKX.Api;
 
+/// <summary>The resolved content root, for the few endpoints that stream files the catalog listed (lesson assets).</summary>
+public sealed record ContentLocation(string Root);
+
 /// <summary>
 /// Where the service reads content/ from, in this order: explicit configuration (<c>MathKX:ContentRoot</c>),
 /// a <c>content/</c> folder beside the binaries (the published layout), then the repository checkout found

@@ -198,12 +198,13 @@ describe("responses are bound to the question they were requested for", () => {
 });
 
 describe("the lesson link", () => {
-  it("records lesson support when activated from the keyboard", async () => {
+  it("leads to the lesson from the keyboard, which records lesson support once it is shown (specs/003)", async () => {
     const { user } = await renderPractice();
     screen.getByTestId("to-lesson").focus();
     await user.keyboard("{Enter}");
     await screen.findByTestId("lesson-page");
-    expect(kindsOf(0)).toEqual(["lesson-opened", "ended"]);
+    await screen.findByTestId("lesson-content");
+    await waitFor(() => expect(kindsOf(0)).toEqual(["ended", "lesson-opened"]));
   });
 });
 

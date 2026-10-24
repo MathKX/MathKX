@@ -101,3 +101,9 @@ public sealed record LessonMetadata(
     Translations Translations);
 
 public sealed record LessonFrontMatter(string Title, string Objective);
+
+/// <summary>
+/// One translation of a lesson as authored: its file, full Markdown (front matter included), front matter, and the
+/// facts the disclosure rule reads (specs/003), all from the same snapshot so the notice and the shown lesson agree.
+/// </summary>
+public sealed record LessonTranslation(string Language, string File, string Markdown, LessonFrontMatter FrontMatter, MathKX.Domain.Lessons.LessonFacts Facts);

@@ -1,5 +1,8 @@
 // A deterministic in-memory PracticeApi for component tests. It mirrors the service's shapes; the
 // mathematics here exists only so tests can drive the screen, it is not the product's validator.
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Identity, InstanceDto, LadderEntry, LessonDetail, LessonSummary, PracticeApi, SkillDto, StepDto, StepKind, ValidationResponse } from "../src/api/types";
 
 export const LADDER: LadderEntry[] = [
@@ -26,9 +29,19 @@ export interface FakeOptions {
   pairs?: Record<string, [number, number]>;
   bySeed?: Record<string, [number, number]>;
   failValidate?: boolean;
+  /** Whether the pilot lesson shows the answer to an instance (the service's disclosure flag). Default: never. */
+  discloses?: (a: number, b: number) => boolean;
+  /** Leave `lessons` off instances, as instances stored before spec 003 were. */
+  omitLessons?: boolean;
 }
 
-type Method = "getInstance" | "getStep" | "validate";
+/** The repository's own lesson files, so component tests render the real lesson. */
+export function lessonMarkdown(lang: string): string {
+  // A path, not `new URL(…, import.meta.url)`: Vite would turn that into an asset import outside its root.
+  return readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../../content/lessons/number-bonds-to-ten", `${lang}.md`), "utf8");
+}
+
+type Method = "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -43,7 +56,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const pairs: Record<string, [number, number]> = { "numbers.addition.within-10": [4, 4], "numbers.addition.crossing-ten": [8, 5], ...options.pairs };
   const calls: string[] = [];
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getInstance: [], getStep: [], validate: [] };
+  const waiting: Record<Method, (() => void)[]> = { getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -64,6 +77,10 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       validator: { name: "integer-answer", version: 1 },
     };
     if (identity.seed !== undefined) dto.generator = { name: "addition-pair", version: 1 };
+    if (!options.omitLessons) {
+      const listed = LESSON.practice.some((p) => p.definition === identity.definitionId && p.version === identity.version);
+      dto.lessons = listed ? [{ id: LESSON.id, discloses: options.discloses?.(pair[0], pair[1]) ?? false }] : [];
+    }
     return dto;
   };
   const steps = (instance: InstanceDto, kind: StepKind): StepDto[] => {
@@ -144,6 +161,24 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       if (v === a + b) return { ...base, status: "correct", code: "correct", values: { a, b, v, sum: a + b } };
       if (v === a || v === b) return { ...base, status: "incorrect", code: "add.oneGroup", values: { a, b, v } };
       return { ...base, status: "incorrect", code: "add.generic", values: { a, b, v } };
+    },
+    getLessonContent: async (id, lang) => {
+      calls.push(`getLessonContent ${id} ${lang}`);
+      await gate("getLessonContent");
+      if (id !== LESSON.id) throw new Error("unknown-lesson");
+      return { id, version: LESSON.version, language: lang, markdown: lessonMarkdown(lang) };
+    },
+    getVisualSteps: async (type, a, b) => {
+      calls.push(`getVisualSteps ${type} ${a} ${b}`);
+      await gate("getVisualSteps");
+      const identity: Identity = { definitionId: type === "make-ten" ? "numbers.addition.crossing-ten" : "numbers.addition.within-10", version: 1 };
+      const instance = { ...instanceOf(identity), a, b, representations: { help: [type], explanation: [type] } };
+      return { type, a, b, steps: steps(instance, "explanation") };
+    },
+    getTenFrameExplorer: async () => {
+      calls.push("getTenFrameExplorer");
+      await gate("getTenFrameExplorer");
+      return { type: "ten-frame-explorer", states: Array.from({ length: 11 }, (_, filled) => ({ filled, partner: 10 - filled })) };
     },
   };
 }

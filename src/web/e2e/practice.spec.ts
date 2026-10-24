@@ -1,5 +1,5 @@
 // The seven end-to-end checks of specs/002 contracts/learner-app.md, against the real service and the built app.
-import { expect, test, type Page, type Response } from "@playwright/test";
+import { expect, test, type Page, type Request, type Response } from "@playwright/test";
 
 const LESSON = "/lessons/number-bonds-to-ten";
 const PRACTICE = "/practice/numbers.addition-within-20";
@@ -86,18 +86,22 @@ test.describe("practice flow", () => {
   });
 
   test("5. no unsolicited response carries the sum; a revealing step arrives only after the learner advances", async ({ page }) => {
-    const responses: { url: string; body: unknown; at: number }[] = [];
+    const responses: { url: string; body: unknown; at: number; sentAt: number }[] = [];
     const clicks: number[] = [];
+    const sent = new Map<Request, number>();
+    page.on("request", (request: Request) => void sent.set(request, Date.now()));
     page.on("response", async (response: Response) => {
       const url = response.url();
       if (!url.includes("/api/") || !(response.headers()["content-type"] ?? "").includes("json")) return;
+      const sentAt = sent.get(response.request()) ?? Date.now();
       try {
-        responses.push({ url, body: await response.json(), at: Date.now() });
+        responses.push({ url, body: await response.json(), at: Date.now(), sentAt });
       } catch {
         // not JSON
       }
     });
     await startPractice(page);
+    const questionShown = Date.now();
     const { a, b } = await operands(page);
     await page.getByTestId("toggle-help").click();
     await page.waitForTimeout(200);
@@ -118,8 +122,16 @@ test.describe("practice flow", () => {
       if (value && typeof value === "object") return Object.entries(value as Record<string, unknown>).some(([k, v]) => k === key || hasKey(v, key));
       return false;
     };
+    // The lesson read before this question existed (to press its practice entry) brings its own worked visual,
+    // whose last step shows that example's total (specs/003 contracts/api.md): lesson content, not this question's
+    // answer. Once the question is shown, no lesson content or visual may arrive at all in this flow.
+    const lessonContent = (url: string) => url.includes("/api/visuals/") || url.includes("/api/lessons/number-bonds-to-ten/content/");
     for (const r of responses) {
       const body = r.body as { status?: string; reveals?: boolean };
+      if (lessonContent(r.url)) {
+        expect(r.sentAt, `${r.url} was requested after the question was shown`).toBeLessThan(questionShown);
+        continue;
+      }
       const allowed = (r.url.includes("/validations") && body.status === "correct") || (r.url.includes("/steps/") && body.reveals === true);
       if (!allowed) expect(hasKey(r.body, "sum") || hasKey(r.body, "total") || hasKey(r.body, "countedAll"), r.url).toBe(false);
     }

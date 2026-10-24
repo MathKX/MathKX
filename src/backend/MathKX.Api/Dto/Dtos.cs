@@ -27,9 +27,10 @@ public sealed record InstanceDto(
     string Prompt,
     RepresentationsDto Representations,
     NamedVersionDto? Generator,
-    NamedVersionDto Validator)
+    NamedVersionDto Validator,
+    IReadOnlyList<LessonDisclosureDto> Lessons)
 {
-    public static InstanceDto From(Instance instance) => new(
+    public static InstanceDto From(Instance instance, IReadOnlyList<LessonDisclosureDto> lessons) => new(
         IdentityDto.From(instance.Identity),
         instance.Skill,
         instance.A,
@@ -37,8 +38,12 @@ public sealed record InstanceDto(
         instance.Prompt,
         new RepresentationsDto(instance.Representations.Help, instance.Representations.Explanation),
         instance.Generator is null ? null : NamedVersionDto.From(instance.Generator),
-        NamedVersionDto.From(instance.Validator));
+        NamedVersionDto.From(instance.Validator),
+        lessons);
 }
+
+/// <summary>A lesson that lists the instance's definition and whether it shows this instance's answer (specs/003); never the sum.</summary>
+public sealed record LessonDisclosureDto(string Id, bool Discloses);
 
 public sealed record ArtifactDto(string Kind, string OriginalText);
 
@@ -79,6 +84,14 @@ public sealed record LessonDto(
     IReadOnlyList<PracticeEntryDto> Practice,
     IReadOnlyList<string> Visuals,
     LocalizedDto Translations);
+
+public sealed record LessonContentDto(string Id, int Version, string Language, string Markdown);
+
+public sealed record VisualStepsDto(string Type, int A, int B, IReadOnlyList<StepDto> Steps);
+
+public sealed record TenFrameExplorerStateDto(int Filled, int Partner);
+
+public sealed record TenFrameExplorerDto(string Type, IReadOnlyList<TenFrameExplorerStateDto> States);
 
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 

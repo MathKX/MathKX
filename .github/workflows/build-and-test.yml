@@ -48,7 +48,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: src/web/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            src/web/package-lock.json
+
+      # The web tests import the validator's parser and grammar (tools/lib) to prove agreement (specs/003 R1).
+      - name: Install the content tooling
+        run: npm ci
+        working-directory: .
 
       - name: Install
         run: npm ci

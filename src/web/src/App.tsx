@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { PracticeApi } from "./api/types";
 import { translate } from "./i18n";
 import { Link, RouterProvider, matchRoute, useRouter } from "./router";
@@ -14,6 +15,10 @@ function Shell({ api }: { api?: PracticeApi }) {
   const { state } = useStore();
   const { path } = useRouter();
   const lang = state.language;
+  // The whole document follows the selected language, so MathML and the header are read in it (specs/003 R2).
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   const route = matchRoute(path);
   const lessonHref = state.skillId ? "/lessons/number-bonds-to-ten" : undefined;
   return (
@@ -30,7 +35,7 @@ function Shell({ api }: { api?: PracticeApi }) {
       </header>
       <main id="main" className="mkx-container" lang={lang} data-testid="app-root">
         {route.name === "lessons" ? <LessonListPage {...(api ? { api } : {})} /> : null}
-        {route.name === "lesson" ? <LessonPage id={route.id} {...(api ? { api } : {})} /> : null}
+        {route.name === "lesson" ? <LessonPage key={route.id} id={route.id} {...(api ? { api } : {})} /> : null}
         {route.name === "practice" ? <PracticePage skillId={route.skillId} {...(lessonHref ? { lessonHref } : {})} /> : null}
         {route.name === "record" ? <RecordPage /> : null}
         {route.name === "unknown" ? <LessonListPage {...(api ? { api } : {})} /> : null}

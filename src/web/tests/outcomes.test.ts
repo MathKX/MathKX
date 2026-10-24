@@ -64,6 +64,19 @@ describe("outcome derivation", () => {
     expect(derived.tags).toEqual(["visualAfter", "explainAfter"]);
   });
 
+  it("a lesson opened after the first correct answer is the lessonAfter tag, last in order (specs/003)", () => {
+    const derived = derive(with_(correct(), support("lesson-opened"), support("explanation-open"), support("visual-help-opened")));
+    expect(derived.outcome).toBe("correctFirst");
+    expect(derived.tags).toEqual(["visualAfter", "explainAfter", "lessonAfter"]);
+    expect(derive(with_(incorrect(), correct(), support("lesson-opened"))).outcome).toBe("correctAfterFeedback");
+  });
+
+  it("lesson events before the first correct answer keep spec 002's outcomes (specs/003 FR-013)", () => {
+    expect(derive(with_(support("lesson-opened"), correct()))).toMatchObject({ outcome: "correctWithHelp", tags: ["lessonBefore"] });
+    expect(derive(with_(support("lesson-reveal"), correct()))).toMatchObject({ outcome: "correctAfterExplanation", tags: ["revealLesson"] });
+    expect(derive(with_(support("visual-help-opened"), support("lesson-opened"), correct())).outcome).toBe("correctWithHelp");
+  });
+
   it("input guidance never produces after feedback", () => {
     expect(derive(with_(guidance(), correct())).outcome).toBe("correctFirst");
   });

@@ -24,11 +24,12 @@ export type Tag =
   | "revealHelp"
   | "revealLesson"
   | "visualAfter"
-  | "explainAfter";
+  | "explainAfter"
+  | "lessonAfter";
 
 const TAG_ORDER: Tag[] = [
   "feedbackBefore", "visualBefore", "lessonBefore", "explainPartBefore",
-  "revealExplanation", "revealCounting", "revealHelp", "revealLesson", "visualAfter", "explainAfter",
+  "revealExplanation", "revealCounting", "revealHelp", "revealLesson", "visualAfter", "explainAfter", "lessonAfter",
 ];
 
 type RevealSource = "explanation" | "counting" | "help" | "lesson";
@@ -80,7 +81,8 @@ export function derive(delivery: Delivery, options: { resumable?: boolean } = {}
           if (e.kind === "lesson-opened") lessonBefore = true;
           else explainPartBefore = true;
         }
-      } else if (isExplanation(e)) tags.add("explainAfter");
+      } else if (e.kind === "lesson-opened") tags.add("lessonAfter"); // added by spec 003
+      else if (isExplanation(e)) tags.add("explainAfter");
       else if (isVisual(e) || source === "counting" || source === "help") tags.add("visualAfter");
       continue;
     }

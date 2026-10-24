@@ -88,4 +88,116 @@ public sealed class ContentCatalogTests
         Assert.Equal("en.md", error.Path);
         Assert.Contains("objective", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Keeps_each_translation_and_the_lesson_assets()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+        const string id = "number-bonds-to-ten";
+        var folder = Path.Combine(RepositoryContent.Root, "lessons", id);
+
+        foreach (var language in new[] { "nb", "en" })
+        {
+            var translation = catalog.Translation(id, language);
+            Assert.Equal(language, translation.Language);
+            Assert.Equal($"{language}.md", translation.File);
+            Assert.Equal(File.ReadAllText(Path.Combine(folder, $"{language}.md")), translation.Markdown);
+            Assert.Equal(catalog.FrontMatter(id, language), translation.FrontMatter);
+        }
+
+        Assert.Equal(["ten-frame-3-7.svg"], catalog.Assets(id));
+    }
+
+    [Fact]
+    public void Finds_the_lessons_that_list_a_definition()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+
+        Assert.Equal(["number-bonds-to-ten"], catalog.LessonsForDefinition("numbers.addition.within-10@1").Select(l => l.Id));
+        Assert.Equal(["number-bonds-to-ten"], catalog.LessonsForDefinition("numbers.addition.crossing-ten@1").Select(l => l.Id));
+        Assert.Empty(catalog.LessonsForDefinition("numbers.addition.four-plus-four@1"));
+        Assert.Empty(catalog.LessonsForDefinition("numbers.addition.within-10@2"));
+    }
+
+    [Fact]
+    public void Ignores_dotfiles_in_assets()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", ".gitkeep"), "");
+
+        Assert.Equal(["ten-frame-3-7.svg"], ContentLoader.Load(content.Root).Assets("number-bonds-to-ten"));
+    }
+
+    [Theory]
+    [InlineData("bad name.svg")]
+    [InlineData("-dash.svg")]
+    public void Fails_fast_on_an_asset_name_outside_the_rule(string name)
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", name), "<svg/>");
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal($"lessons/number-bonds-to-ten/assets/{name}", error.Path);
+    }
+
+    [Fact]
+    public void Fails_fast_on_a_symlinked_asset()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        var outside = Path.Combine(content.Root, "outside-secret.txt");
+        File.WriteAllText(outside, "not lesson content");
+        var link = Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", "leak.svg");
+        if (!TryCreateLink(() => File.CreateSymbolicLink(link, outside)))
+        {
+            return; // this machine cannot create symbolic links (Windows without the privilege); CI on Linux runs it
+        }
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets/leak.svg", error.Path);
+        Assert.Contains("link", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Fails_fast_on_a_symlinked_assets_folder()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        var assets = Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets");
+        var elsewhere = Path.Combine(content.Root, "elsewhere");
+        Directory.Move(assets, elsewhere);
+        if (!TryCreateLink(() => Directory.CreateSymbolicLink(assets, elsewhere)))
+        {
+            return; // see above
+        }
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets", error.Path);
+    }
+
+    private static bool TryCreateLink(Action create)
+    {
+        try
+        {
+            create();
+            return true;
+        }
+        catch (Exception error) when (error is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    [Fact]
+    public void Fails_fast_on_a_folder_inside_assets()
+    {
+        using var content = new TempContent();
+        content.CopyRepositoryContent();
+        Directory.CreateDirectory(Path.Combine(content.Root, "lessons", "number-bonds-to-ten", "assets", "nested"));
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(content.Root));
+        Assert.Equal("lessons/number-bonds-to-ten/assets/nested", error.Path);
+    }
 }

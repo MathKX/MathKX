@@ -21,6 +21,14 @@ export interface InstanceDto {
   representations: { help: string[]; explanation: string[] };
   generator?: NamedVersion;
   validator: NamedVersion;
+  /** Lessons whose practice lists this definition, with whether each shows this instance's answer (specs/003).
+   * Absent on instances stored before spec 003; never carries the sum. */
+  lessons?: LessonDisclosure[];
+}
+
+export interface LessonDisclosure {
+  id: string;
+  discloses: boolean;
 }
 
 export type ValidationStatus = "correct" | "incorrect" | "invalid-response" | "partially-correct" | "review-needed";
@@ -71,6 +79,27 @@ export interface LessonDetail extends LessonSummary {
   translations: Localized;
 }
 
+/** A lesson translation as authored, front matter included (specs/003 contracts/api.md). */
+export interface LessonContentDto {
+  id: string;
+  version: number;
+  language: string;
+  markdown: string;
+}
+
+/** Steps for a lesson visual with authored values; the last step shows the total (lesson content, not an instance). */
+export interface VisualStepsDto {
+  type: string;
+  a: number;
+  b: number;
+  steps: StepDto[];
+}
+
+export interface TenFrameExplorerDto {
+  type: "ten-frame-explorer";
+  states: { filled: number; partner: number }[];
+}
+
 export interface LadderEntry {
   definition: string;
   version: number;
@@ -102,4 +131,7 @@ export interface PracticeApi {
   getInstance(definitionId: string, version: number, seed: string | null): Promise<InstanceDto>;
   getStep(identity: Identity, kind: StepKind, index: number): Promise<StepDto>;
   validate(identity: Identity, originalText: string, submissionId: string): Promise<ValidationResponse>;
+  getLessonContent(id: string, lang: string): Promise<LessonContentDto>;
+  getVisualSteps(type: string, a: number, b: number): Promise<VisualStepsDto>;
+  getTenFrameExplorer(): Promise<TenFrameExplorerDto>;
 }

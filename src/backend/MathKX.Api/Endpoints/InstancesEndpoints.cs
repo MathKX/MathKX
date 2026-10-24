@@ -1,4 +1,6 @@
 using MathKX.Api.Dto;
+using MathKX.Domain.Content;
+using MathKX.Domain.Lessons;
 using MathKX.Domain.Instances;
 using MathKX.Domain.Random;
 
@@ -15,7 +17,7 @@ public static class InstancesEndpoints
         return app;
     }
 
-    public static IResult Resolve(string definitionId, int version, string seed, InstanceResolver resolver)
+    public static IResult Resolve(string definitionId, int version, string seed, InstanceResolver resolver, ContentCatalog catalog)
     {
         if (!TryParseSeed(seed, out var parsed, out var problem))
         {
@@ -25,7 +27,7 @@ public static class InstancesEndpoints
         try
         {
             var instance = resolver.Resolve(new InstanceIdentity(definitionId, version, parsed));
-            return Results.Ok(InstanceDto.From(instance));
+            return Results.Ok(InstanceDto.From(instance, Lessons(catalog, instance)));
         }
         catch (UnknownDefinitionException error)
         {
@@ -36,6 +38,17 @@ public static class InstancesEndpoints
             return Problems.BadRequest("invalid-seed", error.Message);
         }
     }
+
+    /// <summary>
+    /// The lessons whose practice lists the instance's definition, each with the disclosure decision over both
+    /// translations (specs/003 contracts/disclosure.md). The decision is computed here, so the answer is never sent.
+    /// </summary>
+    private static List<LessonDisclosureDto> Lessons(ContentCatalog catalog, Instance instance) =>
+        catalog.LessonsForDefinition(instance.Identity.DefinitionKey)
+            .Select(lesson => new LessonDisclosureDto(
+                lesson.Id,
+                LessonDisclosure.For(catalog.Translations.Where(t => t.Key.LessonId == lesson.Id).Select(t => t.Value.Facts), instance).Discloses))
+            .ToList();
 
     public static bool TryParseSeed(string? text, out Seed? seed, out IResult? problem)
     {

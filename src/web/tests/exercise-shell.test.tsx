@@ -136,16 +136,16 @@ describe("the practice screen", () => {
     expect(seeds.every((s) => /^(0|[1-9][0-9]*)$/.test(s ?? ""))).toBe(true);
   });
 
-  it("records the lesson link as non-revealing support and resumes the question on return", async () => {
+  it("records a lesson without this answer as non-revealing support once shown, and resumes the question on return", async () => {
     const { user } = await renderPractice();
     await user.type(screen.getByTestId("answer"), "5");
     await user.click(screen.getByTestId("to-lesson"));
-    await screen.findByTestId("lesson-page");
+    await screen.findByTestId("lesson-content");
+    const kinds = () => JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}").value.deliveries[0].events.map((e: { kind?: string; type: string }) => e.kind ?? e.type);
+    await waitFor(() => expect(kinds()).toEqual(["ended", "lesson-opened"]));
     let stored = JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}");
-    const kinds = stored.value.deliveries[0].events.map((e: { kind?: string; type: string }) => e.kind ?? e.type);
-    expect(kinds).toEqual(["lesson-opened", "ended"]);
     expect(stored.value.resumable.draft).toBe("5");
-    await user.click(screen.getByTestId("practice-numbers.addition.within-10"));
+    await user.click(await screen.findByTestId("practice-numbers.addition.within-10"));
     await screen.findByTestId("prompt");
     expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("5");
     stored = JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}");

@@ -63,3 +63,15 @@ export function recordEvent(delivery: Delivery, event: Event): Delivery {
 }
 
 export const hasSubmission = (d: Delivery) => d.events.some((e) => e.type === "submission");
+
+export const hasCorrect = (d: Delivery) => d.events.some((e) => e.type === "submission" && e.status === "correct");
+
+/**
+ * The question a lesson visit can be a detour from (specs/003 contracts/detour.md "Terms"): the current delivery
+ * while it has no correct submission and was not skipped. Wider than `resumable`, which needs no submission at all.
+ */
+export function currentQuestion(deliveries: readonly Delivery[], currentDeliveryId: string | null): Delivery | null {
+  const d = currentDeliveryId ? deliveries.find((x) => x.id === currentDeliveryId) : undefined;
+  if (!d || hasCorrect(d) || d.events.some((e) => e.type === "skipped")) return null;
+  return d;
+}

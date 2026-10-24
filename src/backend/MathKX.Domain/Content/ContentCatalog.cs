@@ -12,7 +12,8 @@ public sealed class ContentCatalog
         IReadOnlyDictionary<string, Skill> skills,
         IReadOnlyDictionary<string, ExerciseDefinition> definitions,
         IReadOnlyDictionary<string, LessonMetadata> lessons,
-        IReadOnlyDictionary<(string LessonId, string Language), LessonFrontMatter> frontMatter)
+        IReadOnlyDictionary<(string LessonId, string Language), LessonTranslation> translations,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> assets)
     {
         Generators = generators;
         Validators = validators;
@@ -22,8 +23,12 @@ public sealed class ContentCatalog
         Skills = skills;
         Definitions = definitions;
         Lessons = lessons;
-        FrontMatters = frontMatter;
+        Translations = translations;
+        FrontMatters = translations.ToDictionary(t => t.Key, t => t.Value.FrontMatter);
+        _assets = assets;
     }
+
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _assets;
 
     /// <summary>Keyed by <c>name@version</c>.</summary>
     public IReadOnlyDictionary<string, GeneratorEntry> Generators { get; }
@@ -46,7 +51,24 @@ public sealed class ContentCatalog
 
     public IReadOnlyDictionary<(string LessonId, string Language), LessonFrontMatter> FrontMatters { get; }
 
+    public IReadOnlyDictionary<(string LessonId, string Language), LessonTranslation> Translations { get; }
+
     public LessonFrontMatter FrontMatter(string lessonId, string language) => FrontMatters[(lessonId, language)];
+
+    public LessonTranslation Translation(string lessonId, string language) => Translations[(lessonId, language)];
+
+    public bool TryGetTranslation(string lessonId, string language, out LessonTranslation translation) =>
+        Translations.TryGetValue((lessonId, language), out translation!);
+
+    /// <summary>File names in the lesson's assets/ folder, sorted ordinally; the only names the service serves.</summary>
+    public IReadOnlyList<string> Assets(string lessonId) => _assets.TryGetValue(lessonId, out var names) ? names : [];
+
+    /// <summary>Lessons whose practice entries list the definition key (<c>id@version</c>), ordered by lesson ID.</summary>
+    public IReadOnlyList<LessonMetadata> LessonsForDefinition(string definitionKey) =>
+        Lessons.Values
+            .Where(l => l.Practice.Any(p => p.Key == definitionKey))
+            .OrderBy(l => l.Id, StringComparer.Ordinal)
+            .ToList();
 
     public bool TryGetDefinition(string id, int version, out ExerciseDefinition definition) =>
         Definitions.TryGetValue($"{id}@{version}", out definition!);

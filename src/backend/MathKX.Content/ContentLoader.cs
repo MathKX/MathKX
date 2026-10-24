@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MathKX.Domain.Content;
 
 namespace MathKX.Content;
@@ -29,7 +30,8 @@ public static class ContentLoader
         var skills = new Dictionary<string, Skill>(StringComparer.Ordinal);
         var definitions = new Dictionary<string, ExerciseDefinition>(StringComparer.Ordinal);
         var lessons = new Dictionary<string, LessonMetadata>(StringComparer.Ordinal);
-        var frontMatter = new Dictionary<(string, string), LessonFrontMatter>();
+        var translations = new Dictionary<(string, string), LessonTranslation>();
+        var assets = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
 
         foreach (var file in EnumerateJson(root))
         {
@@ -60,8 +62,11 @@ public static class ContentLoader
                             throw new ContentLoadException(translationRelative, "translation file does not exist");
                         }
 
-                        frontMatter[(lesson.Id, language)] = FrontMatterReader.Read(File.ReadAllText(translation), translationRelative);
+                        var markdown = File.ReadAllText(translation);
+                        translations[(lesson.Id, language)] = new LessonTranslation(language, name, markdown, FrontMatterReader.Read(markdown, translationRelative), LessonFactsReader.Read(markdown));
                     }
+
+                    assets[lesson.Id] = ListAssets(Path.Combine(folder, "assets"), root);
 
                     break;
                 case "exercise.schema.json":
@@ -73,7 +78,61 @@ public static class ContentLoader
 
         CheckReferences(definitions, generators, validators, representations, codes, root);
 
-        return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, frontMatter);
+        return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, translations, assets);
+    }
+
+    private static readonly Regex AssetName = new("^[A-Za-z0-9][A-Za-z0-9._-]*$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The file names a lesson may serve from its assets/ folder (specs/003 data-model.md): regular files directly
+    /// inside, sorted ordinally; dotfiles are ignored; any other entry fails the load with its path. Links are refused,
+    /// the folder itself included: the asset endpoint streams these files, and a link would let a lesson expose a file
+    /// from anywhere on the server under a harmless name.
+    /// </summary>
+    private static IReadOnlyList<string> ListAssets(string folder, string root)
+    {
+        var folderInfo = new DirectoryInfo(folder);
+        if (folderInfo.LinkTarget is not null || (folderInfo.Exists && folderInfo.Attributes.HasFlag(FileAttributes.ReparsePoint)))
+        {
+            throw new ContentLoadException(Path.GetRelativePath(root, folder).Replace('\\', '/'), "assets/ may not be a link");
+        }
+
+        if (!folderInfo.Exists)
+        {
+            return [];
+        }
+
+        var names = new List<string>();
+        foreach (var entry in Directory.EnumerateFileSystemEntries(folder))
+        {
+            var name = Path.GetFileName(entry);
+            if (name.StartsWith('.'))
+            {
+                continue;
+            }
+
+            var relative = Path.GetRelativePath(root, entry).Replace('\\', '/');
+            var info = new FileInfo(entry);
+            if (info.LinkTarget is not null || info.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new ContentLoadException(relative, "assets/ may not hold links");
+            }
+
+            if (Directory.Exists(entry))
+            {
+                throw new ContentLoadException(relative, "assets/ may only hold files, not folders");
+            }
+
+            if (!AssetName.IsMatch(name))
+            {
+                throw new ContentLoadException(relative, "asset names must match ^[A-Za-z0-9][A-Za-z0-9._-]*$");
+            }
+
+            names.Add(name);
+        }
+
+        names.Sort(StringComparer.Ordinal);
+        return names;
     }
 
     private static IEnumerable<string> EnumerateJson(string root)

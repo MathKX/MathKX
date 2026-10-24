@@ -17,7 +17,60 @@ public static class ContentEndpoints
             catalog.Skills.TryGetValue(id, out var skill)
                 ? Results.Ok(new SkillDto(skill.Id, skill.Prerequisites, (skill.Ladder ?? []).Select(e => new LadderEntryDto(e.Definition, e.Version, new LocalizedDto(e.Description.Nb, e.Description.En))).ToList()))
                 : Problems.NotFound("unknown-skill", $"Skill {id} is not defined."));
+        app.MapGet("/api/lessons/{id}/content/{lang}", LessonContent);
+        app.MapGet("/api/lessons/{id}/assets/{name}", LessonAsset);
         return app;
+    }
+
+    /// <summary>A translation's Markdown exactly as loaded (specs/003 contracts/api.md); the app requests it only with an open gate.</summary>
+    public static IResult LessonContent(string id, string lang, ContentCatalog catalog)
+    {
+        if (!catalog.Lessons.TryGetValue(id, out var lesson))
+        {
+            return Problems.NotFound("unknown-lesson", $"Lesson {id} is not defined.");
+        }
+
+        return catalog.TryGetTranslation(id, lang, out var translation)
+            ? Results.Ok(new LessonContentDto(lesson.Id, lesson.Version, translation.Language, translation.Markdown))
+            : Problems.NotFound("unknown-language", $"Lesson {id} has no {lang} translation.");
+    }
+
+    private static readonly Dictionary<string, string> AssetTypes = new(StringComparer.Ordinal)
+    {
+        [".svg"] = "image/svg+xml",
+        [".png"] = "image/png",
+        [".jpg"] = "image/jpeg",
+        [".jpeg"] = "image/jpeg",
+        [".webp"] = "image/webp",
+    };
+
+    /// <summary>
+    /// One file of a lesson's assets/ folder, by a name the snapshot listed at startup and an allowlisted extension;
+    /// anything else is unknown-asset, so no path from the request ever reaches the file system unchecked.
+    /// </summary>
+    public static IResult LessonAsset(string id, string name, ContentCatalog catalog, ContentLocation location, HttpResponse response)
+    {
+        if (!catalog.Lessons.ContainsKey(id) || !catalog.Assets(id).Contains(name, StringComparer.Ordinal) || !AssetTypes.TryGetValue(Path.GetExtension(name), out var type))
+        {
+            return Problems.NotFound("unknown-asset", $"Lesson {id} has no asset {name}.");
+        }
+
+        // The loader refused links; check again at request time in case the files changed on disk since startup.
+        var folder = Path.GetFullPath(Path.Combine(location.Root, "lessons", id, "assets"));
+        var file = new FileInfo(Path.Combine(folder, name));
+        if (!file.Exists
+            || file.LinkTarget is not null
+            || file.Attributes.HasFlag(FileAttributes.ReparsePoint)
+            || new DirectoryInfo(folder).LinkTarget is not null
+            || !string.Equals(Path.GetDirectoryName(file.FullName), folder, StringComparison.Ordinal))
+        {
+            return Problems.NotFound("unknown-asset", $"Lesson {id} has no asset {name}.");
+        }
+
+        response.Headers.XContentTypeOptions = "nosniff";
+        response.Headers.ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+        response.Headers.CacheControl = "no-cache";
+        return Results.File(file.FullName, type);
     }
 
     private static LessonSummaryDto Summary(ContentCatalog catalog, LessonMetadata lesson) => new(

@@ -768,3 +768,20 @@ test("accepts a directive inside a list item and a longer closing fence", async 
   await f.lesson("my-lesson", { nb: mutate(NB), en: mutate(EN) });
   expectPass(f.run());
 });
+
+// ---------------------------------------------------------------------------------------------
+// specs/003: the lesson-facts agreement fixture through the validator's parser. The C# reader
+// (MathKX.Content.LessonFactsReader) is tested against the same file, so the two cannot drift apart.
+
+test("extracts the lesson-facts fixture as recorded", async () => {
+  const { parseLessonMarkdown } = await import("./lib/markdown.mjs");
+  const fixture = JSON.parse(await readFile(path.join(repoRoot, "specs/003-lesson-rendering/contracts/lesson-facts.fixture.json"), "utf8"));
+  assert.ok(fixture.cases.length >= 9);
+  for (const c of fixture.cases) {
+    const parsed = parseLessonMarkdown("---\ntitle: t\nobjective: o\n---\n\n" + c.markdown);
+    const visuals = parsed.directives
+      .filter((d) => d.name === "visual")
+      .map((d) => ({ type: d.attributes.type, attributes: Object.fromEntries(Object.entries(d.attributes).filter(([k]) => k !== "type")) }));
+    assert.deepEqual({ expressions: parsed.math.map((m) => m.value), visuals }, c.expected, c.name);
+  }
+});

@@ -102,4 +102,43 @@
   .mkx-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0.25rem 0 0; padding: 0; }
   .mkx-tag { font-size: 0.85rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--ds-color-neutral-surface-hover); }
   .mkx-practice-entries { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+
+  /* Lesson (specs/003) */
+  .mkx-lesson-body > * + * { margin-top: 1rem; }
+  .mkx-lesson-body h2, .mkx-lesson-body h3 { scroll-margin-top: 1rem; font-weight: 600; line-height: 1.3; }
+  .mkx-lesson-body h2 { font-size: 1.5rem; margin-top: 2rem; }
+  .mkx-lesson-body h3 { font-size: 1.2rem; }
+  /* Authored lists only (they carry no class); component lists such as the ten-frame keep their own styles. */
+  .mkx-lesson-body ol:not([class]), .mkx-lesson-body ul:not([class]) { padding-inline-start: 1.5rem; }
+  .mkx-lesson-body ol:not([class]) { list-style: decimal; }
+  .mkx-lesson-body ul:not([class]) { list-style: disc; }
+  .mkx-lesson-body :is(ol, ul):not([class]) > li + li { margin-top: 0.35rem; }
+  .mkx-section-link { margin-inline-start: 0.35rem; text-decoration: none; color: var(--ds-color-neutral-text-subtle); opacity: 0.6; }
+  .mkx-section-link:hover, .mkx-section-link:focus-visible { opacity: 1; }
+  .mkx-lesson-image { max-width: 100%; height: auto; }
+  .mkx-math-display { overflow-x: auto; }
+  .mkx-math-display math { font-size: 1.15em; }
+  .mkx-example { padding: 1rem; border: 2px solid var(--ds-color-accent-border-default, #6b8fd6); border-inline-start-width: 0.4rem; border-radius: 0.75rem; }
+  .mkx-example > * + * { margin-top: 0.75rem; }
+  .mkx-table-scroll { overflow-x: auto; max-width: 100%; }
+  .mkx-table-scroll:focus-visible { outline: 2px solid var(--ds-color-accent-border-strong, #2a5db0); outline-offset: 2px; }
+  .mkx-table-scroll table { border-collapse: collapse; }
+  .mkx-table-scroll th, .mkx-table-scroll td { padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--ds-color-neutral-border-subtle); text-align: start; }
+  .mkx-table-scroll th { font-weight: 600; border-bottom-width: 2px; }
+  .mkx-align-center { text-align: center; }
+  .mkx-align-right { text-align: end; }
+  .mkx-placeholder { padding: 0.5rem 0.75rem; border: 1px dashed var(--ds-color-neutral-border-default); border-radius: 0.5rem; }
+  .mkx-panel-accent { display: grid; gap: 0.75rem; padding: 1rem; border: 2px solid var(--ds-color-accent-border-default, #6b8fd6); border-radius: 0.75rem; background: var(--ds-color-accent-surface-default, transparent); }
+  .mkx-gate h2:focus { outline: none; }
+  .mkx-return { grid-template-columns: 1fr auto; align-items: center; margin-bottom: 1rem; }
+  .mkx-return__link { display: inline-flex; align-items: center; font-weight: 600; }
+  .mkx-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .mkx-explorer { display: grid; gap: 0.75rem; margin: 0; }
+  .mkx-explorer .mkx-ten-frame { justify-self: start; }
+  .mkx-explorer__choices { display: flex; flex-wrap: wrap; gap: 0.35rem; border: 0; padding: 0; margin: 0; }
+  .mkx-explorer__choices legend { margin-bottom: 0.35rem; font-weight: 600; }
+  .mkx-explorer__choice { position: relative; display: inline-grid; place-items: center; border: 1px solid var(--ds-color-neutral-border-default); border-radius: 0.5rem; cursor: pointer; }
+  .mkx-explorer__choice input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .mkx-explorer__choice:has(input:checked) { background: var(--ds-color-accent-surface-default); font-weight: 700; border-color: var(--ds-color-accent-border-strong, #2a5db0); }
+  .mkx-explorer__choice:has(input:focus-visible) { outline: 2px solid var(--ds-color-accent-border-strong, #2a5db0); outline-offset: 2px; }
 }

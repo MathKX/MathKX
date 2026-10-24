@@ -1,20 +1,57 @@
-// The lesson page in this feature: title and objective from the front matter for the active language and
-// the practice entries from lesson.json. The Markdown body arrives with spec 003.
-import { useEffect, useState } from "react";
+// The lesson page (specs/003): title and objective from the lesson metadata, then the translation's Markdown
+// rendered by the lesson chunk, with the practice entries where the lesson places them. While the current
+// question is unanswered and this lesson practises its definition, the visit is a detour: a lesson that shows the
+// question's answer stays behind the notice (and is not even requested) until the learner chooses, the visit is
+// recorded once the lesson is shown, and "Back to your question" is offered (contracts/detour.md).
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { LessonDetail, PracticeApi, SkillDto } from "../api/types";
 import { practiceApi } from "../api/client";
-import { translate } from "../i18n";
+import { translate, type Lang } from "../i18n";
 import { useRouter } from "../router";
 import { useStore } from "../state/store";
+import { currentQuestion } from "../state/observations";
+import { PracticeEntry } from "../lesson/PracticeEntry";
+import { Placeholder } from "../lesson/Placeholder";
+import type { LessonComponents } from "../lesson/render";
+import { LessonGate } from "../components/LessonGate";
+import { ReturnBanner } from "../components/ReturnBanner";
+import { StepVisual } from "../components/math/StepVisual";
+import { TenFrameExplorer } from "../components/math/TenFrameExplorer";
+
+const LessonView = lazy(() => import("../lesson/LessonView"));
+
+/** A visit to this lesson, decided once when the page has what it needs (contracts/detour.md "Terms"). */
+interface Visit {
+  deliveryId: string | null;
+  detour: boolean;
+  discloses: boolean;
+  fromQuestion: boolean;
+  gateOpen: boolean;
+  question: { a: number; b: number; prompt: string; hasHelp: boolean } | null;
+}
 
 export function LessonPage({ id, api = practiceApi }: { id: string; api?: PracticeApi }) {
-  const { state, startPractice } = useStore();
-  const { navigate } = useRouter();
+  const store = useStore();
+  const { state } = store;
+  const { path, search, navigate, replace } = useRouter();
   const lang = state.language;
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
   const [skills, setSkills] = useState<Record<string, SkillDto>>({});
   const [failed, setFailed] = useState(false);
+  const [contents, setContents] = useState<Partial<Record<Lang, string>>>({});
+  const [contentFailed, setContentFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [visit, setVisit] = useState<Visit | null>(null);
+  const [lessonsCheck, setLessonsCheck] = useState<"none" | "pending" | "done" | "failed">("none");
+  const [fromQuestion] = useState(() => new URLSearchParams(search).get("from") === "question");
+  const recorded = useRef(false);
+
+  // The origin is read once; dropping it means a reload or a later history visit is not a visit from the question.
+  useEffect(() => {
+    // Keep a section fragment (#why) when dropping the query, so a direct section link still lands there.
+    if (new URLSearchParams(search).has("from")) replace(`${path}${window.location.hash}`);
+  }, [path, search, replace]);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,40 +73,130 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
     };
   }, [api, id]);
 
-  if (failed) return <Paragraph>{translate(lang, "lesson.notFound")}</Paragraph>;
-  if (!lesson) return <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
+  // Decide the visit once, from the store as it is now.
+  useEffect(() => {
+    if (!lesson || visit) return;
+    const question = currentQuestion(state.deliveries, state.currentDeliveryId);
+    const listed = Boolean(question && lesson.practice.some((p) => p.definition === question.instance.definitionId && p.version === question.instance.version));
+    if (listed && !state.instance?.lessons && lessonsCheck !== "done" && lessonsCheck !== "failed") {
+      if (lessonsCheck === "none") {
+        setLessonsCheck("pending");
+        void store.ensureInstanceLessons().then((ok) => setLessonsCheck(ok ? "done" : "failed"));
+      }
+      return;
+    }
+    const entry = state.instance?.lessons?.find((l) => l.id === lesson.id);
+    // Without a decision from the service, keep the gate closed: an unrecorded reveal is worse than one more click.
+    const discloses = listed && (entry ? entry.discloses : lessonsCheck === "failed");
+    const instance = state.instance;
+    setVisit({
+      deliveryId: state.currentDeliveryId,
+      detour: listed,
+      discloses,
+      fromQuestion,
+      gateOpen: !discloses,
+      question: listed && instance ? { a: instance.a, b: instance.b, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
+    });
+  }, [lesson, visit, state, lessonsCheck, fromQuestion, store]);
 
+  const gateOpen = visit?.gateOpen ?? false;
+  const cached = contents[lang];
+  useEffect(() => {
+    if (!gateOpen || cached !== undefined) return;
+    let cancelled = false;
+    setContentFailed(false);
+    api
+      .getLessonContent(id, lang)
+      .then((content) => {
+        if (!cancelled) setContents((prev) => ({ ...prev, [lang]: content.markdown }));
+      })
+      .catch(() => {
+        if (!cancelled) setContentFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, id, lang, cached, attempt, gateOpen]);
+
+  // While the selected language loads, keep showing the other one, so the section can be restored after.
+  const shown: { lang: Lang; markdown: string } | null = useMemo(() => {
+    if (cached !== undefined) return { lang, markdown: cached };
+    const other = (Object.entries(contents) as [Lang, string][])[0];
+    return other ? { lang: other[0], markdown: other[1] } : null;
+  }, [contents, lang, cached]);
+
+  const onShown = useCallback(() => {
+    if (!visit || recorded.current) return;
+    recorded.current = true;
+    store.lessonShown({ deliveryId: visit.deliveryId, detour: visit.detour, discloses: visit.discloses, fromQuestion: visit.fromQuestion });
+  }, [visit, store]);
+
+  const practiceEntry = useCallback(
+    (attributes: Record<string, string>, key: string) => {
+      const entry = lesson?.practice.find((p) => p.definition === attributes.definition && String(p.version) === attributes.version);
+      if (!entry) return <Placeholder key={key} lang={lang} />;
+      const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
+      return <PracticeEntry key={key} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
+    },
+    [lesson, skills, lang],
+  );
+  // Visuals load their models only here, inside the rendered lesson, so nothing is requested behind the notice.
+  const visual = useCallback(
+    (attributes: Record<string, string>, key: string) => {
+      const n = (name: string) => Number.parseInt(attributes[name] ?? "", 10);
+      switch (attributes.type) {
+        case "ten-frame-explorer":
+          return <TenFrameExplorer key={key} start={Number.isNaN(n("start")) ? 0 : n("start")} lang={lang} api={api} />;
+        case "make-ten":
+        case "groups":
+          return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <StepVisual key={key} type={attributes.type} a={n("a")} b={n("b")} lang={lang} api={api} />;
+        default:
+          return <Placeholder key={key} lang={lang} />;
+      }
+    },
+    [api, lang],
+  );
+  const components: LessonComponents = useMemo(() => ({ visual, practice: practiceEntry }), [visual, practiceEntry]);
+
+  if (failed) return <Paragraph>{translate(lang, "lesson.notFound")}</Paragraph>;
+  if (!lesson || !visit) return <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
+
+  const practiceHref = `/practice/${encodeURIComponent(state.skillId ?? "")}`;
+  const loading = <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
   return (
-    <article className="mkx-prose" data-testid="lesson-page">
+    <article className="mkx-prose mkx-lesson" data-testid="lesson-page">
+      {visit.detour && visit.question && state.skillId ? <ReturnBanner a={visit.question.a} b={visit.question.b} skillId={state.skillId} lang={lang} /> : null}
       <Heading level={1} data-size="lg">
         {lesson.titles[lang]}
       </Heading>
       <Paragraph data-size="lg">{lesson.objectives[lang]}</Paragraph>
-      <Paragraph data-size="sm">{translate(lang, "lesson.bodyLater")}</Paragraph>
-      <Heading level={2} data-size="md">
-        {translate(lang, "lesson.practiceHeading")}
-      </Heading>
-      <ul className="mkx-practice-entries">
-        {lesson.practice.map((entry) => {
-          const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
-          const description = ladder?.description[lang] ?? entry.definition;
-          return (
-            <li key={`${entry.definition}@${entry.version}`}>
-              <Button
-                variant="primary"
-                data-size="md"
-                className="mkx-target"
-                data-testid={`practice-${entry.definition}`}
-                onClick={() => {
-                  void startPractice(entry.skill, { definition: entry.definition, version: entry.version }).then(() => navigate(`/practice/${encodeURIComponent(entry.skill)}`));
-                }}
-              >
-                {translate(lang, "lesson.practise", { description })}
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+      {!visit.gateOpen && visit.question ? (
+        <LessonGate
+          prompt={visit.question.prompt}
+          hasHelp={visit.question.hasHelp}
+          lang={lang}
+          onOpen={() => setVisit({ ...visit, gateOpen: true })}
+          onHelp={() => {
+            store.showHelpInstead();
+            navigate(practiceHref);
+          }}
+          onCancel={() => navigate(practiceHref)}
+        />
+      ) : contentFailed && cached === undefined ? (
+        // The selected language failed: say so, even when another language is cached, rather than keep showing it.
+        <div role="alert" className="mkx-placeholder" data-testid="lesson-content-failed">
+          <Paragraph>{translate(lang, "lesson.contentFailed")}</Paragraph>
+          <Button variant="secondary" data-size="md" className="mkx-target" onClick={() => setAttempt((n) => n + 1)}>
+            {translate(lang, "lesson.retry")}
+          </Button>
+        </div>
+      ) : shown ? (
+        <Suspense fallback={loading}>
+          <LessonView lessonId={lesson.id} lang={shown.lang} markdown={shown.markdown} components={components} onShown={onShown} />
+        </Suspense>
+      ) : (
+        loading
+      )}
     </article>
   );
 }
