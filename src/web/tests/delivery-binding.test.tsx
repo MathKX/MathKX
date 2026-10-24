@@ -124,6 +124,65 @@ describe("responses are bound to the question they were requested for", () => {
     expect(kindsOf(1)).toEqual([]);
   });
 
+  it("does not record a reveal whose panel was closed before it arrived", async () => {
+    const api = createFakeApi();
+    const { user } = await renderPractice(api);
+    await user.click(screen.getByTestId("toggle-help"));
+    for (let i = 0; i < 3; i++) await user.click(screen.getByTestId("help-next"));
+    await waitFor(() => expect(kindsOf(0).filter((k) => k === "help-step")).toHaveLength(3));
+    api.hold("getStep");
+    await user.click(screen.getByTestId("help-next")); // the revealing step
+    await user.click(screen.getByTestId("toggle-help")); // closed before it arrives
+    api.release("getStep");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(kindsOf(0)).not.toContain("counting-complete");
+    expect(kindsOf(0).filter((k) => k === "help-step")).toHaveLength(3);
+
+    await user.click(screen.getByTestId("toggle-help")); // reopened: still at the last presented step
+    expect(screen.queryByTestId("help-revealed")).toBeNull();
+    expect(screen.getByTestId("help-step-text").textContent).toContain("Steg 3 av 4");
+
+    await user.type(screen.getByTestId("answer"), "8");
+    await user.click(screen.getByTestId("check"));
+    await screen.findByTestId("result");
+    await user.click(screen.getByText("Mitt arbeid"));
+    const items = await screen.findAllByTestId("record-item");
+    expect(items[0]?.getAttribute("data-outcome")).toBe("correctWithVisualHelp");
+  });
+
+  it("does not record a reveal that arrives after the learner left the practice view", async () => {
+    const api = createFakeApi();
+    const { user } = await renderPractice(api);
+    await user.click(screen.getByTestId("toggle-help"));
+    for (let i = 0; i < 3; i++) await user.click(screen.getByTestId("help-next"));
+    await waitFor(() => expect(kindsOf(0).filter((k) => k === "help-step")).toHaveLength(3));
+    api.hold("getStep");
+    await user.click(screen.getByTestId("help-next"));
+    await user.click(screen.getByText("Mitt arbeid"));
+    await screen.findAllByTestId("record-item");
+    api.release("getStep");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(kindsOf(0)).not.toContain("counting-complete");
+    expect(kindsOf(0).filter((k) => k === "help-step")).toHaveLength(3);
+    expect(kindsOf(0).at(-1)).toBe("ended");
+  });
+
+  it("does not record an explanation step whose panel was closed before it arrived", async () => {
+    const api = createFakeApi();
+    const { user } = await renderPractice(api);
+    await user.type(screen.getByTestId("answer"), "3");
+    await user.click(screen.getByTestId("check"));
+    await screen.findByTestId("result");
+    await user.click(screen.getByTestId("toggle-explanation"));
+    api.hold("getStep");
+    await user.click(screen.getByTestId("explanation-next"));
+    await user.click(screen.getByTestId("toggle-explanation"));
+    api.release("getStep");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const supportKinds = stored().deliveries[0].events.filter((e: StoredEvent) => e.type === "support").map((e: StoredEvent) => e.kind);
+    expect(supportKinds).toEqual(["explanation-open"]);
+  });
+
   it("lets only the most recent question request become the current question", async () => {
     const api = createFakeApi();
     const { user } = await renderPractice(api);

@@ -49,6 +49,8 @@ export interface State extends PersistedState {
   checking: boolean;
   notice: { key: string; params?: Record<string, string | number> } | null;
   loadError: boolean;
+  /** The practice view is mounted. A step is presented, and so recorded, only while it is and its panel is open. */
+  presenting: boolean;
 }
 
 const initialPersisted: PersistedState = {
@@ -89,6 +91,7 @@ type Action =
   | { type: "pending"; pending: PendingChange | null }
   | { type: "notice"; notice: State["notice"] }
   | { type: "loadError"; failed: boolean }
+  | { type: "present" }
   | { type: "end" }
   | { type: "clear" };
 
@@ -160,7 +163,8 @@ function reducer(state: State, action: Action): State {
     case "help":
       return { ...state, helpOpen: action.open };
     case "helpStep": {
-      if (!isCurrent(state, action.deliveryId)) return state; // never presented: nothing shown, nothing recorded
+      // Not presented (the learner moved on, closed the panel, or left the view): nothing shown, nothing recorded.
+      if (!isCurrent(state, action.deliveryId) || !state.presenting || !state.helpOpen) return state;
       const { step } = action;
       const events: Event[] = [{ type: "support", kind: "help-step", step: step.index, reveals: step.reveals }];
       if (step.reveals && step.representation === "groups") events.push({ type: "support", kind: "counting-complete" });
@@ -170,7 +174,7 @@ function reducer(state: State, action: Action): State {
     case "explanation":
       return { ...state, explanationOpen: action.open };
     case "explanationStep": {
-      if (!isCurrent(state, action.deliveryId)) return state;
+      if (!isCurrent(state, action.deliveryId) || !state.presenting || !state.explanationOpen) return state;
       const { step } = action;
       const recorded = updateCurrent(state, (d) => recordEvent(d, { type: "support", kind: "explanation-step", step: step.index, reveals: step.reveals }));
       return { ...recorded, explanationSteps: [...state.explanationSteps.slice(0, step.index), step], explanationStep: step.index };
@@ -181,14 +185,16 @@ function reducer(state: State, action: Action): State {
       return { ...state, notice: action.notice };
     case "loadError":
       return { ...state, loadError: action.failed };
+    case "present":
+      return state.presenting ? state : { ...state, presenting: true };
     case "end": {
-      if (!state.currentDeliveryId || !state.instance) return state;
+      if (!state.currentDeliveryId || !state.instance) return { ...state, presenting: false };
       const current = state.deliveries.find((d) => d.id === state.currentDeliveryId);
       const unanswered = current ? !hasSubmission(current) : false;
       const resumable: Resumable | null = unanswered
         ? { deliveryId: state.currentDeliveryId, draft: state.draft, helpOpen: state.helpOpen, helpStep: state.helpStep, explanationOpen: state.explanationOpen, explanationStep: state.explanationStep }
         : null;
-      return { ...updateCurrent(state, (d) => recordEvent(d, { type: "ended" })), resumable };
+      return { ...updateCurrent(state, (d) => recordEvent(d, { type: "ended" })), resumable, presenting: false };
     }
     case "clear":
       return { ...state, ...initialPersisted, language: state.language };
@@ -224,7 +230,7 @@ export interface StoreProviderProps {
 }
 
 const persistedOf = (s: State): PersistedState => {
-  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, ...persisted } = s;
+  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, presenting: _presenting, ...persisted } = s;
   return persisted;
 };
 
@@ -232,7 +238,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const store = useMemo(() => storage ?? createStorage<PersistedState>(), [storage]);
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
-    return { ...initialPersisted, ...(loaded.value ?? {}), kept: loaded.kept, checking: false, notice: null, loadError: false };
+    return { ...initialPersisted, ...(loaded.value ?? {}), kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
   });
   const latest = useRef(state);
   latest.current = state;
@@ -301,6 +307,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       state,
       setLanguage: (language) => dispatch({ type: "language", language }),
       async startPractice(skillId, preferred) {
+        dispatch({ type: "present" }); // the practice view is mounted (its unmount dispatches "end")
         const current = latest.current;
         // An explicitly chosen variation (a lesson's practice button) that differs from the one in progress or
         // the one that would be resumed replaces it; the practice route itself passes no preference and resumes.
