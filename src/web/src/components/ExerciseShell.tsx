@@ -80,7 +80,7 @@ export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined 
         ) : null}
       </div>
 
-      <div ref={resultRef} tabIndex={-1} className="mkx-result">
+      <div ref={resultRef} tabIndex={-1} className="mkx-result" data-testid="result-region">
         {state.result ? <Feedback result={state.result} lang={lang} /> : null}
         {state.notice && state.notice.key === "practice.unreachable" ? (
           <p role="alert" data-testid="notice">
