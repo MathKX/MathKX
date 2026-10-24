@@ -41,6 +41,8 @@ export interface Delivery {
   provenance: "guest";
   startedAt: string;
   events: Event[];
+  /** The lesson whose practice entry started this practice run (specs/003); navigation context, never evidence. */
+  originLessonId?: string;
 }
 
 export const identityOf = (d: Delivery): Identity => {

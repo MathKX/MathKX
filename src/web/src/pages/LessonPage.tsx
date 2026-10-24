@@ -136,7 +136,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       const entry = lesson?.practice.find((p) => p.definition === attributes.definition && String(p.version) === attributes.version);
       if (!entry) return <Placeholder key={key} lang={lang} />;
       const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
-      return <PracticeEntry key={key} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
+      return <PracticeEntry key={key} lessonId={id} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
     },
     [lesson, skills, lang],
   );

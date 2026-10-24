@@ -33,6 +33,8 @@ export interface FakeOptions {
   discloses?: (a: number, b: number) => boolean;
   /** Leave `lessons` off instances, as instances stored before spec 003 were. */
   omitLessons?: boolean;
+  /** IDs of lessons that practise both pilot definitions (default: the pilot lesson). Titles are the IDs. */
+  lessonIds?: string[];
 }
 
 /** The repository's own lesson files, so component tests render the real lesson. */
@@ -55,6 +57,9 @@ export interface FakeControls {
 export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeControls {
   const pairs: Record<string, [number, number]> = { "numbers.addition.within-10": [4, 4], "numbers.addition.crossing-ten": [8, 5], ...options.pairs };
   const calls: string[] = [];
+  const lessonIds = [...(options.lessonIds ?? [LESSON.id])].sort();
+  const lessonFor = (id: string): LessonDetail =>
+    id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
   const waiting: Record<Method, (() => void)[]> = { getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [] };
   const fail = new Set<Method>();
@@ -79,7 +84,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     if (identity.seed !== undefined) dto.generator = { name: "addition-pair", version: 1 };
     if (!options.omitLessons) {
       const listed = LESSON.practice.some((p) => p.definition === identity.definitionId && p.version === identity.version);
-      dto.lessons = listed ? [{ id: LESSON.id, discloses: options.discloses?.(pair[0], pair[1]) ?? false }] : [];
+      dto.lessons = listed ? lessonIds.map((id) => ({ id, discloses: options.discloses?.(pair[0], pair[1]) ?? false })) : [];
     }
     return dto;
   };
@@ -121,13 +126,15 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     },
     getLessons: async () => {
       calls.push("getLessons");
-      const summary: LessonSummary = { id: LESSON.id, version: LESSON.version, status: LESSON.status, skills: LESSON.skills, titles: LESSON.titles, practice: LESSON.practice };
-      return [summary];
+      return lessonIds.map((id): LessonSummary => {
+        const l = lessonFor(id);
+        return { id: l.id, version: l.version, status: l.status, skills: l.skills, titles: l.titles, practice: l.practice };
+      });
     },
     getLesson: async (id) => {
       calls.push(`getLesson ${id}`);
-      if (id !== LESSON.id) throw new Error("unknown-lesson");
-      return LESSON;
+      if (!lessonIds.includes(id)) throw new Error("unknown-lesson");
+      return lessonFor(id);
     },
     getSkill: async (id) => {
       calls.push(`getSkill ${id}`);
@@ -165,7 +172,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     getLessonContent: async (id, lang) => {
       calls.push(`getLessonContent ${id} ${lang}`);
       await gate("getLessonContent");
-      if (id !== LESSON.id) throw new Error("unknown-lesson");
+      if (!lessonIds.includes(id)) throw new Error("unknown-lesson");
       return { id, version: LESSON.version, language: lang, markdown: lessonMarkdown(lang) };
     },
     getVisualSteps: async (type, a, b) => {

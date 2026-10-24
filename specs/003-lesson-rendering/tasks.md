@@ -142,13 +142,13 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ### Tests for User Story 4
 
-- [ ] T047 [P] [US4] Add `contracts/detour.md` unit test 9 to `src/web/tests/lesson-gate.test.tsx` with a fake catalogue of `a-lesson` and `b-lesson` listing the same definition: practice started from `b-lesson` links to `b-lesson` on the first question, after "Another question", after a ladder move and back, and after a reload; practice started from the practice route links to `a-lesson`
-- [ ] T048 [P] [US4] Extend `src/web/tests/exercise-shell.test.tsx`: an instance with `lessons: []` (the fixed task) shows no lesson link; with the pilot lesson the link targets `/lessons/number-bonds-to-ten`; choosing a practice entry on another variation replaces the question in progress and closes it as `skipped` when unsubmitted (spec User Story 4 scenario 2; spec 002 behaviour unchanged)
+- [X] T047 [P] [US4] Add `contracts/detour.md` unit test 9 to `src/web/tests/lesson-gate.test.tsx` with a fake catalogue of `a-lesson` and `b-lesson` listing the same definition: practice started from `b-lesson` links to `b-lesson` on the first question, after "Another question", after a ladder move and back, and after a reload; practice started from the practice route links to `a-lesson`
+- [X] T048 [P] [US4] Extend `src/web/tests/exercise-shell.test.tsx`: an instance with `lessons: []` (the fixed task) shows no lesson link; with the pilot lesson the link targets `/lessons/number-bonds-to-ten`; choosing a practice entry on another variation replaces the question in progress and closes it as `skipped` when unsubmitted (spec User Story 4 scenario 2; spec 002 behaviour unchanged)
 
 ### Implementation for User Story 4
 
-- [ ] T049 [US4] Add `originLessonId?` to `Delivery` in `src/web/src/state/observations.ts`; in `src/web/src/state/store.tsx` give `startPractice` a third parameter `originLessonId`, record it on the first delivery, and copy it from the previous delivery into every new one (another, more like this, ladder moves, resume); pass the lesson ID from `src/web/src/lesson/PracticeEntry.tsx`; deliveries stored before this feature load without it
-- [ ] T050 [US4] In `src/web/src/components/ExerciseShell.tsx`, compute the lesson link from `instance.lessons` and the current delivery's `originLessonId` per `contracts/detour.md`, keeping the `?from=question` suffix of T035 (no link for an empty list) and remove the hard-coded `lessonHref` from `src/web/src/App.tsx` and `src/web/src/pages/PracticePage.tsx`; T047 and T048 pass; spec 002's end-to-end checks still pass
+- [X] T049 [US4] Add `originLessonId?` to `Delivery` in `src/web/src/state/observations.ts`; in `src/web/src/state/store.tsx` give `startPractice` a third parameter `originLessonId`, record it on the first delivery, and copy it from the previous delivery into every new one (another, more like this, ladder moves, resume); pass the lesson ID from `src/web/src/lesson/PracticeEntry.tsx`; deliveries stored before this feature load without it
+- [X] T050 [US4] In `src/web/src/components/ExerciseShell.tsx`, compute the lesson link from `instance.lessons` and the current delivery's `originLessonId` per `contracts/detour.md`, keeping the `?from=question` suffix of T035 (no link for an empty list) and remove the hard-coded `lessonHref` from `src/web/src/App.tsx` and `src/web/src/pages/PracticePage.tsx`; T047 and T048 pass; spec 002's end-to-end checks still pass
 
 **Checkpoint**: The link back is derived from content; the multi-lesson case is covered.
 

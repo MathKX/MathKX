@@ -7,7 +7,7 @@ import { useStore } from "../state/store";
 import { ExerciseShell } from "../components/ExerciseShell";
 import { LadderNotice } from "../components/LadderControls";
 
-export function PracticePage({ skillId, lessonHref }: { skillId: string; lessonHref?: string | undefined }) {
+export function PracticePage({ skillId }: { skillId: string }) {
   const store = useStore();
   const { state } = store;
   const lang = state.language;
@@ -31,7 +31,7 @@ export function PracticePage({ skillId, lessonHref }: { skillId: string; lessonH
         </Paragraph>
       ) : null}
       {state.loadError ? <Paragraph role="alert">{translate(lang, "practice.loadError")}</Paragraph> : null}
-      {state.instance ? <ExerciseShell lessonHref={lessonHref} /> : !state.loadError ? <Paragraph>{translate(lang, "lesson.loading")}</Paragraph> : null}
+      {state.instance ? <ExerciseShell /> : !state.loadError ? <Paragraph>{translate(lang, "lesson.loading")}</Paragraph> : null}
       <Paragraph data-size="sm" className="mkx-storage-note" data-testid="storage-note">
         {translate(lang, state.kept ? "storage.kept" : "storage.notKept")}
       </Paragraph>
