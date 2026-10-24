@@ -1,0 +1,122 @@
+{
+  "description": "Lesson-facts agreement fixture (specs/003 contracts/disclosure.md). Each markdown body is prefixed with front matter (---\ntitle: t\nobjective: o\n---\n\n) before parsing. Expected values were produced by tools/lib/markdown.mjs (remark) on 2026-10-24; MathKX.Content.LessonFactsReader must produce the same expression sources in document order and the same visuals with the same attributes. Attribute values are the authored strings.",
+  "cases": [
+    {
+      "name": "inline-and-display",
+      "markdown": "Text $3 + 7 = 10$ and more.\n\n$$8 + 5 = 13$$\n",
+      "expected": {
+        "expressions": [
+          "3 + 7 = 10",
+          "8 + 5 = 13"
+        ],
+        "visuals": []
+      }
+    },
+    {
+      "name": "code-span-dollar",
+      "markdown": "Price `$5` costs and $3 + 4$ is maths.\n",
+      "expected": {
+        "expressions": [
+          "3 + 4"
+        ],
+        "visuals": []
+      }
+    },
+    {
+      "name": "multi-line-display",
+      "markdown": "$$\n8 + 5\n= 13\n$$\n",
+      "expected": {
+        "expressions": [
+          "8 + 5\n= 13"
+        ],
+        "visuals": []
+      }
+    },
+    {
+      "name": "fenced-code-ignored",
+      "markdown": "```\n$9 + 1 = 10$\n:::visual{type=\"make-ten\" a=\"9\" b=\"4\"}\n:::\n```\n",
+      "expected": {
+        "expressions": [],
+        "visuals": []
+      }
+    },
+    {
+      "name": "attribute-order",
+      "markdown": ":::visual{b=\"5\" type=\"make-ten\" a=\"8\"}\n:::\n",
+      "expected": {
+        "expressions": [],
+        "visuals": [
+          {
+            "type": "make-ten",
+            "attributes": {
+              "b": "5",
+              "a": "8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "explorer-and-groups",
+      "markdown": ":::visual{type=\"ten-frame-explorer\" start=\"3\"}\n:::\n\n:::visual{type=\"groups\" a=\"4\" b=\"4\"}\n:::\n",
+      "expected": {
+        "expressions": [],
+        "visuals": [
+          {
+            "type": "ten-frame-explorer",
+            "attributes": {
+              "start": "3"
+            }
+          },
+          {
+            "type": "groups",
+            "attributes": {
+              "a": "4",
+              "b": "4"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "example-then-visual",
+      "markdown": ":::example{title=\"Worked example: 8 + 5\" id=\"example\"}\n1. Step.\n\n$$8 + 5 = 8 + 2 + 3 = 10 + 3 = 13$$\n:::\n\n:::visual{type=\"make-ten\" a=\"8\" b=\"5\"}\n:::\n",
+      "expected": {
+        "expressions": [
+          "8 + 5 = 8 + 2 + 3 = 10 + 3 = 13"
+        ],
+        "visuals": [
+          {
+            "type": "make-ten",
+            "attributes": {
+              "a": "8",
+              "b": "5"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "table-cells",
+      "markdown": "| Pair | Sum |\n| --- | --- |\n| 1 and 9 | $1 + 9 = 10$ |\n| 4 and 6 | $4 + 6 = 10$ |\n",
+      "expected": {
+        "expressions": [
+          "1 + 9 = 10",
+          "4 + 6 = 10"
+        ],
+        "visuals": []
+      }
+    },
+    {
+      "name": "unicode-minus",
+      "markdown": "Here $9 − 4 = 5$ and $9 - 4 = 5$.\n",
+      "expected": {
+        "expressions": [
+          "9 − 4 = 5",
+          "9 - 4 = 5"
+        ],
+        "visuals": []
+      }
+    }
+  ]
+}
