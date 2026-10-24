@@ -63,7 +63,7 @@ public static class ContentLoader
                         }
 
                         var markdown = File.ReadAllText(translation);
-                        translations[(lesson.Id, language)] = new LessonTranslation(language, name, markdown, FrontMatterReader.Read(markdown, translationRelative));
+                        translations[(lesson.Id, language)] = new LessonTranslation(language, name, markdown, FrontMatterReader.Read(markdown, translationRelative), LessonFactsReader.Read(markdown));
                     }
 
                     assets[lesson.Id] = ListAssets(Path.Combine(folder, "assets"), root);

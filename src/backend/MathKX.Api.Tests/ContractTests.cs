@@ -340,6 +340,43 @@ public sealed class StepContractTests : IClassFixture<WebApplicationFactory<Prog
         Assert.DoesNotContain("\"practice\"", body, StringComparison.Ordinal);
     }
 
+    // specs/003 contracts/api.md, contract test 1: the instance's lessons and their disclosure flags.
+
+    [Fact]
+    public async Task Every_pilot_instance_lists_the_lesson_with_the_recorded_disclosure()
+    {
+        var fixture = Path.Combine(Directory.GetParent(RepositoryContentRoot())!.FullName, "src", "backend", "MathKX.Domain.Tests", "Fixtures", "disclosure.number-bonds-to-ten.json");
+        using var table = JsonDocument.Parse(File.ReadAllText(fixture));
+        var disclosing = table.RootElement.GetProperty("disclosing").EnumerateArray()
+            .Select(e => (e.GetProperty("definition").GetString()!, e.GetProperty("a").GetInt32(), e.GetProperty("b").GetInt32()))
+            .ToHashSet();
+
+        using var client = _factory.CreateClient();
+        foreach (var (definition, pool) in new[] { ("numbers.addition.within-10", 45), ("numbers.addition.crossing-ten", 36) })
+        {
+            var seen = new HashSet<(int, int)>();
+            for (var seed = 0; seen.Count < pool && seed < 5000; seed++)
+            {
+                var body = await client.GetStringAsync($"/api/instances/{definition}/1/{seed}");
+                using var document = JsonDocument.Parse(body);
+                var root = document.RootElement;
+                var (a, b) = (root.GetProperty("a").GetInt32(), root.GetProperty("b").GetInt32());
+                seen.Add((a, b));
+
+                var lesson = Assert.Single(root.GetProperty("lessons").EnumerateArray());
+                Assert.Equal("number-bonds-to-ten", lesson.GetProperty("id").GetString());
+                Assert.Equal(disclosing.Contains((definition, a, b)), lesson.GetProperty("discloses").GetBoolean());
+                Assert.DoesNotContain("\"sum\"", body, StringComparison.Ordinal);
+                Assert.DoesNotContain("10 + 3", body, StringComparison.Ordinal);
+            }
+
+            Assert.Equal(pool, seen.Count);
+        }
+
+        using var fixedTask = JsonDocument.Parse(await client.GetStringAsync("/api/instances/numbers.addition.four-plus-four/1/-"));
+        Assert.Empty(fixedTask.RootElement.GetProperty("lessons").EnumerateArray());
+    }
+
     private static string RepositoryContentRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

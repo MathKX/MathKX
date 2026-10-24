@@ -1,0 +1,17 @@
+{
+  "lesson": "number-bonds-to-ten",
+  "note": "The pilot instances this lesson shows the answer to (specs/003 contracts/disclosure.md). Every other within-10 and crossing-ten instance does not disclose. A lesson edit that adds or removes a worked result for a pilot question changes this file as part of that content change.",
+  "disclosing": [
+    { "definition": "numbers.addition.within-10", "a": 1, "b": 9, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 9, "b": 1, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 2, "b": 8, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 8, "b": 2, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 3, "b": 7, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 7, "b": 3, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 4, "b": 6, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 6, "b": 4, "where": "expression" },
+    { "definition": "numbers.addition.within-10", "a": 5, "b": 5, "where": "expression" },
+    { "definition": "numbers.addition.crossing-ten", "a": 8, "b": 5, "where": "expression" },
+    { "definition": "numbers.addition.crossing-ten", "a": 5, "b": 8, "where": "expression" }
+  ]
+}
