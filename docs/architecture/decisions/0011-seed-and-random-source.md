@@ -6,7 +6,7 @@
 
 ADR 0004 made exercise generation deterministic for `(definition id, definition version, seed)` but left the seed representation and the random-number algorithm undecided. The [seed and random-source proposal](../proposals/seed-and-random-source.md) filled that gap and was examined in review rounds one to four: its raw and bounded test vectors were reproduced independently by three reviewers, and the decision log fixed the adoption trigger as a C# implementation that passes the proposal's raw, bounded, rejection, and boundary fixtures (DL-018, DL-024, DL-034).
 
-Spec 002 met the trigger. `MathKX.Domain.Random` implements the proposal, its tests reproduce every vector in the proposal's test-vectors section together with the injected rejection streams, invalid bounds, seed parsing at both limits, state wraparound, and the draw after a rejection, and they pass in CI on every push. The first generator, `addition-pair@1`, draws from this source and has frozen golden seeds.
+Spec 002 met the trigger. `MathKX.Domain.Random` implements the proposal, its tests reproduce every vector in the proposal's test-vectors section together with the injected rejection streams, the zero bound, seed parsing at both limits, state wraparound, and the draw after a rejection, and they pass in CI on every push. The proposal's other invalid bounds, negative values and values above `2^64 − 1`, are not tested because they cannot be expressed: `NextBelow` takes a `ulong`, and bounds come from generator code, never from parsed input. A boundary that converts external input into a bound must reject those values itself and test that it does. The first generator, `addition-pair@1`, draws from this source and has frozen golden seeds.
 
 ## Decision
 
