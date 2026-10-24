@@ -1,8 +1,8 @@
 # Proposal: Seed representation and random source
 
-**Status:** Proposed
+**Status:** Accepted as [ADR 0011](../decisions/0011-seed-and-random-source.md) on 2026-10-24 (decision log DL-024). This document is retained as the record of the reasoning and the test vectors; the ADR is the accepted contract.
 
-This proposal originated as a proposed ADR in Claude's foundation contribution. It remains outside the accepted decision set until validated with the first generator; accepted ADR 0006 covers learner profiles. Keeping it here preserves the technical work without assigning tentative choices an ADR number.
+This proposal originated as a proposed ADR in Claude's foundation contribution and was held outside the accepted decision set until the first generator validated it; spec 002 did so, and ADR 0011 adopts its contract and test vectors. The sections below are kept as written, so their "proposed" wording records the proposal as reviewed; where they and ADR 0011 differ, ADR 0011 governs.
 
 ## Context
 

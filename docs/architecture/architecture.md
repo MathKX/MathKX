@@ -99,8 +99,9 @@ Accepted decisions are documented in:
 - [ADR 0008: Store profiles and progress in PostgreSQL](decisions/0008-store-profiles-and-progress-in-postgresql.md)
 - [ADR 0009: Host on Azure App Service in Norway East](decisions/0009-host-on-azure-app-service.md)
 - [ADR 0010: License code under MIT and content under CC BY-SA 4.0](decisions/0010-license-code-and-content.md)
+- [ADR 0011: Seed representation and random source](decisions/0011-seed-and-random-source.md)
 
-The [seed and random-source proposal](proposals/seed-and-random-source.md) is retained for evaluation with the first generator. It is not an accepted ADR or a finalized compatibility contract.
+The [seed and random-source proposal](proposals/seed-and-random-source.md) is the record of the reasoning and test vectors behind ADR 0011; the ADR is the accepted contract.
 
 ## Future decisions
 

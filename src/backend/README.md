@@ -31,7 +31,7 @@ Azure sign-in uses GitHub OIDC; no secret is stored. The user-assigned managed i
 
 ## Rules the tests enforce
 
-- **No platform randomness in generation or validation.** `SplitMix64` and `BoundedSampler` implement the seed proposal exactly, and every raw, bounded, and injected-rejection vector in that document is a test. Generators receive their stream from the caller.
+- **No platform randomness in generation or validation.** `SplitMix64` and `BoundedSampler` implement the seed and random-source contract (ADR 0011) exactly, and every raw, bounded, and injected-rejection vector in it is a test. Generators receive their stream from the caller.
 - **Golden seeds are frozen.** `MathKX.Domain.Tests/Fixtures/addition-pair-v1.golden.json` holds ten seeds per pilot definition. A change to the enumeration, the draw count, or the sampler is a new generator version (`addition-pair@2`), registered separately; definitions keep the version they pin. Seed 42 is checked by hand against the proposal's raw vector in the tests (raw mod 45 = 28, raw mod 36 = 1).
 - **The instance has no sum.** `Instance` has no total member, DTOs have none by construction, and the contract tests assert no `sum` or `validation` key in any unsolicited response. The sum appears only in a correct validation result and in a step whose `reveals` flag is true.
 - **Content is the runtime source.** The loader reads the files spec 001 validates; the domain tests assert the generator and validator match their registry entries by name, version, bounds, and emitted codes.
