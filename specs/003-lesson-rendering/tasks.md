@@ -162,12 +162,12 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ### Tests for User Story 5
 
-- [ ] T051 [P] [US5] Add `contracts/lesson-renderer.md` test 6 to `src/web/tests/lesson-render.test.tsx`: in `nb`, "Edit this lesson" is `https://github.com/MathKX/MathKX/blob/main/content/lessons/number-bonds-to-ten/nb.md`; the issue link's decoded `title` and `body` contain the lesson ID, `1`, `nb`, and the section anchor in view and contain none of the store's delivery IDs, seeds, drafts, or prompts (checked with a store holding a question and a draft); both have `target="_blank"` and `rel="noopener noreferrer"`
+- [X] T051 [P] [US5] Add `contracts/lesson-renderer.md` test 6 to `src/web/tests/lesson-render.test.tsx`: in `nb`, "Edit this lesson" is `https://github.com/MathKX/MathKX/blob/main/content/lessons/number-bonds-to-ten/nb.md`; the issue link's decoded `title` and `body` contain the lesson ID, `1`, `nb`, and the section anchor in view and contain none of the store's delivery IDs, seeds, drafts, or prompts (checked with a store holding a question and a draft); both have `target="_blank"` and `rel="noopener noreferrer"`
 
 ### Implementation for User Story 5
 
-- [ ] T052 [P] [US5] Create `src/web/src/lesson/contribute.ts` (`editUrl(id, file)` and `issueUrl({ id, version, lang, section })` per research R10, using `URLSearchParams`) and render the footer links in `src/web/src/pages/LessonPage.tsx` with `lesson.edit` ("Edit this lesson" / "Rediger leksjonen") and `lesson.suggest` ("Suggest an improvement" / "Foreslå en forbedring") plus the issue's title and body templates in both dictionaries; T051 passes
-- [ ] T053 [P] [US5] Add a "Preview a lesson" section to `CONTRIBUTING.md` and a pointer in `src/web/README.md`: root `npm ci`, `dotnet run --project src/backend/MathKX.Api`, `npm run dev` in `src/web`, open `/lessons/{id}`, restart the service after editing a lesson file (the snapshot loads at startup), `npm run validate` before opening a pull request (FR-018)
+- [X] T052 [P] [US5] Create `src/web/src/lesson/contribute.ts` (`editUrl(id, file)` and `issueUrl({ id, version, lang, section })` per research R10, using `URLSearchParams`) and render the footer links in `src/web/src/pages/LessonPage.tsx` with `lesson.edit` ("Edit this lesson" / "Rediger leksjonen") and `lesson.suggest` ("Suggest an improvement" / "Foreslå en forbedring") plus the issue's title and body templates in both dictionaries; T051 passes
+- [X] T053 [P] [US5] Add a "Preview a lesson" section to `CONTRIBUTING.md` and a pointer in `src/web/README.md`: root `npm ci`, `dotnet run --project src/backend/MathKX.Api`, `npm run dev` in `src/web`, open `/lessons/{id}`, restart the service after editing a lesson file (the snapshot loads at startup), `npm run validate` before opening a pull request (FR-018)
 
 **Checkpoint**: All five stories work; quickstart scenarios 1–5 can be run.
 

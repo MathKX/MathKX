@@ -24,6 +24,11 @@ export const en = {
     explorerPair: "{filled} and {partner} make 10.",
     previousStep: "Previous step",
     visualFailed: "This illustration could not be loaded.",
+    edit: "Edit this lesson",
+    suggest: "Suggest an improvement",
+    issueTitle: "Lesson {id}: suggestion",
+    issueBody: "Lesson: {id}\nVersion: {version}\nLanguage: {lang}\nSection: {section}\n\nWhat could be clearer or more correct?\n",
+    issueTop: "(start of the lesson)",
     status: { draft: "Draft", pilot: "Pilot", released: "Released" },
   },
   detour: {

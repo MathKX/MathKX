@@ -13,6 +13,7 @@ import { useStore } from "../state/store";
 import { currentQuestion } from "../state/observations";
 import { PracticeEntry } from "../lesson/PracticeEntry";
 import { Placeholder } from "../lesson/Placeholder";
+import { editUrl, issueUrl } from "../lesson/contribute";
 import type { LessonComponents } from "../lesson/render";
 import { LessonGate } from "../components/LessonGate";
 import { ReturnBanner } from "../components/ReturnBanner";
@@ -46,6 +47,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const [lessonsCheck, setLessonsCheck] = useState<"none" | "pending" | "done" | "failed">("none");
   const [fromQuestion] = useState(() => new URLSearchParams(search).get("from") === "question");
   const recorded = useRef(false);
+  const [section, setSection] = useState<string | null>(null);
 
   // The origin is read once; dropping it means a reload or a later history visit is not a visit from the question.
   useEffect(() => {
@@ -191,9 +193,27 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
           </Button>
         </div>
       ) : shown ? (
-        <Suspense fallback={loading}>
-          <LessonView lessonId={lesson.id} lang={shown.lang} markdown={shown.markdown} components={components} onShown={onShown} />
-        </Suspense>
+        <>
+          <Suspense fallback={loading}>
+            <LessonView lessonId={lesson.id} lang={shown.lang} markdown={shown.markdown} components={components} onShown={onShown} onSection={setSection} />
+          </Suspense>
+          {/* Offered only with the lesson shown: the source on GitHub would otherwise get round the notice. */}
+          <footer className="mkx-lesson-footer" data-testid="lesson-contribute">
+            <a href={editUrl(lesson.id, lesson.translations[lang])} target="_blank" rel="noopener noreferrer">
+              {translate(lang, "lesson.edit")}
+            </a>
+            <a
+              href={issueUrl(
+                translate(lang, "lesson.issueTitle", { id: lesson.id }),
+                translate(lang, "lesson.issueBody", { id: lesson.id, version: lesson.version, lang, section: section ?? translate(lang, "lesson.issueTop") }),
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {translate(lang, "lesson.suggest")}
+            </a>
+          </footer>
+        </>
       ) : (
         loading
       )}

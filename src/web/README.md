@@ -1,6 +1,6 @@
 # MathKX learner app
 
-React 19 and TypeScript with Designsystemet components and Tailwind for layout (ADR 0007), built by Vite. It renders what the practice service returns and computes nothing mathematical itself: questions, feedback, and the help and explanation steps all come from `src/backend`.
+React 19 and TypeScript with Designsystemet components and Tailwind for layout (ADR 0007), built by Vite. It renders what the practice service returns and computes nothing mathematical itself: questions, feedback, the help and explanation steps, lesson visuals, and whether a lesson shows a question's answer all come from `src/backend`. Lessons are parsed with the content validator's remark stack and rendered as React elements (specs/003); to preview a lesson edit, see "Previewing a lesson" in `CONTRIBUTING.md`.
 
 ## Scripts
 
@@ -9,9 +9,9 @@ React 19 and TypeScript with Designsystemet components and Tailwind for layout (
 | `npm ci` | Install the pinned dependencies |
 | `npm run dev` | Vite dev server on port 5173, proxying `/api` to the service on port 5080 (`MATHKX_API_URL` overrides) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | vitest: dictionaries, translate, storage, outcome derivation, exercise shell, ladder, record page, status rendering |
+| `npm test` | vitest: dictionaries, translate, storage, outcome derivation, exercise shell, ladder, record page, status rendering, lesson rendering, the lesson gate and detour, visuals, and agreement with the validator's parser and grammar (needs `npm ci` at the repository root) |
 | `npm run build` | Production build to `dist/`; the service copies it into `wwwroot/` at build time and serves it |
-| `npm run e2e` | Playwright end-to-end checks against the built app served by the service |
+| `npm run e2e` | Playwright end-to-end checks against the built app served by the service: build this app, then `dotnet build ../backend/MathKX.Api` (which copies `dist/` into `wwwroot/`), then run them |
 
 Run the service first: `dotnet run --project ../backend/MathKX.Api`.
 
@@ -23,8 +23,11 @@ src/
   api/         typed client for the service; newSeed() picks seeds (selection, not generation)
   state/       storage (versioned localStorage with memory fallback), observations (deliveries and events),
                outcomes (DL-029 derivation), store (the session reducer)
-  components/  ExerciseShell, StepPanel, Feedback, LadderControls, LanguageSwitch, math/ (MathExpr, Counters, MakeTen, TenFrame)
-  pages/       LessonListPage, LessonPage, PracticePage, RecordPage
+  components/  ExerciseShell, StepPanel, Feedback, LadderControls, LanguageSwitch, LessonGate, ReturnBanner,
+               math/ (MathExpr, Counters, MakeTen, TenFrame, TenFrameExplorer, StepVisual)
+  lesson/      the lesson chunk, loaded lazily: parse.ts (remark), notation.ts and MathNotation.tsx (MathML), render.tsx,
+               LessonView.tsx (the chunk entry), sections.ts, PracticeEntry.tsx, Placeholder.tsx, contribute.ts
+  pages/       LessonListPage, LessonPage (the gate, recording, the way back), PracticePage, RecordPage
   styles/      index.css: the one entry point for Designsystemet + Tailwind; theme.css: the MathKX theme tokens
 tests/         vitest (jsdom) with a deterministic fake service in fakeApi.ts
 e2e/           Playwright
