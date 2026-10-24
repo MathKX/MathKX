@@ -65,7 +65,7 @@ specs/002-practice-flow/
 │   ├── dictionaries.md               # key namespaces, parity rule, literal-scan exceptions
 │   └── learner-app.md                # screens, controls, state preservation, accessibility
 ├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks), not created here
+└── tasks.md             # Phase 2 (/speckit-tasks): 51 tasks in eight phases
 ```
 
 ### Source Code (repository root)
