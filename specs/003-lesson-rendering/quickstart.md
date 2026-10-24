@@ -42,11 +42,21 @@ cd src/web && npm test
 
 Expected: renderer, notation agreement, parse agreement, gate and recording, `lessonAfter`, dictionary parity, and literal checks all pass.
 
+The end-to-end checks start the service with `--no-build`, and the service copies `src/web/dist` into its `wwwroot` only when it is built, so build in this order (as the CI job does):
+
 ```bash
-cd src/web && npm run build && npm run e2e
+cd src/web && npm run build
 ```
 
-Expected: spec 002's checks plus the five of [contracts/detour.md](contracts/detour.md), on the desktop and iPad projects. The build output shows the lesson renderer in its own chunk.
+```bash
+dotnet build src/backend/MathKX.Api
+```
+
+```bash
+cd src/web && npm run e2e
+```
+
+Expected: spec 002's checks plus the five of [contracts/detour.md](contracts/detour.md), on the desktop and iPad projects. The web build output shows the lesson renderer in its own chunk. Skipping the `dotnet build` after the web build (for example right after `dotnet test` on a clean checkout) leaves `wwwroot` empty or stale and the checks fail with a 404 for the app.
 
 ## Scenario 1: read the lesson (User Story 1)
 

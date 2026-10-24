@@ -38,9 +38,10 @@ Phase 1 of [plan.md](plan.md). Entities this feature adds or changes, by layer. 
 | Entity | Fields | Rules |
 | --- | --- | --- |
 | `InstanceDto` in the store (changed) | gains `lessons?` | Absent on instances stored before this feature: the lesson page re-resolves the identity before deciding |
+| `Delivery` (changed) | gains `originLessonId?` | Set on the first delivery when practice starts from a lesson's practice entry (`startPractice(skillId, preferred, originLessonId)`); copied to every later delivery of the same practice run, including after a reload; unset when practice starts from the practice route; selects the practice screen's lesson link (`contracts/detour.md`); not an event and not evidence; deliveries stored before this feature have none |
 | Current question (derived, not stored) | the current delivery when it has no `correct` submission and no `skipped` event | Wider than spec 002's `resumable`, which covers only questions without any submission |
 | `LessonVisit` (new, in memory, not persisted) | `lessonId`, `deliveryId` (or none), `detour` (bool), `discloses` (bool), `gate` (`closed`, `open`), `origin` (`question-link`, `other`), `shown` (bool), `bannerDismissed` (bool), `sectionAnchor` | Created on entering a lesson route, discarded on leaving it; `shown` turns true on the first render of the lesson content and triggers at most one recording |
-| `lessonOrigin` (new, in memory) | set to `question-link` by the practice screen's lesson link immediately before navigation | Consumed by the next `LessonVisit`; lets an opening after a correct answer be recorded only when it came from the question |
+| `lessonLinkOrigin` (new, in memory, one-shot) | set to `question-link` by the practice screen's lesson link immediately before navigation | Consumed by the next `LessonVisit`; lets an opening after a correct answer be recorded only when it came from the question |
 | `Event` (unchanged set) | `support` with `lesson-opened` or `lesson-reveal` | Recorded only by the visit rule in `contracts/detour.md` |
 | `Tag` (changed) | gains `lessonAfter` | Derived from `lesson-opened` after the first `correct`; ordered after `explainAfter` |
 

@@ -11,7 +11,9 @@ Part of [plan.md](../plan.md) Phase 1. Spec FR-010 to FR-015 and User Story 2; r
 
 ## The practice screen's lesson link
 
-The link targets the first lesson in `instance.lessons` whose ID equals the lesson practice was started from, else the first lesson in the list; with an empty list there is no link (spec FR-010; replaces the hard-coded `/lessons/number-bonds-to-ten`). Activating it sets the one-shot origin `question-link` and navigates. It records nothing itself; recording happens on the lesson page.
+The link targets the lesson in `instance.lessons` whose ID equals the current delivery's `originLessonId`, else the first lesson in the list (lesson-ID order); with an empty list there is no link (spec FR-010; replaces the hard-coded `/lessons/number-bonds-to-ten`).
+
+`originLessonId` is persisted on each delivery ([data-model.md](../data-model.md)): a lesson's practice entry passes its lesson ID to `startPractice`, the first delivery records it, and every later delivery of that practice run ("Another question", "More like this", ladder moves, resume after a reload) copies it from the delivery before. Practice started without a lesson (the practice route itself) leaves it unset. It is context for navigation, never an observation event and never evidence. Activating it sets the one-shot origin `question-link` and navigates. It records nothing itself; recording happens on the lesson page.
 
 ## The gate (lesson page)
 
@@ -62,6 +64,7 @@ Unit (`lesson-gate.test.tsx`, `outcomes.test.ts`, with the fake API):
 6. A language switch during the visit records nothing new and keeps the gate state.
 7. A stored instance without `lessons` is re-resolved before the gate decides.
 8. Return by the banner restores draft, help open and step, explanation state, and pending change.
+9. With a fake catalogue in which two lessons (`a-lesson` and `b-lesson`) list the same definition, practice started from `b-lesson`'s entry links to `b-lesson` on the first question, after "Another question", after a ladder move and back, and after a reload; practice started from the practice route links to `a-lesson`, the first by ID.
 
 End to end (`e2e/lesson.spec.ts`, desktop and iPad projects). Questions are pinned to golden seeds of `addition-pair-v1.golden.json` with a Playwright init script that makes `crypto.getRandomValues` yield the seed's eight big-endian bytes for the next question, so `newSeed()` in the app is unchanged:
 
