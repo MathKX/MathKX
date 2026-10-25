@@ -127,4 +127,56 @@ test.describe("the progress view", () => {
     const stored = await page.evaluate(() => JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}").value.lessonViews.map((v: { language: string }) => v.language));
     expect(stored).toEqual(["en", "en", "en"]);
   });
+
+  test("3. replay: one request for the question, nothing recorded, no unrevealed sum, and the counts unchanged", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-numbers.addition.within-10").click();
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    const done = await operands(page);
+    await answer(page, done.a + done.b, "correct");
+    await next(page);
+    const open = await operands(page); // left unanswered
+
+    await page.getByRole("link", { name: "My work" }).click();
+    const summary = await page.getByTestId("record-summary").textContent();
+    const before = await page.evaluate(() => window.localStorage.getItem("mathkx.guest.v1"));
+    await page.getByTestId("progress-questions").click();
+
+    const requests: string[] = [];
+    page.on("request", (r) => {
+      if (r.url().includes("/api/")) requests.push(new URL(r.url()).pathname);
+    });
+
+    // The answered question (the older one, so the second in the list).
+    await page.getByTestId("record-question").nth(1).click();
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", `${done.a} plus ${done.b}. What is the sum?`);
+    await expect(page.getByTestId("replay-outcome")).toHaveText("Correct on first response, no help");
+    await expect(page.getByTestId("replay-submission")).toContainText(`Correct. ${done.a} + ${done.b} = ${done.a + done.b}.`);
+    expect(requests.filter((p) => p.startsWith("/api/instances/"))).toHaveLength(1);
+    await page.getByTestId("replay-back").click();
+
+    // The unanswered question: Continue, no answer field, and its sum nowhere on the page or in its accessibility tree.
+    await page.getByTestId("progress-questions").click();
+    await page.getByTestId("record-question").first().click();
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", `${open.a} plus ${open.b}. What is the sum?`);
+    await expect(page.getByTestId("replay-continue")).toBeVisible();
+    await expect(page.getByRole("textbox")).toHaveCount(0);
+    const sum = new RegExp(`\\b${open.a + open.b}\\b`);
+    expect(await page.getByTestId("replay-page").innerText()).not.toMatch(sum);
+    expect(await page.locator("body").ariaSnapshot()).not.toMatch(sum);
+    expect(requests.filter((p) => p.startsWith("/api/instances/"))).toHaveLength(2);
+    expect(requests.filter((p) => p.includes("/steps/") || p.startsWith("/api/validations"))).toEqual([]);
+
+    // Loading the replay address directly (a reload or a shared link) shows the replay, not a 404.
+    await page.reload();
+    await expect(page.getByTestId("replay-continue")).toBeVisible();
+
+    await page.getByTestId("replay-back").click();
+    await expect(page.getByTestId("record-summary")).toHaveText(summary ?? "");
+    expect(await page.evaluate(() => window.localStorage.getItem("mathkx.guest.v1"))).toBe(before);
+  });
 });

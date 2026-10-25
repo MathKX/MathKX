@@ -79,6 +79,14 @@ export const nb = {
     question: "{a} + {b}",
     answers: "Svar: {answers}",
   },
+  replay: {
+    title: "Oppgave fra {date}",
+    unavailable: "Denne oppgaven kan ikke lenger vises slik den ble gitt. Her er det som ble registrert.",
+    notFound: "Denne oppgaven finnes ikke i arbeidet ditt i denne nettleseren.",
+    back: "Tilbake til mitt arbeid",
+    noAnswers: "Det ble ikke gitt noe svar.",
+    answersLabel: "Svarene dine",
+  },
   progress: {
     other: "Annen øving",
     repeats: "{n} av dem var en oppgave du hadde hatt før.",
@@ -87,6 +95,7 @@ export const nb = {
     continue: "Fortsett",
     contentUnavailable: "Navnene på ferdighetene kunne ikke hentes akkurat nå. Alt arbeidet ditt er her.",
     toLessons: "Gå til leksjonene",
+    questionLink: "{question}, {date}",
     lessonViewed: "{title}: vist {n} ganger, sist {date}",
     lessonViewedOnce: "{title}: vist én gang, {date}",
     viewNote: "At en leksjon er vist, betyr at du åpnet den, ikke at du har forstått den.",

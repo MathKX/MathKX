@@ -57,9 +57,11 @@ interface LinkProps {
   /** Runs on every activation of the link, pointer or keyboard, before the navigation. */
   onActivate?: () => void;
   "data-testid"?: string;
+  /** When the visible text alone does not name the target (a question's link names its date too). */
+  "aria-label"?: string;
 }
 
-export function Link({ to, children, className, onActivate, "data-testid": testId }: LinkProps) {
+export function Link({ to, children, className, onActivate, "data-testid": testId, "aria-label": label }: LinkProps) {
   const { navigate } = useRouter();
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented) return;
@@ -69,7 +71,7 @@ export function Link({ to, children, className, onActivate, "data-testid": testI
     navigate(to);
   };
   return (
-    <a href={to} onClick={onClick} className={className} data-testid={testId}>
+    <a href={to} onClick={onClick} className={className} data-testid={testId} aria-label={label}>
       {children}
     </a>
   );
@@ -80,6 +82,7 @@ export type Route =
   | { name: "lesson"; id: string }
   | { name: "practice"; skillId: string }
   | { name: "record" }
+  | { name: "replay"; deliveryId: string }
   | { name: "unknown" };
 
 export function matchRoute(address: string): Route {
@@ -87,6 +90,7 @@ export function matchRoute(address: string): Route {
   if (parts.length === 0) return { name: "lessons" };
   if (parts[0] === "lessons" && parts[1]) return { name: "lesson", id: parts[1] };
   if (parts[0] === "practice" && parts[1]) return { name: "practice", skillId: parts[1] };
+  if (parts[0] === "record" && parts[1]) return { name: "replay", deliveryId: parts[1] };
   if (parts[0] === "record") return { name: "record" };
   return { name: "unknown" };
 }

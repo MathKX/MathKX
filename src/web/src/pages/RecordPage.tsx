@@ -9,7 +9,7 @@ import { PageHeading } from "../components/PageHeading";
 import { formatDate, translate, translateCode, type Lang } from "../i18n";
 import { Link } from "../router";
 import type { Outcome, Summary } from "../state/outcomes";
-import { groupBySkill, skillOrder, type ListedQuestion } from "../state/progress";
+import { groupBySkill, inProgress, skillOrder } from "../state/progress";
 import { useStore } from "../state/store";
 
 /** Outcomes in the order the count sentence lists them, from the most independent to unfinished. */
@@ -26,9 +26,6 @@ function summarySentence(lang: Lang, summary: Summary): string {
   return translate(lang, summary.questions === 1 ? "record.summaryOne" : "record.summary", { questions: summary.questions, details });
 }
 
-/** Whether a listed question is the one in progress, which practice can resume. */
-const inProgress = (q: ListedQuestion, resumableId: string | null) =>
-  q.delivery.id === resumableId && !q.derived.submissions.some((s) => s.status === "correct") && !q.delivery.events.some((e) => e.type === "skipped");
 
 export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
   const store = useStore();
@@ -111,7 +108,17 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                     <ol className="mkx-record">
                       {group.questions.map((q) => (
                         <li key={q.delivery.id} data-testid="record-item" data-outcome={q.derived.outcome}>
-                          <span className="mkx-record__question">{translate(lang, "record.question", { a: q.delivery.instance.a, b: q.delivery.instance.b })}</span>{" "}
+                          <Link
+                            to={`/record/${encodeURIComponent(q.delivery.id)}`}
+                            className="mkx-record__question mkx-inline-target"
+                            data-testid="record-question"
+                            aria-label={translate(lang, "progress.questionLink", {
+                              question: translate(lang, "record.question", { a: q.delivery.instance.a, b: q.delivery.instance.b }),
+                              date: formatDate(lang, q.delivery.startedAt),
+                            })}
+                          >
+                            {translate(lang, "record.question", { a: q.delivery.instance.a, b: q.delivery.instance.b })}
+                          </Link>{" "}
                           <strong>{translateCode(lang, "outcome", q.derived.outcome)}</strong>
                           <span className="mkx-record__meta">
                             {formatDate(lang, q.delivery.startedAt)}
@@ -131,7 +138,7 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                               ) : null}
                             </ul>
                           ) : null}
-                          {inProgress(q, resumableId) ? (
+                          {inProgress(q.delivery, resumableId) ? (
                             <>
                               {" "}
                               <Link to={continueTo} className="mkx-inline-target" data-testid="record-continue">

@@ -41,7 +41,7 @@ The page heading stays "My work" / "Mitt arbeid". Above the skills, the storage 
 3. When there are repeats: `progress.repeats`.
 4. For each viewed lesson of the skill, latest view first: `progress.lessonViewed` (or `progress.lessonViewedOnce`), with the lesson's title in the selected language. Skills that tie on latest activity keep the practised skill first.
 5. Once on the page, after the first lesson line: `progress.viewNote`.
-6. Designsystemet's `Details` (a native `details` element) with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression (a link to `/record/{deliveryId}` once replay exists) and the outcome label; on a second line the date and spec 002's `record.answers`; then the tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag` for a repeat). An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
+6. Designsystemet's `Details` (a native `details` element) with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression as a link to `/record/{deliveryId}`, whose accessible name `progress.questionLink` ("{question}, {date}") adds the date, and the outcome label; on a second line the date and spec 002's `record.answers`; then the tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag` for a repeat). An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
 
 An empty record (no counted delivery, no view) shows spec 002's `record.empty` with a link to the lessons.
 
@@ -61,6 +61,7 @@ An empty record (no counted delivery, no view) shows spec 002's `record.empty` w
 | `progress.continue` | Continue | Fortsett |
 | `progress.contentUnavailable` | Skill names could not be loaded just now. Your work is all here. | Navnene på ferdighetene kunne ikke hentes akkurat nå. Alt arbeidet ditt er her. |
 | `progress.toLessons` | Go to the lessons | Gå til leksjonene |
+| `progress.questionLink` | {question}, {date} | {question}, {date} |
 | `record.summaryOne` | {questions} question: {details} | {questions} oppgave: {details} |
 
 Dates: `Intl.DateTimeFormat(lang === "nb" ? "nb-NO" : "en-GB", { dateStyle: "long" })`. The final wording is settled in review; the keys and the rules are the contract.
