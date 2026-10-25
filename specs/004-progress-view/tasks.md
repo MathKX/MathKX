@@ -299,7 +299,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - the content review of the nine skill names in both languages.
 
   Findings are recorded, not scored.
-- [ ] T042 After the first release (Phases 1–3) has deployed, open "My work" on the production URL (the deploy job's `environment.url`) in both languages and check that the skill names render from the deployed content. Do the same for the lesson history after the second release. Add both results to a dated walkthrough file under `docs/reviews/walkthroughs/`.
+- [ ] T042 After the first release (Phases 1–3) has deployed, open "My work" on the production URL (the deploy job's `environment.url`) in both languages and check that the skill names render from the deployed content. Do the same for the lesson history after the second release. Add both results to a dated walkthrough file under `docs/reviews/walkthroughs/`. First release checked on 2026-10-25 (`f987903`): pass in both languages, recorded in `docs/reviews/walkthroughs/2026-10-25-progress-view-production.md`; the lesson-history part remains.
 
 ---
 
