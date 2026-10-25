@@ -51,10 +51,11 @@ If the delivery is the unfinished current question (`resumable.deliveryId` or `c
 | `replay.notFound` | This question is not in your work in this browser. | Denne oppgaven finnes ikke i arbeidet ditt i denne nettleseren. |
 | `replay.back` | Back to my work | Tilbake til mitt arbeid |
 | `replay.noAnswers` | No answer was given. | Det ble ikke gitt noe svar. |
+| `replay.answersLabel` | Your answers | Svarene dine |
 
 ## Accessibility
 
-`h1` is `replay.title`; focus moves to it on arrival. Submissions are an ordered list. The expression uses the existing `AdditionPrompt` with its accessible name. The links are at least 44 by 44 pixels on touch screens.
+`h1` is `replay.title` (or `replay.notFound` for an unknown ID); focus moves to it on arrival. Submissions are an ordered list labelled `replay.answersLabel`. The expression waits for the instance request, then shows the recorded operands whether the request matched or not. The expression uses the existing `AdditionPrompt` with its accessible name. The links are at least 44 by 44 pixels on touch screens.
 
 ## Tests (`tests/replay.test.tsx`, with the fake API)
 

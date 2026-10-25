@@ -78,6 +78,14 @@ export const en = {
     question: "{a} + {b}",
     answers: "Answers: {answers}",
   },
+  replay: {
+    title: "Question from {date}",
+    unavailable: "This question can no longer be shown as it was asked. Here is what was recorded.",
+    notFound: "This question is not in your work in this browser.",
+    back: "Back to my work",
+    noAnswers: "No answer was given.",
+    answersLabel: "Your answers",
+  },
   progress: {
     other: "Other practice",
     repeats: "{n} of them repeated a question you had already had.",
@@ -86,6 +94,7 @@ export const en = {
     continue: "Continue",
     contentUnavailable: "Skill names could not be loaded just now. Your work is all here.",
     toLessons: "Go to the lessons",
+    questionLink: "{question}, {date}",
     lessonViewed: "{title}: viewed {n} times, last on {date}",
     lessonViewedOnce: "{title}: viewed once, on {date}",
     viewNote: "A view shows that you opened the lesson, not that you understood it.",

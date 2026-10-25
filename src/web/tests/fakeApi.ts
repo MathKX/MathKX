@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Identity, InstanceDto, LadderEntry, LessonDetail, LessonSummary, PracticeApi, SkillDto, StepDto, StepKind, ValidationResponse } from "../src/api/types";
+import { ApiError, type Identity, type InstanceDto, type LadderEntry, type LessonDetail, type LessonSummary, type PracticeApi, type SkillDto, type StepDto, type StepKind, type ValidationResponse } from "../src/api/types";
 
 export const LADDER: LadderEntry[] = [
   { definition: "numbers.addition.within-10", version: 1, description: { nb: "Summen er høyst 10.", en: "The sum is at most 10." } },
@@ -55,6 +55,10 @@ export interface FakeOptions {
   skillsFail?: boolean;
   /** `getLessons` rejects. */
   lessonsFail?: boolean;
+  /** Operands the service resolves every identity to, as if the generator had changed (specs/004 replay). */
+  instanceOperands?: [number, number];
+  /** `getInstance` fails: an unknown definition (404) or an unreachable service. */
+  instanceFails?: "404" | "network";
 }
 
 /** The repository's own lesson files, so component tests render the real lesson. */
@@ -90,7 +94,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   };
   const instanceOf = (identity: Identity): InstanceDto => {
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
-    const pair: [number, number] = bySeed ?? pairs[identity.definitionId] ?? [3, 5];
+    const pair: [number, number] = options.instanceOperands ?? bySeed ?? pairs[identity.definitionId] ?? [3, 5];
     const crossing = identity.definitionId.includes("crossing");
     const representation = crossing ? "make-ten" : "groups";
     const dto: InstanceDto = {
@@ -170,6 +174,8 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     getInstance: async (definitionId, version, seed) => {
       calls.push(`getInstance ${definitionId}@${version} ${seed ?? "-"}`);
       await gate("getInstance");
+      if (options.instanceFails === "404") throw new ApiError(404, "unknown-definition", `Definition ${definitionId}@${version} is not defined.`);
+      if (options.instanceFails === "network") throw new TypeError("Failed to fetch");
       const identity: Identity = { definitionId, version };
       if (seed !== null) identity.seed = seed;
       return instanceOf(identity);

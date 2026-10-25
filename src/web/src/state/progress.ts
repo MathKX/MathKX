@@ -51,6 +51,11 @@ export function revealsWithoutCorrect(delivery: Delivery): Tag[] {
   return TAG_ORDER.filter((t) => tags.has(t));
 }
 
+/** The question practice can resume: the resumable or current delivery, not answered correctly and not skipped. */
+export function inProgress(delivery: Delivery, resumableId: string | null): boolean {
+  return delivery.id === resumableId && !delivery.events.some((e) => (e.type === "submission" && e.status === "correct") || e.type === "skipped");
+}
+
 export interface ListedQuestion {
   delivery: Delivery;
   derived: Derived;

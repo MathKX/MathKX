@@ -232,7 +232,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 3
 
-- [ ] T029 [P] [US3] Add `src/web/tests/replay.test.tsx` for `contracts/replay.md` tests 1–7. First extend `src/web/tests/fakeApi.ts` with `FakeOptions.instanceOperands` (overrides the resolved `a` and `b`) and `instanceFails` (`404` or network). Then cover:
+- [X] T029 [P] [US3] Add `src/web/tests/replay.test.tsx` for `contracts/replay.md` tests 1–7. First extend `src/web/tests/fakeApi.ts` with `FakeOptions.instanceOperands` (overrides the resolved `a` and `b`) and `instanceFails` (`404` or network). Then cover:
   - **Spec scenarios 1 and 2**: `8 + 5` answered `12` then `13` shows both answers with status and feedback, "Correct after feedback", the date, and `8 + 5 = 13`; `6 + 5` answered `10` shows no `11` in `document.body.innerHTML`.
   - **Requests**: the call log holds exactly one `getInstance`.
   - **A reveal without a correct answer**: a lesson, help, explanation, and counting reveal, each followed by `ended`, show their reveal tag and no sum.
@@ -241,7 +241,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - **Question in progress and unknown IDs**: the resumable question shows "Continue" and no `input`; an unknown ID shows `replay.notFound`.
   - **Fixed task**: resolves with seed `null`.
   - **Language switch**: keeps the page.
-- [ ] T030 [P] [US3] Add check 3 (quickstart scenario 3) to `src/web/e2e/progress.spec.ts`:
+- [X] T030 [P] [US3] Add check 3 (quickstart scenario 3) to `src/web/e2e/progress.spec.ts`:
   - from "My work", open a correctly answered question and then the unfinished one;
   - the page's request log shows one `/api/instances/` request per replay and none to `/steps/` or `/api/validations`;
   - the unfinished replay's text and accessibility tree hold no sum;
@@ -249,14 +249,14 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation for User Story 3
 
-- [ ] T031 [US3] In `src/web/src/router.tsx`, make `matchRoute` return `{ name: "replay", deliveryId }` for `/record/{id}` (decoded), keeping `{ name: "record" }` for `/record`. Render `ReplayPage` for it in `src/web/src/App.tsx` with `api`, keyed on the delivery ID.
-- [ ] T032 [US3] Create `src/web/src/pages/ReplayPage.tsx` per `contracts/replay.md`:
+- [X] T031 [US3] In `src/web/src/router.tsx`, make `matchRoute` return `{ name: "replay", deliveryId }` for `/record/{id}` (decoded), keeping `{ name: "record" }` for `/record`. Render `ReplayPage` for it in `src/web/src/App.tsx` with `api`, keyed on the delivery ID.
+- [X] T032 [US3] Create `src/web/src/pages/ReplayPage.tsx` per `contracts/replay.md`:
   - **Lookup and request**: find the delivery in `state.deliveries`, or show `replay.notFound`; call `api.getInstance(definitionId, version, seed ?? null)` once.
   - **States**: `loading`, `matched`, `unavailable`, and `notFound` from data-model.md.
   - **Content**: `PageHeading` with `replay.title`; `AdditionPrompt` from the resolved instance when matched, or from the record otherwise; an `ol` of submissions (text, `translateCode(lang, "status", status)`, feedback via `translateCode(lang, "feedback", code, { a, b, v: value, sum: value })`) and input-guidance entries; `replay.noAnswers` when there are none; the outcome and tags from `derive`, then `revealsWithoutCorrect`, then the repeat tag from `repeats`; the completed equation only from a `correct` submission; `progress.continue` for the resumable delivery; `replay.back`.
   - **No store writes**: no store action is dispatched anywhere on the page.
-- [ ] T033 [P] [US3] Add `replay.title`, `replay.unavailable`, `replay.notFound`, `replay.back`, and `replay.noAnswers` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/replay.md`; the dictionary and literal checks pass.
-- [ ] T034 [US3] In `src/web/src/pages/RecordPage.tsx`, make each `record-item` expression a `Link` to `/record/{deliveryId}` whose accessible name is the expression and the date. T029 and T030 pass.
+- [X] T033 [P] [US3] Add `replay.title`, `replay.unavailable`, `replay.notFound`, `replay.back`, `replay.noAnswers`, and `replay.answersLabel` (the answers list's label) to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/replay.md`; the dictionary and literal checks pass.
+- [X] T034 [US3] In `src/web/src/pages/RecordPage.tsx`, make each `record-item` expression a `Link` to `/record/{deliveryId}` whose accessible name is the expression and the date (`progress.questionLink`; the router's `Link` gains an optional `aria-label`). T029 and T030 pass.
 
 **Checkpoint**: quickstart scenario 3 passes; this phase may merge on its own.
 
