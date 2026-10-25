@@ -26,7 +26,7 @@ Phase 1 of [plan.md](plan.md). Entities this feature adds or changes, by layer. 
 | Entity | Fields | Rules |
 | --- | --- | --- |
 | `PersistedState` (changed) | gains `lessonViews: LessonView[]` | Missing on hydrate → `[]`; storage schema version stays 1; cleared by "Clear my work" |
-| `LessonView` (new) | `lessonId`, `language` (`nb`, `en`), `at` (ISO timestamp) | Appended when spec 003 reports the lesson shown; not when the same lesson was appended less than one second earlier; at most 500, oldest dropped ([contracts/lesson-views.md](contracts/lesson-views.md)) |
+| `LessonView` (new) | `lessonId`, `language` (`nb`, `en`), `at` (ISO timestamp) | Appended once per visit that shows the lesson, through the guard that records spec 003's lesson event; no time window and no cap, like deliveries ([contracts/lesson-views.md](contracts/lesson-views.md)) |
 | `Delivery` (unchanged) | as spec 002 | Replay and the progress view only read it |
 
 ## Derived view (`src/web/src/state/progress.ts`, never stored)

@@ -124,7 +124,8 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - `repeats(withRepeats)` marks only the second `3 + 7`, with a different version or seed giving the same answer for the same operands;
   - deliveries are newest first, by `startedAt` then record order;
   - `skillOrder` puts the latest activity first and "Other practice" last;
-  - a definition that moved skill counts under its current skill.
+  - a definition that moved skill counts under its current skill;
+  - `revealsWithoutCorrect` gives `revealLesson`, `revealHelp`, `revealExplanation` (also for `answer-reveal`), and `revealCounting` for each reveal followed by `ended` or an incorrect submission; `[]` for a delivery with a correct submission and for one without reveals; `derive`'s outcome for the same deliveries is unchanged.
 - [ ] T015 [P] [US1] Rewrite `src/web/tests/record-page.test.tsx` for `contracts/progress-view.md` "What the page shows" (deliveries only) with the fake API, keeping its storage-notice, reload, and clear tests:
   - **Names**: skill headings show `name.en`, and `name.nb` after the language switch, never the ID.
   - **Counts**: one `record-summary` per skill with spec 002's sentence; the repeat sentence and the `progress.repeatTag` tag appear for `withRepeats`.
@@ -142,7 +143,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Create `src/web/src/state/progress.ts` with the pure functions `skillOfDefinition`, `repeats`, `groupBySkill`, and `skillOrder` of `contracts/progress-view.md`:
+- [ ] T017 [US1] Export `revealSource` from `src/web/src/state/outcomes.ts` (no logic change). Create `src/web/src/state/progress.ts` with the pure functions `skillOfDefinition`, `repeats`, `revealsWithoutCorrect`, `groupBySkill`, and `skillOrder` of `contracts/progress-view.md`:
   - `groupBySkill(deliveries, skills, resumableId)` returns `SkillGroup[]`, with `skillId: null` for "Other practice" (data-model.md);
   - it uses `derive` and `summarize` from `src/web/src/state/outcomes.ts` unchanged;
   - `lessons` stays `[]` until T033.
@@ -153,7 +154,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 - [ ] T020 [US1] Rewrite `src/web/src/pages/RecordPage.tsx` as the progress view of `contracts/progress-view.md`:
   - **Data**: take an optional `api` prop (default `practiceApi`), as `LessonPage` does, and request `getSkills()` once per visit.
   - **Heading and notices**: render `PageHeading`, then the storage notice.
-  - **Per skill**: for each `SkillGroup` in `skillOrder`, an `h2` with the name in the selected language (`progress.other` for `null`); the `record-summary` sentence; the repeat sentence; and a `details` with the summary `progress.showQuestions` (`data-testid="progress-questions"`) holding an `ol` of `record-item` entries. Each entry shows the expression via `record.question`, `formatDate` of `startedAt`, the outcome, `record-tag` tags plus `progress.repeatTag`, and `record.answers`, with `progress.continue` as a `Link` for the resumable question.
+  - **Per skill**: for each `SkillGroup` in `skillOrder`, an `h2` with the name in the selected language (`progress.other` for `null`); the `record-summary` sentence; the repeat sentence; and a `details` with the summary `progress.showQuestions` (`data-testid="progress-questions"`) holding an `ol` of `record-item` entries. Each entry shows the expression via `record.question`, `formatDate` of `startedAt`, the outcome, `record-tag` tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag`), and `record.answers`, with `progress.continue` as a `Link` for the resumable question.
   - **Other states**: the empty state with a `Link` to `/lessons`; `progress.contentUnavailable` when the skill request fails.
   - **Clear**: keep "Clear my work" as it is.
 
@@ -181,9 +182,9 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - **One view when shown**: one view after the content renders, none before.
   - **Detours**: a non-disclosing detour records one view plus `lesson-opened`; a disclosing lesson cancelled at the notice, or left through "Show visual help instead", records neither; opened anyway, it records one view plus `lesson-reveal`.
   - **Not shown**: `contentFails` records no view, and leaving before the content resolves records none.
-  - **Repeat visits**: a language switch records nothing; leaving and returning records a second view; two views within one second (fake timers) give one.
+  - **Repeat visits**: a language switch records nothing; leaving and returning records a second view; a remount within one second (fake timers) still records a second view; `onShown` called twice in one visit records one.
   - **Old records**: `beforeThisFeature` hydrates with `lessonViews: []` and its deliveries intact.
-  - **Clear and cap**: "Clear my work" empties the views; the 501st view drops the oldest.
+  - **Clear, no cap**: "Clear my work" empties the views; 600 views of one lesson all stay in the record.
 - [ ] T023 [P] [US2] Extend `src/web/tests/progress.test.ts`:
   - `lessonHistory` counts and gives the latest `at` per lesson;
   - a lesson teaching two skills appears in both groups with the same counts;
@@ -205,12 +206,12 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 - [ ] T025 [US2] In `src/web/src/state/store.tsx`:
   - **Types and hydrate**: add `LessonView` and `lessonViews: LessonView[]` to `PersistedState` and `initialPersisted`; in the `hydrate` case, default a missing `lessonViews` to `[]`.
-  - **Action**: add an action `{ type: "lessonViewed"; view: LessonView }` that appends unless the last view has the same `lessonId` and is less than 1000 ms earlier, then keeps the last 500.
+  - **Action**: add an action `{ type: "lessonViewed"; view: LessonView }` that appends (no time window and no cap; deduplication is the page's visit guard).
   - **Store API**: add `lessonViewed(lessonId, language)` to `StoreApi`, dispatching with `new Date().toISOString()`.
   - **Clear**: make the `clear` case empty `lessonViews`.
 
   Leave `STORAGE_KEY` and `SCHEMA_VERSION` in `src/web/src/state/storage.ts` unchanged.
-- [ ] T026 [US2] In `src/web/src/pages/LessonPage.tsx`, call `store.lessonViewed(id, <the language the content was shown in>)` inside the existing `onShown` callback, beside `store.lessonShown(...)`, so it runs once per visit after the first commit (spec 003's "shown"). T022 passes.
+- [ ] T026 [US2] In `src/web/src/pages/LessonPage.tsx`, call `store.lessonViewed(id, <the language the content was shown in>)` inside the existing `onShown` callback, in the branch guarded by the `recorded` ref and beside `store.lessonShown(...)`, so it runs once per visit after the first commit (spec 003's "shown"). T022 passes.
 - [ ] T027 [US2] Add `lessonHistory` to `src/web/src/state/progress.ts`, and extend `groupBySkill` and `skillOrder` to take the views and the lesson list (`LessonSummary.skills`): fill `SkillGroup.lessons`, list skills with views only, and use the latest view as activity.
 - [ ] T028 [US2] In `src/web/src/pages/RecordPage.tsx`:
   - request `getLessons()` once per visit;
@@ -234,7 +235,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 - [ ] T029 [P] [US3] Add `src/web/tests/replay.test.tsx` for `contracts/replay.md` tests 1–7. First extend `src/web/tests/fakeApi.ts` with `FakeOptions.instanceOperands` (overrides the resolved `a` and `b`) and `instanceFails` (`404` or network). Then cover:
   - **Spec scenarios 1 and 2**: `8 + 5` answered `12` then `13` shows both answers with status and feedback, "Correct after feedback", the date, and `8 + 5 = 13`; `6 + 5` answered `10` shows no `11` in `document.body.innerHTML`.
   - **Requests**: the call log holds exactly one `getInstance`.
-  - **A reveal without a correct answer**: shows its reveal tag and no sum.
+  - **A reveal without a correct answer**: a lesson, help, explanation, and counting reveal, each followed by `ended`, show their reveal tag and no sum.
   - **Nothing recorded**: `localStorage` is byte-identical before and after, with no new lesson view.
   - **Unavailable**: a mismatch, a 404, and a network failure each show the recorded expression and `replay.unavailable`.
   - **Question in progress and unknown IDs**: the resumable question shows "Continue" and no `input`; an unknown ID shows `replay.notFound`.
@@ -252,7 +253,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 - [ ] T032 [US3] Create `src/web/src/pages/ReplayPage.tsx` per `contracts/replay.md`:
   - **Lookup and request**: find the delivery in `state.deliveries`, or show `replay.notFound`; call `api.getInstance(definitionId, version, seed ?? null)` once.
   - **States**: `loading`, `matched`, `unavailable`, and `notFound` from data-model.md.
-  - **Content**: `PageHeading` with `replay.title`; `AdditionPrompt` from the resolved instance when matched, or from the record otherwise; an `ol` of submissions (text, `translateCode(lang, "status", status)`, feedback via `translateCode(lang, "feedback", code, { a, b, v: value, sum: value })`) and input-guidance entries; `replay.noAnswers` when there are none; the outcome and tags from `derive`, plus the repeat tag from `repeats`; the completed equation only from a `correct` submission; `progress.continue` for the resumable delivery; `replay.back`.
+  - **Content**: `PageHeading` with `replay.title`; `AdditionPrompt` from the resolved instance when matched, or from the record otherwise; an `ol` of submissions (text, `translateCode(lang, "status", status)`, feedback via `translateCode(lang, "feedback", code, { a, b, v: value, sum: value })`) and input-guidance entries; `replay.noAnswers` when there are none; the outcome and tags from `derive`, then `revealsWithoutCorrect`, then the repeat tag from `repeats`; the completed equation only from a `correct` submission; `progress.continue` for the resumable delivery; `replay.back`.
   - **No store writes**: no store action is dispatched anywhere on the page.
 - [ ] T033 [P] [US3] Add `replay.title`, `replay.unavailable`, `replay.notFound`, `replay.back`, and `replay.noAnswers` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/replay.md`; the dictionary and literal checks pass.
 - [ ] T034 [US3] In `src/web/src/pages/RecordPage.tsx`, make each `record-item` expression a `Link` to `/record/{deliveryId}` whose accessible name is the expression and the date. T029 and T030 pass.
@@ -374,5 +375,5 @@ T001–T013, then US1 (T014–T021) and the first release merge, then US2 (T022�
 - Commit after each task or logical group; each release checkpoint is a pull-request boundary.
 - Outcome derivation stays spec 002's: `progress.ts` groups and counts, and never decides an outcome.
 - Replay sends only the identity and computes nothing mathematical; the only sum it shows is a recorded correct answer.
-- A lesson view is recorded only from `onShown`, never on a click, route entry, or confirmation.
+- A lesson view is recorded only from `onShown`, behind the visit guard, never on a click, route entry, or confirmation; never deduplicate by time or cap the list.
 - Do not bump `SCHEMA_VERSION`: it would discard every learner's existing record.

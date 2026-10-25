@@ -53,20 +53,22 @@ Phase 0 of [plan.md](plan.md). Each decision records what was chosen, why, and w
 
 **Decision**:
 - **The field**: the persisted guest state gains `lessonViews: { lessonId, language, at }[]`, where `at` is an ISO timestamp.
-- **When**: spec 003's `LessonPage` already calls `onShown` once per visit when the content first renders. It now also calls `store.lessonViewed(lessonId, shownLanguage)`, which appends a view unless the last view is of the same lesson less than one second earlier (a double activation).
-- **Cap**: the list keeps at most the 500 most recent views.
+- **When**: spec 003's `LessonPage` records its lesson event once per visit, behind a guard, when the content first renders. The same guarded branch now also calls `store.lessonViewed(lessonId, shownLanguage)`, which always appends. Deduplication is by visit, not by time.
+- **No cap**: the list keeps every view, as `deliveries` keeps every question.
 - **Clearing**: "Clear my work" empties it.
 - **Compatibility**: hydration defaults a missing field to `[]`, and the storage schema version stays 1.
 
 **Rationale**:
 - **Same moment as spec 003's events**: recording at the "shown" moment makes the view and the question's lesson events agree, and a lesson behind the notice is never a view.
-- **One second, not three**: the window guards against a double mount or double activation without swallowing a real revisit (the prototype used three seconds).
-- **The cap**: it bounds storage for a long-lived guest record, and 500 views is far beyond any summary's needs.
+- **By visit, not by time**: a time window (the prototype used three seconds) would swallow a quick reload or return, which the spec counts as a new view. The visit guard already makes repeated callbacks harmless, and a second activation of a link to the page on screen does not remount it.
+- **No cap**: the history shows counts, so dropping old entries would lower them silently ("viewed 500 times" after 501 visits) or make a lesson's history disappear. Deliveries are not capped either; a view is about 90 bytes, and a failed save already shows spec 002's "not being kept" notice.
 - **The version**: bumping it would make `storage.ts` discard every existing record.
 
 **Alternatives considered**:
 - **Recording on route entry**: this would count a lesson kept behind the notice.
 - **Recording on scroll or time spent**: DL-019 forbids it.
+- **A time window against duplicates**: see above.
+- **A cap with folded totals**: it would keep counts right, but adds a second structure to keep in step with no present need; storage size belongs with F9.
 - **A separate storage key**: "Clear my work" and the "kept" notice would then have to coordinate two keys.
 
 ## R6. Replay
@@ -78,7 +80,7 @@ Phase 0 of [plan.md](plan.md). Each decision records what was chosen, why, and w
 - **Input-guidance entries**: shown as "could not be read" with their code's text.
 - **The outcome and its tags**.
 
-It shows the completed equation (`a + b = sum`) only when the delivery has a `correct` submission, whose recorded value is the sum. A delivery whose answer was revealed but never submitted correctly shows its reveal tag and no sum: the record holds none, and the app computes none. The sum never comes from a request.
+It shows the completed equation (`a + b = sum`) only when the delivery has a `correct` submission, whose recorded value is the sum. A delivery whose answer was revealed but never submitted correctly shows its reveal tag and no sum: the record holds none, and the app computes none. Spec 002's `derive` emits reveal tags only at the first correct submission, so a separate pure function, `revealsWithoutCorrect`, lists the reveals of a delivery without one; outcome precedence and counts are untouched. The sum never comes from a request.
 
 When resolution fails, the operands differ, or the service is unreachable, it shows the recorded expression from the record with the message `replay.unavailable`. It dispatches nothing to the store. An unfinished current question shows "Continue" to `/practice/{skillId}` instead of any answer control.
 

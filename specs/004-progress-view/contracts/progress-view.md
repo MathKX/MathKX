@@ -17,11 +17,13 @@ If either request fails, the page still shows every delivery from the record, un
 | `skillOfDefinition(skills)` | skill list | map `id@version` → skill ID |
 | `groupBySkill(deliveries, skills, resumableId)` | record, skill list | per skill (and one "Other practice" group): the deliveries, newest first, and spec 002's `summarize` over them |
 | `repeats(deliveries)` | record | the set of delivery IDs that repeat an earlier delivery (same definition ID, version, `a`, `b` in that order; earlier by `startedAt`, then record order) |
+| `revealsWithoutCorrect(delivery)` | one delivery | for a delivery with no `correct` submission, the reveal tags (`revealExplanation`, `revealCounting`, `revealHelp`, `revealLesson`) of its revealing support events, in spec 002's tag order; `[]` when it has a `correct` submission (`derive` then carries them) |
 | `lessonHistory(lessonViews)` | views | per lesson ID: `views` and `last` |
 | `skillOrder(groups, history, lessons)` | the above | skill IDs by latest activity, newest first; "Other practice" last |
 
 Rules:
 - Outcomes come from spec 002's `derive` unchanged; a delivery with outcome "none" is neither counted nor listed.
+- `derive` emits reveal tags only when it reaches the first correct submission, so a question whose answer was shown and never answered correctly gets no tags from it. `revealsWithoutCorrect` adds those tags for the question list and replay. It reads events through `revealSource`, which `outcomes.ts` exports for this without any change to its logic, and it never changes an outcome or a count.
 - A skill appears when it has a counted delivery or a viewed lesson whose `skills` lists it. A skill with views and no practice shows its lesson history and the sentence `progress.noPractice` instead of a count sentence.
 - A lesson teaching two skills appears under both; its views are counted once per lesson, not split.
 
@@ -34,7 +36,7 @@ The page heading stays "My work" / "Mitt arbeid". Above the skills, the storage 
 3. When there are repeats: `progress.repeats`.
 4. For each viewed lesson of the skill: `progress.lessonViewed` (or its single-view form).
 5. Once on the page, after the first lesson line: `progress.viewNote`.
-6. A native `details` with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression as a link to `/record/{deliveryId}`, the date, the outcome label, the tags (with `progress.repeatTag` for a repeat), and spec 002's `record.answers`. An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
+6. A native `details` with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression as a link to `/record/{deliveryId}`, the date, the outcome label, the tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag` for a repeat), and spec 002's `record.answers`. An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
 
 An empty record (no counted delivery, no view) shows spec 002's `record.empty` with a link to the lessons.
 

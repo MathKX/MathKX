@@ -18,14 +18,14 @@ Exactly one: `getInstance(definitionId, version, seed ?? null)`, spec 002's inst
 | The date of the question | the delivery's `startedAt`, long date format |
 | Each submission, in order: the text the learner entered, the status label, the feedback text | the `submission` events; `translateCode(feedback, code, { a, b, v: value, sum: value })` (`sum` is used only by `correct`) |
 | Each unreadable entry: the text and "Could not be read", with its guidance text | the `input-guidance` events |
-| The outcome and its tags | spec 002's `derive`, unchanged |
+| The outcome and its tags | spec 002's `derive`, unchanged, followed by `revealsWithoutCorrect` ([progress-view.md](progress-view.md)) |
 | "Repeated question" | [progress-view.md](progress-view.md) `repeats` |
 | The completed equation `a + b = sum` | only when the delivery has a `correct` submission; the sum is that submission's recorded value, through spec 002's `feedback.correct` (`{ a, b, sum: value }`) |
 
 ## Never shown
 
 - The sum, or anything from which it could be read, for a delivery with no correct submission: not in text, accessible names, `title` attributes, or data the page requests. The instance response contains no sum (spec 002), so the request itself discloses nothing.
-- The sum for a delivery whose answer was revealed (help, counting, explanation, lesson) but never submitted correctly: the record holds no sum, and the app computes none. Its reveal tag ("Answer shown in the help", and so on) says what happened.
+- The sum for a delivery whose answer was revealed (help, counting, explanation, lesson) but never submitted correctly: the record holds no sum, and the app computes none. Its reveal tag from `revealsWithoutCorrect` ("Answer shown in the help", and so on) says what happened.
 - An answer field, "Check", help, explanation, or lesson controls. Replay is for reading.
 
 ## Records nothing
@@ -60,7 +60,7 @@ If the delivery is the unfinished current question (`resumable.deliveryId` or `c
 
 1. A correct delivery replays with the same operands in both languages, its submissions, feedback, outcome, tags, and the completed equation.
 2. An unrevealed incorrect delivery shows no sum anywhere in the DOM, including attributes; the only request is the instance request.
-3. A delivery with an answer reveal and no correct submission shows its reveal tag and no sum.
+3. A delivery with a lesson, help, explanation, or counting reveal followed by `ended` (no correct submission) shows that reveal tag and no sum.
 4. The persisted record is unchanged after replay; no lesson view is recorded.
 5. Mismatched operands, a 404, and a network error each show the recorded expression and `replay.unavailable`.
 6. The question in progress shows "Continue" and no answer field; an unknown delivery ID shows `replay.notFound`.

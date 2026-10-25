@@ -106,7 +106,7 @@ Every heading, count, label, date, and note in "My work" and in a replayed quest
 - A delivery whose definition is not in the current content (removed or renamed): it is counted under "Other practice" with its recorded expression, and replay says it can no longer be shown.
 - The same question delivered twice in a row (the small pool of within ten makes this possible until feature F7): both deliveries are counted, and the second is marked as a repeat.
 - A question answered after "More like this" or after a ladder move: it counts under the skill of its own definition, not under where the learner started.
-- A lesson opened twice within a second (for example a double activation): one visit, one view; a deliberate reload is a new visit and a new view.
+- A second activation that does not start a new visit (for example the link to the lesson already on screen): one visit, one view; a reload or a return is a new visit and a new view, however soon it follows.
 - A lesson shown in English and later in Norwegian: both are views of the same lesson; the history records the language of each and shows one line per lesson.
 - Dates around midnight and across time zones: the date shown is the learner's local date at the moment of the view or delivery; no streaks or "days in a row" are derived.
 - "Clear my work" (spec 002): clears lesson views together with deliveries, after the same confirmation.
