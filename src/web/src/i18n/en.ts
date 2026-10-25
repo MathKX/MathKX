@@ -86,6 +86,11 @@ export const en = {
     continue: "Continue",
     contentUnavailable: "Skill names could not be loaded just now. Your work is all here.",
     toLessons: "Go to the lessons",
+    lessonViewed: "{title}: viewed {n} times, last on {date}",
+    lessonViewedOnce: "{title}: viewed once, on {date}",
+    viewNote: "A view shows that you opened the lesson, not that you understood it.",
+    noPractice: "No questions practised yet.",
+    historyUnavailable: "Your lesson history could not be loaded just now. It is still kept.",
   },
   ladder: {
     current: "Now: {description}",

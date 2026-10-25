@@ -1,8 +1,9 @@
-// The progress view's derivation (specs/004 contracts/progress-view.md): pure functions over the guest record and
-// the skill list. Outcomes and counts are spec 002's derive and summarize, unchanged; this file only groups,
-// orders, and marks repeats.
+// The progress view's derivation (specs/004 contracts/progress-view.md): pure functions over the guest record, the
+// skill list, and the lesson list. Outcomes and counts are spec 002's derive and summarize, unchanged; this file only
+// groups, orders, marks repeats, and counts lesson views.
 import type { SkillDto } from "../api/types";
 import type { Delivery } from "./observations";
+import type { LessonView } from "./store";
 import { derive, revealSource, summarize, TAG_ORDER, type Derived, type Summary, type Tag } from "./outcomes";
 
 /** Definition key (`id@version`) → skill ID, from each skill's `definitions`. */
@@ -58,6 +59,29 @@ export interface ListedQuestion {
   repeat: boolean;
 }
 
+export interface LessonHistory {
+  lessonId: string;
+  views: number;
+  /** The latest view's `at`. */
+  last: string;
+}
+
+/** Per lesson: how many views, and the latest. A view records that the lesson was shown, nothing more. */
+export function lessonHistory(views: LessonView[]): Map<string, LessonHistory> {
+  const history = new Map<string, LessonHistory>();
+  for (const { lessonId, at } of views) {
+    const seen = history.get(lessonId);
+    history.set(lessonId, seen ? { lessonId, views: seen.views + 1, last: at > seen.last ? at : seen.last } : { lessonId, views: 1, last: at });
+  }
+  return history;
+}
+
+/** What the progress view needs of a lesson: which skills it teaches. */
+export interface LessonSkills {
+  id: string;
+  skills: string[];
+}
+
 export interface SkillGroup {
   /** `null` for "Other practice": definitions no skill lists. */
   skillId: string | null;
@@ -65,12 +89,17 @@ export interface SkillGroup {
   questions: ListedQuestion[];
   summary: Summary;
   repeatCount: number;
-  /** The latest `startedAt` among its questions. */
+  /** Viewed lessons that teach the skill, latest view first; always empty for "Other practice". */
+  lessons: LessonHistory[];
+  /** The latest `startedAt` among its questions, or view among its lessons. */
   lastActivity: string;
 }
 
-/** Groups the counted deliveries by the skill of their definition; outcome "none" is neither counted nor listed. */
-export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumableId: string | null): SkillGroup[] {
+/**
+ * Groups the counted deliveries by the skill of their definition (outcome "none" is neither counted nor listed), and
+ * puts each viewed lesson under every named skill it teaches. A skill with views and no practice is listed too.
+ */
+export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumableId: string | null, views: LessonView[] = [], lessons: LessonSkills[] = []): SkillGroup[] {
   const skillOf = skillOfDefinition(skills);
   const repeated = repeats(deliveries);
   const byGroup = new Map<string | null, Delivery[]>();
@@ -78,6 +107,16 @@ export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumab
     const group = skillOf.get(keyOf(d)) ?? null;
     byGroup.set(group, [...(byGroup.get(group) ?? []), d]);
   }
+  const named = new Set(skills.map((s) => s.id));
+  const lessonsBySkill = new Map<string, LessonHistory[]>();
+  for (const history of lessonHistory(views).values()) {
+    const lesson = lessons.find((l) => l.id === history.lessonId);
+    for (const skillId of lesson?.skills ?? []) {
+      if (named.has(skillId)) lessonsBySkill.set(skillId, [...(lessonsBySkill.get(skillId) ?? []), history]);
+    }
+  }
+  for (const skillId of lessonsBySkill.keys()) if (!byGroup.has(skillId)) byGroup.set(skillId, []);
+
   const groups: SkillGroup[] = [];
   for (const [skillId, members] of byGroup) {
     const questions = members
@@ -87,19 +126,22 @@ export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumab
       })
       .filter((q) => q.derived.outcome !== "none")
       .reverse();
-    if (questions.length === 0) continue;
+    const viewed = skillId === null ? [] : [...(lessonsBySkill.get(skillId) ?? [])].sort((x, y) => (x.last < y.last ? 1 : x.last > y.last ? -1 : 0));
+    if (questions.length === 0 && viewed.length === 0) continue;
+    const latest = [questions[0]?.delivery.startedAt, viewed[0]?.last].filter((t): t is string => t !== undefined).sort().at(-1)!;
     groups.push({
       skillId,
       questions,
       summary: summarize(questions.map((q) => q.delivery), resumableId),
       repeatCount: questions.filter((q) => q.repeat).length,
-      lastActivity: questions[0]!.delivery.startedAt,
+      lessons: viewed,
+      lastActivity: latest,
     });
   }
   return groups;
 }
 
-/** Skills by their latest activity, newest first; "Other practice" last. */
+/** Skills by their latest activity (a question or a lesson view), newest first; "Other practice" last. */
 export function skillOrder(groups: SkillGroup[]): SkillGroup[] {
   return [...groups].sort((x, y) => {
     if ((x.skillId === null) !== (y.skillId === null)) return x.skillId === null ? 1 : -1;

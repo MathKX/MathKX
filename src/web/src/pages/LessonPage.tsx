@@ -126,11 +126,15 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
     return other ? { lang: other[0], markdown: other[1] } : null;
   }, [contents, lang, cached]);
 
+  // The language on screen when the content first renders is the language of the view (specs/004).
+  const shownLanguage = useRef<Lang>(lang);
+  shownLanguage.current = shown?.lang ?? lang;
   const onShown = useCallback(() => {
     if (!visit || recorded.current) return;
-    recorded.current = true;
+    recorded.current = true; // once per visit: the lesson event and the lesson view alike
     store.lessonShown({ deliveryId: visit.deliveryId, detour: visit.detour, discloses: visit.discloses, fromQuestion: visit.fromQuestion });
-  }, [visit, store]);
+    store.lessonViewed(id, shownLanguage.current);
+  }, [visit, store, id]);
 
   const practiceEntry = useCallback(
     (attributes: Record<string, string>, key: string) => {
