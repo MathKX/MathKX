@@ -10,7 +10,7 @@ Part of [plan.md](../plan.md) Phase 1. Spec FR-001 to FR-006, FR-009, FR-015 to 
 
 If a request fails, nothing from the record is hidden:
 - **The skill list fails**: every delivery is shown under "Other practice", with the message `progress.contentUnavailable`. The lesson history is left out (it is placed under named skills).
-- **The lesson list fails**: deliveries are still grouped by skill. The lesson history is left out, because the record holds lesson IDs and not titles or skills, with the message `progress.historyUnavailable` when there are views.
+- **The lesson list fails**: deliveries are still grouped by skill. The lesson history is left out, because the record holds lesson IDs and not titles or skills, with the message `progress.historyUnavailable` when there are views. The message says nothing about whether the history is kept: the storage notice on the same page says that, and without browser storage the views last only for the visit.
 
 The views stay in the record and appear on the next visit.
 
@@ -56,7 +56,7 @@ An empty record (no counted delivery, no view) shows spec 002's `record.empty` w
 | `progress.lessonViewedOnce` | {title}: viewed once, on {date} | {title}: vist én gang, {date} |
 | `progress.viewNote` | A view shows that you opened the lesson, not that you understood it. | At en leksjon er vist, betyr at du åpnet den, ikke at du har forstått den. |
 | `progress.noPractice` | No questions practised yet. | Ingen oppgaver øvd ennå. |
-| `progress.historyUnavailable` | Your lesson history could not be loaded just now. It is still kept. | Leksjonshistorikken din kunne ikke hentes akkurat nå. Den er fortsatt lagret. |
+| `progress.historyUnavailable` | Your lesson history could not be shown just now. | Leksjonshistorikken din kunne ikke vises akkurat nå. |
 | `progress.showQuestions` | Show the questions | Vis oppgavene |
 | `progress.continue` | Continue | Fortsett |
 | `progress.contentUnavailable` | Skill names could not be loaded just now. Your work is all here. | Navnene på ferdighetene kunne ikke hentes akkurat nå. Alt arbeidet ditt er her. |

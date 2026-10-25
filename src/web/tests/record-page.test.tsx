@@ -170,10 +170,20 @@ describe("the record page", () => {
 
   it("leaves the history out, with the note, when the lessons cannot be loaded", async () => {
     openRecord([delivery({ startedAt: at(1), events: [correct(8)] })], { api: createFakeApi({ lessonsFail: true }), lessonViews: [{ lessonId: "number-bonds-to-ten", language: "en", at: at(3) }] });
-    expect((await screen.findByTestId("history-unavailable")).textContent).toBe("Your lesson history could not be loaded just now. It is still kept.");
+    expect((await screen.findByTestId("history-unavailable")).textContent).toBe("Your lesson history could not be shown just now.");
     expect(screen.getAllByTestId("skill-name").map((h) => h.textContent)).toEqual(["Addition within 20"]);
     expect(screen.queryByTestId("progress-unavailable")).toBeNull();
     expect(screen.queryAllByTestId("lesson-viewed")).toHaveLength(0);
+  });
+
+  it("makes no claim that the history is kept when storage is unavailable and the lessons cannot be loaded (PR 38 review)", async () => {
+    render(<App api={createFakeApi({ lessonsFail: true })} initialPath="/lessons/number-bonds-to-ten" storage={brokenStorage()} />);
+    const user = userEvent.setup();
+    await screen.findByTestId("lesson-content"); // a view, kept in memory only
+    await user.click(screen.getByRole("link", { name: "Mitt arbeid" }));
+    expect((await screen.findByTestId("history-unavailable")).textContent).toBe("Leksjonshistorikken din kunne ikke vises akkurat nå.");
+    expect(screen.getByTestId("storage-note").textContent).toBe("Arbeidet ditt blir ikke lagret i denne nettleseren.");
+    expect(screen.getByTestId("record-page").textContent).not.toMatch(/fortsatt lagret|still kept/);
   });
 
   it("continues practice and says the work is not being kept when storage is unavailable", async () => {

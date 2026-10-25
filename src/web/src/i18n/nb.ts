@@ -91,7 +91,7 @@ export const nb = {
     lessonViewedOnce: "{title}: vist én gang, {date}",
     viewNote: "At en leksjon er vist, betyr at du åpnet den, ikke at du har forstått den.",
     noPractice: "Ingen oppgaver øvd ennå.",
-    historyUnavailable: "Leksjonshistorikken din kunne ikke hentes akkurat nå. Den er fortsatt lagret.",
+    historyUnavailable: "Leksjonshistorikken din kunne ikke vises akkurat nå.",
   },
   ladder: {
     current: "Nå: {description}",

@@ -90,7 +90,7 @@ export const en = {
     lessonViewedOnce: "{title}: viewed once, on {date}",
     viewNote: "A view shows that you opened the lesson, not that you understood it.",
     noPractice: "No questions practised yet.",
-    historyUnavailable: "Your lesson history could not be loaded just now. It is still kept.",
+    historyUnavailable: "Your lesson history could not be shown just now.",
   },
   ladder: {
     current: "Now: {description}",
