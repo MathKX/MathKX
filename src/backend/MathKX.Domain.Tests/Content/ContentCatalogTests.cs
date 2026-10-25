@@ -120,6 +120,44 @@ public sealed class ContentCatalogTests
     }
 
     [Fact]
+    public void Every_skill_has_a_name_in_both_languages()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+
+        Assert.All(catalog.Skills.Values, skill =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(skill.Name.Nb), skill.Id);
+            Assert.False(string.IsNullOrWhiteSpace(skill.Name.En), skill.Id);
+        });
+        Assert.Equal("Addition within 20", catalog.Skills["numbers.addition-within-20"].Name.En);
+    }
+
+    [Fact]
+    public void Lists_the_definitions_of_each_skill()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+
+        Assert.Equal(
+            ["numbers.addition.crossing-ten@1", "numbers.addition.four-plus-four@1", "numbers.addition.within-10@1"],
+            catalog.DefinitionsForSkill("numbers.addition-within-20"));
+        Assert.Empty(catalog.DefinitionsForSkill("numbers.number-bonds-to-ten"));
+        Assert.Empty(catalog.DefinitionsForSkill("numbers.unknown"));
+    }
+
+    [Fact]
+    public void Fails_fast_with_the_path_when_a_skill_has_no_name()
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        temp.Rewrite("skills/numbers.powers.json", text => System.Text.RegularExpressions.Regex.Replace(text, "\"name\":\\s*\\{[^}]*\\},?", ""));
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Contains("numbers.powers.json", error.Path, StringComparison.Ordinal);
+        Assert.Contains("name", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Ignores_dotfiles_in_assets()
     {
         using var content = new TempContent();

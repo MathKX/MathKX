@@ -279,6 +279,8 @@ describe("the lesson link's origin travels in its address (test 10)", () => {
     const { user } = await practice();
     const link = screen.getByTestId("to-lesson");
     expect(link.getAttribute("href")).toBe(`${lessonPath}?from=question`);
+    // The store persists in an effect after the prompt renders; compare against the persisted question, not a race.
+    await waitFor(() => expect(deliveries()).toHaveLength(1));
     const before = JSON.stringify(deliveries());
     for (const key of ["Control", "Meta", "Shift", "Alt"]) {
       await user.keyboard(`{${key}>}`);

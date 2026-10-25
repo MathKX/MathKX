@@ -27,14 +27,15 @@ export type Tag =
   | "explainAfter"
   | "lessonAfter";
 
-const TAG_ORDER: Tag[] = [
+export const TAG_ORDER: Tag[] = [
   "feedbackBefore", "visualBefore", "lessonBefore", "explainPartBefore",
   "revealExplanation", "revealCounting", "revealHelp", "revealLesson", "visualAfter", "explainAfter", "lessonAfter",
 ];
 
-type RevealSource = "explanation" | "counting" | "help" | "lesson";
+export type RevealSource = "explanation" | "counting" | "help" | "lesson";
 
-function revealSource(e: Event): RevealSource | null {
+/** Whether an event revealed the answer, and where; exported for specs/004 `revealsWithoutCorrect`. */
+export function revealSource(e: Event): RevealSource | null {
   if (e.type !== "support") return null;
   if (e.kind === "counting-complete") return "counting";
   if (e.kind === "help-step" && e.reveals) return "help";

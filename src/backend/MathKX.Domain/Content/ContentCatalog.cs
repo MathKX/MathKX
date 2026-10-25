@@ -70,6 +70,14 @@ public sealed class ContentCatalog
             .OrderBy(l => l.Id, StringComparer.Ordinal)
             .ToList();
 
+    /// <summary>Keys (<c>id@version</c>) of the definitions whose skill is <paramref name="skillId"/>, ordinally sorted; ladder or not (specs/004).</summary>
+    public IReadOnlyList<string> DefinitionsForSkill(string skillId) =>
+        Definitions.Values
+            .Where(d => d.Skill == skillId)
+            .Select(d => d.Key)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
     public bool TryGetDefinition(string id, int version, out ExerciseDefinition definition) =>
         Definitions.TryGetValue($"{id}@{version}", out definition!);
 }

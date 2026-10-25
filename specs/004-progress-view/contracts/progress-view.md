@@ -19,7 +19,7 @@ If either request fails, the page still shows every delivery from the record, un
 | `repeats(deliveries)` | record | the set of delivery IDs that repeat an earlier delivery (same definition ID, version, `a`, `b` in that order; earlier by `startedAt`, then record order) |
 | `revealsWithoutCorrect(delivery)` | one delivery | for a delivery with no `correct` submission, the reveal tags (`revealExplanation`, `revealCounting`, `revealHelp`, `revealLesson`) of its revealing support events, in spec 002's tag order; `[]` when it has a `correct` submission (`derive` then carries them) |
 | `lessonHistory(lessonViews)` | views | per lesson ID: `views` and `last` |
-| `skillOrder(groups, history, lessons)` | the above | skill IDs by latest activity, newest first; "Other practice" last |
+| `skillOrder(groups)` | groups | the groups by latest activity (`lastActivity`, which User Story 2 extends with lesson views), newest first; "Other practice" last |
 
 Rules:
 - Outcomes come from spec 002's `derive` unchanged; a delivery with outcome "none" is neither counted nor listed.
@@ -32,11 +32,11 @@ Rules:
 The page heading stays "My work" / "Mitt arbeid". Above the skills, the storage notice and "Clear my work" stay as in spec 002. For each skill, in order:
 
 1. `h2`: the skill's name in the selected language ("Other practice" / "Annen øving" for the extra group).
-2. The count sentence, spec 002's `record.summary`, for example "5 questions: 3 correct on first response, no help, 1 correct with visual help, 1 unfinished".
+2. The count sentence, spec 002's `record.summary` (`record.summaryOne` for one question), for example "5 questions: 3 correct on first response, no help, 1 correct with visual help, 1 unfinished". Outcomes are listed in a fixed order: correct on first response, after feedback, with visual help, with help, after the answer was shown, partly right, not checked automatically, not correct yet, skipped, unfinished.
 3. When there are repeats: `progress.repeats`.
 4. For each viewed lesson of the skill: `progress.lessonViewed` (or its single-view form).
 5. Once on the page, after the first lesson line: `progress.viewNote`.
-6. A native `details` with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression as a link to `/record/{deliveryId}`, the date, the outcome label, the tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag` for a repeat), and spec 002's `record.answers`. An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
+6. Designsystemet's `Details` (a native `details` element) with the summary `progress.showQuestions`; inside, an ordered list, newest first. Each item: the expression (a link to `/record/{deliveryId}` once replay exists) and the outcome label; on a second line the date and spec 002's `record.answers`; then the tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag` for a repeat). An unfinished question in progress also has "Continue" to `/practice/{skillId}`.
 
 An empty record (no counted delivery, no view) shows spec 002's `record.empty` with a link to the lessons.
 
@@ -54,6 +54,8 @@ An empty record (no counted delivery, no view) shows spec 002's `record.empty` w
 | `progress.showQuestions` | Show the questions | Vis oppgavene |
 | `progress.continue` | Continue | Fortsett |
 | `progress.contentUnavailable` | Skill names could not be loaded just now. Your work is all here. | Navnene på ferdighetene kunne ikke hentes akkurat nå. Alt arbeidet ditt er her. |
+| `progress.toLessons` | Go to the lessons | Gå til leksjonene |
+| `record.summaryOne` | {questions} question: {details} | {questions} oppgave: {details} |
 
 Dates: `Intl.DateTimeFormat(lang === "nb" ? "nb-NO" : "en-GB", { dateStyle: "long" })`. The final wording is settled in review; the keys and the rules are the contract.
 

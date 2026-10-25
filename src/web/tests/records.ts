@@ -1,0 +1,140 @@
+// Scripted guest records for the progress and replay tests (specs/004 tasks T001). Plain data shaped like the
+// store's deliveries; nothing here derives anything.
+import type { SkillDto } from "../src/api/types";
+import type { Delivery, Event } from "../src/state/observations";
+
+export const WITHIN_TEN = "numbers.addition.within-10";
+export const CROSSING = "numbers.addition.crossing-ten";
+export const FOUR_PLUS_FOUR = "numbers.addition.four-plus-four";
+/** A definition only the test skill list knows, so a second skill has practice. */
+export const BONDS_DEFINITION = "numbers.bonds.to-ten";
+
+/** The skill list the pure progress functions are tested against. */
+export const SKILLS: SkillDto[] = [
+  {
+    id: "numbers.addition-within-20",
+    name: { nb: "Addisjon opp til 20", en: "Addition within 20" },
+    prerequisites: ["numbers.number-bonds-to-ten"],
+    ladder: [],
+    definitions: [`${CROSSING}@1`, `${FOUR_PLUS_FOUR}@1`, `${WITHIN_TEN}@1`],
+  },
+  {
+    id: "numbers.number-bonds-to-ten",
+    name: { nb: "Tiervenner", en: "Number bonds to ten" },
+    prerequisites: [],
+    ladder: [],
+    definitions: [`${BONDS_DEFINITION}@1`],
+  },
+];
+
+let counter = 0;
+const nextId = (prefix: string) => `${prefix}${++counter}`;
+
+export interface DeliverySpec {
+  id?: string;
+  definitionId?: string;
+  version?: number;
+  /** `null` for a fixed task (no seed). */
+  seed?: string | null;
+  a?: number;
+  b?: number;
+  startedAt?: string;
+  events?: Event[];
+}
+
+export function delivery(spec: DeliverySpec = {}): Delivery {
+  const { definitionId = WITHIN_TEN, version = 1, seed = "1", a = 4, b = 4 } = spec;
+  const instance: Delivery["instance"] = { definitionId, version, validatorName: "integer-answer", validatorVersion: 1, a, b };
+  if (seed !== null) instance.seed = seed;
+  return {
+    id: spec.id ?? nextId("d"),
+    instance,
+    purpose: "practice",
+    provenance: "guest",
+    startedAt: spec.startedAt ?? "2026-10-24T10:00:00.000Z",
+    events: spec.events ?? [],
+  };
+}
+
+export const correct = (value: number): Event => ({ type: "submission", submissionId: nextId("s"), originalText: String(value), value, status: "correct", code: "correct" });
+export const incorrect = (value: number, code = "add.generic"): Event => ({ type: "submission", submissionId: nextId("s"), originalText: String(value), value, status: "incorrect", code });
+export const guidance = (text = "abc"): Event => ({ type: "input-guidance", submissionId: nextId("s"), originalText: text, code: "invalid.notAnInteger" });
+export const support = (kind: Extract<Event, { type: "support" }>["kind"], reveals?: boolean): Event =>
+  reveals === undefined ? { type: "support", kind } : { type: "support", kind, reveals };
+export const ended: Event = { type: "ended" };
+export const skipped: Event = { type: "skipped" };
+
+/** Minutes after a fixed start, so records have a known order. */
+export const at = (minute: number) => new Date(Date.UTC(2026, 9, 24, 10, minute)).toISOString();
+
+/**
+ * Spec User Story 1 scenario 1 (nine questions on addition: four correct on first response, two with visual help,
+ * one after feedback, one answered after the answer was shown, one skipped), then one of each remaining outcome.
+ */
+export function everyOutcome(): Delivery[] {
+  const d = (minute: number, events: Event[], a = 4, b = 4) => delivery({ startedAt: at(minute), events, a, b, seed: String(minute) });
+  return [
+    d(1, [correct(8)]),
+    d(2, [correct(8)]),
+    d(3, [correct(8)]),
+    d(4, [correct(8)]),
+    d(5, [support("visual-help-opened"), correct(8)]),
+    d(6, [support("visual-help-opened"), correct(8)]),
+    d(7, [incorrect(5), correct(8)]),
+    d(8, [support("explanation-open"), support("explanation-step", true), correct(8)]),
+    d(9, [skipped]),
+    // the remaining outcomes
+    d(10, [support("lesson-opened"), correct(8)]),
+    d(11, [incorrect(5)]),
+    d(12, [ended]),
+  ];
+}
+
+/** Addition and number bonds, interleaved in time. */
+export function twoSkills(): Delivery[] {
+  return [
+    delivery({ startedAt: at(1), events: [correct(8)] }),
+    delivery({ definitionId: BONDS_DEFINITION, startedAt: at(2), a: 3, b: 7, events: [correct(10)] }),
+    delivery({ definitionId: CROSSING, startedAt: at(3), a: 8, b: 5, events: [incorrect(12), correct(13)] }),
+  ];
+}
+
+/** `3 + 7` twice and `7 + 3` once, same definition and version; the second `3 + 7` is the only repeat. */
+export function withRepeats(): Delivery[] {
+  return [
+    delivery({ id: "first", startedAt: at(1), a: 3, b: 7, seed: "10", events: [correct(10)] }),
+    delivery({ id: "swapped", startedAt: at(2), a: 7, b: 3, seed: "11", events: [correct(10)] }),
+    delivery({ id: "again", startedAt: at(3), a: 3, b: 7, seed: "12", events: [correct(10)] }),
+  ];
+}
+
+/** A delivery whose definition the content no longer has. */
+export function unknownDefinition(): Delivery[] {
+  return [delivery({ definitionId: "numbers.removed", startedAt: at(1), a: 2, b: 2, events: [correct(4)] })];
+}
+
+/** Only unreadable input: outcome "none", neither counted nor listed. */
+export function guidanceOnly(): Delivery[] {
+  return [delivery({ startedAt: at(1), events: [guidance()] })];
+}
+
+/** A persisted state as spec 003 wrote it: no `lessonViews`. */
+export function beforeThisFeature(): Record<string, unknown> {
+  return {
+    language: "en",
+    skillId: "numbers.addition-within-20",
+    ladder: { entries: [], current: null, pending: null },
+    deliveries: [delivery({ startedAt: at(1), events: [correct(8)] }), delivery({ startedAt: at(2), events: [incorrect(5), correct(8)] })],
+    currentDeliveryId: null,
+    instance: null,
+    draft: "",
+    helpOpen: false,
+    helpSteps: [],
+    helpStep: -1,
+    explanationOpen: false,
+    explanationSteps: [],
+    explanationStep: -1,
+    result: null,
+    resumable: null,
+  };
+}

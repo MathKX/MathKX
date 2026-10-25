@@ -46,6 +46,7 @@ async function answerAndOpenRecord(page: Page, value: string) {
   await page.getByTestId("check").click();
   await expect(page.getByTestId("result")).toHaveAttribute("data-status", "correct");
   await page.getByRole("link", { name: "My work" }).click();
+  await page.getByTestId("progress-questions").first().click(); // specs/004: the list is behind "Show the questions"
   return page.getByTestId("record-item").first();
 }
 

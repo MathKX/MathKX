@@ -95,7 +95,8 @@ public sealed record TenFrameExplorerDto(string Type, IReadOnlyList<TenFrameExpl
 
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
-public sealed record SkillDto(string Id, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder);
+/// <summary>A skill with its learner-facing name and the keys (<c>id@version</c>) of its definitions (specs/004 contracts/api.md).</summary>
+public sealed record SkillDto(string Id, LocalizedDto Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder, IReadOnlyList<string> Definitions);
 
 public sealed record StepTextDto(string Code, IReadOnlyDictionary<string, object> Values);
 

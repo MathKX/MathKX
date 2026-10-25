@@ -36,7 +36,7 @@ function Shell({ api }: { api?: PracticeApi }) {
         {route.name === "lessons" ? <LessonListPage {...(api ? { api } : {})} /> : null}
         {route.name === "lesson" ? <LessonPage key={route.id} id={route.id} {...(api ? { api } : {})} /> : null}
         {route.name === "practice" ? <PracticePage skillId={route.skillId} /> : null}
-        {route.name === "record" ? <RecordPage /> : null}
+        {route.name === "record" ? <RecordPage {...(api ? { api } : {})} /> : null}
         {route.name === "unknown" ? <LessonListPage {...(api ? { api } : {})} /> : null}
       </main>
     </>

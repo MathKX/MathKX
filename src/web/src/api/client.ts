@@ -44,6 +44,7 @@ const seedSegment = (identity: Identity) => identity.seed ?? NO_SEED;
 export const practiceApi: PracticeApi = {
   getLessons: () => request<LessonSummary[]>("/api/lessons"),
   getLesson: (id) => request<LessonDetail>(`/api/lessons/${encodeURIComponent(id)}`),
+  getSkills: () => request<SkillDto[]>("/api/skills"),
   getSkill: (id) => request<SkillDto>(`/api/skills/${encodeURIComponent(id)}`),
   getInstance: (definitionId, version, seed) =>
     request<InstanceDto>(`/api/instances/${encodeURIComponent(definitionId)}/${version}/${seed ?? NO_SEED}`),

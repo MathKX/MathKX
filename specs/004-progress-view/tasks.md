@@ -31,7 +31,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 **Purpose**: The scripted records every progress and replay test reads.
 
-- [ ] T001 [P] Create `src/web/tests/records.ts` exporting builders for scripted deliveries (`delivery({ definitionId, version, seed, a, b, startedAt, events })`) and named records:
+- [X] T001 [P] Create `src/web/tests/records.ts` exporting builders for scripted deliveries (`delivery({ definitionId, version, seed, a, b, startedAt, events })`) and named records:
   - `everyOutcome`: the nine-question record of spec User Story 1 scenario 1, plus one of each remaining outcome;
   - `twoSkills`: deliveries for `numbers.addition-within-20` and one for a definition the fake lists under `numbers.number-bonds-to-ten`;
   - `withRepeats`: `3 + 7` twice and `7 + 3` once, same definition and version;
@@ -51,15 +51,15 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests
 
-- [ ] T002 [P] Extend `tools/validate-content.test.mjs` for `contracts/skill-name.md`:
+- [X] T002 [P] Extend `tools/validate-content.test.mjs` for `contracts/skill-name.md`:
   - **Helper**: give the `skill()` helper a default `name: { nb: id, en: id }` and override it with `extra`, so existing tests still pass.
-  - **Cases**: a valid named skill passes; a skill without `name` fails as a schema violation; a skill without `name.en` fails; `name.nb` of `"  "` fails with `content/skills/<file>: skill name in nb is missing or empty (field name.nb)`; an extra `name.de` fails.
-- [ ] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
+  - **Cases**: a valid named skill passes; a skill without `name` fails as a schema violation; a skill without `name.en` fails; `name.nb` of `"  "` fails with `content/skills/<file> name.nb: skill name in nb is missing or empty`; an extra `name.de` fails.
+- [X] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
   - all nine repository skills load with a non-empty `Name.Nb` and `Name.En`;
   - `catalog.DefinitionsForSkill("numbers.addition-within-20")` is `["numbers.addition.crossing-ten@1", "numbers.addition.four-plus-four@1", "numbers.addition.within-10@1"]`;
   - `numbers.number-bonds-to-ten` has none;
   - a temporary content root whose skill file lacks `name` fails the load with the file's relative path.
-- [ ] T004 [P] Add `contracts/api.md` contract tests 1–5 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
+- [X] T004 [P] Add `contracts/api.md` contract tests 1–5 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - `GET /api/skills` lists nine skills in ID order with names and `definitions`;
   - `GET /api/skills/{id}` equals the list element;
   - `unknown-skill` gives a 404;
@@ -70,40 +70,40 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation
 
-- [ ] T005 In `schemas/skill.schema.json`:
+- [X] T005 In `schemas/skill.schema.json`:
   - add `"name"` to `required`;
   - add the property `name`: an object with required `nb` and `en`, each `{ "type": "string", "minLength": 1 }`, and `additionalProperties: false`;
   - rewrite `description` so it says the skill carries its localized name, and that descriptions and curriculum mappings still live elsewhere.
 
   Keep `schemaVersion` `"0.1"` (research R1).
-- [ ] T006 In `tools/lib/skills.mjs`, add a check in `indexSkills` (or a new exported `checkNames` called from the same place as `checkLadders`): for `nb` and `en`, a missing value or a string that is empty after `trim()` reports `skill name in {language} is missing or empty` with `{ field: "name.{language}" }`. T002 passes.
-- [ ] T007 Add `name` (after `id`) to all nine files in `content/skills/` with the proposed names of `contracts/skill-name.md`; `npm run validate` at the root passes.
-- [ ] T008 [P] Add a "Name a skill" section before "Add a ladder" in `content/AUTHORING.md`, covering:
+- [X] T006 In `tools/lib/skills.mjs`, add a check in `indexSkills` (or a new exported `checkNames` called from the same place as `checkLadders`): for `nb` and `en`, a missing value or a string that is empty after `trim()` reports `skill name in {language} is missing or empty` with `{ field: "name.{language}" }`. T002 passes.
+- [X] T007 Add `name` (after `id`) to all nine files in `content/skills/` with the proposed names of `contracts/skill-name.md`; `npm run validate` at the root passes.
+- [X] T008 [P] Add a "Name a skill" section before "Add a ladder" in `content/AUTHORING.md`, covering:
   - the field, with an example;
   - both languages required;
   - the name is shown to learners and reviewed like lesson text;
   - it is never an identity.
 
   Also replace "Names, descriptions, and curriculum mappings … will live elsewhere" in `content/README.md` with a sentence saying each skill file carries its localized name, while descriptions and curriculum mappings live elsewhere.
-- [ ] T009 In `src/backend/MathKX.Domain/Content/Records.cs`, change `Skill` to `Skill(string Id, Localized Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder)`. In `src/backend/MathKX.Domain/Content/ContentCatalog.cs`:
+- [X] T009 In `src/backend/MathKX.Domain/Content/Records.cs`, change `Skill` to `Skill(string Id, Localized Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder)`. In `src/backend/MathKX.Domain/Content/ContentCatalog.cs`:
   - add `DefinitionsForSkill(string skillId)`, the ordinally sorted `id@version` keys of the definitions whose `Skill` equals it;
   - make `src/backend/MathKX.Content/ContentLoader.cs` throw `ContentLoadException` with the relative path when a skill's `Name` (or either language) is null.
 
   T003 passes.
-- [ ] T010 In `src/backend/MathKX.Api/Dto/Dtos.cs`, make `SkillDto(string Id, LocalizedDto Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder, IReadOnlyList<string> Definitions)`. In `src/backend/MathKX.Api/Endpoints/ContentEndpoints.cs`:
+- [X] T010 In `src/backend/MathKX.Api/Dto/Dtos.cs`, make `SkillDto(string Id, LocalizedDto Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder, IReadOnlyList<string> Definitions)`. In `src/backend/MathKX.Api/Endpoints/ContentEndpoints.cs`:
   - move the existing mapping into a private `Skill(ContentCatalog, Skill)` helper;
   - add `GET /api/skills` returning every skill ordered by ID through it;
   - keep `GET /api/skills/{id}` on the same helper;
   - update the class summary.
 
   T004 passes.
-- [ ] T011 [P] In `src/web/src/api/types.ts`, add `name: { nb: string; en: string }` and `definitions: string[]` to `SkillDto`, and `getSkills(): Promise<SkillDto[]>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts` as `request<SkillDto[]>("/api/skills")`.
-- [ ] T012 [P] Extend `src/web/tests/fakeApi.ts`:
+- [X] T011 [P] In `src/web/src/api/types.ts`, add `name: { nb: string; en: string }` and `definitions: string[]` to `SkillDto`, and `getSkills(): Promise<SkillDto[]>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts` as `request<SkillDto[]>("/api/skills")`.
+- [X] T012 [P] Extend `src/web/tests/fakeApi.ts`:
   - **Skills**: `SKILL` and a new `BONDS_SKILL` carry names and `definitions` (the three pilot keys under addition, none under number bonds).
   - **`getSkills()`**: returns both and logs `getSkills`.
   - **`getSkill(id)`**: returns the matching one.
   - **New `FakeOptions`**: `skillsFail` rejects `getSkills`; `lessonsFail` rejects `getLessons`.
-- [ ] T013 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/skills` from the published service contains `"name":{"nb":"Addisjon opp til 20"` (or the reviewed name). This proves the deploy package carries the named skill files.
+- [X] T013 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/skills` from the published service contains `"name":{"nb":"Addisjon opp til 20"` (or the reviewed name). This proves the deploy package carries the named skill files.
 
 **Checkpoint**: `npm test` (root), `dotnet test`, and `npm test` in `src/web` pass; the app looks unchanged.
 
@@ -117,7 +117,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 1
 
-- [ ] T014 [P] [US1] Add `src/web/tests/progress.test.ts` for `contracts/progress-view.md` "Derivation", over the records of T001:
+- [X] T014 [P] [US1] Add `src/web/tests/progress.test.ts` for `contracts/progress-view.md` "Derivation", over the records of T001:
   - per-skill `summary` equals `summarize` of the same deliveries (SC-001);
   - outcome "none" (`guidanceOnly`) is neither counted nor listed;
   - `unknownDefinition` goes to the "Other practice" group;
@@ -126,14 +126,14 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - `skillOrder` puts the latest activity first and "Other practice" last;
   - a definition that moved skill counts under its current skill;
   - `revealsWithoutCorrect` gives `revealLesson`, `revealHelp`, `revealExplanation` (also for `answer-reveal`), and `revealCounting` for each reveal followed by `ended` or an incorrect submission; `[]` for a delivery with a correct submission and for one without reveals; `derive`'s outcome for the same deliveries is unchanged.
-- [ ] T015 [P] [US1] Rewrite `src/web/tests/record-page.test.tsx` for `contracts/progress-view.md` "What the page shows" (deliveries only) with the fake API, keeping its storage-notice, reload, and clear tests:
+- [X] T015 [P] [US1] Rewrite `src/web/tests/record-page.test.tsx` for `contracts/progress-view.md` "What the page shows" (deliveries only) with the fake API, keeping its storage-notice, reload, and clear tests:
   - **Names**: skill headings show `name.en`, and `name.nb` after the language switch, never the ID.
   - **Counts**: one `record-summary` per skill with spec 002's sentence; the repeat sentence and the `progress.repeatTag` tag appear for `withRepeats`.
   - **Question list**: "Show the questions" reveals the items newest first with date, outcome, tags, and answers; switching language keeps it open.
   - **Continue**: the resumable question shows "Continue" to `/practice/numbers.addition-within-20`.
   - **Empty state**: the empty record shows `record.empty` and a link to `/lessons`.
   - **Content unavailable**: `skillsFail` shows every delivery under "Other practice" with `progress.contentUnavailable`.
-- [ ] T016 [P] [US1] Add `src/web/e2e/progress.spec.ts` with check 1 (quickstart scenario 1):
+- [X] T016 [P] [US1] Add `src/web/e2e/progress.spec.ts` with check 1 (quickstart scenario 1):
   - clear the record, then answer one question correctly at once, one after a wrong answer, one with visual help, and leave one unanswered (seeds pinned with the `crypto.getRandomValues` init script of `src/web/e2e/lesson.spec.ts`);
   - "My work" shows "Addition within 20" with "4 questions:" and the three outcomes plus "Unfinished";
   - "Continue" returns to the same question;
@@ -143,23 +143,23 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Export `revealSource` from `src/web/src/state/outcomes.ts` (no logic change). Create `src/web/src/state/progress.ts` with the pure functions `skillOfDefinition`, `repeats`, `revealsWithoutCorrect`, `groupBySkill`, and `skillOrder` of `contracts/progress-view.md`:
+- [X] T017 [US1] Export `revealSource` from `src/web/src/state/outcomes.ts` (no logic change). Create `src/web/src/state/progress.ts` with the pure functions `skillOfDefinition`, `repeats`, `revealsWithoutCorrect`, `groupBySkill`, and `skillOrder` of `contracts/progress-view.md`:
   - `groupBySkill(deliveries, skills, resumableId)` returns `SkillGroup[]`, with `skillId: null` for "Other practice" (data-model.md);
   - it uses `derive` and `summarize` from `src/web/src/state/outcomes.ts` unchanged;
   - `lessons` stays `[]` until T033.
 
   T014 passes.
-- [ ] T018 [P] [US1] Add `formatDate(lang, iso)` to `src/web/src/i18n/index.ts`: `Intl.DateTimeFormat` with `nb-NO` or `en-GB` and `{ dateStyle: "long" }` (research R7). Add `progress.other`, `progress.repeats`, `progress.repeatTag`, `progress.showQuestions`, `progress.continue`, `progress.contentUnavailable`, and `progress.skillsLabel` (the region label) to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/progress-view.md`. `tests/dictionaries.test.ts` and `tests/literals.test.ts` pass.
-- [ ] T019 [P] [US1] Create `src/web/src/components/PageHeading.tsx`: an `h1` (Designsystemet `Heading level={1}`) with `tabIndex={-1}` that takes focus on mount when the page was reached by in-app navigation (the router's `navigate`, tracked with a module-level flag the router sets), not on the first load of the app. Add the flag to `src/web/src/router.tsx`.
-- [ ] T020 [US1] Rewrite `src/web/src/pages/RecordPage.tsx` as the progress view of `contracts/progress-view.md`:
+- [X] T018 [P] [US1] Add `formatDate(lang, iso)` to `src/web/src/i18n/index.ts`: `Intl.DateTimeFormat` with `nb-NO` or `en-GB` and `{ dateStyle: "long" }` (research R7). Add `progress.other`, `progress.repeats`, `progress.repeatTag`, `progress.showQuestions`, `progress.continue`, `progress.contentUnavailable`, `progress.toLessons` (the empty state's link), and `record.summaryOne` (one question) to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/progress-view.md`. `tests/dictionaries.test.ts` and `tests/literals.test.ts` pass.
+- [X] T019 [P] [US1] Create `src/web/src/components/PageHeading.tsx`: an `h1` (Designsystemet `Heading level={1}`) with `tabIndex={-1}` that takes focus on mount when the page was reached by in-app navigation (the router's `navigate`, tracked with a module-level flag the router sets), not on the first load of the app. Add the flag to `src/web/src/router.tsx`.
+- [X] T020 [US1] Rewrite `src/web/src/pages/RecordPage.tsx` as the progress view of `contracts/progress-view.md`:
   - **Data**: take an optional `api` prop (default `practiceApi`), as `LessonPage` does, and request `getSkills()` once per visit.
   - **Heading and notices**: render `PageHeading`, then the storage notice.
-  - **Per skill**: for each `SkillGroup` in `skillOrder`, an `h2` with the name in the selected language (`progress.other` for `null`); the `record-summary` sentence; the repeat sentence; and a `details` with the summary `progress.showQuestions` (`data-testid="progress-questions"`) holding an `ol` of `record-item` entries. Each entry shows the expression via `record.question`, `formatDate` of `startedAt`, the outcome, `record-tag` tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag`), and `record.answers`, with `progress.continue` as a `Link` for the resumable question.
+  - **Per skill**: for each `SkillGroup` in `skillOrder`, an `h2` with the name in the selected language (`progress.other` for `null`); the `record-summary` sentence; the repeat sentence; and Designsystemet's `Details` with the summary `progress.showQuestions` (`data-testid="progress-questions"`) holding an `ol` of `record-item` entries. Each entry shows the expression via `record.question`, `formatDate` of `startedAt`, the outcome, `record-tag` tags (`derive`'s, then `revealsWithoutCorrect`, then `progress.repeatTag`), and `record.answers`, with `progress.continue` as a `Link` for the resumable question.
   - **Other states**: the empty state with a `Link` to `/lessons`; `progress.contentUnavailable` when the skill request fails.
   - **Clear**: keep "Clear my work" as it is.
 
   Pass `api` from `src/web/src/App.tsx`. T015 passes.
-- [ ] T021 [US1] Update the checks that read the record so they open "Show the questions" first:
+- [X] T021 [US1] Update the checks that read the record so they open "Show the questions" first:
   - the `record-item` helper near line 49 of `src/web/e2e/lesson.spec.ts`;
   - check 7 of `src/web/e2e/practice.spec.ts`;
   - the `record-item` reads in `src/web/tests/delivery-binding.test.tsx` and `src/web/tests/exercise-shell.test.tsx`, if they assert visibility.

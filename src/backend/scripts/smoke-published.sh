@@ -38,4 +38,6 @@ curl -fsS "http://127.0.0.1:$port/api/lessons/number-bonds-to-ten/content/en" | 
 type="$(curl -fsS -o /dev/null -w '%{content_type}' "http://127.0.0.1:$port/api/lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg")"
 case "$type" in image/svg+xml*) ;; *) echo "lesson asset was not published (content type '$type')"; exit 1 ;; esac
 curl -fsS "http://127.0.0.1:$port/api/visuals/make-ten?a=8&b=5" | grep -q '"type":"make-ten"' || { echo "lesson visuals did not resolve"; exit 1; }
+# specs/004 T013: the package carries the named skill files.
+curl -fsS "http://127.0.0.1:$port/api/skills" | grep -q '"name":{"nb":"Addisjon opp til 20","en":"Addition within 20"}' || { echo "skill names were not published"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

@@ -44,7 +44,14 @@ public static class ContentLoader
                     LoadRegistry(document, relative, generators, validators, representations, components, codes);
                     break;
                 case "skill.schema.json":
-                    Add(skills, Deserialize<Skill>(document, relative), s => s.Id, relative);
+                    var skill = Deserialize<Skill>(document, relative);
+                    if (string.IsNullOrWhiteSpace(skill.Name?.Nb) || string.IsNullOrWhiteSpace(skill.Name?.En))
+                    {
+                        // The validator reports this first in CI; the loader refuses rather than show an ID to a learner.
+                        throw new ContentLoadException(relative, "skill name in nb and en is required");
+                    }
+
+                    Add(skills, skill, s => s.Id, relative);
                     break;
                 case "exercise-definition.pilot.schema.json":
                     Add(definitions, Deserialize<ExerciseDefinition>(document, relative), d => d.Key, relative);
