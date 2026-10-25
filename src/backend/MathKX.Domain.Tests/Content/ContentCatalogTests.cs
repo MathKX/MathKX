@@ -69,6 +69,31 @@ public sealed class ContentCatalogTests
         Assert.Contains("addition-pear@1", error.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void An_error_names_the_definition_file_of_the_content_being_loaded()
+    {
+        // Loading the repository first used to fill a static path cache shared by every Load (and every thread).
+        ContentLoader.Load(RepositoryContent.Root);
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        File.Move(Path.Combine(temp.Root, "exercises/numbers/addition-within-10.json"), Path.Combine(temp.Root, "exercises/numbers/moved-within-10.json"));
+        temp.Rewrite("exercises/numbers/moved-within-10.json", text => text.Replace("\"name\": \"addition-pair\"", "\"name\": \"addition-pear\"", StringComparison.Ordinal));
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Equal("exercises/numbers/moved-within-10.json", error.Path);
+    }
+
+    [Fact]
+    public void Loads_in_parallel_without_shared_state()
+    {
+        // Test classes load content in parallel; a shared cache corrupted under that load on CI (PR 39).
+        var catalogs = new ContentCatalog[32];
+        Parallel.For(0, catalogs.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount * 2) }, i => catalogs[i] = ContentLoader.Load(RepositoryContent.Root));
+
+        Assert.All(catalogs, catalog => Assert.Equal(3, catalog.Definitions.Count));
+    }
+
     [Theory]
     [InlineData("---\ntitle: \"Quoted: title\"\nobjective: 'Single quoted'\n---\n# Body\n", "Quoted: title", "Single quoted")]
     [InlineData("---\ntitle: Folded\nobjective: >-\n  First line\n  second line\n---\n", "Folded", "First line second line")]

@@ -29,6 +29,7 @@ public static class ContentLoader
         var codes = new Dictionary<string, MisconceptionCodeEntry>(StringComparer.Ordinal);
         var skills = new Dictionary<string, Skill>(StringComparer.Ordinal);
         var definitions = new Dictionary<string, ExerciseDefinition>(StringComparer.Ordinal);
+        var definitionFiles = new Dictionary<string, string>(StringComparer.Ordinal); // id@version -> the file it was read from
         var lessons = new Dictionary<string, LessonMetadata>(StringComparer.Ordinal);
         var translations = new Dictionary<(string, string), LessonTranslation>();
         var assets = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -54,7 +55,9 @@ public static class ContentLoader
                     Add(skills, skill, s => s.Id, relative);
                     break;
                 case "exercise-definition.pilot.schema.json":
-                    Add(definitions, Deserialize<ExerciseDefinition>(document, relative), d => d.Key, relative);
+                    var definition = Deserialize<ExerciseDefinition>(document, relative);
+                    Add(definitions, definition, d => d.Key, relative);
+                    definitionFiles[definition.Key] = relative;
                     break;
                 case "lesson.schema.json":
                     var lesson = Deserialize<LessonMetadata>(document, relative);
@@ -83,7 +86,7 @@ public static class ContentLoader
             }
         }
 
-        CheckReferences(definitions, generators, validators, representations, codes, root);
+        CheckReferences(definitions, definitionFiles, generators, validators, representations, codes);
 
         return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, translations, assets);
     }
@@ -259,15 +262,15 @@ public static class ContentLoader
 
     private static void CheckReferences(
         Dictionary<string, ExerciseDefinition> definitions,
+        Dictionary<string, string> definitionFiles,
         Dictionary<string, GeneratorEntry> generators,
         Dictionary<string, ValidatorEntry> validators,
         Dictionary<string, RepresentationEntry> representations,
-        Dictionary<string, MisconceptionCodeEntry> codes,
-        string root)
+        Dictionary<string, MisconceptionCodeEntry> codes)
     {
         foreach (var definition in definitions.Values)
         {
-            var path = DefinitionPath(root, definition);
+            var path = definitionFiles[definition.Key];
             if (!validators.ContainsKey(definition.Validator.Key))
             {
                 throw new ContentLoadException(path, $"validator {definition.Validator.Key} is not registered");
@@ -294,29 +297,5 @@ public static class ContentLoader
                 }
             }
         }
-    }
-
-    private static readonly Dictionary<string, string> DefinitionPaths = new(StringComparer.Ordinal);
-
-    private static string DefinitionPath(string root, ExerciseDefinition definition)
-    {
-        // Best effort: find the file that defines this id@version for the error message.
-        if (DefinitionPaths.TryGetValue(definition.Key, out var cached))
-        {
-            return cached;
-        }
-
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "exercises"), "*.json", SearchOption.AllDirectories))
-        {
-            var text = File.ReadAllText(file);
-            if (text.Contains($"\"id\": \"{definition.Id}\"", StringComparison.Ordinal) && text.Contains($"\"version\": {definition.Version}", StringComparison.Ordinal))
-            {
-                var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
-                DefinitionPaths[definition.Key] = relative;
-                return relative;
-            }
-        }
-
-        return definition.Key;
     }
 }
