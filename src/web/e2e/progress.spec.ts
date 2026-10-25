@@ -193,16 +193,54 @@ test.describe("the progress view", () => {
     await next(page);
   }
 
+  /**
+   * Records each control's unfocused outline and shadow, so a focus indicator is told apart from a permanent
+   * decoration (PR 41 review). Runs before Tab reaches the controls, while none of them has focus.
+   */
+  const recordUnfocused = (page: Page) =>
+    page.evaluate(() => {
+      const store = new WeakMap<Element, string>();
+      for (const el of document.querySelectorAll("a, button, summary, input, [tabindex]")) {
+        if (el === document.activeElement) continue;
+        const style = getComputedStyle(el);
+        store.set(el, style.outlineStyle + " " + style.outlineWidth + " " + style.outlineColor + " | " + style.boxShadow);
+      }
+      (window as unknown as { __mkxUnfocused: WeakMap<Element, string> }).__mkxUnfocused = store;
+    });
+
+  /**
+   * Whether the focused element shows a painted focus indicator: an outline with width and a visible colour, or a
+   * box shadow with a visible colour and some extent, either of which the element does not have unfocused. A
+   * transparent outline, a transparent or zero-size shadow, and an unchanged decorative shadow do not count.
+   */
   const focusShows = (page: Page) =>
     page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body) return { name: "none", visible: false };
+      const alpha = (color: string) => {
+        if (color === "transparent") return 0;
+        const match = /rgba?\(([^)]*)\)/.exec(color);
+        if (!match) return 1;
+        const parts = match[1]!.split(/[\s,/]+/).filter(Boolean);
+        return parts.length >= 4 ? Number.parseFloat(parts[3]!) : 1;
+      };
       const style = getComputedStyle(el);
-      const visible = (style.outlineStyle !== "none" && style.outlineWidth !== "0px") || style.boxShadow !== "none";
-      return { name: el.dataset.testid ?? el.tagName.toLowerCase(), visible };
+      const outline = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0 && alpha(style.outlineColor) > 0;
+      // Computed shadows list the colour first: "rgb(0, 0, 255) 0px 0px 0px 2px, ...".
+      const shadows = style.boxShadow === "none" ? [] : style.boxShadow.split(/,(?![^(]*\))/);
+      const paintedShadow = shadows.some((shadow) => {
+        const color = /rgba?\([^)]*\)|transparent/.exec(shadow)?.[0] ?? "rgb(0, 0, 0)";
+        const lengths = (shadow.replace(color, "").match(/-?[\d.]+px/g) ?? []).map((n) => Math.abs(Number.parseFloat(n)));
+        return alpha(color) > 0 && lengths.some((n) => n > 0);
+      });
+      const unfocused = (window as unknown as { __mkxUnfocused?: WeakMap<Element, string> }).__mkxUnfocused?.get(el);
+      const now = style.outlineStyle + " " + style.outlineWidth + " " + style.outlineColor + " | " + style.boxShadow;
+      const changed = unfocused === undefined || unfocused !== now;
+      return { name: el.dataset.testid ?? el.tagName.toLowerCase(), visible: changed && (outline || paintedShadow) };
     });
 
   async function tabTo(page: Page, testId: string) {
+    await recordUnfocused(page);
     for (let i = 0; i < 30; i++) {
       await page.keyboard.press("Tab");
       const focus = await focusShows(page);
@@ -232,6 +270,51 @@ test.describe("the progress view", () => {
     await expect(page.getByRole("heading", { level: 1, name: "My work" })).toBeFocused();
   });
 
+  test("4b. the focus check rejects invisible indicators (negative controls)", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "a check of the check; one project is enough");
+    await page.goto("/");
+    await page.evaluate(() => {
+      const style = document.createElement("style");
+      style.textContent = ".shadow-on-focus:focus { outline: none; box-shadow: 0 0 0 3px rgb(0, 0, 255); } .outline-on-focus:focus { outline: 3px solid rgb(0, 0, 255); }";
+      document.head.append(style);
+      const cases: [string, string, string][] = [
+        ["transparent-outline", "outline: 3px solid transparent;", ""],
+        ["clear-outline", "outline: 3px solid rgba(0, 0, 0, 0);", ""],
+        ["zero-shadow", "outline: none; box-shadow: 0 0 0 0 rgb(0, 0, 0);", ""],
+        ["clear-shadow", "outline: none; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0);", ""],
+        ["decorative-shadow", "outline: none; box-shadow: 0 0 0 3px rgb(0, 0, 0);", ""],
+        ["decorative-outline", "outline: 3px solid rgb(0, 0, 255);", ""],
+        ["outline-on-focus", "", "outline-on-focus"],
+        ["shadow-on-focus", "", "shadow-on-focus"],
+      ];
+      for (const [id, css, className] of cases) {
+        const a = document.createElement("a");
+        a.href = "#";
+        a.textContent = id;
+        a.dataset.testid = id;
+        a.setAttribute("style", css);
+        if (className) a.className = className;
+        document.body.prepend(a);
+      }
+    });
+    await recordUnfocused(page);
+    const results: Record<string, boolean> = {};
+    for (const id of ["transparent-outline", "clear-outline", "zero-shadow", "clear-shadow", "decorative-shadow", "decorative-outline", "outline-on-focus", "shadow-on-focus"]) {
+      await page.getByTestId(id).focus();
+      results[id] = (await focusShows(page)).visible;
+    }
+    expect(results).toEqual({
+      "transparent-outline": false,
+      "clear-outline": false,
+      "zero-shadow": false,
+      "clear-shadow": false,
+      "decorative-shadow": false,
+      "decorative-outline": false,
+      "outline-on-focus": true,
+      "shadow-on-focus": true,
+    });
+  });
+
   test("5. My work and replay at 200 percent zoom do not scroll sideways", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "desktop viewport only");
     await twoQuestions(page);
@@ -239,11 +322,28 @@ test.describe("the progress view", () => {
     await page.setViewportSize({ width: 512, height: 384 }); // 1024 by 768 at 200 percent
     await page.getByRole("link", { name: "Mitt arbeid" }).click();
     await page.getByTestId("progress-questions").first().click();
-    const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    expect(await overflow(), "My work").toBeLessThanOrEqual(0);
+    await expect(page.getByTestId("record-item").first()).toBeVisible(); // the list has opened
+    // The page must not scroll sideways, and no box inside it may clip or scroll content sideways either: the
+    // question list sits in a box that hides its own overflow, which the page width alone would not reveal.
+    const overflow = () =>
+      page.evaluate(() => ({
+        page: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+        clipped: [...document.querySelectorAll("main *")]
+          .filter((el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== "visible")
+          .map((el) => (el as HTMLElement).dataset.testid ?? el.tagName.toLowerCase()),
+      }));
+    expect(await overflow(), "My work").toEqual({ page: 0, clipped: [] });
+
+    // Replay shows the expression only once the instance request settles: delay it, and measure only after it.
+    await page.route("**/api/instances/**", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.continue();
+    });
     await page.getByTestId("record-question").first().click();
     await expect(page.getByTestId("replay-outcome")).toBeVisible();
-    expect(await overflow(), "replay").toBeLessThanOrEqual(0);
+    await expect(page.getByTestId("prompt")).toHaveCount(0); // the delayed request has not settled yet
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    expect(await overflow(), "replay").toEqual({ page: 0, clipped: [] });
   });
 
   test("6. the controls of My work and replay are at least 44 by 44 at the iPad viewport", async ({ page }, testInfo) => {
