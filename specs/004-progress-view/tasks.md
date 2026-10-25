@@ -291,14 +291,14 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T038 [P] Add check 5 (quickstart scenario 4) to `src/web/e2e/progress.spec.ts`: a record of spec 003's shape without `lessonViews`, injected through `localStorage` before load, shows every delivery under its skill and no lesson lines.
-- [ ] T039 Update `README.md` "Current status", the spec 004 row of `specs/README.md`, and `docs/learning/mastery.md` "Persistence and current implementation status" (if it lists what the guest record holds) to say the progress view, lesson history, and replay are implemented.
-- [ ] T040 Run the four quickstart scenarios by hand. Correct any quoted wording in `specs/004-progress-view/quickstart.md` or the contracts to match the dictionaries as reviewed, and record the measured CI wall time in the quickstart's CI section (SC-006).
-- [ ] T041 Record two open human validation items in the pull-request description:
+- [X] T038 [P] Add check 5 (quickstart scenario 4) to `src/web/e2e/progress.spec.ts`: a record of spec 003's shape without `lessonViews`, injected through `localStorage` before load, shows every delivery under its skill and no lesson lines (check 7; it also blocks the skill, lesson, and instance requests and checks the fallbacks of "My work" and replay).
+- [X] T039 Update `README.md` "Current status", the spec 004 row of `specs/README.md`, and `docs/learning/mastery.md` "Persistence and current implementation status" (if it lists what the guest record holds) to say the progress view, lesson history, and replay are implemented.
+- [X] T040 Run the four quickstart scenarios by hand. Correct any quoted wording in `specs/004-progress-view/quickstart.md` or the contracts to match the dictionaries as reviewed, and record the measured CI wall time in the quickstart's CI section (SC-006).
+- [X] T041 Record two open human validation items in the pull-request description:
   - the learner check of SC-005 (after one minute on "My work", the learner can say which skill they practised, how the questions went, and which lesson they looked at);
   - the content review of the nine skill names in both languages.
 
-  Findings are recorded, not scored.
+  Findings are recorded, not scored. Both are listed as open items in the pull request for this phase.
 - [X] T042 After the first release (Phases 1–3) has deployed, open "My work" on the production URL (the deploy job's `environment.url`) in both languages and check that the skill names render from the deployed content. Do the same for the lesson history after the second release. Add both results to a dated walkthrough file under `docs/reviews/walkthroughs/`. Both parts checked on 2026-10-25 and recorded in `docs/reviews/walkthroughs/2026-10-25-progress-view-production.md`: the first release (`f987903`) and the lesson history (`21605ea`), pass in both languages.
 
 ---

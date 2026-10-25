@@ -371,4 +371,62 @@ test.describe("the progress view", () => {
     await check(page.getByTestId("replay-continue"), "replay Continue");
     await check(page.getByTestId("replay-back"), "Back to my work");
   });
+
+  test("7. a record from before this feature, and the service unreachable (quickstart scenario 4)", async ({ page }) => {
+    // A guest record as spec 003 wrote it: deliveries, no lessonViews field.
+    const delivery = (id: string, definitionId: string, a: number, b: number, minute: number, value: number) => ({
+      id,
+      instance: { definitionId, version: 1, seed: String(minute), generatorVersion: 1, validatorName: "integer-answer", validatorVersion: 1, a, b },
+      purpose: "practice",
+      provenance: "guest",
+      startedAt: new Date(Date.UTC(2026, 9, 20, 10, minute)).toISOString(),
+      events: [{ type: "submission", submissionId: "s" + id, originalText: String(value), value, status: "correct", code: "correct" }],
+    });
+    const old = {
+      language: "en",
+      skillId: "numbers.addition-within-20",
+      ladder: { entries: [], current: null, pending: null },
+      deliveries: [
+        delivery("old-1", "numbers.addition.within-10", 3, 4, 1, 7),
+        delivery("old-2", "numbers.addition.within-10", 2, 6, 2, 8),
+        delivery("old-3", "numbers.addition.crossing-ten", 8, 5, 3, 13),
+      ],
+      currentDeliveryId: null,
+      instance: null,
+      draft: "",
+      helpOpen: false,
+      helpSteps: [],
+      helpStep: -1,
+      explanationOpen: false,
+      explanationSteps: [],
+      explanationStep: -1,
+      result: null,
+      resumable: null,
+    };
+    await page.goto("/");
+    await page.evaluate((value) => window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value })), old);
+
+    await page.goto("/record");
+    await expect(page.getByTestId("skill-name")).toHaveText(["Addition within 20"]);
+    await expect(page.getByTestId("record-summary")).toHaveText("3 questions: 3 correct on first response, no help");
+    await expect(page.getByTestId("record-item")).toHaveCount(3);
+    await expect(page.getByTestId("lesson-viewed")).toHaveCount(0);
+    const kept = await page.evaluate(() => JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}"));
+    expect(kept.schema).toBe(1);
+    expect(kept.value.deliveries).toEqual(old.deliveries);
+
+    // The service unreachable: every question stays visible, under Other practice, and replay says what it can.
+    await page.route("**/api/skills", (route) => route.abort());
+    await page.route("**/api/lessons", (route) => route.abort());
+    await page.route("**/api/instances/**", (route) => route.abort());
+    await page.reload();
+    await expect(page.getByTestId("progress-unavailable")).toHaveText("Skill names could not be loaded just now. Your work is all here.");
+    await expect(page.getByTestId("skill-name")).toHaveText(["Other practice"]);
+    await expect(page.getByTestId("record-item")).toHaveCount(3);
+    await page.getByTestId("progress-questions").click();
+    await page.getByTestId("record-question").first().click();
+    await expect(page.getByTestId("replay-unavailable")).toBeVisible();
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", "8 plus 5. What is the sum?");
+    await expect(page.getByTestId("replay-submission")).toContainText("Correct. 8 + 5 = 13.");
+  });
 });
