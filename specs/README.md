@@ -11,7 +11,7 @@ Specifications follow the backlog order recorded in the decision log (feature ve
 | [001-pilot-content-contract](001-pilot-content-contract/spec.md) | F1 | Schemas, folder layout, directive and notation rules, and validator checks for lessons, exercise definitions, and skill ladders (implemented, PR 20) |
 | [002-practice-flow](002-practice-flow/spec.md) | F2, F3, F4 | The first learner-visible practice loop: domain generator and validator, thin service, web practice flow with help-first feedback, the ladder transitions between the two milestone definitions, and the minimum guest session record with derived outcomes; establishes the application layout |
 | [003-lesson-rendering](003-lesson-rendering/spec.md) | F5 | Lesson rendering and the detour back to an exercise, with the honest answer-reveal notice and recording (implemented: first release PR 30, then US4, US5, and polish) |
-| 004 (planned) | F6 | The progress view across skills and lessons, "Lesson viewed" history, and replay of recorded deliveries |
+| [004-progress-view](004-progress-view/spec.md) | F6 | The progress view across skills and lessons, "Lesson viewed" history, and replay of recorded deliveries; adds localized skill names to the content contract (specified, planned, and broken into tasks) |
 | 005 (planned) | F7 | Repeat avoidance, "Repeat this question", and further session controls |
 | 006 (later) | F8 | Self-checks, after milestone one |
 | F9 | — | Profiles, recovery, and persistence: a design proposal first, then a specification |
