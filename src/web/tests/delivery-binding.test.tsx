@@ -100,7 +100,7 @@ describe("responses are bound to the question they were requested for", () => {
 
     await user.click(screen.getByText("Mitt arbeid"));
     const items = await screen.findAllByTestId("record-item");
-    expect(items[0]?.getAttribute("data-outcome")).toBe("correctWithVisualHelp");
+    expect(items.at(-1)?.getAttribute("data-outcome")).toBe("correctWithVisualHelp"); // newest first: the first question is last
   });
 
   it("does not record an explanation step that was requested but never presented", async () => {

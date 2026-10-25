@@ -20,16 +20,24 @@ export function splitAddress(address: string): { path: string; search: string } 
   return q < 0 ? { path: withoutHash || "/", search: "" } : { path: withoutHash.slice(0, q) || "/", search: withoutHash.slice(q) };
 }
 
+/** Whether the app has navigated since it loaded (a link, or back and forward); a page heading takes focus then. */
+let navigatedInApp = false;
+export const hasNavigatedInApp = () => navigatedInApp;
+
 const currentAddress = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
 
 export function RouterProvider({ children, initialPath }: { children: ReactNode; initialPath?: string }) {
   const [address, setAddress] = useState(() => splitAddress(initialPath ?? currentAddress()));
   useEffect(() => {
-    const onPop = () => setAddress(splitAddress(currentAddress()));
+    const onPop = () => {
+      navigatedInApp = true;
+      setAddress(splitAddress(currentAddress()));
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
   const navigate = (to: string) => {
+    navigatedInApp = true;
     if (typeof window !== "undefined" && to !== currentAddress()) window.history.pushState(null, "", to);
     setAddress(splitAddress(to));
   };

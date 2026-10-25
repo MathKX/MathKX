@@ -181,12 +181,13 @@ test.describe("practice flow", () => {
     await page.getByTestId("explanation-next").click();
 
     await page.getByText("Mitt arbeid").click();
+    await page.getByTestId("progress-questions").click(); // specs/004: the list is behind "Show the questions", newest first
     const items = page.getByTestId("record-item");
     await expect(items).toHaveCount(2);
-    await expect(items.nth(0)).toHaveAttribute("data-outcome", "correctAfterExplanation");
-    await expect(items.nth(0)).toContainText("Feil svar først");
-    await expect(items.nth(1)).toHaveAttribute("data-outcome", "correctFirst");
-    await expect(items.nth(1)).toContainText("Forklaring åpnet etter svaret");
+    await expect(items.nth(1)).toHaveAttribute("data-outcome", "correctAfterExplanation");
+    await expect(items.nth(1)).toContainText("Feil svar først");
+    await expect(items.nth(0)).toHaveAttribute("data-outcome", "correctFirst");
+    await expect(items.nth(0)).toContainText("Forklaring åpnet etter svaret");
     await expect(page.getByTestId("record-summary")).not.toContainText("%");
   });
 

@@ -54,6 +54,13 @@ export function translate(lang: Lang, key: string, params?: Params): string {
   });
 }
 
+const DATE_LOCALES: Record<Lang, string> = { nb: "nb-NO", en: "en-GB" };
+
+/** A date in the selected language's long format, in the browser's time zone ("24. oktober 2026", "24 October 2026"). */
+export function formatDate(lang: Lang, iso: string): string {
+  return new Intl.DateTimeFormat(DATE_LOCALES[lang], { dateStyle: "long" }).format(new Date(iso));
+}
+
 /** Code-keyed lookups (feedback, status, outcome, tag, step texts) share the translate path. */
 export function translateCode(lang: Lang, namespace: string, code: string, params?: Params): string {
   return translate(lang, `${namespace}.${code}`, params);
