@@ -2,7 +2,7 @@
 // answer, and order, checked against spec 002's derive and summarize applied to the same deliveries.
 import { describe, expect, it } from "vitest";
 import { derive, summarize } from "../src/state/outcomes";
-import { groupBySkill, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
+import { groupBySkill, lessonHistory, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
 import {
   BONDS_DEFINITION, CROSSING, SKILLS, WITHIN_TEN, at, correct, delivery, ended, everyOutcome, guidanceOnly, incorrect, support,
   twoSkills, unknownDefinition, withRepeats,
@@ -132,5 +132,48 @@ describe("skillOrder", () => {
       delivery({ definitionId: BONDS_DEFINITION, startedAt: at(10), a: 3, b: 7, events: [correct(10)] }),
     ];
     expect(skillOrder(groupBySkill(record, SKILLS, null)).map((g) => g.skillId)).toEqual(["numbers.number-bonds-to-ten", "numbers.addition-within-20", null]);
+  });
+});
+
+describe("lesson history (User Story 2)", () => {
+  const view = (minute: number, lessonId = "number-bonds-to-ten", language: "nb" | "en" = "nb") => ({ lessonId, language, at: at(minute) });
+  const LESSONS = [
+    { id: "number-bonds-to-ten", skills: ["numbers.number-bonds-to-ten", "numbers.addition-within-20"] },
+    { id: "other-lesson", skills: ["numbers.addition-within-20"] },
+  ];
+
+  it("counts the views of each lesson and keeps the latest", () => {
+    const history = lessonHistory([view(1), view(5, "number-bonds-to-ten", "en"), view(3), view(2, "other-lesson")]);
+    expect(history.get("number-bonds-to-ten")).toEqual({ lessonId: "number-bonds-to-ten", views: 3, last: at(5) });
+    expect(history.get("other-lesson")).toEqual({ lessonId: "other-lesson", views: 1, last: at(2) });
+  });
+
+  it("puts a lesson's views under every skill it teaches, with the same counts, and lists a skill with views only", () => {
+    const groups = groupBySkill([delivery({ startedAt: at(1), events: [correct(8)] })], SKILLS, null, [view(4), view(6)], LESSONS);
+    const addition = groups.find((g) => g.skillId === "numbers.addition-within-20")!;
+    const bonds = groups.find((g) => g.skillId === "numbers.number-bonds-to-ten")!;
+    expect(addition.lessons).toEqual([{ lessonId: "number-bonds-to-ten", views: 2, last: at(6) }]);
+    expect(bonds.lessons).toEqual(addition.lessons);
+    expect(bonds.questions).toEqual([]);
+    expect(bonds.summary).toEqual({ questions: 0, counts: {} });
+  });
+
+  it("orders skills by their latest question or view", () => {
+    const groups = groupBySkill([delivery({ startedAt: at(1), events: [correct(8)] })], SKILLS, null, [view(9, "other-lesson")], LESSONS);
+    expect(skillOrder(groups).map((g) => g.skillId)).toEqual(["numbers.addition-within-20"]);
+    expect(groups[0]!.lastActivity).toBe(at(9));
+    const later = groupBySkill([delivery({ startedAt: at(1), events: [correct(8)] })], SKILLS, null, [view(9)], LESSONS);
+    expect(skillOrder(later).map((g) => g.skillId)).toEqual(["numbers.addition-within-20", "numbers.number-bonds-to-ten"]);
+  });
+
+  it("leaves out views of a lesson the list no longer has, and skills the content does not name", () => {
+    const groups = groupBySkill([], SKILLS, null, [view(1, "removed-lesson"), view(2, "orphan")], [...LESSONS, { id: "orphan", skills: ["numbers.unknown"] }]);
+    expect(groups).toEqual([]);
+  });
+
+  it("lists the lessons of a skill by their latest view, newest first", () => {
+    const groups = groupBySkill([], SKILLS, null, [view(1), view(7, "other-lesson")], LESSONS);
+    const addition = groups.find((g) => g.skillId === "numbers.addition-within-20")!;
+    expect(addition.lessons.map((l) => l.lessonId)).toEqual(["other-lesson", "number-bonds-to-ten"]);
   });
 });

@@ -25,6 +25,13 @@ export interface Resumable {
   explanationStep: number;
 }
 
+/** One visit in which a lesson's content was shown (specs/004 contracts/lesson-views.md); never evidence about a skill. */
+export interface LessonView {
+  lessonId: string;
+  language: Lang;
+  at: string;
+}
+
 /** What survives a reload. */
 export interface PersistedState {
   language: Lang;
@@ -42,6 +49,8 @@ export interface PersistedState {
   explanationStep: number;
   result: ValidationResponse | null;
   resumable: Resumable | null;
+  /** Added by specs/004 without a schema version change; a record written before it has none. No cap, like deliveries. */
+  lessonViews: LessonView[];
 }
 
 export interface State extends PersistedState {
@@ -69,6 +78,7 @@ const initialPersisted: PersistedState = {
   explanationStep: -1,
   result: null,
   resumable: null,
+  lessonViews: [],
 };
 
 type Action =
@@ -94,6 +104,7 @@ type Action =
   | { type: "present" }
   | { type: "instanceLessons"; deliveryId: string; lessons: NonNullable<InstanceDto["lessons"]> }
   | { type: "end" }
+  | { type: "lessonViewed"; view: LessonView }
   | { type: "clear" };
 
 function updateDelivery(state: State, deliveryId: string | null | undefined, fn: (d: Delivery) => Delivery): State {
@@ -108,7 +119,7 @@ const isCurrent = (state: State, deliveryId: string) => state.currentDeliveryId 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
-      return { ...state, ...action.state, kept: action.kept };
+      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], kept: action.kept };
     case "language":
       return { ...state, language: action.language };
     case "kept":
@@ -199,6 +210,8 @@ function reducer(state: State, action: Action): State {
         : null;
       return { ...updateCurrent(state, (d) => recordEvent(d, { type: "ended" })), resumable, presenting: false };
     }
+    case "lessonViewed":
+      return { ...state, lessonViews: [...state.lessonViews, action.view] };
     case "clear":
       return { ...state, ...initialPersisted, language: state.language };
     default:
@@ -221,6 +234,8 @@ export interface StoreApi {
   requestChallenge(request: "easier" | "harder"): void;
   /** Records the lesson visit on the delivery it began with, once the lesson content is shown (specs/003). */
   lessonShown(visit: { deliveryId: string | null; detour: boolean; discloses: boolean; fromQuestion: boolean }): void;
+  /** Records that a lesson's content was shown in a visit; the page calls it once per visit (specs/004). */
+  lessonViewed(lessonId: string, language: Lang): void;
   /** "Show visual help instead": help opens through toggleHelp() when the practice view next presents this question. */
   showHelpInstead(): void;
   /** Re-resolves the current question when it was stored before instances carried their lessons; false on failure. */
@@ -462,6 +477,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         // The recording table of specs/003 contracts/detour.md: one event, only once the lesson is shown.
         const kind = detour ? (discloses ? "lesson-reveal" : "lesson-opened") : fromQuestion && hasCorrect(delivery) ? "lesson-opened" : null;
         if (kind) dispatch({ type: "event", event: { type: "support", kind }, deliveryId });
+      },
+      lessonViewed(lessonId, language) {
+        dispatch({ type: "lessonViewed", view: { lessonId, language, at: new Date().toISOString() } });
       },
       showHelpInstead() {
         pendingHelpOpen.current = latest.current.currentDeliveryId;

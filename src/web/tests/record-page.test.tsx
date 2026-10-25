@@ -42,8 +42,11 @@ async function practiseThree(api = createFakeApi({ pairs: { "numbers.addition.wi
 }
 
 /** Stores a record as the app would have written it, then opens "My work" in the given language. */
-function openRecord(deliveries: Delivery[], { language = "en", api = createFakeApi() }: { language?: "nb" | "en"; api?: ReturnType<typeof createFakeApi> } = {}) {
-  window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), language, deliveries } }));
+function openRecord(
+  deliveries: Delivery[],
+  { language = "en", api = createFakeApi(), lessonViews }: { language?: "nb" | "en"; api?: ReturnType<typeof createFakeApi>; lessonViews?: { lessonId: string; language: string; at: string }[] } = {},
+) {
+  window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), language, deliveries, ...(lessonViews ? { lessonViews } : {}) } }));
   render(<App api={api} initialPath="/record" />);
   return userEvent.setup();
 }
@@ -135,6 +138,52 @@ describe("the record page", () => {
     await user.click(within(item).getByTestId("record-continue"));
     expect((await screen.findByTestId("answer")).getAttribute("value") ?? (screen.getByTestId("answer") as HTMLInputElement).value).toBe("7");
     expect(screen.getByTestId("prompt").getAttribute("aria-label")).toContain("3");
+  });
+
+  it("lists a viewed lesson under every skill it teaches, with its title, count, and last date, and the note once", async () => {
+    const lessonViews = [
+      { lessonId: "number-bonds-to-ten", language: "nb", at: at(2) },
+      { lessonId: "number-bonds-to-ten", language: "en", at: at(5) },
+    ];
+    const user = openRecord([delivery({ startedAt: at(1), events: [correct(8)] })], { language: "nb", lessonViews });
+    await waitFor(() => expect(screen.getAllByTestId("skill-name")).toHaveLength(2));
+    // The lesson teaches both skills, so its latest view is the latest activity of both; on a tie the practised skill stays first.
+    expect(screen.getAllByTestId("skill-name").map((h) => h.textContent)).toEqual(["Addisjon opp til 20", "Tiervenner"]);
+    const lines = screen.getAllByTestId("lesson-viewed").map((l) => l.textContent);
+    expect(lines).toEqual([`Tiervenner: vist 2 ganger, sist ${formatDate("nb", at(5))}`, `Tiervenner: vist 2 ganger, sist ${formatDate("nb", at(5))}`]);
+    expect(screen.getAllByTestId("lesson-view-note").map((n) => n.textContent)).toEqual(["At en leksjon er vist, betyr at du åpnet den, ikke at du har forstått den."]);
+    expect(screen.getByTestId("record-no-practice").textContent).toBe("Ingen oppgaver øvd ennå.");
+    expect(screen.getAllByTestId("record-summary")).toHaveLength(1);
+
+    await user.click(screen.getByTestId("lang-en"));
+    expect(screen.getAllByTestId("lesson-viewed")[0]!.textContent).toBe(`Number bonds to ten: viewed 2 times, last on ${formatDate("en", at(5))}`);
+    expect(screen.getByTestId("lesson-view-note").textContent).toBe("A view shows that you opened the lesson, not that you understood it.");
+  });
+
+  it("says viewed once for a single view, and shows a skill with views only", async () => {
+    openRecord([], { lessonViews: [{ lessonId: "number-bonds-to-ten", language: "en", at: at(3) }] });
+    await waitFor(() => expect(screen.getAllByTestId("skill-name")).toHaveLength(2));
+    expect(screen.getAllByTestId("lesson-viewed")[0]!.textContent).toBe(`Number bonds to ten: viewed once, on ${formatDate("en", at(3))}`);
+    expect(screen.queryByTestId("record-empty")).toBeNull();
+    expect(screen.getAllByTestId("record-no-practice")).toHaveLength(2);
+  });
+
+  it("leaves the history out, with the note, when the lessons cannot be loaded", async () => {
+    openRecord([delivery({ startedAt: at(1), events: [correct(8)] })], { api: createFakeApi({ lessonsFail: true }), lessonViews: [{ lessonId: "number-bonds-to-ten", language: "en", at: at(3) }] });
+    expect((await screen.findByTestId("history-unavailable")).textContent).toBe("Your lesson history could not be shown just now.");
+    expect(screen.getAllByTestId("skill-name").map((h) => h.textContent)).toEqual(["Addition within 20"]);
+    expect(screen.queryByTestId("progress-unavailable")).toBeNull();
+    expect(screen.queryAllByTestId("lesson-viewed")).toHaveLength(0);
+  });
+
+  it("makes no claim that the history is kept when storage is unavailable and the lessons cannot be loaded (PR 38 review)", async () => {
+    render(<App api={createFakeApi({ lessonsFail: true })} initialPath="/lessons/number-bonds-to-ten" storage={brokenStorage()} />);
+    const user = userEvent.setup();
+    await screen.findByTestId("lesson-content"); // a view, kept in memory only
+    await user.click(screen.getByRole("link", { name: "Mitt arbeid" }));
+    expect((await screen.findByTestId("history-unavailable")).textContent).toBe("Leksjonshistorikken din kunne ikke vises akkurat nå.");
+    expect(screen.getByTestId("storage-note").textContent).toBe("Arbeidet ditt blir ikke lagret i denne nettleseren.");
+    expect(screen.getByTestId("record-page").textContent).not.toMatch(/fortsatt lagret|still kept/);
   });
 
   it("continues practice and says the work is not being kept when storage is unavailable", async () => {

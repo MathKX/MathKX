@@ -178,14 +178,14 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] Add `src/web/tests/lesson-views.test.tsx` for `contracts/lesson-views.md` tests 1–6 with the fake API, reusing the visit setup of `src/web/tests/lesson-gate.test.tsx`:
+- [X] T022 [P] [US2] Add `src/web/tests/lesson-views.test.tsx` for `contracts/lesson-views.md` tests 1–6 with the fake API, reusing the visit setup of `src/web/tests/lesson-gate.test.tsx`:
   - **One view when shown**: one view after the content renders, none before.
   - **Detours**: a non-disclosing detour records one view plus `lesson-opened`; a disclosing lesson cancelled at the notice, or left through "Show visual help instead", records neither; opened anyway, it records one view plus `lesson-reveal`.
   - **Not shown**: `contentFails` records no view, and leaving before the content resolves records none.
-  - **Repeat visits**: a language switch records nothing; leaving and returning records a second view; a remount within one second (fake timers) still records a second view; `onShown` called twice in one visit records one.
+  - **Repeat visits**: a language switch records nothing; leaving and returning records a second view; a remount within one second (fake timers) still records a second view; `onShown` called twice in one visit records one (the lesson remounted within the visit after a failed language and a retry; `LessonView` has its own once-guard, so this is the case that reaches the page's).
   - **Old records**: `beforeThisFeature` hydrates with `lessonViews: []` and its deliveries intact.
   - **Clear, no cap**: "Clear my work" empties the views; 600 views of one lesson all stay in the record.
-- [ ] T023 [P] [US2] Extend `src/web/tests/progress.test.ts`:
+- [X] T023 [P] [US2] Extend `src/web/tests/progress.test.ts`:
   - `lessonHistory` counts and gives the latest `at` per lesson;
   - a lesson teaching two skills appears in both groups with the same counts;
   - a skill with views and no deliveries is listed;
@@ -195,30 +195,30 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - `progress.lessonViewed` and `progress.lessonViewedOnce` with the lesson title in the selected language and `formatDate`;
   - `progress.viewNote` exactly once on the page;
   - `progress.noPractice` for a skill with views only;
-  - `lessonsFail` leaves the history out with `progress.contentUnavailable`.
-- [ ] T024 [P] [US2] Add check 2 (quickstart scenario 2) to `src/web/e2e/progress.spec.ts`:
-  - open the lesson from the list, then by a non-disclosing detour, then cancel the notice for `3 + 7` (pinned seed);
+  - `lessonsFail` leaves the history out with `progress.historyUnavailable`.
+- [X] T024 [P] [US2] Add check 2 (quickstart scenario 2) to `src/web/e2e/progress.spec.ts`:
+  - open the lesson from the list, then by a non-disclosing detour (`6 + 5`), then cancel the notice for `5 + 8` (pinned seeds, as `e2e/lesson.spec.ts`), and answer it;
   - "My work" shows "viewed 2 times" under both skill headings;
   - a reload of the lesson page adds one view;
   - a language switch on it adds none.
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] In `src/web/src/state/store.tsx`:
+- [X] T025 [US2] In `src/web/src/state/store.tsx`:
   - **Types and hydrate**: add `LessonView` and `lessonViews: LessonView[]` to `PersistedState` and `initialPersisted`; in the `hydrate` case, default a missing `lessonViews` to `[]`.
   - **Action**: add an action `{ type: "lessonViewed"; view: LessonView }` that appends (no time window and no cap; deduplication is the page's visit guard).
   - **Store API**: add `lessonViewed(lessonId, language)` to `StoreApi`, dispatching with `new Date().toISOString()`.
   - **Clear**: make the `clear` case empty `lessonViews`.
 
   Leave `STORAGE_KEY` and `SCHEMA_VERSION` in `src/web/src/state/storage.ts` unchanged.
-- [ ] T026 [US2] In `src/web/src/pages/LessonPage.tsx`, call `store.lessonViewed(id, <the language the content was shown in>)` inside the existing `onShown` callback, in the branch guarded by the `recorded` ref and beside `store.lessonShown(...)`, so it runs once per visit after the first commit (spec 003's "shown"). T022 passes.
-- [ ] T027 [US2] Add `lessonHistory` to `src/web/src/state/progress.ts`, and extend `groupBySkill` and `skillOrder` to take the views and the lesson list (`LessonSummary.skills`): fill `SkillGroup.lessons`, list skills with views only, and use the latest view as activity.
-- [ ] T028 [US2] In `src/web/src/pages/RecordPage.tsx`:
+- [X] T026 [US2] In `src/web/src/pages/LessonPage.tsx`, call `store.lessonViewed(id, <the language the content was shown in>)` inside the existing `onShown` callback, in the branch guarded by the `recorded` ref and beside `store.lessonShown(...)`, so it runs once per visit after the first commit (spec 003's "shown"). T022 passes.
+- [X] T027 [US2] Add `lessonHistory` to `src/web/src/state/progress.ts`, and extend `groupBySkill` and `skillOrder` to take the views and the lesson list (`LessonSummary.skills`): fill `SkillGroup.lessons`, list skills with views only, and use the latest view as activity.
+- [X] T028 [US2] In `src/web/src/pages/RecordPage.tsx`:
   - request `getLessons()` once per visit;
   - per skill, render the lesson lines (`progress.lessonViewed` or `progress.lessonViewedOnce` with `titles[lang]` and `formatDate(last)`), `progress.viewNote` once after the first lesson line on the page, and `progress.noPractice` for a group without deliveries;
-  - leave the history out with `progress.contentUnavailable` when the lesson request fails.
+  - leave the history out with `progress.historyUnavailable` when the lesson request fails (deliveries stay grouped by skill).
 
-  Add `progress.lessonViewed`, `progress.lessonViewedOnce`, `progress.viewNote`, and `progress.noPractice` to both dictionaries. T023 and T024 pass.
+  Add `progress.lessonViewed`, `progress.lessonViewedOnce`, `progress.viewNote`, `progress.noPractice`, and `progress.historyUnavailable` to both dictionaries. T023 and T024 pass.
 
 **Checkpoint (second release)**: quickstart scenario 2 passes; merge Phase 4 as one change.
 
