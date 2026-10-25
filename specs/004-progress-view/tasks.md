@@ -270,20 +270,20 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 4
 
-- [ ] T035 [P] [US4] Add `src/web/tests/progress-wording.test.tsx`, which renders "My work" over `everyOutcome`, `withRepeats`, and lesson views, and a replay of each delivery, in both languages. It asserts that no text node, `aria-label`, or `title`:
+- [X] T035 [P] [US4] Add `src/web/tests/progress-wording.test.tsx`, which renders "My work" over `everyOutcome`, `withRepeats`, and lesson views, and a replay of each delivery, in both languages. It asserts that no text node, `aria-label`, or `title`:
   - contains `%`;
   - matches `/\b(score|streak|mastery|mastered|poeng|rekke|mestring|mestret)\b/i`;
   - matches a ratio such as `\d+\s*/\s*\d+` or `\d+ of \d+` outside the repeat sentence.
 
   The same patterns are scanned over the `progress`, `replay`, and `record` sections of both dictionaries (SC-002).
-- [ ] T036 [P] [US4] Add check 4 to `src/web/e2e/progress.spec.ts` (keyboard and zoom):
+- [X] T036 [P] [US4] Add check 4 to `src/web/e2e/progress.spec.ts` (keyboard and zoom):
   - **Keyboard only**: Tab from the header link "My work", open "Show the questions" with Enter, follow a question, and return with "Back to my work". Focus is visible at each step and lands on the `h1` after each navigation.
   - **Zoom**: at 200 percent zoom on 1024 pixels there is no horizontal page scroll.
   - **Targets**: on the iPad project the summary, links, and "Continue" are at least 44 by 44.
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] Fix what T035 and T036 find in `src/web/src/pages/RecordPage.tsx`, `src/web/src/pages/ReplayPage.tsx`, and `src/web/src/styles/index.css` (the `mkx-target` class on the `details` summary and the links; wrapping of long names and dates). Each skill's count sentence must stay one `p` that a screen reader reads as text.
+- [X] T037 [US4] Fix what T035 and T036 find in `src/web/src/pages/RecordPage.tsx`, `src/web/src/pages/ReplayPage.tsx`, and `src/web/src/styles/index.css` (the `mkx-target` class on the `details` summary and the links; wrapping of long names and dates). Each skill's count sentence must stay one `p` that a screen reader reads as text. Found and fixed: the question link (`4 + 4`) was 42 pixels wide on the iPad viewport; `.mkx-inline-target` now has a minimum width as well as height. The wording scan and the keyboard and zoom checks found nothing to fix.
 
 **Checkpoint**: All four stories work; quickstart scenarios 1–4 can be run.
 

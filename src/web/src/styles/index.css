@@ -107,7 +107,9 @@
   .mkx-page-heading:focus-visible { outline: 2px solid var(--ds-color-accent-border-strong, #2a5db0); outline-offset: 2px; }
   .mkx-page-heading:focus:not(:focus-visible) { outline: none; }
   .mkx-record__meta { display: block; font-size: 0.9rem; color: var(--ds-color-neutral-text-subtle); }
-  .mkx-inline-target { display: inline-flex; align-items: center; min-height: var(--mkx-target); }
+  /* A link inside text is still a 44 by 44 target: a short expression such as 4 + 4 is narrower than that (specs/004 T036). */
+  .mkx-inline-target { display: inline-flex; align-items: center; min-height: var(--mkx-target); min-width: var(--mkx-target); }
+  .mkx-record__question.mkx-inline-target { justify-content: center; }
   .mkx-practice-entries { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
 
   /* Lesson (specs/003) */

@@ -179,4 +179,96 @@ test.describe("the progress view", () => {
     await expect(page.getByTestId("record-summary")).toHaveText(summary ?? "");
     expect(await page.evaluate(() => window.localStorage.getItem("mathkx.guest.v1"))).toBe(before);
   });
+
+  /** Practises two questions: one answered correctly, one left unanswered (the question in progress). */
+  async function twoQuestions(page: Page) {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-numbers.addition.within-10").click();
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    const done = await operands(page);
+    await answer(page, done.a + done.b, "correct");
+    await next(page);
+  }
+
+  const focusShows = (page: Page) =>
+    page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return { name: "none", visible: false };
+      const style = getComputedStyle(el);
+      const visible = (style.outlineStyle !== "none" && style.outlineWidth !== "0px") || style.boxShadow !== "none";
+      return { name: el.dataset.testid ?? el.tagName.toLowerCase(), visible };
+    });
+
+  async function tabTo(page: Page, testId: string) {
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press("Tab");
+      const focus = await focusShows(page);
+      if (focus.name === testId) {
+        expect(focus.visible, `${testId} shows focus`).toBe(true);
+        return;
+      }
+    }
+    throw new Error(`Tab never reached ${testId}`);
+  }
+
+  test("4. keyboard only: My work, a question, its replay, and back, with focus visible and on each heading", async ({ page }) => {
+    await twoQuestions(page);
+    await page.getByRole("link", { name: "My work" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { level: 1, name: "My work" })).toBeFocused();
+    await tabTo(page, "progress-questions");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("progress-questions").locator("xpath=..")).toHaveAttribute("open", "");
+    await tabTo(page, "record-question");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("replay-page")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+    await tabTo(page, "replay-continue");
+    await tabTo(page, "replay-back");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { level: 1, name: "My work" })).toBeFocused();
+  });
+
+  test("5. My work and replay at 200 percent zoom do not scroll sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "desktop viewport only");
+    await twoQuestions(page);
+    await page.getByTestId("lang-nb").click(); // the longer language
+    await page.setViewportSize({ width: 512, height: 384 }); // 1024 by 768 at 200 percent
+    await page.getByRole("link", { name: "Mitt arbeid" }).click();
+    await page.getByTestId("progress-questions").first().click();
+    const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(await overflow(), "My work").toBeLessThanOrEqual(0);
+    await page.getByTestId("record-question").first().click();
+    await expect(page.getByTestId("replay-outcome")).toBeVisible();
+    expect(await overflow(), "replay").toBeLessThanOrEqual(0);
+  });
+
+  test("6. the controls of My work and replay are at least 44 by 44 at the iPad viewport", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "ipad", "iPad viewport only");
+    await twoQuestions(page);
+    const check = async (locator: ReturnType<Page["locator"]>, label: string) => {
+      const count = await locator.count();
+      expect(count, label).toBeGreaterThan(0);
+      for (let i = 0; i < count; i++) {
+        const box = await locator.nth(i).boundingBox();
+        expect(box, `${label} ${i}`).not.toBeNull();
+        expect(box!.width, `${label} ${i} width`).toBeGreaterThanOrEqual(44);
+        expect(box!.height, `${label} ${i} height`).toBeGreaterThanOrEqual(44);
+      }
+    };
+    await page.getByRole("link", { name: "My work" }).click();
+    await expect(page.getByTestId("progress-questions").first()).toBeVisible(); // the skills have loaded
+    for (const summary of await page.getByTestId("progress-questions").all()) await summary.click();
+    await check(page.getByTestId("progress-questions"), "Show the questions");
+    await check(page.getByTestId("record-question"), "question link");
+    await check(page.getByTestId("record-continue"), "Continue");
+    await check(page.getByTestId("clear"), "Clear my work");
+    await page.getByTestId("record-question").first().click();
+    await expect(page.getByTestId("replay-outcome")).toBeVisible();
+    await check(page.getByTestId("replay-continue"), "replay Continue");
+    await check(page.getByTestId("replay-back"), "Back to my work");
+  });
 });
