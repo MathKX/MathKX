@@ -142,13 +142,13 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ### Tests for User Story 4
 
-- [ ] T047 [P] [US4] Add `contracts/detour.md` unit test 9 to `src/web/tests/lesson-gate.test.tsx` with a fake catalogue of `a-lesson` and `b-lesson` listing the same definition: practice started from `b-lesson` links to `b-lesson` on the first question, after "Another question", after a ladder move and back, and after a reload; practice started from the practice route links to `a-lesson`
-- [ ] T048 [P] [US4] Extend `src/web/tests/exercise-shell.test.tsx`: an instance with `lessons: []` (the fixed task) shows no lesson link; with the pilot lesson the link targets `/lessons/number-bonds-to-ten`; choosing a practice entry on another variation replaces the question in progress and closes it as `skipped` when unsubmitted (spec User Story 4 scenario 2; spec 002 behaviour unchanged)
+- [X] T047 [P] [US4] Add `contracts/detour.md` unit test 9 to `src/web/tests/lesson-gate.test.tsx` with a fake catalogue of `a-lesson` and `b-lesson` listing the same definition: practice started from `b-lesson` links to `b-lesson` on the first question, after "Another question", after a ladder move and back, and after a reload; practice started from the practice route links to `a-lesson`
+- [X] T048 [P] [US4] Extend `src/web/tests/exercise-shell.test.tsx`: an instance with `lessons: []` (the fixed task) shows no lesson link; with the pilot lesson the link targets `/lessons/number-bonds-to-ten`; choosing a practice entry on another variation replaces the question in progress and closes it as `skipped` when unsubmitted (spec User Story 4 scenario 2; spec 002 behaviour unchanged)
 
 ### Implementation for User Story 4
 
-- [ ] T049 [US4] Add `originLessonId?` to `Delivery` in `src/web/src/state/observations.ts`; in `src/web/src/state/store.tsx` give `startPractice` a third parameter `originLessonId`, record it on the first delivery, and copy it from the previous delivery into every new one (another, more like this, ladder moves, resume); pass the lesson ID from `src/web/src/lesson/PracticeEntry.tsx`; deliveries stored before this feature load without it
-- [ ] T050 [US4] In `src/web/src/components/ExerciseShell.tsx`, compute the lesson link from `instance.lessons` and the current delivery's `originLessonId` per `contracts/detour.md`, keeping the `?from=question` suffix of T035 (no link for an empty list) and remove the hard-coded `lessonHref` from `src/web/src/App.tsx` and `src/web/src/pages/PracticePage.tsx`; T047 and T048 pass; spec 002's end-to-end checks still pass
+- [X] T049 [US4] Add `originLessonId?` to `Delivery` in `src/web/src/state/observations.ts`; in `src/web/src/state/store.tsx` give `startPractice` a third parameter `originLessonId`, record it on the first delivery, and copy it from the previous delivery into every new one (another, more like this, ladder moves, resume); pass the lesson ID from `src/web/src/lesson/PracticeEntry.tsx`; deliveries stored before this feature load without it
+- [X] T050 [US4] In `src/web/src/components/ExerciseShell.tsx`, compute the lesson link from `instance.lessons` and the current delivery's `originLessonId` per `contracts/detour.md`, keeping the `?from=question` suffix of T035 (no link for an empty list) and remove the hard-coded `lessonHref` from `src/web/src/App.tsx` and `src/web/src/pages/PracticePage.tsx`; T047 and T048 pass; spec 002's end-to-end checks still pass
 
 **Checkpoint**: The link back is derived from content; the multi-lesson case is covered.
 
@@ -162,12 +162,12 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ### Tests for User Story 5
 
-- [ ] T051 [P] [US5] Add `contracts/lesson-renderer.md` test 6 to `src/web/tests/lesson-render.test.tsx`: in `nb`, "Edit this lesson" is `https://github.com/MathKX/MathKX/blob/main/content/lessons/number-bonds-to-ten/nb.md`; the issue link's decoded `title` and `body` contain the lesson ID, `1`, `nb`, and the section anchor in view and contain none of the store's delivery IDs, seeds, drafts, or prompts (checked with a store holding a question and a draft); both have `target="_blank"` and `rel="noopener noreferrer"`
+- [X] T051 [P] [US5] Add `contracts/lesson-renderer.md` test 6 to `src/web/tests/lesson-render.test.tsx`: in `nb`, "Edit this lesson" is `https://github.com/MathKX/MathKX/blob/main/content/lessons/number-bonds-to-ten/nb.md`; the issue link's decoded `title` and `body` contain the lesson ID, `1`, `nb`, and the section anchor in view and contain none of the store's delivery IDs, seeds, drafts, or prompts (checked with a store holding a question and a draft); both have `target="_blank"` and `rel="noopener noreferrer"`
 
 ### Implementation for User Story 5
 
-- [ ] T052 [P] [US5] Create `src/web/src/lesson/contribute.ts` (`editUrl(id, file)` and `issueUrl({ id, version, lang, section })` per research R10, using `URLSearchParams`) and render the footer links in `src/web/src/pages/LessonPage.tsx` with `lesson.edit` ("Edit this lesson" / "Rediger leksjonen") and `lesson.suggest` ("Suggest an improvement" / "Foreslå en forbedring") plus the issue's title and body templates in both dictionaries; T051 passes
-- [ ] T053 [P] [US5] Add a "Preview a lesson" section to `CONTRIBUTING.md` and a pointer in `src/web/README.md`: root `npm ci`, `dotnet run --project src/backend/MathKX.Api`, `npm run dev` in `src/web`, open `/lessons/{id}`, restart the service after editing a lesson file (the snapshot loads at startup), `npm run validate` before opening a pull request (FR-018)
+- [X] T052 [P] [US5] Create `src/web/src/lesson/contribute.ts` (`editUrl(id, file)` and `issueUrl({ id, version, lang, section })` per research R10, using `URLSearchParams`) and render the footer links in `src/web/src/pages/LessonPage.tsx` with `lesson.edit` ("Edit this lesson" / "Rediger leksjonen") and `lesson.suggest` ("Suggest an improvement" / "Foreslå en forbedring") plus the issue's title and body templates in both dictionaries; T051 passes
+- [X] T053 [P] [US5] Add a "Preview a lesson" section to `CONTRIBUTING.md` and a pointer in `src/web/README.md`: root `npm ci`, `dotnet run --project src/backend/MathKX.Api`, `npm run dev` in `src/web`, open `/lessons/{id}`, restart the service after editing a lesson file (the snapshot loads at startup), `npm run validate` before opening a pull request (FR-018)
 
 **Checkpoint**: All five stories work; quickstart scenarios 1–5 can be run.
 
@@ -175,12 +175,12 @@ Backend under `src/backend/` (existing solution `MathKX.slnx`), learner app unde
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T054 [P] Confirm the lesson renderer is a separate chunk in the `npm run build` output of `src/web` and the practice route does not load it (network log in a Playwright check added to `src/web/e2e/lesson.spec.ts`)
-- [ ] T055 [P] Add a keyboard-only and 200 percent zoom pass of the lesson page to `src/web/e2e/lesson.spec.ts`: every control reachable in order with visible focus, the explorer and the step visual operable, no horizontal page scroll at 1024 pixels except inside the table container, controls at least 44 by 44 on the iPad project (FR-021, SC-006)
-- [ ] T056 Update `README.md` "Current status" and the spec 003 row of `specs/README.md` to say lesson rendering and the detour are implemented
-- [ ] T057 Run line 1 of the bilingual walkthrough script (revised brief §7) in both languages and record the result as a new dated file under `docs/reviews/walkthroughs/`, referencing the spec 002 walkthrough's "partial" line (SC-005); note what still needs a physical iPad with VoiceOver
-- [ ] T058 Run the five quickstart scenarios by hand, correct any quoted wording in `specs/003-lesson-rendering/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time there (SC-008)
-- [ ] T059 Record the first contributor check (SC-007) as an open human validation item in the pull-request description: a contributor who has not seen the code edits a sentence, previews, and validates; findings recorded, not scored
+- [X] T054 [P] Confirm the lesson renderer is a separate chunk in the `npm run build` output of `src/web` and the practice route does not load it (network log in a Playwright check added to `src/web/e2e/lesson.spec.ts`)
+- [X] T055 [P] Add a keyboard-only and 200 percent zoom pass of the lesson page to `src/web/e2e/lesson.spec.ts`: every control reachable in order with visible focus, the explorer and the step visual operable, no horizontal page scroll at 1024 pixels except inside the table container, controls at least 44 by 44 on the iPad project (FR-021, SC-006)
+- [X] T056 Update `README.md` "Current status" and the spec 003 row of `specs/README.md` to say lesson rendering and the detour are implemented
+- [X] T057 Run line 1 of the bilingual walkthrough script (revised brief §7) in both languages and record the result as a new dated file under `docs/reviews/walkthroughs/`, referencing the spec 002 walkthrough's "partial" line (SC-005); note what still needs a physical iPad with VoiceOver
+- [X] T058 Run the five quickstart scenarios by hand, correct any quoted wording in `specs/003-lesson-rendering/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time there (SC-008)
+- [X] T059 Record the first contributor check (SC-007) as an open human validation item in the pull-request description: a contributor who has not seen the code edits a sentence, previews, and validates; findings recorded, not scored
 - [X] T060 [P] Extend `src/backend/scripts/smoke-published.sh` (run by the backend job and therefore before every deploy): from the published service started outside the checkout, `GET /api/lessons/number-bonds-to-ten/content/en` returns the lesson's Markdown and `GET /api/lessons/number-bonds-to-ten/assets/ten-frame-3-7.svg` returns `image/svg+xml`, proving the deploy package carries the lesson files and assets
 - [X] T061 After the first release (Phases 1–5) has deployed, run quickstart scenarios 1 and 3 against the production URL from the deploy job's `environment.url`, in both languages, and add the result to the walkthrough file of T057; record any difference from the local run
 

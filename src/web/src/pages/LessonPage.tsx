@@ -13,6 +13,7 @@ import { useStore } from "../state/store";
 import { currentQuestion } from "../state/observations";
 import { PracticeEntry } from "../lesson/PracticeEntry";
 import { Placeholder } from "../lesson/Placeholder";
+import { editUrl, issueUrl } from "../lesson/contribute";
 import type { LessonComponents } from "../lesson/render";
 import { LessonGate } from "../components/LessonGate";
 import { ReturnBanner } from "../components/ReturnBanner";
@@ -136,7 +137,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       const entry = lesson?.practice.find((p) => p.definition === attributes.definition && String(p.version) === attributes.version);
       if (!entry) return <Placeholder key={key} lang={lang} />;
       const ladder = skills[entry.skill]?.ladder.find((l) => l.definition === entry.definition && l.version === entry.version);
-      return <PracticeEntry key={key} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
+      return <PracticeEntry key={key} lessonId={id} definition={entry.definition} version={entry.version} skill={entry.skill} description={ladder?.description[lang] ?? entry.definition} lang={lang} />;
     },
     [lesson, skills, lang],
   );
@@ -192,7 +193,32 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
         </div>
       ) : shown ? (
         <Suspense fallback={loading}>
-          <LessonView lessonId={lesson.id} lang={shown.lang} markdown={shown.markdown} components={components} onShown={onShown} />
+          {/* The contribution links render inside the lesson, after it: never before the lesson is shown (the source on
+              GitHub would otherwise get round the notice), and always for the translation on screen. */}
+          <LessonView
+            lessonId={lesson.id}
+            lang={shown.lang}
+            markdown={shown.markdown}
+            components={components}
+            onShown={onShown}
+            footer={(displayed, section) => (
+              <footer className="mkx-lesson-footer" data-testid="lesson-contribute">
+                <a href={editUrl(lesson.id, lesson.translations[displayed])} target="_blank" rel="noopener noreferrer">
+                  {translate(lang, "lesson.edit")}
+                </a>
+                <a
+                  href={issueUrl(
+                    translate(lang, "lesson.issueTitle", { id: lesson.id }),
+                    translate(lang, "lesson.issueBody", { id: lesson.id, version: lesson.version, lang: displayed, section: section ?? translate(lang, "lesson.issueTop") }),
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translate(lang, "lesson.suggest")}
+                </a>
+              </footer>
+            )}
+          />
         </Suspense>
       ) : (
         loading

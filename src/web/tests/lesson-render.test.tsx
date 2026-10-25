@@ -2,7 +2,9 @@
 // one-line display rule, placeholders instead of raw markup, safe links and images, and the section kept across
 // a language switch.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { App } from "../src/App";
 import { visit } from "unist-util-visit";
 import type { Nodes } from "mdast";
 import { toString } from "mdast-util-to-string";
@@ -10,7 +12,7 @@ import LessonView from "../src/lesson/LessonView";
 import { parseLesson } from "../src/lesson/parse";
 import type { LessonComponents } from "../src/lesson/render";
 import type { Lang } from "../src/i18n";
-import { lessonMarkdown } from "./fakeApi";
+import { createFakeApi, lessonMarkdown } from "./fakeApi";
 
 const components: LessonComponents = {
   visual: (attributes, key) => <div key={key} data-testid="stub-visual" data-type={attributes.type} />,
@@ -169,5 +171,102 @@ describe("the section in view across a language switch", () => {
     const target = scrolled.at(-1);
     expect(target?.id).toBe("why");
     expect(toString({ type: "text", value: target?.textContent ?? "" })).toContain("Why is this useful?");
+  });
+});
+
+// specs/003 contracts/lesson-renderer.md test 6 and User Story 5: the contribution links.
+describe("the contribution links", () => {
+  const stubSectionInView = (anchor: string) => {
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        private readonly callback: (entries: IntersectionObserverEntry[]) => void;
+        private readonly targets: Element[] = [];
+        constructor(callback: (entries: IntersectionObserverEntry[]) => void) {
+          this.callback = callback;
+        }
+        observe(element: Element) {
+          this.targets.push(element);
+          const order = ["what", "pairs", "ten-frame", "why", "try", "practice"];
+          const passed = order.indexOf((element as HTMLElement).dataset.anchor ?? "") <= order.indexOf(anchor);
+          queueMicrotask(() => this.callback([{ target: element, boundingClientRect: { top: passed ? -10 : 500 }, rootBounds: { top: 0 } } as unknown as IntersectionObserverEntry]));
+        }
+        disconnect() {}
+      },
+    );
+  };
+
+  it("point at the selected language's source and prepare an issue with only the lesson's identity", async () => {
+    window.localStorage.clear();
+    stubSectionInView("why");
+    const user = userEvent.setup();
+    // A question with a typed draft exists, to prove none of it reaches the issue.
+    render(<App api={createFakeApi()} initialPath="/practice/numbers.addition-within-20" />);
+    await screen.findByTestId("prompt");
+    await user.type(screen.getByTestId("answer"), "17");
+    await user.click(screen.getByRole("link", { name: "Leksjoner" }));
+    await user.click(await screen.findByRole("link", { name: "Tiervenner" }));
+    await screen.findByTestId("lesson-content");
+
+    const edit = await screen.findByRole("link", { name: "Rediger leksjonen" });
+    expect(edit.getAttribute("href")).toBe("https://github.com/MathKX/MathKX/blob/main/content/lessons/number-bonds-to-ten/nb.md");
+    const suggest = screen.getByRole("link", { name: "Foreslå en forbedring" });
+    for (const link of [edit, suggest]) {
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    }
+    const url = new URL(suggest.getAttribute("href") ?? "");
+    expect(url.origin + url.pathname).toBe("https://github.com/MathKX/MathKX/issues/new");
+    const text = `${url.searchParams.get("title")}\n${url.searchParams.get("body")}`;
+    expect(text).toContain("number-bonds-to-ten");
+    expect(text).toContain("nb");
+    expect(text).toMatch(/\b1\b/);
+    await waitFor(() => expect(new URL(screen.getByRole("link", { name: "Foreslå en forbedring" }).getAttribute("href") ?? "").searchParams.get("body")).toContain("why"));
+
+    const stored = window.localStorage.getItem("mathkx.guest.v1") ?? "";
+    const delivery = JSON.parse(stored).value.deliveries[0];
+    const href = decodeURIComponent(screen.getByRole("link", { name: "Foreslå en forbedring" }).getAttribute("href") ?? "");
+    for (const secret of [delivery.id, delivery.instance.seed, "17", "4 + 4"]) expect(href).not.toContain(secret);
+  });
+
+  it("are not offered while the notice holds back a lesson that shows the answer", async () => {
+    window.localStorage.clear();
+    const user = userEvent.setup();
+    render(<App api={createFakeApi({ discloses: () => true })} initialPath="/practice/numbers.addition-within-20" />);
+    await screen.findByTestId("prompt");
+    await user.click(screen.getByTestId("to-lesson"));
+    await screen.findByTestId("lesson-gate");
+    expect(screen.queryByRole("link", { name: "Rediger leksjonen" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Foreslå en forbedring" })).toBeNull();
+  });
+});
+
+describe("the contribution links belong to the rendered lesson (review of PR 34)", () => {
+  it("are part of the rendered lesson content, so they cannot appear before it", async () => {
+    window.localStorage.clear();
+    render(<App api={createFakeApi()} initialPath="/lessons/number-bonds-to-ten" />);
+    const content = await screen.findByTestId("lesson-content");
+    expect(within(content).getByRole("link", { name: "Rediger leksjonen" })).toBeTruthy();
+    expect(within(content).getByRole("link", { name: "Foreslå en forbedring" })).toBeTruthy();
+  });
+
+  it("follow the translation on screen while another one loads", async () => {
+    window.localStorage.clear();
+    const api = createFakeApi();
+    const user = userEvent.setup();
+    render(<App api={api} initialPath="/lessons/number-bonds-to-ten" />);
+    await screen.findByRole("heading", { level: 2, name: /Hva er tiervenner\?/ });
+    api.hold("getLessonContent");
+    await user.click(screen.getByTestId("lang-en"));
+    // Norwegian is still on screen: the links point at it, labelled in the interface language.
+    expect(screen.getByRole("heading", { level: 2, name: /Hva er tiervenner\?/ })).toBeTruthy();
+    const edit = screen.getByRole("link", { name: "Edit this lesson" });
+    expect(edit.getAttribute("href")).toMatch(/\/nb\.md$/);
+    const issue = new URL(screen.getByRole("link", { name: "Suggest an improvement" }).getAttribute("href") ?? "");
+    expect(issue.searchParams.get("body")).toContain("Language: nb");
+
+    api.release("getLessonContent");
+    await screen.findByRole("heading", { level: 2, name: /What are number bonds to ten\?/ });
+    expect(screen.getByRole("link", { name: "Edit this lesson" }).getAttribute("href")).toMatch(/\/en\.md$/);
   });
 });

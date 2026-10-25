@@ -209,7 +209,8 @@ function reducer(state: State, action: Action): State {
 export interface StoreApi {
   state: State;
   setLanguage(language: Lang): void;
-  startPractice(skillId: string, preferred?: DefinitionRef): Promise<void>;
+  /** `originLessonId`: the lesson whose practice entry was chosen; it carries over through the practice run. */
+  startPractice(skillId: string, preferred?: DefinitionRef, originLessonId?: string): Promise<void>;
   nextQuestion(request: "another" | "same"): Promise<void>;
   setDraft(draft: string): void;
   submit(): Promise<void>;
@@ -258,7 +259,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     if (kept !== state.kept) dispatch({ type: "kept", kept });
   }, [state, store]);
 
-  const toDelivery = useCallback((instance: InstanceDto): Delivery => {
+  const toDelivery = useCallback((instance: InstanceDto, originLessonId?: string): Delivery => {
     const d: Delivery["instance"] = {
       definitionId: instance.identity.definitionId,
       version: instance.identity.version,
@@ -269,7 +270,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     };
     if (instance.identity.seed !== undefined) d.seed = instance.identity.seed;
     if (instance.generator) d.generatorVersion = instance.generator.version;
-    return { id: newId(), instance: d, purpose: "practice", provenance: "guest", startedAt: new Date().toISOString(), events: [] };
+    const delivery: Delivery = { id: newId(), instance: d, purpose: "practice", provenance: "guest", startedAt: new Date().toISOString(), events: [] };
+    if (originLessonId) delivery.originLessonId = originLessonId;
+    return delivery;
   }, []);
 
   /**
@@ -277,12 +280,17 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
    * `clearPending` drops a pending change an explicit selection supersedes. Both take effect only with the question.
    */
   const load = useCallback(
-    async (ref: DefinitionRef, fixed: boolean, commit: { applied?: PendingChange; clearPending?: boolean } = {}): Promise<boolean> => {
+    async (ref: DefinitionRef, fixed: boolean, commit: { applied?: PendingChange; clearPending?: boolean; origin?: string | null } = {}): Promise<boolean> => {
       const token = ++loadToken.current;
+      // The lesson that started this practice run carries over to every later question of the run (specs/003).
+      const current = latest.current;
+      const continued = current.deliveries.find((x) => x.id === current.currentDeliveryId)?.originLessonId;
+      const origin = commit.origin === undefined ? continued : (commit.origin ?? undefined);
+      const { origin: _origin, ...questionCommit } = commit;
       try {
         const instance = await api.getInstance(ref.definition, ref.version, fixed ? null : newSeed());
         if (token !== loadToken.current) return false; // superseded by a later request
-        dispatch({ type: "question", instance, delivery: toDelivery(instance), ...commit });
+        dispatch({ type: "question", instance, delivery: toDelivery(instance, origin), ...questionCommit });
         return true;
       } catch {
         if (token === loadToken.current) dispatch({ type: "loadError", failed: true });
@@ -327,7 +335,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   }, [openHelp]);
 
   const startPracticeOnly = useCallback(
-    async (skillId: string, preferred?: DefinitionRef) => {
+    async (skillId: string, preferred?: DefinitionRef, originLessonId?: string) => {
       dispatch({ type: "present" }); // the practice view is mounted (its unmount dispatches "end")
       const current = latest.current;
       // An explicitly chosen variation (a lesson's practice button) that differs from the one in progress or
@@ -338,7 +346,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         if (!preferred || !differsFrom(current.ladder.current)) return; // already in progress
         // The ladder position and the dropped pending change commit with the loaded question; on failure the
         // question in progress and its ladder position stay as they were, and the selection can be retried.
-        await load(preferred, false, { clearPending: true });
+        await load(preferred, false, { clearPending: true, origin: originLessonId ?? null });
         return;
       }
       const skill = await api.getSkill(skillId);
@@ -349,7 +357,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       const resumableDelivery = resumable ? current.deliveries.find((d) => d.id === resumable.deliveryId) : undefined;
       const resumeFits = resumableDelivery ? !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
       if (resumable && resumeFits && (await resume(resumable))) return;
-      await load(first, false);
+      await load(first, false, { origin: originLessonId ?? null }); // a new practice run: its origin, or none
     },
     [api, load, resume],
   );
@@ -358,9 +366,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     () => ({
       state,
       setLanguage: (language) => dispatch({ type: "language", language }),
-      async startPractice(skillId, preferred) {
+      async startPractice(skillId, preferred, originLessonId) {
         try {
-          await startPracticeOnly(skillId, preferred);
+          await startPracticeOnly(skillId, preferred, originLessonId);
         } finally {
           consumePendingHelp();
         }
@@ -465,7 +473,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const { definitionId, version, seed } = current.instance.identity;
         try {
           const instance = await api.getInstance(definitionId, version, seed ?? null);
-          dispatch({ type: "instanceLessons", deliveryId, lessons: instance.lessons ?? [] });
+          // Only a service that knows lessons answers with the field; never invent "no lessons" from its absence.
+          if (!instance.lessons) return false;
+          dispatch({ type: "instanceLessons", deliveryId, lessons: instance.lessons });
           return true;
         } catch {
           return false; // the caller keeps the lesson behind the notice rather than guess

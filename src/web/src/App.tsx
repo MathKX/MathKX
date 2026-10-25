@@ -20,7 +20,6 @@ function Shell({ api }: { api?: PracticeApi }) {
     document.documentElement.lang = lang;
   }, [lang]);
   const route = matchRoute(path);
-  const lessonHref = state.skillId ? "/lessons/number-bonds-to-ten" : undefined;
   return (
     <>
       <a href="#main" className="mkx-skip">
@@ -36,7 +35,7 @@ function Shell({ api }: { api?: PracticeApi }) {
       <main id="main" className="mkx-container" lang={lang} data-testid="app-root">
         {route.name === "lessons" ? <LessonListPage {...(api ? { api } : {})} /> : null}
         {route.name === "lesson" ? <LessonPage key={route.id} id={route.id} {...(api ? { api } : {})} /> : null}
-        {route.name === "practice" ? <PracticePage skillId={route.skillId} {...(lessonHref ? { lessonHref } : {})} /> : null}
+        {route.name === "practice" ? <PracticePage skillId={route.skillId} /> : null}
         {route.name === "record" ? <RecordPage /> : null}
         {route.name === "unknown" ? <LessonListPage {...(api ? { api } : {})} /> : null}
       </main>

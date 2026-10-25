@@ -25,6 +25,11 @@ export const nb = {
     explorerPair: "{filled} og {partner} blir 10.",
     previousStep: "Forrige steg",
     visualFailed: "Denne illustrasjonen kunne ikke lastes.",
+    edit: "Rediger leksjonen",
+    suggest: "Foreslå en forbedring",
+    issueTitle: "Leksjon {id}: forslag",
+    issueBody: "Leksjon: {id}\nVersjon: {version}\nSpråk: {lang}\nAvsnitt: {section}\n\nHva kunne vært tydeligere eller mer riktig?\n",
+    issueTop: "(starten av leksjonen)",
     status: { draft: "Utkast", pilot: "Pilot", released: "Utgitt" },
   },
   detour: {

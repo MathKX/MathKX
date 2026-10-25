@@ -9,11 +9,30 @@ import { AdditionPrompt } from "./math/MathExpr";
 import { Feedback } from "./Feedback";
 import { StepPanel } from "./StepPanel";
 
-export function ExerciseShell({ lessonHref }: { lessonHref?: string | undefined }) {
+/**
+ * The lesson to link to from this question (specs/003 contracts/detour.md): the one that started the practice run
+ * when the instance lists it, else the first listed (lesson-ID order); none when no lesson practises the definition.
+ */
+function lessonFor(lessons: { id: string }[] | undefined, originLessonId: string | undefined): string | undefined {
+  if (!lessons || lessons.length === 0) return undefined;
+  return (lessons.find((l) => l.id === originLessonId) ?? lessons[0])?.id;
+}
+
+export function ExerciseShell() {
   const store = useStore();
   const { state } = store;
   const lang = state.language;
   const instance = state.instance;
+  const originLessonId = state.deliveries.find((d) => d.id === state.currentDeliveryId)?.originLessonId;
+  const lessonId = lessonFor(instance?.lessons, originLessonId);
+  const lessonHref = lessonId ? `/lessons/${encodeURIComponent(lessonId)}` : undefined;
+
+  // A question stored before instances carried their lessons is re-resolved once, so its link can be derived.
+  const needsLessons = Boolean(instance && !instance.lessons);
+  useEffect(() => {
+    if (needsLessons) void store.ensureInstanceLessons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsLessons]);
   const fieldId = useId();
   const resultRef = useRef<HTMLDivElement>(null);
   const lastResult = useRef<unknown>(null);

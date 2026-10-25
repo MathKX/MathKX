@@ -229,6 +229,51 @@ describe("the way back and the visit", () => {
   });
 });
 
+describe("the lesson link follows the lesson that started practice (test 9)", () => {
+  const href = () => screen.getByTestId("to-lesson").getAttribute("href");
+  const count = () => deliveries().length;
+
+  it("keeps linking to b-lesson through another question, ladder moves, and a reload", async () => {
+    window.localStorage.clear();
+    const api = createFakeApi({ lessonIds: ["a-lesson", "b-lesson"] });
+    const user = userEvent.setup();
+    const view = render(<App api={api} initialPath="/lessons/b-lesson" />);
+    await user.click(await screen.findByTestId("practice-numbers.addition.within-10"));
+    await screen.findByTestId("prompt");
+    expect(href()).toBe("/lessons/b-lesson?from=question");
+    expect(deliveries()[0]?.originLessonId).toBe("b-lesson");
+
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(count()).toBe(2));
+    expect(href()).toBe("/lessons/b-lesson?from=question");
+
+    await user.click(screen.getByTestId("harder"));
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(count()).toBe(3));
+    expect(deliveries()[2]?.instance.definitionId).toBe("numbers.addition.crossing-ten");
+    expect(href()).toBe("/lessons/b-lesson?from=question");
+
+    await user.click(screen.getByTestId("easier"));
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(count()).toBe(4));
+    expect(href()).toBe("/lessons/b-lesson?from=question");
+
+    view.unmount();
+    render(<App api={api} initialPath={practicePath} />);
+    await screen.findByTestId("prompt");
+    expect(href()).toBe("/lessons/b-lesson?from=question");
+  });
+
+  it("links to the first lesson by ID when practice started from the practice route", async () => {
+    const { user } = await practice(createFakeApi({ lessonIds: ["b-lesson", "a-lesson"] }));
+    expect(href()).toBe("/lessons/a-lesson?from=question");
+    expect(deliveries()[0]?.originLessonId).toBeUndefined();
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(count()).toBe(2));
+    expect(href()).toBe("/lessons/a-lesson?from=question");
+  });
+});
+
 describe("the lesson link's origin travels in its address (test 10)", () => {
   it("is part of the link's address, and a modified click leaves the source tab and its store unchanged", async () => {
     const { user } = await practice();

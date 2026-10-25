@@ -152,6 +152,24 @@ describe("the practice screen", () => {
     expect(stored.value.deliveries).toHaveLength(1);
   });
 
+  it("links to the lesson the instance lists, and offers no link when no lesson lists the definition (specs/003 FR-010)", async () => {
+    const first = await renderPractice();
+    expect(screen.getByTestId("to-lesson").getAttribute("href")).toBe("/lessons/number-bonds-to-ten?from=question");
+    first.unmount();
+    await renderPractice(createFakeApi({ lessonIds: [] }));
+    expect(screen.queryByTestId("to-lesson")).toBeNull();
+  });
+
+  it("re-resolves a question stored before spec 003 to find its lesson link", async () => {
+    const before = await renderPractice(createFakeApi({ omitLessons: true }));
+    before.unmount();
+    const api = createFakeApi();
+    render(<App api={api} initialPath={practicePath} />); // the stored question, now served with its lessons
+    await screen.findByTestId("prompt");
+    expect((await screen.findByTestId("to-lesson")).getAttribute("href")).toBe("/lessons/number-bonds-to-ten?from=question");
+    expect(api.calls.filter((c) => c.startsWith("getInstance"))).not.toHaveLength(0);
+  });
+
   it("keeps the typed answer and says the answer could not be checked when the service is unreachable", async () => {
     const { user } = await renderPractice(createFakeApi({ failValidate: true }));
     await user.type(screen.getByTestId("answer"), "8");

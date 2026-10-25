@@ -47,6 +47,28 @@ npm test
 
 The tests invoke the CLI against isolated fixtures, including conflicting exercise identities, invalid document shapes, and prerequisite errors. Both tests and content validation run in CI.
 
+## Previewing a lesson
+
+You can see a lesson change in the real app before opening a pull request. You need the .NET 10 SDK and Node.js 22.
+
+```bash
+npm ci
+```
+
+```bash
+dotnet run --project src/backend/MathKX.Api
+```
+
+In a second terminal:
+
+```bash
+cd src/web && npm ci && npm run dev
+```
+
+Open the address the dev server prints and go to `/lessons/<lesson-id>`, for example `/lessons/number-bonds-to-ten`. The service reads `content/` once when it starts, so after you edit a lesson file, stop the service (Ctrl+C), start it again, and reload the page. Run `npm run validate` before you open a pull request; it reports any directive, notation, or translation pairing problem with the file and line.
+
+Every lesson also has "Edit this lesson" and "Suggest an improvement" links at the bottom, which open its source file on GitHub or a prepared issue that names only the lesson, its version, the language, and the section.
+
 ## Running the application and its tests
 
 The first practice loop lives in two application roots. The backend needs the .NET 10 SDK; the learner app needs Node.js 22.

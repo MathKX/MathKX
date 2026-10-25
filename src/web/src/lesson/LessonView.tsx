@@ -1,7 +1,7 @@
 // The lesson body, loaded as its own chunk (React.lazy in pages/LessonPage.tsx) so the practice route does not
 // pay for the Markdown stack. Parses the translation, renders it, keeps the section in view across a language
 // switch, and reports the first commit of rendered content ("shown", specs/003 contracts/detour.md).
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Lang } from "../i18n";
 import { parseLesson } from "./parse";
 import { LessonBody, type LessonComponents } from "./render";
@@ -14,11 +14,17 @@ export interface LessonViewProps {
   components: LessonComponents;
   /** Called once, after the lesson content has been committed for the first time in this view. */
   onShown?: (() => void) | undefined;
-  /** The anchor of the section in view, as it changes (for "Suggest an improvement"). */
+  /** The anchor of the section in view, as it changes. */
   onSection?: ((anchor: string | null) => void) | undefined;
+  /**
+   * Rendered after the body, as part of the lesson: it cannot appear before the lesson itself has rendered (the
+   * contribution links would otherwise expose the source behind the notice). Gets the displayed translation's
+   * language and the section in view.
+   */
+  footer?: ((displayed: Lang, section: string | null) => ReactNode) | undefined;
 }
 
-export default function LessonView({ lessonId, lang, markdown, components, onShown, onSection }: LessonViewProps) {
+export default function LessonView({ lessonId, lang, markdown, components, onShown, onSection, footer }: LessonViewProps) {
   const tree = useMemo(() => parseLesson(markdown), [markdown]);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [section] = useSectionInView(container, tree);
@@ -42,7 +48,7 @@ export default function LessonView({ lessonId, lang, markdown, components, onSho
     } catch {
       return;
     }
-    if (document.getElementById(anchor)) restoreSection(anchor);
+    if (document.getElementById(anchor)) restoreSection(anchor, true);
   }, []);
 
   // After a language switch, show the section that was in view in the other language.
@@ -59,6 +65,7 @@ export default function LessonView({ lessonId, lang, markdown, components, onSho
   return (
     <div ref={setContainer} data-testid="lesson-content" data-section={section ?? ""}>
       <LessonBody tree={tree} markdown={markdown} lessonId={lessonId} lang={lang} components={components} />
+      {footer?.(lang, section)}
     </div>
   );
 }
