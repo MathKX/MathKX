@@ -2,5 +2,6 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "geometry.right-triangle-trigonometry",
+  "name": { "nb": "Trigonometri i rettvinklede trekanter", "en": "Trigonometry in right triangles" },
   "prerequisites": ["geometry.pythagorean-theorem"]
 }

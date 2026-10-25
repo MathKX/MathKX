@@ -3,7 +3,7 @@ using MathKX.Domain.Content;
 
 namespace MathKX.Api.Endpoints;
 
-/// <summary>Lesson metadata (titles and objectives from the front matter) and skills with their ladders.</summary>
+/// <summary>Lesson metadata (titles and objectives from the front matter) and skills with their names, ladders, and definitions.</summary>
 public static class ContentEndpoints
 {
     public static IEndpointRouteBuilder MapContent(this IEndpointRouteBuilder app)
@@ -13,14 +13,22 @@ public static class ContentEndpoints
             catalog.Lessons.TryGetValue(id, out var lesson)
                 ? Results.Ok(Detail(catalog, lesson))
                 : Problems.NotFound("unknown-lesson", $"Lesson {id} is not defined."));
+        app.MapGet("/api/skills", (ContentCatalog catalog) => Results.Ok(catalog.Skills.Values.OrderBy(s => s.Id, StringComparer.Ordinal).Select(s => Skill(catalog, s)).ToList()));
         app.MapGet("/api/skills/{id}", (string id, ContentCatalog catalog) =>
             catalog.Skills.TryGetValue(id, out var skill)
-                ? Results.Ok(new SkillDto(skill.Id, skill.Prerequisites, (skill.Ladder ?? []).Select(e => new LadderEntryDto(e.Definition, e.Version, new LocalizedDto(e.Description.Nb, e.Description.En))).ToList()))
+                ? Results.Ok(Skill(catalog, skill))
                 : Problems.NotFound("unknown-skill", $"Skill {id} is not defined."));
         app.MapGet("/api/lessons/{id}/content/{lang}", LessonContent);
         app.MapGet("/api/lessons/{id}/assets/{name}", LessonAsset);
         return app;
     }
+
+    private static SkillDto Skill(ContentCatalog catalog, Skill skill) => new(
+        skill.Id,
+        new LocalizedDto(skill.Name.Nb, skill.Name.En),
+        skill.Prerequisites,
+        (skill.Ladder ?? []).Select(e => new LadderEntryDto(e.Definition, e.Version, new LocalizedDto(e.Description.Nb, e.Description.En))).ToList(),
+        catalog.DefinitionsForSkill(skill.Id));
 
     /// <summary>A translation's Markdown exactly as loaded (specs/003 contracts/api.md); the app requests it only with an open gate.</summary>
     public static IResult LessonContent(string id, string lang, ContentCatalog catalog)

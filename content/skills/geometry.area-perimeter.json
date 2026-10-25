@@ -2,5 +2,6 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "geometry.area-perimeter",
+  "name": { "nb": "Areal og omkrets", "en": "Area and perimeter" },
   "prerequisites": ["numbers.integer-operations"]
 }

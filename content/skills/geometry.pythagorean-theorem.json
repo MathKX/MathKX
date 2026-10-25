@@ -2,5 +2,6 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "geometry.pythagorean-theorem",
+  "name": { "nb": "Pytagoras' setning", "en": "The Pythagorean theorem" },
   "prerequisites": ["numbers.square-roots", "geometry.area-perimeter"]
 }

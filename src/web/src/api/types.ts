@@ -108,8 +108,12 @@ export interface LadderEntry {
 
 export interface SkillDto {
   id: string;
+  /** The learner-facing name; never shown as or compared like an ID (specs/004). */
+  name: Localized;
   prerequisites: string[];
   ladder: LadderEntry[];
+  /** Keys (`id@version`) of every definition of this skill, ladder or not. */
+  definitions: string[];
 }
 
 export class ApiError extends Error {
@@ -127,6 +131,7 @@ export class ApiError extends Error {
 export interface PracticeApi {
   getLessons(): Promise<LessonSummary[]>;
   getLesson(id: string): Promise<LessonDetail>;
+  getSkills(): Promise<SkillDto[]>;
   getSkill(id: string): Promise<SkillDto>;
   getInstance(definitionId: string, version: number, seed: string | null): Promise<InstanceDto>;
   getStep(identity: Identity, kind: StepKind, index: number): Promise<StepDto>;

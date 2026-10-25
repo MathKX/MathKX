@@ -10,7 +10,21 @@ export const LADDER: LadderEntry[] = [
   { definition: "numbers.addition.crossing-ten", version: 1, description: { nb: "Over tieren, som 8 + 5.", en: "Across ten, like 8 + 5." } },
 ];
 
-const SKILL: SkillDto = { id: "numbers.addition-within-20", prerequisites: ["numbers.number-bonds-to-ten"], ladder: LADDER };
+export const SKILL: SkillDto = {
+  id: "numbers.addition-within-20",
+  name: { nb: "Addisjon opp til 20", en: "Addition within 20" },
+  prerequisites: ["numbers.number-bonds-to-ten"],
+  ladder: LADDER,
+  definitions: ["numbers.addition.crossing-ten@1", "numbers.addition.four-plus-four@1", "numbers.addition.within-10@1"],
+};
+
+export const BONDS_SKILL: SkillDto = {
+  id: "numbers.number-bonds-to-ten",
+  name: { nb: "Tiervenner", en: "Number bonds to ten" },
+  prerequisites: [],
+  ladder: [],
+  definitions: [],
+};
 
 const LESSON: LessonDetail = {
   id: "number-bonds-to-ten",
@@ -35,6 +49,12 @@ export interface FakeOptions {
   omitLessons?: boolean;
   /** IDs of lessons that practise both pilot definitions (default: the pilot lesson). Titles are the IDs. */
   lessonIds?: string[];
+  /** The skill list (default: addition and number bonds, as the service gives them). */
+  skills?: SkillDto[];
+  /** `getSkills` rejects, as with the service unreachable. */
+  skillsFail?: boolean;
+  /** `getLessons` rejects. */
+  lessonsFail?: boolean;
 }
 
 /** The repository's own lesson files, so component tests render the real lesson. */
@@ -57,6 +77,7 @@ export interface FakeControls {
 export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeControls {
   const pairs: Record<string, [number, number]> = { "numbers.addition.within-10": [4, 4], "numbers.addition.crossing-ten": [8, 5], ...options.pairs };
   const calls: string[] = [];
+  const skills = options.skills ?? [SKILL, BONDS_SKILL];
   const lessonIds = [...(options.lessonIds ?? [LESSON.id])].sort();
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
@@ -126,6 +147,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     },
     getLessons: async () => {
       calls.push("getLessons");
+      if (options.lessonsFail) throw new Error("unreachable");
       return lessonIds.map((id): LessonSummary => {
         const l = lessonFor(id);
         return { id: l.id, version: l.version, status: l.status, skills: l.skills, titles: l.titles, practice: l.practice };
@@ -136,9 +158,14 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       if (!lessonIds.includes(id)) throw new Error("unknown-lesson");
       return lessonFor(id);
     },
+    getSkills: async () => {
+      calls.push("getSkills");
+      if (options.skillsFail) throw new Error("unreachable");
+      return skills;
+    },
     getSkill: async (id) => {
       calls.push(`getSkill ${id}`);
-      return SKILL;
+      return skills.find((s) => s.id === id) ?? SKILL;
     },
     getInstance: async (definitionId, version, seed) => {
       calls.push(`getInstance ${definitionId}@${version} ${seed ?? "-"}`);

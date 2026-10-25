@@ -43,7 +43,7 @@ async function fixture(t) {
   }
   async function skill(id, prerequisites = [], filename = `${id}.json`, extra = {}) {
     await write(`content/skills/${filename}`, {
-      $schema: "../../schemas/skill.schema.json", schemaVersion: "0.1", id, prerequisites, ...extra,
+      $schema: "../../schemas/skill.schema.json", schemaVersion: "0.1", id, name: { nb: id, en: id }, prerequisites, ...extra,
     });
   }
   async function registry(kind, mutate) {
@@ -673,6 +673,28 @@ test("rejects a ladder entry missing a language and an empty ladder", async (t) 
   expectFailure(f.run(),
     /addition-within-20\.json schema violation: \/ladder\/0\/description must have required property 'en'/,
     /number-bonds-to-ten\.json schema violation: \/ladder must NOT have fewer than 1 items/);
+});
+
+// ---------------------------------------------------------------------------------------------
+// specs/004 contracts/skill-name.md: every skill carries a localized name
+
+test("accepts a skill with a name in both languages", async (t) => {
+  const f = await fixture(t);
+  await f.skill("numbers.powers", [], "numbers.powers.json", { name: { nb: "Potenser", en: "Powers" } });
+  expectPass(f.run(), /2 skill\(s\)/);
+});
+
+test("rejects a skill without a name, without English, with a blank name, or with another language", async (t) => {
+  const f = await fixture(t);
+  await f.skill("numbers.powers", [], "numbers.powers.json", { name: undefined });
+  await f.skill("numbers.square-roots", [], "numbers.square-roots.json", { name: { nb: "Kvadratrøtter" } });
+  await f.skill("numbers.integer-operations", [], "numbers.integer-operations.json", { name: { nb: "  ", en: "Operations with integers" } });
+  await f.skill("geometry.area-perimeter", [], "geometry.area-perimeter.json", { name: { nb: "Areal og omkrets", en: "Area and perimeter", de: "Fläche" } });
+  expectFailure(f.run(),
+    /numbers\.powers\.json schema violation: \/ must have required property 'name'/,
+    /numbers\.square-roots\.json schema violation: \/name must have required property 'en'/,
+    /content\/skills\/numbers\.integer-operations\.json name\.nb: skill name in nb is missing or empty/,
+    /geometry\.area-perimeter\.json schema violation: \/name must NOT have additional properties/);
 });
 
 // ---------------------------------------------------------------------------------------------

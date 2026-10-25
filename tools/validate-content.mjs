@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { createDiagnostics, formatDiagnostic, summary } from "./lib/diagnostics.mjs";
 import { loadContentFiles } from "./lib/files.mjs";
 import { indexRegistries } from "./lib/registry.mjs";
-import { checkLadders, indexSkills } from "./lib/skills.mjs";
+import { checkLadders, checkNames, indexSkills } from "./lib/skills.mjs";
 import { indexDefinitions } from "./lib/definitions.mjs";
 import { checkLessons } from "./lib/lessons.mjs";
 
@@ -36,6 +36,7 @@ async function main() {
   const registries = indexRegistries(ofKind("registry"), diagnostics);
   const skills = indexSkills(ofKind("skill"), diagnostics);
   const definitions = indexDefinitions([...ofKind("exercise"), ...ofKind("definition")], { skills, registries, diagnostics });
+  checkNames(skills, diagnostics);
   checkLadders(skills, definitions, diagnostics);
   const lessonCount = await checkLessons(ofKind("lesson"), { skills, definitions, registries, diagnostics });
 

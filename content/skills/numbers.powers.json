@@ -2,5 +2,6 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "numbers.powers",
+  "name": { "nb": "Potenser", "en": "Powers" },
   "prerequisites": ["numbers.integer-operations"]
 }

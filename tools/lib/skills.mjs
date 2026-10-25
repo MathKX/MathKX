@@ -1,4 +1,4 @@
-// Skill registry checks: unique IDs, prerequisite references, self-reference, cycles, ladders.
+// Skill registry checks: unique IDs, prerequisite references, self-reference, cycles, names, ladders.
 
 const RETIRED_PREFIX = "arithmetic.";
 export const RETIRED_HINT = "the registry uses numbers.*";
@@ -64,6 +64,20 @@ export function indexSkills(entries, diagnostics) {
     }
   }
   return skills;
+}
+
+const NAME_LANGUAGES = ["nb", "en"];
+
+/** A skill's name must have text in each release language; the schema cannot reject whitespace only (specs/004). */
+export function checkNames(skills, diagnostics) {
+  for (const { file, data } of skills.values()) {
+    for (const language of NAME_LANGUAGES) {
+      const value = data.name?.[language];
+      if (typeof value !== "string" || value.trim() === "") {
+        diagnostics.error(file, `skill name in ${language} is missing or empty`, { field: `name.${language}` });
+      }
+    }
+  }
 }
 
 /** Ladder entries must be unique, resolve to defined definitions, and belong to this skill. */

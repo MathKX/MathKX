@@ -1,4 +1,4 @@
-# Authoring guide: lessons, exercise definitions, and ladders
+# Authoring guide: lessons, exercise definitions, skill names, and ladders
 
 This guide documents every field, directive, and attribute the content check enforces. It is the pilot contract (`schemaVersion` `0.1-pilot`), defined by [spec 001](../specs/001-pilot-content-contract/spec.md); it is not Exercise Format v1. When the check reports something this guide does not explain, the guide has a defect: please open an issue.
 
@@ -156,7 +156,18 @@ Definitions live under `content/exercises/` and describe either a generated fami
 
 The retired `arithmetic.*` skill IDs from the prototype are reported with a hint: the registry uses `numbers.*`.
 
-## 8. Add a ladder
+## 8. Name a skill
+
+Every file in `content/skills/` carries the skill's learner-facing name in both release languages, next to its ID ([spec 004](../specs/004-progress-view/contracts/skill-name.md)):
+
+```json
+"id": "numbers.addition-within-20",
+"name": { "nb": "Addisjon opp til 20", "en": "Addition within 20" },
+```
+
+Both languages are required and must contain text; the check reports a missing or blank one as `name.nb` or `name.en`. Learners see the name, for example as a heading in "My work", so review it like lesson text. It is never an identity: records refer to the skill's `id`, and a name can change without changing anything they mean.
+
+## 9. Add a ladder
 
 A skill may list its definitions from easiest to hardest in `content/skills/<id>.json`; "Make it easier" and "More challenge" move along it:
 
@@ -169,7 +180,7 @@ A skill may list its definitions from easiest to hardest in `content/skills/<id>
 
 Entries are unique, each definition exists at that version and belongs to this skill, and both sentences are present.
 
-## 9. Reading a diagnostic
+## 10. Reading a diagnostic
 
 ```text
 content/lessons/number-bonds-to-ten/en.md:24 anchor: {#pairs} is missing in nb.md (anchors must match across languages)

@@ -31,7 +31,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 **Purpose**: The scripted records every progress and replay test reads.
 
-- [ ] T001 [P] Create `src/web/tests/records.ts` exporting builders for scripted deliveries (`delivery({ definitionId, version, seed, a, b, startedAt, events })`) and named records:
+- [X] T001 [P] Create `src/web/tests/records.ts` exporting builders for scripted deliveries (`delivery({ definitionId, version, seed, a, b, startedAt, events })`) and named records:
   - `everyOutcome`: the nine-question record of spec User Story 1 scenario 1, plus one of each remaining outcome;
   - `twoSkills`: deliveries for `numbers.addition-within-20` and one for a definition the fake lists under `numbers.number-bonds-to-ten`;
   - `withRepeats`: `3 + 7` twice and `7 + 3` once, same definition and version;
@@ -51,15 +51,15 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests
 
-- [ ] T002 [P] Extend `tools/validate-content.test.mjs` for `contracts/skill-name.md`:
+- [X] T002 [P] Extend `tools/validate-content.test.mjs` for `contracts/skill-name.md`:
   - **Helper**: give the `skill()` helper a default `name: { nb: id, en: id }` and override it with `extra`, so existing tests still pass.
-  - **Cases**: a valid named skill passes; a skill without `name` fails as a schema violation; a skill without `name.en` fails; `name.nb` of `"  "` fails with `content/skills/<file>: skill name in nb is missing or empty (field name.nb)`; an extra `name.de` fails.
-- [ ] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
+  - **Cases**: a valid named skill passes; a skill without `name` fails as a schema violation; a skill without `name.en` fails; `name.nb` of `"  "` fails with `content/skills/<file> name.nb: skill name in nb is missing or empty`; an extra `name.de` fails.
+- [X] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
   - all nine repository skills load with a non-empty `Name.Nb` and `Name.En`;
   - `catalog.DefinitionsForSkill("numbers.addition-within-20")` is `["numbers.addition.crossing-ten@1", "numbers.addition.four-plus-four@1", "numbers.addition.within-10@1"]`;
   - `numbers.number-bonds-to-ten` has none;
   - a temporary content root whose skill file lacks `name` fails the load with the file's relative path.
-- [ ] T004 [P] Add `contracts/api.md` contract tests 1–5 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
+- [X] T004 [P] Add `contracts/api.md` contract tests 1–5 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - `GET /api/skills` lists nine skills in ID order with names and `definitions`;
   - `GET /api/skills/{id}` equals the list element;
   - `unknown-skill` gives a 404;
@@ -70,40 +70,40 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation
 
-- [ ] T005 In `schemas/skill.schema.json`:
+- [X] T005 In `schemas/skill.schema.json`:
   - add `"name"` to `required`;
   - add the property `name`: an object with required `nb` and `en`, each `{ "type": "string", "minLength": 1 }`, and `additionalProperties: false`;
   - rewrite `description` so it says the skill carries its localized name, and that descriptions and curriculum mappings still live elsewhere.
 
   Keep `schemaVersion` `"0.1"` (research R1).
-- [ ] T006 In `tools/lib/skills.mjs`, add a check in `indexSkills` (or a new exported `checkNames` called from the same place as `checkLadders`): for `nb` and `en`, a missing value or a string that is empty after `trim()` reports `skill name in {language} is missing or empty` with `{ field: "name.{language}" }`. T002 passes.
-- [ ] T007 Add `name` (after `id`) to all nine files in `content/skills/` with the proposed names of `contracts/skill-name.md`; `npm run validate` at the root passes.
-- [ ] T008 [P] Add a "Name a skill" section before "Add a ladder" in `content/AUTHORING.md`, covering:
+- [X] T006 In `tools/lib/skills.mjs`, add a check in `indexSkills` (or a new exported `checkNames` called from the same place as `checkLadders`): for `nb` and `en`, a missing value or a string that is empty after `trim()` reports `skill name in {language} is missing or empty` with `{ field: "name.{language}" }`. T002 passes.
+- [X] T007 Add `name` (after `id`) to all nine files in `content/skills/` with the proposed names of `contracts/skill-name.md`; `npm run validate` at the root passes.
+- [X] T008 [P] Add a "Name a skill" section before "Add a ladder" in `content/AUTHORING.md`, covering:
   - the field, with an example;
   - both languages required;
   - the name is shown to learners and reviewed like lesson text;
   - it is never an identity.
 
   Also replace "Names, descriptions, and curriculum mappings … will live elsewhere" in `content/README.md` with a sentence saying each skill file carries its localized name, while descriptions and curriculum mappings live elsewhere.
-- [ ] T009 In `src/backend/MathKX.Domain/Content/Records.cs`, change `Skill` to `Skill(string Id, Localized Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder)`. In `src/backend/MathKX.Domain/Content/ContentCatalog.cs`:
+- [X] T009 In `src/backend/MathKX.Domain/Content/Records.cs`, change `Skill` to `Skill(string Id, Localized Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder)`. In `src/backend/MathKX.Domain/Content/ContentCatalog.cs`:
   - add `DefinitionsForSkill(string skillId)`, the ordinally sorted `id@version` keys of the definitions whose `Skill` equals it;
   - make `src/backend/MathKX.Content/ContentLoader.cs` throw `ContentLoadException` with the relative path when a skill's `Name` (or either language) is null.
 
   T003 passes.
-- [ ] T010 In `src/backend/MathKX.Api/Dto/Dtos.cs`, make `SkillDto(string Id, LocalizedDto Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder, IReadOnlyList<string> Definitions)`. In `src/backend/MathKX.Api/Endpoints/ContentEndpoints.cs`:
+- [X] T010 In `src/backend/MathKX.Api/Dto/Dtos.cs`, make `SkillDto(string Id, LocalizedDto Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntryDto> Ladder, IReadOnlyList<string> Definitions)`. In `src/backend/MathKX.Api/Endpoints/ContentEndpoints.cs`:
   - move the existing mapping into a private `Skill(ContentCatalog, Skill)` helper;
   - add `GET /api/skills` returning every skill ordered by ID through it;
   - keep `GET /api/skills/{id}` on the same helper;
   - update the class summary.
 
   T004 passes.
-- [ ] T011 [P] In `src/web/src/api/types.ts`, add `name: { nb: string; en: string }` and `definitions: string[]` to `SkillDto`, and `getSkills(): Promise<SkillDto[]>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts` as `request<SkillDto[]>("/api/skills")`.
-- [ ] T012 [P] Extend `src/web/tests/fakeApi.ts`:
+- [X] T011 [P] In `src/web/src/api/types.ts`, add `name: { nb: string; en: string }` and `definitions: string[]` to `SkillDto`, and `getSkills(): Promise<SkillDto[]>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts` as `request<SkillDto[]>("/api/skills")`.
+- [X] T012 [P] Extend `src/web/tests/fakeApi.ts`:
   - **Skills**: `SKILL` and a new `BONDS_SKILL` carry names and `definitions` (the three pilot keys under addition, none under number bonds).
   - **`getSkills()`**: returns both and logs `getSkills`.
   - **`getSkill(id)`**: returns the matching one.
   - **New `FakeOptions`**: `skillsFail` rejects `getSkills`; `lessonsFail` rejects `getLessons`.
-- [ ] T013 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/skills` from the published service contains `"name":{"nb":"Addisjon opp til 20"` (or the reviewed name). This proves the deploy package carries the named skill files.
+- [X] T013 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/skills` from the published service contains `"name":{"nb":"Addisjon opp til 20"` (or the reviewed name). This proves the deploy package carries the named skill files.
 
 **Checkpoint**: `npm test` (root), `dotnet test`, and `npm test` in `src/web` pass; the app looks unchanged.
 

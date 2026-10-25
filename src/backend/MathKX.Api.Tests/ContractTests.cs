@@ -40,6 +40,7 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
     [InlineData("/api/lessons")]
     [InlineData("/api/lessons/number-bonds-to-ten")]
     [InlineData("/api/skills/numbers.addition-within-20")]
+    [InlineData("/api/skills")]
     public async Task Unsolicited_responses_never_contain_sum_or_validation(string path)
     {
         using var client = _factory.CreateClient();
@@ -154,10 +155,48 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
 
         using var skill = JsonDocument.Parse(await client.GetStringAsync("/api/skills/numbers.addition-within-20"));
         Assert.Equal(2, skill.RootElement.GetProperty("ladder").GetArrayLength());
+        Assert.Equal("Addition within 20", skill.RootElement.GetProperty("name").GetProperty("en").GetString());
+        Assert.Equal(3, skill.RootElement.GetProperty("definitions").GetArrayLength());
 
         var missing = await client.GetAsync("/api/lessons/nope");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         Assert.Equal("unknown-lesson", await Code(missing));
+    }
+
+    [Fact]
+    public async Task The_skill_list_has_every_skill_in_id_order_with_names_and_definitions()
+    {
+        using var client = _factory.CreateClient();
+        var body = await client.GetStringAsync("/api/skills");
+        using var skills = JsonDocument.Parse(body);
+        var list = skills.RootElement.EnumerateArray().ToList();
+
+        Assert.Equal(9, list.Count);
+        var ids = list.Select(s => s.GetProperty("id").GetString()!).ToList();
+        Assert.Equal(ids.Order(StringComparer.Ordinal), ids);
+        Assert.All(list, s =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(s.GetProperty("name").GetProperty("nb").GetString()));
+            Assert.False(string.IsNullOrWhiteSpace(s.GetProperty("name").GetProperty("en").GetString()));
+        });
+
+        var addition = list.Single(s => s.GetProperty("id").GetString() == "numbers.addition-within-20");
+        Assert.Equal(
+            ["numbers.addition.crossing-ten@1", "numbers.addition.four-plus-four@1", "numbers.addition.within-10@1"],
+            addition.GetProperty("definitions").EnumerateArray().Select(d => d.GetString()));
+        var bonds = list.Single(s => s.GetProperty("id").GetString() == "numbers.number-bonds-to-ten");
+        Assert.Equal(0, bonds.GetProperty("definitions").GetArrayLength());
+        Assert.Equal(0, bonds.GetProperty("ladder").GetArrayLength());
+
+        // One skill by ID is the same object as its list element.
+        var single = await client.GetStringAsync("/api/skills/numbers.addition-within-20");
+        Assert.Equal(addition.GetRawText(), JsonDocument.Parse(single).RootElement.GetRawText());
+
+        Assert.Equal(body, await client.GetStringAsync("/api/skills"));
+
+        var missing = await client.GetAsync("/api/skills/numbers.unknown");
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal("unknown-skill", await Code(missing));
     }
 
     private static async Task<JsonDocument> Validate(HttpClient client, string definitionId, int version, string? seed, string text, string? submissionId = null)

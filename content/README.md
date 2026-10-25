@@ -18,7 +18,7 @@ Directories are created when they contain real content. The curriculum format re
 
 ### Skills
 
-Each file under `skills/` defines one skill: its stable, language-neutral ID, the IDs of the skills it depends on, and optionally a `ladder` of its exercise definitions from easiest to hardest with a learner-facing sentence per language. Names, descriptions, and curriculum mappings are localized or jurisdiction-specific and will live elsewhere. The schema is [`schemas/skill.schema.json`](../schemas/skill.schema.json).
+Each file under `skills/` defines one skill: its stable, language-neutral ID, its learner-facing name in each release language, the IDs of the skills it depends on, and optionally a `ladder` of its exercise definitions from easiest to hardest with a learner-facing sentence per language. The name is kept apart from the ID and never used as one. Descriptions and curriculum mappings are localized or jurisdiction-specific and will live elsewhere. The schema is [`schemas/skill.schema.json`](../schemas/skill.schema.json).
 
 The skills form a small seed graph: the Pythagorean theorem and the square roots it depends on, plus the first milestone's `numbers.number-bonds-to-ten` and `numbers.addition-within-20`. The graph is illustrative content, not an approved taxonomy. Skill granularity and the meaning of a prerequisite edge are still open questions in the [learning model](../docs/learning/learning-model.md) and the [skill graph](../docs/learning/skill-graph.md) document.
 

@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MathKX Skill",
-  "description": "Exploratory 0.1 schema for a curriculum-independent mathematical skill, extended by specs/001 with the optional ladder. A skill carries its stable identity, its prerequisite edges, and optionally an ordered challenge ladder of its own exercise definitions with a learner-facing step description per release language. Names, descriptions, and curriculum mappings for the skill itself still live elsewhere.",
+  "description": "Exploratory 0.1 schema for a curriculum-independent mathematical skill, extended by specs/001 with the optional ladder and by specs/004 with the required name. A skill carries its stable identity, its learner-facing name per release language (kept apart from the identity, never used as one), its prerequisite edges, and optionally an ordered challenge ladder of its own exercise definitions with a learner-facing step description per release language. Descriptions and curriculum mappings for the skill itself still live elsewhere.",
   "type": "object",
-  "required": ["schemaVersion", "id", "prerequisites"],
+  "required": ["schemaVersion", "id", "name", "prerequisites"],
   "properties": {
     "$schema": { "type": "string", "format": "uri-reference" },
     "schemaVersion": { "const": "0.1" },
@@ -11,6 +11,16 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
       "description": "Stable, language-neutral skill ID such as numbers.square-roots. Must not encode a country, curriculum, grade, or display language."
+    },
+    "name": {
+      "type": "object",
+      "description": "The learner-facing name of the skill in each release language. Content, reviewed like lesson text; it may change without changing anything a record refers to.",
+      "required": ["nb", "en"],
+      "properties": {
+        "nb": { "type": "string", "minLength": 1 },
+        "en": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
     },
     "prerequisites": {
       "type": "array",

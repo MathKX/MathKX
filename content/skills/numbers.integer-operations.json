@@ -2,5 +2,6 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "numbers.integer-operations",
+  "name": { "nb": "Regning med hele tall", "en": "Operations with integers" },
   "prerequisites": []
 }

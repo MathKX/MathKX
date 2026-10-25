@@ -79,7 +79,8 @@ public sealed record LadderEntry(string Definition, int Version, Localized Descr
     public string Key => $"{Definition}@{Version}";
 }
 
-public sealed record Skill(string Id, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder);
+/// <summary>A skill: its stable ID, its learner-facing name per language (specs/004; never an identity), its prerequisites, and its optional ladder.</summary>
+public sealed record Skill(string Id, Localized Name, IReadOnlyList<string> Prerequisites, IReadOnlyList<LadderEntry>? Ladder);
 
 public sealed record PracticeRef(string Definition, int Version)
 {

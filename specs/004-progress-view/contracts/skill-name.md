@@ -23,10 +23,10 @@ Each file in `content/skills/` carries a required `name`:
 
 ## Validator
 
-The schema rejects a missing `name`, a missing language, an extra key, and an empty string. In addition, `tools/lib/skills.mjs` reports a name that is only whitespace in either language, in spec 001's diagnostics format:
+The schema rejects a missing `name`, a missing language, an extra key, and an empty string. In addition, `tools/lib/skills.mjs` reports a name that is only whitespace in either language, in spec 001's diagnostics format (`path field: message`):
 
 ```text
-content/skills/numbers.powers.json: skill name in en is missing or empty (field name.en)
+content/skills/numbers.powers.json name.en: skill name in en is missing or empty
 ```
 
 Root tooling tests (`tools/validate-content.test.mjs`): a valid skill passes; a skill without `name` fails; a skill without `name.en` fails; a skill whose `name.nb` is `"  "` fails with the diagnostic above; an extra key `name.de` fails.
