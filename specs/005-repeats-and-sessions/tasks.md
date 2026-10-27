@@ -70,7 +70,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 - [ ] T006 [P] In `src/web/src/api/types.ts`, add `PoolDto` and `getPool(definitionId, version): Promise<PoolDto>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts`.
 - [ ] T007 [P] Record fields:
   - **`src/web/src/state/observations.ts`**: add optional `repeatOf?: string` and `repeatReason?: "requested" | "exhausted"` to `Delivery`.
-  - **`src/web/src/state/store.tsx`**: add `session: { start: string | null; last: { from: string | null; to: string } | null }` to `PersistedState` and `initialPersisted`; default a missing `session` on hydrate (the reducer initializer and the `hydrate` case); reset it in `clear`.
+  - **`src/web/src/state/store.tsx`**: add `session: { current: string[]; last: { finishedAt: string; questions: { id: string; outcome: Outcome; repeat: "requested" | "chance" | null }[] } | null }` to `PersistedState` and `initialPersisted`. Default a missing `session` on hydrate (the reducer initializer and the `hydrate` case) to `{ current: <every delivery ID>, last: null }`. Reset it in `clear`. Append a delivery's ID to `session.current` whenever it becomes current (the `question` action, for new, resumed, and repeated questions).
 
   Leave `SCHEMA_VERSION` unchanged. Extend `src/web/tests/lesson-views.test.tsx`'s old-record test to check `session` defaults and the deliveries stay intact.
 - [ ] T008 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/definitions/numbers.addition.within-10/1/pool` from the published service lists 45 questions and contains no `"sum"`.
@@ -94,7 +94,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - determinism.
 - [ ] T010 [P] [US1] Add `src/web/tests/avoidance.test.tsx` for the `contracts/selection.md` store tests 1–7, with the fake API and `records.ts`:
   - 100 requests on each pilot variation with no pair from the previous eight;
-  - `poolSize: 5`: every request after the fifth is a repeat with `repeatReason: "exhausted"`, a `repeatOf`, and the notice;
+  - `poolSize: 5`: a request is a repeat with `repeatReason: "exhausted"`, a `repeatOf`, and the notice exactly while all five pairs are in the window. A pair that has left the window is delivered next, without the notice (after `A, B, C, D, E, E, E, E, E`, the next is `A`);
   - the record never holds the passed-over question;
   - at most two `getInstance` calls per question, and one `getPool` per variation;
   - `poolFails` still delivers a question;
@@ -172,15 +172,16 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 3
 
-- [ ] T025 [P] [US3] Add `src/web/tests/session.test.tsx` for `contracts/session.md` tests 1–9, with the fake API:
+- [ ] T025 [P] [US3] Add `src/web/tests/session.test.tsx` for `contracts/session.md` tests 1–11, with the fake API:
   - the summary counts;
-  - "Practise again" resumes;
+  - "Practise again" resumes an unfinished question, and loads a new one after a finish on an answered question;
+  - a question resumed across sessions: its second summary has the new outcome, and the first summary, read before the second finish, still has the old one;
   - a detour and a look at "My work" do not split the session;
-  - a second session counts only its own questions;
-  - `session.empty`;
+  - a second session counts its own and resumed questions;
+  - a chance repeat of an earlier session's question counts as a repeat;
   - an old record's first finish counts everything;
   - the summary survives a reload, and "Clear my work" gives `session.none`;
-  - the repeat sentences;
+  - `session.empty` after a load failure;
   - both languages.
 - [ ] T026 [P] [US3] Add check 3 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 4):
   - answer three questions, take a lesson detour, and type a draft on a fourth;
@@ -190,10 +191,14 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Add `finishPractice()` to `StoreApi` in `src/web/src/state/store.tsx`: dispatch `end`, then an action `{ type: "finish"; at: string }` that sets `session.last` to `{ from: session.start, to: at }` and `session.start` to `at`.
+- [ ] T027 [US3] Add `finishPractice()` to `StoreApi` in `src/web/src/state/store.tsx` with one action `{ type: "finish"; at: string }` per `contracts/session.md`:
+  - **Close**: apply `end`, so an unanswered question stays resumable.
+  - **Snapshot**: record each `session.current` delivery's `derive` outcome and its `repeatKind` against the whole record, leaving out "none", as `session.last`.
+  - **Release**: clear `instance`, `currentDeliveryId`, and the draft and panel state (kept in `resumable`).
+  - **Next session**: empty `session.current`.
 - [ ] T028 [US3] Create `src/web/src/pages/SessionPage.tsx` per `contracts/session.md`:
   - `PageHeading` with `session.title`;
-  - `groupBySkill` over the deliveries in `session.last` (no lesson history, no question list), with each skill's name from `getSkills`, its count sentence, and the repeat sentences;
+  - the snapshot in `session.last` grouped by skill through `skillOfDefinition` (no lesson history, no question list), with each skill's name from `getSkills`, its count sentence over the snapshot's outcomes, and the repeat sentences from its repeat kinds;
   - `session.empty` or `session.none` when there is nothing to count;
   - "Practise again" as a `Link` to `/practice/{skillId}`, and a link to `/record`.
 

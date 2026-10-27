@@ -85,8 +85,9 @@ A learner who is done practising chooses "Finish practice". The session ends whe
 **Acceptance Scenarios**:
 
 1. **Given** a session with answered questions and one unanswered with a draft, **When** the learner chooses "Finish practice", **Then** the summary lists this session's questions as counts per outcome, the unanswered one is "Unfinished", and nothing is lost.
-2. **Given** the summary, **When** the learner chooses "Practise again", **Then** the unfinished question resumes with its draft and help state (DL-026 (4)), or a new question is delivered if there is none.
-3. **Given** the summary, **Then** it shows no percentage, score, streak, or mastery word, and its counts equal spec 002's derivation over this session's questions.
+2. **Given** the summary, **When** the learner chooses "Practise again", **Then** the unfinished question resumes with its draft and help state (DL-026 (4)), or, when the session ended on a question with a result, a new question is delivered, never the finished one.
+3. **Given** the summary, **Then** it shows no percentage, score, streak, or mastery word, and its counts equal spec 002's derivation over this session's questions as they were when the session finished.
+4. **Given** a question left unfinished in one session and answered after "Practise again", **When** the learner finishes again, **Then** the new summary counts it with its new outcome; until then, the earlier summary still shows the outcome it had when that session finished.
 
 ---
 
@@ -116,8 +117,9 @@ Every new action, notice, tag, and sentence exists in Norwegian Bokmål and Engl
 - **The service unreachable**: "Repeat this question" behaves like any question request that fails (spec 002's load error); nothing is recorded until the question is shown.
 - **The variation's pool cannot be loaded**: the question is still delivered, as before this feature, without avoidance; avoidance never stops a learner from getting a question.
 - **The same question recently delivered by chance and then repeated on request**: the repeat on request is never refused because of avoidance; avoidance only governs questions the learner did not choose.
-- **A session that spans a detour or several days**: a lesson detour, a look at "My work", a replay, or a later visit does not end the session; its summary counts every question since the learner last finished. A record from before this feature has never been finished, so its first summary counts all its questions.
-- **"Finish practice" with no questions since the last finish**: the summary says there are no questions in this session and still offers "Practise again".
+- **A session that spans a detour or several days**: a lesson detour, a look at "My work", a replay, or a later visit does not end the session; its summary counts every question worked since the learner last finished. A record from before this feature has never been finished, so its first summary counts all its questions.
+- **A question resumed after a finish**: it belongs to both sessions. Each summary shows its outcome as it was when that session finished.
+- **"Finish practice" when no question was shown** (for example after a load failure): the summary says there are no questions in this session and still offers "Practise again".
 - **Questions passed over during avoidance**: never shown, never recorded, and never visible in replay or "My work".
 - **Avoidance and a pool larger than the window**: a question from beyond the last eight may come back; that is a repeat by chance and is marked as in spec 004.
 
@@ -146,7 +148,7 @@ Every new action, notice, tag, and sentence exists in Norwegian Bokmål and Engl
 - **FR-011**: The practice screen MUST offer "Finish practice", which ends the session as leaving the practice page does today: an unanswered question stays resumable with its draft and support context (DL-026 (4)).
 - **FR-012**: Finishing MUST show a summary of this session's questions as counts per outcome, with the number repeated by chance and on request, in spec 002's and spec 004's wording, with "Practise again" (resuming the unfinished question or starting a new one) and a link to "My work".
 - **FR-013**: The session summary MUST show no percentage, score, streak, time, or mastery word. Sessions MUST NOT have a fixed length.
-- **FR-014**: A practice session MUST run from the first question after the previous "Finish practice" (or the first question in the record) until the learner chooses "Finish practice". Leaving the practice page for a lesson detour, "My work", or a replay MUST NOT split the session; it still keeps an unanswered question resumable, as today (DL-026 (4)).
+- **FR-014**: A practice session MUST contain every question worked in it, meaning delivered, resumed, or repeated, from the previous "Finish practice" (or the start of the record) until the learner chooses "Finish practice". A question resumed in a later session belongs to that session too. Leaving the practice page for a lesson detour, "My work", or a replay MUST NOT split the session; it still keeps an unanswered question resumable, as today (DL-026 (4)). A summary MUST show each question's outcome and repeat kind as they were when the session finished, with repeats classified against the learner's whole record, and "Practise again" MUST NOT reopen a question that already has a result.
 
 **Languages, accessibility, privacy, and quality**
 
@@ -167,8 +169,8 @@ Every new action, notice, tag, and sentence exists in Norwegian Bokmål and Engl
 - **Recent questions of a variation**: the last eight questions delivered in one variation (definition and version), taken from the guest record; compared by their two numbers regardless of order.
 - **Repeat on request**: a delivery that repeats an earlier delivery's identity because the learner chose "Repeat this question"; it records which delivery it repeats.
 - **Chance repeat**: a delivery whose question equals an earlier one without the learner asking (after exhaustion, or beyond the window); marked as in spec 004.
-- **Practice session**: the questions delivered since the previous "Finish practice" (or since the record began), up to the next "Finish practice"; detours away from the practice page do not split it.
-- **Session summary**: counts per outcome and repeat counts over the questions of one practice session; derived, never stored as a score.
+- **Practice session**: the questions worked (delivered, resumed, or repeated) since the previous "Finish practice", or since the record began, up to the next "Finish practice"; detours away from the practice page do not split it.
+- **Session summary**: counts per outcome and repeat counts over the questions of one practice session, from a snapshot of their outcomes and repeat kinds taken at finish. These are outcome labels and counts, never a score.
 
 ## Success Criteria *(mandatory)*
 

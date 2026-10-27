@@ -10,7 +10,7 @@ Three additions to practice, all over the guest record in the browser:
 
 - **Avoiding recent questions**: the service publishes each variation's pool, every question with the smallest seed that produces it, as operands and seeds, never sums. The learner app keeps today's random draw. When the drawn question is among the last eight of that variation (in either order), the app picks, from that same draw, one of the pool's questions outside the window and requests that question's seed instead. So a question costs at most two instance requests; avoidance never changes what an identity resolves to; and the recent history never leaves the browser. When every question of the variation is recent, the drawn question is delivered, marked as a repeat, and a notice says so.
 - **"Repeat this question"**: offered on the practice screen once a question has a result, and in a replay. It delivers the same identity as a new delivery that records which delivery it repeats and why ("on request"). "My work" and replay tag it apart from chance repeats.
-- **"Finish practice"**: ends the session as leaving does, keeping an unanswered question resumable. It records where the session ended and shows a summary of the session's questions as counts and repeats, with "Practise again".
+- **"Finish practice"**: ends the session as leaving does, keeping an unanswered question resumable. It takes a snapshot of the session's questions (those worked since the last finish, including any resumed) and shows it as counts and repeats, with "Practise again".
 
 No new project; no change to generation, validation, or outcome derivation.
 
@@ -22,7 +22,7 @@ No new project; no change to generation, validation, or outcome derivation.
 
 **Storage**: The guest record (`mathkx.guest.v1`, schema version 1) gains, all additively and without a version bump:
 - on a delivery, `repeatOf` (a delivery ID) and `repeatReason` (`"requested"` or `"exhausted"`);
-- on the record, `session`: where the current session started and the range of the last finished one.
+- on the record, `session`: the questions worked in the current session, and a snapshot of the last finished one.
 
 The service stores nothing.
 
@@ -82,7 +82,7 @@ specs/005-repeats-and-sessions/
 │   ├── pool.md          # GET /api/definitions/{id}/{version}/pool and the smallest-seed table
 │   ├── selection.md     # choosing a question: the window, the bounded search, exhaustion
 │   ├── repeat.md        # "Repeat this question" from practice and replay; record fields; tags
-│   └── session.md       # "Finish practice", the session range, the summary, "Practise again"
+│   └── session.md       # "Finish practice", session membership, the snapshot summary, "Practise again"
 ├── checklists/requirements.md
 └── tasks.md             # Phase 2 (/speckit-tasks)
 ```
@@ -103,7 +103,7 @@ src/web/
 ├── src/state/selection.ts                         # NEW: recent window, choosing among the pool (pure)
 ├── src/state/observations.ts                      # CHANGED: Delivery.repeatOf, repeatReason
 ├── src/state/store.tsx                            # CHANGED: avoidance in load(), repeatQuestion(), finishPractice(), session
-├── src/state/progress.ts                          # CHANGED: repeat kind (on request, by chance), session range
+├── src/state/progress.ts                          # CHANGED: repeat kind (on request, by chance)
 ├── src/components/ExerciseShell.tsx               # CHANGED: "Repeat this question", "Finish practice", the exhausted notice
 ├── src/pages/ReplayPage.tsx                       # CHANGED: "Repeat this question"
 ├── src/pages/RecordPage.tsx                       # CHANGED: tag and sentence for repeats on request

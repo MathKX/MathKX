@@ -90,22 +90,30 @@ The tag is `progress.repeatRequestedTag` ("Repeated on request") for `"requested
 ## R7. Sessions and "Finish practice"
 
 **Decision**:
-- **The record**: the guest record gains `session: { start: string | null; last: { from: string | null; to: string } | null }`. `start` is when the current session began (the time of the previous finish, or `null` for the whole record).
-- **"Finish practice"** (`practice.finish`): it dispatches spec 002's `end` (the unanswered question stays resumable, DL-026 (4)). It then sets `session.last` to `{ from: start, to: now }`, sets `start` to now, and navigates to `/session`.
-- **`SessionPage`**: it summarizes the deliveries whose `startedAt` falls in `last`, with spec 004's functions:
+- **The record**: the guest record gains `session: { current: string[]; last: { finishedAt, questions: { id, outcome, repeat }[] } | null }`. `current` lists the deliveries worked in this session (delivered, resumed, or repeated). `last` is a snapshot of the last finished session.
+- **"Finish practice"** (`practice.finish`), in one action:
+  - it dispatches spec 002's `end` (the unanswered question stays resumable, DL-026 (4));
+  - it snapshots each current question's outcome and its repeat kind, classified against the complete record;
+  - it releases the current question (`instance` and `currentDeliveryId` cleared; the draft and support live on in `resumable`);
+  - it empties `current` and navigates to `/session`.
+- **`SessionPage`**: it renders the snapshot:
   - per skill: spec 002's count sentence, the repeat sentences (R6), and nothing else;
-  - "Practise again" (`session.again`) to `/practice/{skillId}`, which resumes the unfinished question or starts a new one;
+  - "Practise again" (`session.again`) to `/practice/{skillId}`, which resumes the unfinished question or loads a new one, since no question is current;
   - a link to "My work".
 - **No questions**: the page says `session.empty`.
 - **Clearing**: "Clear my work" resets `session`.
 
 **Rationale**:
 - **The session runs between finishes** (spec FR-014), so a lesson detour or a look at "My work" never splits it.
+- **Membership by work, not by start time** (PR 43 review): a question resumed after a finish was worked in the new session, so it belongs there. Selecting by `startedAt` would drop it and say no questions were answered.
+- **A snapshot**: the earlier summary keeps what was true when it was shown, even after a resumed question is answered later; repeats are classified against the whole record, as "My work" does, not against the session's questions alone.
+- **Releasing the question at finish**: `startPractice` keeps a question in progress for the same skill, so without it "Practise again" would reopen a finished question (PR 43 review).
 - **A page for the summary**: a reload keeps it, and the learner can return to it.
 - **Reuse**: it uses spec 004's tested counting, with no new arithmetic.
 
 **Alternatives considered**:
 - **Ending a session when the practice page unmounts**: every detour would split it.
+- **A time range (`from < startedAt ≤ to`)**: it loses questions resumed in a later session, and a summary would change after it was shown.
 - **Showing the summary in place on the practice screen**: it would be lost on a reload and compete with the question.
 - **A session list**: F9 and later.
 

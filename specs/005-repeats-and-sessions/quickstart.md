@@ -45,7 +45,7 @@ The end-to-end checks need spec 003's build order (web build, then `dotnet build
 
 ## Scenario 2: an exhausted pool (User Story 1)
 
-The pilot pools do not run out within eight questions, so this scenario uses the component tests' scripted pool of five questions. After the fifth question, every question repeats, says "This variation has no other questions right now, so this one repeats.", and is tagged "Repeated question" in "My work".
+The pilot pools do not run out within eight questions, so this scenario uses the component tests' scripted pool of five questions. While all five are among the last eight, each question repeats, says "This variation has no other questions right now, so this one repeats.", and is tagged "Repeated question" in "My work". As soon as one of the five leaves the window, the next question is that one, without the notice.
 
 ## Scenario 3: repeating on purpose (User Story 2)
 
@@ -58,8 +58,8 @@ The pilot pools do not run out within eight questions, so this scenario uses the
 
 1. Answer three questions, take a lesson detour, and type a draft on a fourth.
 2. Choose "Finish practice": "Your practice session" counts 4 questions, one unfinished, with no percentage or score.
-3. "Practise again" brings back the fourth question with its draft.
-4. Finish again at once: the summary says no questions were answered in this session.
+3. "Practise again" brings back the fourth question with its draft. Answer it correctly and finish again: the new summary counts it as correct, in a session of its own.
+4. Choose "Practise again" once more: since the last session ended on an answered question, a new question appears, not the finished one.
 
 ## CI
 

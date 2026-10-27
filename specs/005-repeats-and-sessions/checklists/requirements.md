@@ -17,8 +17,8 @@
 - [x] Requirements are testable and unambiguous — FR-001 to FR-018 each name an observable condition; FR-005 has a time bound and a fixed upper limit
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined — 17 scenarios across four stories
-- [x] Edge cases are identified — thirteen listed
+- [x] All acceptance scenarios are defined — 18 scenarios across four stories
+- [x] Edge cases are identified — fourteen listed
 - [x] Scope is clearly bounded — Assumptions name what stays with spec 002, F8, F9, and the future learning model
 - [x] Dependencies and assumptions identified
 

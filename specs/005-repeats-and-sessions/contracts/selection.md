@@ -25,7 +25,7 @@ It does not apply to resuming an unfinished question (spec 002), to "Repeat this
 | --- | --- |
 | The first draw's pair is not in the window | `{ kind: "fresh" }`: deliver the first draw |
 | Some pool questions' pairs are not in the window | `{ kind: "chosen", seed }`: the question at index `BigInt(firstDraw.seed) mod n` among those `n` questions, in pool order |
-| Every pool question's pair is in the window | `{ kind: "exhausted" }`: deliver the first draw as a repeat |
+| Every pool question's pair is in the window | `{ kind: "exhausted" }`: deliver the first draw as a repeat. Exhaustion is a state of the current window, not of the pool: once a pair has left the window, it is fresh again |
 
 The fixed task's first draw has no seed, so its index is 0; its pool has one question, so the "chosen" case never arises for it.
 
@@ -56,7 +56,7 @@ The fixed task's first draw has no seed, so its index is 0; its pool has one que
 
 **Store tests with the fake API (pool from the fake)**:
 1. 100 "Another question" requests on `within-10` and on `crossing-ten` never deliver a pair from the previous eight.
-2. A scripted pool of five questions: every request after the fifth is a repeat with the notice.
+2. A scripted pool of five questions `A` to `E`: a request is a repeat with the notice exactly while all five pairs are among the last eight. When a pair leaves the window, the next request delivers it without the notice (PR 43 review). For example, after `A, B, C, D, E, E, E, E, E`, the window is `B, C, D, E, E, E, E, E`, so the next question is `A`.
 3. The record never holds the passed-over question.
 4. Each question makes at most two instance requests.
 5. A failing pool request still delivers a question.
