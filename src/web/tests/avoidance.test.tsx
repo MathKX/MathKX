@@ -77,7 +77,10 @@ describe("avoiding recent questions (tests 1, 3, 4)", () => {
 
 describe("an exhausted pool (test 2)", () => {
   it("repeats with the notice exactly while every question is recent, and delivers a question again once it has left the window", async () => {
-    const api = createFakeApi({ pool: true, poolSize: 5 });
+    // Scripted draws, so the run always reaches the exhausted state and leaves it: A..E fill the pool, then every draw
+    // is E. Draws 6–9 find all five recent and repeat E; on draw 10 A has left the window, so A comes back fresh.
+    const pool = [[1, 1], [1, 2], [1, 3], [1, 4], [1, 5]] as [number, number][];
+    const api = createFakeApi({ pool: true, poolSize: 5, sequence: [...pool, ...Array.from({ length: 20 }, () => [1, 5] as [number, number])] });
     await practise(api);
     let noticed = false;
     for (let i = 0; i < 20; i++) {
