@@ -43,6 +43,9 @@ export interface Delivery {
   events: Event[];
   /** The lesson whose practice entry started this practice run (specs/003); navigation context, never evidence. */
   originLessonId?: string;
+  /** The delivery this one repeats (specs/005): chosen by the learner, or forced by an exhausted pool. */
+  repeatOf?: string;
+  repeatReason?: "requested" | "exhausted";
 }
 
 export const identityOf = (d: Delivery): Identity => {

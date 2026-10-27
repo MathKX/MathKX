@@ -5,6 +5,7 @@ import {
   type LessonContentDto,
   type LessonDetail,
   type LessonSummary,
+  type PoolDto,
   type PracticeApi,
   type SkillDto,
   type StepDto,
@@ -48,6 +49,7 @@ export const practiceApi: PracticeApi = {
   getSkill: (id) => request<SkillDto>(`/api/skills/${encodeURIComponent(id)}`),
   getInstance: (definitionId, version, seed) =>
     request<InstanceDto>(`/api/instances/${encodeURIComponent(definitionId)}/${version}/${seed ?? NO_SEED}`),
+  getPool: (definitionId, version) => request<PoolDto>(`/api/definitions/${encodeURIComponent(definitionId)}/${version}/pool`),
   getStep: (identity, kind: StepKind, index) =>
     request<StepDto>(`/api/instances/${encodeURIComponent(identity.definitionId)}/${identity.version}/${seedSegment(identity)}/steps/${kind}/${index}`),
   validate: (identity, originalText, submissionId) =>

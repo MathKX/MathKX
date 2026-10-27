@@ -57,6 +57,18 @@ export interface FakeOptions {
   lessonsFail?: boolean;
   /** Operands the service resolves every identity to, as if the generator had changed (specs/004 replay). */
   instanceOperands?: [number, number];
+  /**
+   * Serve each variation's pool (specs/005): the canonical ordered pairs, each with the seed `p{index}`. With a pool,
+   * a first draw (a numeric seed) resolves like the real generator, to the pair at `seed mod n`. Without one (the
+   * default), `getPool` rejects and the app delivers first draws as before, so earlier tests keep their questions.
+   */
+  pool?: boolean;
+  /** Limit every pool to its first n pairs (a small pool, for exhaustion). */
+  poolSize?: number;
+  /** With `pool`, `getPool` rejects anyway. */
+  poolFails?: boolean;
+  /** With `pool`, the pairs successive first draws resolve to, in order (a seed keeps its pair once drawn). */
+  sequence?: [number, number][];
   /** `getInstance` fails: an unknown definition (404) or an unreachable service. */
   instanceFails?: "404" | "network";
 }
@@ -92,9 +104,27 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     if (fail.has(method)) throw new Error(`${method} failed`);
     if (held.has(method)) await new Promise<void>((resolve) => waiting[method].push(resolve));
   };
+  const poolOf = (definitionId: string): [number, number][] => {
+    const all = canonicalPool(definitionId);
+    return options.poolSize ? all.slice(0, options.poolSize) : all;
+  };
+  const sequence = [...(options.sequence ?? [])];
+  const drawn = new Map<string, [number, number]>(); // definition@version:seed -> the pair a first draw resolved to
+  const poolPair = (identity: Identity): [number, number] | undefined => {
+    if (!options.pool || identity.seed === undefined) return undefined;
+    const pool = poolOf(identity.definitionId);
+    const indexed = /^p(\d+)$/.exec(identity.seed);
+    if (indexed) return pool[Number(indexed[1])];
+    const key = `${identity.definitionId}@${identity.version}:${identity.seed}`;
+    const known = drawn.get(key);
+    if (known) return known;
+    const next = sequence.shift() ?? (/^\d+$/.test(identity.seed) ? pool[Number(BigInt(identity.seed) % BigInt(pool.length))] : undefined);
+    if (next) drawn.set(key, next);
+    return next;
+  };
   const instanceOf = (identity: Identity): InstanceDto => {
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
-    const pair: [number, number] = options.instanceOperands ?? bySeed ?? pairs[identity.definitionId] ?? [3, 5];
+    const pair: [number, number] = options.instanceOperands ?? bySeed ?? poolPair(identity) ?? pairs[identity.definitionId] ?? [3, 5];
     const crossing = identity.definitionId.includes("crossing");
     const representation = crossing ? "make-ten" : "groups";
     const dto: InstanceDto = {
@@ -171,6 +201,12 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       calls.push(`getSkill ${id}`);
       return skills.find((s) => s.id === id) ?? SKILL;
     },
+    getPool: async (definitionId, version) => {
+      calls.push(`getPool ${definitionId}@${version}`);
+      if (!options.pool || options.poolFails) throw new Error("no pool");
+      const fixed = definitionId === "numbers.addition.four-plus-four";
+      return { definition: definitionId, version, questions: poolOf(definitionId).map(([a, b], i) => ({ seed: fixed ? null : `p${i}`, a, b })) };
+    },
     getInstance: async (definitionId, version, seed) => {
       calls.push(`getInstance ${definitionId}@${version} ${seed ?? "-"}`);
       await gate("getInstance");
@@ -221,6 +257,15 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       return { type: "ten-frame-explorer", states: Array.from({ length: 11 }, (_, filled) => ({ filled, partner: 10 - filled })) };
     },
   };
+}
+
+/** The canonical ordered pairs of the fake's variations, as the generator enumerates them (specs/005 pools). */
+export function canonicalPool(definitionId: string): [number, number][] {
+  if (definitionId === "numbers.addition.four-plus-four") return [[4, 4]];
+  const [min, max] = definitionId.includes("crossing") ? [11, 18] : definitionId.includes("within-10") ? [2, 10] : [8, 8];
+  const pool: [number, number][] = [];
+  for (let a = 1; a <= 9; a++) for (let b = 1; b <= 9; b++) if (a + b >= min && a + b <= max) pool.push([a, b]);
+  return pool;
 }
 
 /** A storage that throws, to exercise the memory fallback. */

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { InstanceDto, LadderEntry, PracticeApi, StepDto, ValidationResponse } from "../api/types";
 import { newSeed, practiceApi } from "../api/client";
 import type { Lang } from "../i18n";
+import type { Outcome } from "./outcomes";
 import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
 
@@ -51,7 +52,19 @@ export interface PersistedState {
   resumable: Resumable | null;
   /** Added by specs/004 without a schema version change; a record written before it has none. No cap, like deliveries. */
   lessonViews: LessonView[];
+  /** Added by specs/005 without a schema version change (contracts/session.md). */
+  session: PracticeSession;
 }
+
+/** The questions worked in the current session, and a snapshot of the last finished one (specs/005). */
+export interface PracticeSession {
+  current: string[];
+  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: "requested" | "chance" | null }[] } | null;
+}
+
+/** A record written before specs/005 has no session: every question in it belongs to the first one. */
+const sessionOf = (value: Partial<PersistedState>): PracticeSession =>
+  value.session ?? { current: (value.deliveries ?? []).map((d) => d.id), last: null };
 
 export interface State extends PersistedState {
   kept: boolean;
@@ -79,6 +92,7 @@ const initialPersisted: PersistedState = {
   result: null,
   resumable: null,
   lessonViews: [],
+  session: { current: [], last: null },
 };
 
 type Action =
@@ -119,7 +133,7 @@ const isCurrent = (state: State, deliveryId: string) => state.currentDeliveryId 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
-      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], kept: action.kept };
+      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], session: sessionOf(action.state), kept: action.kept };
     case "language":
       return { ...state, language: action.language };
     case "kept":
@@ -138,9 +152,12 @@ function reducer(state: State, action: Action): State {
         ? previousClosed.deliveries
         : [...previousClosed.deliveries, action.delivery];
       const resumed = action.resumedFrom;
+      // Delivered, resumed, or repeated: the question is worked in the current session (specs/005 FR-014).
+      const current = previousClosed.session.current.includes(action.delivery.id) ? previousClosed.session.current : [...previousClosed.session.current, action.delivery.id];
       return {
         ...previousClosed,
         deliveries,
+        session: { ...previousClosed.session, current },
         currentDeliveryId: action.delivery.id,
         instance: action.instance,
         draft: resumed?.draft ?? "",
@@ -262,7 +279,8 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const store = useMemo(() => storage ?? createStorage<PersistedState>(), [storage]);
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
-    return { ...initialPersisted, ...(loaded.value ?? {}), kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
+    const value = loaded.value ?? {};
+    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
   });
   const latest = useRef(state);
   latest.current = state;

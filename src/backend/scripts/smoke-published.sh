@@ -40,4 +40,8 @@ case "$type" in image/svg+xml*) ;; *) echo "lesson asset was not published (cont
 curl -fsS "http://127.0.0.1:$port/api/visuals/make-ten?a=8&b=5" | grep -q '"type":"make-ten"' || { echo "lesson visuals did not resolve"; exit 1; }
 # specs/004 T013: the package carries the named skill files.
 curl -fsS "http://127.0.0.1:$port/api/skills" | grep -q '"name":{"nb":"Addisjon opp til 20","en":"Addition within 20"}' || { echo "skill names were not published"; exit 1; }
+# specs/005 T008: the package builds and serves the question pools, with operands only.
+pool="$(curl -fsS "http://127.0.0.1:$port/api/definitions/numbers.addition.within-10/1/pool")"
+[ "$(echo "$pool" | grep -o '"seed":' | wc -l)" -eq 45 ] || { echo "the within-ten pool does not list 45 questions"; exit 1; }
+echo "$pool" | grep -q '"sum"' && { echo "the pool leaked a sum"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

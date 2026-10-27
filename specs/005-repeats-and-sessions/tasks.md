@@ -29,9 +29,9 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 **Purpose**: Test fixtures every story reads.
 
-- [ ] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
+- [X] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
   - **`getPool(definitionId, version)` in the fake**: returns every question of the fake's pool for the definition in canonical order, each with a seed the fake's `getInstance` resolves to it. Use a seed-to-pair map the fake also honours, so a pool seed resolves to its pair. It logs `getPool …`.
-  - **New `FakeOptions`**: `poolSize` (limits a definition's pool to its first n pairs, for the exhausted case), `poolFails` (rejects `getPool`), and `sequence` (the pairs successive first draws resolve to, so a test can force a recent first draw).
+  - **New `FakeOptions`**: `pool` (serve pools at all; off by default, so `getPool` rejects and earlier tests keep their questions through the pool-unavailable fallback), `poolSize` (limits a definition's pool to its first n pairs, for the exhausted case), `poolFails` (rejects `getPool` even with `pool`), and `sequence` (the pairs successive first draws resolve to, so a test can force a recent first draw).
   - **`records.ts`**: add `repeatOf` and `repeatReason` to `DeliverySpec`, and a builder `recentWindow(definitionId, pairs)` that returns one delivery per pair, oldest first.
 
 ---
@@ -44,12 +44,12 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests
 
-- [ ] T002 [P] Add `src/backend/MathKX.Domain.Tests/Generators/QuestionPoolTests.cs` for `contracts/pool.md` "Tests" 1–6:
+- [X] T002 [P] Add `src/backend/MathKX.Domain.Tests/Generators/QuestionPoolTests.cs` for `contracts/pool.md` "Tests" 1–6:
   - **Sizes**: 45 for `within-10`, 36 for `crossing-ten`, and 1 for `four-plus-four`.
   - **Seeds**: each seed generates its pair; no smaller seed does; all seeds are below 65,536.
   - **Fixture**: the first ten entries of each generated pool match `src/backend/MathKX.Domain.Tests/Fixtures/pools.json`, which you create from the first run and review by hand against `Generate`.
   - **The limit**: with a lowered limit, building a pool fails with the definition key.
-- [ ] T003 [P] Add the `contracts/pool.md` contract tests 1–6 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
+- [X] T003 [P] Add the `contracts/pool.md` contract tests 1–6 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - the shape, in canonical order;
   - every seed resolving through the instance endpoint to the listed operands (both pilot definitions);
   - the fixed task with `seed: null`;
@@ -61,19 +61,19 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation
 
-- [ ] T004 Create `src/backend/MathKX.Domain/Generators/QuestionPool.cs`: `QuestionPool.For(ExerciseDefinition, GeneratorRegistry, ulong limit = 65_536)` returning the definition key and `IReadOnlyList<(Seed? Seed, int A, int B)>` per `contracts/pool.md`. A generated pool comes from `AdditionPairGenerator.Enumerate` and the smallest-seed search; a fixed task's pool is its prompt with no seed. Failure throws with the definition key. T002 passes.
-- [ ] T005 In `src/backend/MathKX.Api`:
+- [X] T004 Create `src/backend/MathKX.Domain/Generators/QuestionPool.cs`: `QuestionPool.For(ExerciseDefinition, GeneratorRegistry, ulong limit = 65_536)` returning the definition key and `IReadOnlyList<(Seed? Seed, int A, int B)>` per `contracts/pool.md`. A generated pool comes from `AdditionPairGenerator.Enumerate` and the smallest-seed search; a fixed task's pool is its prompt with no seed. Failure throws with the definition key. T002 passes.
+- [X] T005 In `src/backend/MathKX.Api`:
   - **Pools at startup**: add `QuestionPools` (a singleton holding every catalog definition's pool, built in its constructor) and register it in `Program.cs`. Resolve it once before `app.Run()`, so a pool that cannot be covered fails the start.
   - **Endpoint**: add `Endpoints/DefinitionsEndpoints.cs` with `GET /api/definitions/{definitionId}/{version:int}/pool`, returning `PoolDto` (new in `Dto/Dtos.cs`: `Definition`, `Version`, `Questions: { Seed, A, B }[]`, with the seed as a decimal string or null). An unknown definition gives `Problems.NotFound("unknown-definition", …)`. Map it in `Program.cs`.
 
   T003 passes.
-- [ ] T006 [P] In `src/web/src/api/types.ts`, add `PoolDto` and `getPool(definitionId, version): Promise<PoolDto>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts`.
-- [ ] T007 [P] Record fields:
+- [X] T006 [P] In `src/web/src/api/types.ts`, add `PoolDto` and `getPool(definitionId, version): Promise<PoolDto>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts`.
+- [X] T007 [P] Record fields:
   - **`src/web/src/state/observations.ts`**: add optional `repeatOf?: string` and `repeatReason?: "requested" | "exhausted"` to `Delivery`.
   - **`src/web/src/state/store.tsx`**: add `session: { current: string[]; last: { finishedAt: string; questions: { id: string; outcome: Outcome; repeat: "requested" | "chance" | null }[] } | null }` to `PersistedState` and `initialPersisted`. Default a missing `session` on hydrate (the reducer initializer and the `hydrate` case) to `{ current: <every delivery ID>, last: null }`. Reset it in `clear`. Append a delivery's ID to `session.current` whenever it becomes current (the `question` action, for new, resumed, and repeated questions).
 
   Leave `SCHEMA_VERSION` unchanged. Extend `src/web/tests/lesson-views.test.tsx`'s old-record test to check `session` defaults and the deliveries stay intact.
-- [ ] T008 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/definitions/numbers.addition.within-10/1/pool` from the published service lists 45 questions and contains no `"sum"`.
+- [X] T008 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/definitions/numbers.addition.within-10/1/pool` from the published service lists 45 questions and contains no `"sum"`.
 
 **Checkpoint**: `dotnet test` and `npm test` pass; nothing visible changes.
 

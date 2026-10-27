@@ -17,6 +17,9 @@ public interface IGenerator
 
     /// <summary>How many distinct instances the definition's bounds admit.</summary>
     int PoolSize(ExerciseDefinition definition);
+
+    /// <summary>Every instance the definition's bounds admit, in the generator's canonical order (specs/005 pools).</summary>
+    IReadOnlyList<(int A, int B)> Enumerate(ExerciseDefinition definition);
 }
 
 /// <summary>Generators by <c>name@version</c>. A new version is a new registration; definitions pin the one they use.</summary>

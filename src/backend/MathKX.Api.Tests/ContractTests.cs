@@ -41,6 +41,7 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
     [InlineData("/api/lessons/number-bonds-to-ten")]
     [InlineData("/api/skills/numbers.addition-within-20")]
     [InlineData("/api/skills")]
+    [InlineData("/api/definitions/numbers.addition.within-10/1/pool")]
     public async Task Unsolicited_responses_never_contain_sum_or_validation(string path)
     {
         using var client = _factory.CreateClient();
@@ -197,6 +198,48 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         var missing = await client.GetAsync("/api/skills/numbers.unknown");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         Assert.Equal("unknown-skill", await Code(missing));
+    }
+
+    [Theory]
+    [InlineData("numbers.addition.within-10", 45)]
+    [InlineData("numbers.addition.crossing-ten", 36)]
+    public async Task A_pool_lists_every_question_in_canonical_order_and_each_seed_resolves_to_it(string definition, int size)
+    {
+        using var client = _factory.CreateClient();
+        var body = await client.GetStringAsync($"/api/definitions/{definition}/1/pool");
+        using var pool = JsonDocument.Parse(body);
+        Assert.Equal(definition, pool.RootElement.GetProperty("definition").GetString());
+        Assert.Equal(1, pool.RootElement.GetProperty("version").GetInt32());
+        var questions = pool.RootElement.GetProperty("questions").EnumerateArray().ToList();
+        Assert.Equal(size, questions.Count);
+
+        var order = questions.Select(q => (q.GetProperty("a").GetInt32(), q.GetProperty("b").GetInt32())).ToList();
+        Assert.Equal(order.OrderBy(p => p.Item1).ThenBy(p => p.Item2), order);
+        foreach (var question in questions)
+        {
+            var seed = question.GetProperty("seed").GetString();
+            using var instance = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{definition}/1/{seed}"));
+            Assert.Equal(question.GetProperty("a").GetInt32(), instance.RootElement.GetProperty("a").GetInt32());
+            Assert.Equal(question.GetProperty("b").GetInt32(), instance.RootElement.GetProperty("b").GetInt32());
+        }
+
+        Assert.Equal(body, await client.GetStringAsync($"/api/definitions/{definition}/1/pool"));
+    }
+
+    [Fact]
+    public async Task A_fixed_task_pool_is_its_one_question_without_a_seed_and_an_unknown_definition_is_not_found()
+    {
+        using var client = _factory.CreateClient();
+        using var pool = JsonDocument.Parse(await client.GetStringAsync("/api/definitions/numbers.addition.four-plus-four/1/pool"));
+        var question = Assert.Single(pool.RootElement.GetProperty("questions").EnumerateArray());
+        Assert.Equal(JsonValueKind.Null, question.GetProperty("seed").ValueKind);
+        Assert.Equal(4, question.GetProperty("a").GetInt32());
+
+        var missing = await client.GetAsync("/api/definitions/numbers.unknown/1/pool");
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal("unknown-definition", await Code(missing));
+        var version = await client.GetAsync("/api/definitions/numbers.addition.within-10/9/pool");
+        Assert.Equal(HttpStatusCode.NotFound, version.StatusCode);
     }
 
     private static async Task<JsonDocument> Validate(HttpClient client, string definitionId, int version, string? seed, string text, string? submissionId = null)

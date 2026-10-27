@@ -1,0 +1,107 @@
+{
+  "$comment": "specs/005 contracts/pool.md: the first ten entries of each pilot pool (canonical order, smallest seed per question), checked against addition-pair-v1.golden.json (seed 1 -> 1 + 6 within ten; seeds 0 and 1 -> 5 + 7 and 4 + 9 across ten). Highest seeds: 235 within ten, 208 across ten.",
+  "numbers.addition.within-10@1": [
+    {
+      "seed": "54",
+      "a": 1,
+      "b": 1
+    },
+    {
+      "seed": "10",
+      "a": 1,
+      "b": 2
+    },
+    {
+      "seed": "48",
+      "a": 1,
+      "b": 3
+    },
+    {
+      "seed": "11",
+      "a": 1,
+      "b": 4
+    },
+    {
+      "seed": "27",
+      "a": 1,
+      "b": 5
+    },
+    {
+      "seed": "1",
+      "a": 1,
+      "b": 6
+    },
+    {
+      "seed": "69",
+      "a": 1,
+      "b": 7
+    },
+    {
+      "seed": "106",
+      "a": 1,
+      "b": 8
+    },
+    {
+      "seed": "5",
+      "a": 1,
+      "b": 9
+    },
+    {
+      "seed": "17",
+      "a": 2,
+      "b": 1
+    }
+  ],
+  "numbers.addition.crossing-ten@1": [
+    {
+      "seed": "19",
+      "a": 2,
+      "b": 9
+    },
+    {
+      "seed": "32",
+      "a": 3,
+      "b": 8
+    },
+    {
+      "seed": "30",
+      "a": 3,
+      "b": 9
+    },
+    {
+      "seed": "7",
+      "a": 4,
+      "b": 7
+    },
+    {
+      "seed": "9",
+      "a": 4,
+      "b": 8
+    },
+    {
+      "seed": "1",
+      "a": 4,
+      "b": 9
+    },
+    {
+      "seed": "31",
+      "a": 5,
+      "b": 6
+    },
+    {
+      "seed": "0",
+      "a": 5,
+      "b": 7
+    },
+    {
+      "seed": "29",
+      "a": 5,
+      "b": 8
+    },
+    {
+      "seed": "3",
+      "a": 5,
+      "b": 9
+    }
+  ]
+}
