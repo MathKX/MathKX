@@ -13,9 +13,9 @@ It does not apply to resuming an unfinished question (spec 002), to "Repeat this
 
 ## The window (`selection.ts`, pure)
 
-`recentPairs(record, definitionId, version)`:
-- **Which deliveries**: the last eight of that definition and version, ordered by `startedAt` and then record order.
-- **What it returns**: their unordered pairs `{min(a, b), max(a, b)}`. Every shown delivery counts, whatever its outcome or repeat reason.
+`recentWindow(record, definitionId, version)`:
+- **Which deliveries**: the last eight of that definition and version, ordered by `startedAt` and then record order. Every shown delivery counts, whatever its outcome or repeat reason.
+- **What it returns**: those deliveries, oldest first. The store compares their unordered pairs (`pairKey(a, b)`, so `3 + 7` equals `7 + 3`), and the exhausted case takes `repeatOf` from the most recent delivery with the same pair.
 
 ## Choosing
 
@@ -34,9 +34,9 @@ The fixed task's first draw has no seed, so its index is 0; its pool has one que
 1. **First draw**: request the instance with a new seed, as today. If the request was superseded or fails, stop as today.
 2. **Window**: compute it from the record.
 3. **Fresh**: dispatch the question as today.
-4. **Pool**: otherwise, get the pool, cached per definition and version for the visit. If that request fails, dispatch the first draw as today and stop.
+4. **Pool**: otherwise, get the pool, cached per definition and version for the visit (a failed request is not cached). If that request fails, dispatch the first draw as today and stop.
 5. **Chosen**: request the instance by the chosen seed and dispatch that question. The first draw is never dispatched, shown, or recorded. If this request fails, show spec 002's load error, as for any failed question.
-6. **Exhausted**: dispatch the first draw with `repeatReason: "exhausted"` and `repeatOf` set to the most recent delivery in the window with the same pair. Show the notice `practice.poolExhausted`, announced politely.
+6. **Exhausted**: dispatch the first draw with `repeatReason: "exhausted"` and `repeatOf` set to the most recent delivery in the window with the same pair. Show the notice `practice.poolExhausted`, announced politely. The next question that is not exhausted clears that notice, which is true only of the question it came with.
 
 **At most two instance requests and one pool request per question.**
 

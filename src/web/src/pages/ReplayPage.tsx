@@ -10,7 +10,7 @@ import { PageHeading } from "../components/PageHeading";
 import { formatDate, translate, translateCode } from "../i18n";
 import { Link } from "../router";
 import { derive } from "../state/outcomes";
-import { inProgress, repeats, revealsWithoutCorrect } from "../state/progress";
+import { inProgress, repeatKind, repeats, revealsWithoutCorrect } from "../state/progress";
 import { useStore } from "../state/store";
 
 type Shown = "loading" | "matched" | "unavailable";
@@ -56,7 +56,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
   const resumableId = state.resumable?.deliveryId ?? state.currentDeliveryId;
   const derived = derive(delivery, { resumable: delivery.id === resumableId });
   const tags = [...derived.tags, ...revealsWithoutCorrect(delivery)];
-  const repeated = repeats(state.deliveries).has(delivery.id);
+  const repeated = repeatKind(delivery, repeats(state.deliveries)) !== null;
   const answers = delivery.events.flatMap((e) => (e.type === "submission" || e.type === "input-guidance" ? [e] : []));
 
   return (

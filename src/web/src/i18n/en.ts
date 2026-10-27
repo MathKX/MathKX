@@ -64,6 +64,7 @@ export const en = {
     toLesson: "To the lesson",
     unreachable: "The answer could not be checked just now. Your answer is kept; try again.",
     resumed: "You continue where you left off.",
+    poolExhausted: "This variation has no other questions right now, so this one repeats.",
     loadError: "The question could not be loaded. Try again.",
   },
   record: {

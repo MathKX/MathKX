@@ -2,7 +2,7 @@
 // answer, and order, checked against spec 002's derive and summarize applied to the same deliveries.
 import { describe, expect, it } from "vitest";
 import { derive, summarize } from "../src/state/outcomes";
-import { groupBySkill, lessonHistory, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
+import { groupBySkill, lessonHistory, repeatKind, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
 import {
   BONDS_DEFINITION, CROSSING, SKILLS, WITHIN_TEN, at, correct, delivery, ended, everyOutcome, guidanceOnly, incorrect, support,
   twoSkills, unknownDefinition, withRepeats,
@@ -175,5 +175,21 @@ describe("lesson history (User Story 2)", () => {
     const groups = groupBySkill([], SKILLS, null, [view(1), view(7, "other-lesson")], LESSONS);
     const addition = groups.find((g) => g.skillId === "numbers.addition-within-20")!;
     expect(addition.lessons.map((l) => l.lessonId)).toEqual(["other-lesson", "number-bonds-to-ten"]);
+  });
+});
+
+describe("repeat kinds (specs/005)", () => {
+  it("counts a question repeated because the pool was exhausted as a chance repeat, in either order", () => {
+    const record = [
+      delivery({ id: "first", startedAt: at(1), a: 3, b: 7, events: [correct(10)] }),
+      delivery({ id: "exhausted", startedAt: at(2), a: 7, b: 3, repeatOf: "first", repeatReason: "exhausted", events: [correct(10)] }),
+      delivery({ id: "new", startedAt: at(3), a: 2, b: 5, events: [correct(7)] }),
+    ];
+    const ordered = repeats(record);
+    expect(repeatKind(record[1]!, ordered)).toBe("chance");
+    expect(repeatKind(record[2]!, ordered)).toBeNull();
+    const [group] = groupBySkill(record, SKILLS, null);
+    expect(group!.repeatCount).toBe(1);
+    expect(group!.questions.find((q) => q.delivery.id === "exhausted")!.repeat).toBe(true);
   });
 });
