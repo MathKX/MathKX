@@ -186,8 +186,10 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 - [ ] T026 [P] [US3] Add check 3 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 4):
   - answer three questions, take a lesson detour, and type a draft on a fourth;
   - "Finish practice" shows "4 questions" with "1 unfinished";
-  - "Practise again" shows the draft;
-  - finishing again at once shows the empty sentence.
+  - "Practise again" shows the draft; answering it correctly and finishing again gives a summary of 1 question, correct (the resumed question belongs to the new session);
+  - "Practise again" once more delivers a new question, not the finished one.
+
+  The empty summary is not part of this check: `session.empty` needs a session whose question never loaded, which T025 covers with a load failure.
 
 ### Implementation for User Story 3
 
