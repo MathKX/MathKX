@@ -58,7 +58,9 @@ The pilot pools do not run out within eight questions, so this scenario uses the
 
 1. Answer three questions, take a lesson detour, and type a draft on a fourth.
 2. Choose "Finish practice": "Your practice session" counts 4 questions, one unfinished, with no percentage or score.
-3. "Practise again" brings back the fourth question with its draft. Answer it correctly and finish again: the new summary counts it in a session of its own, as "1 question: 1 correct with help", because the lesson detour counts as help. (If the fourth question's sum is 10, the lesson asks first; cancel there so the answer stays unshown.)
+3. "Practise again" brings back the fourth question with its draft. Answer it correctly and finish again: the new summary counts it in a session of its own. What it says depends on the detour:
+   - **The lesson was shown**: "1 question: 1 correct with help", because seeing the lesson counts as help.
+   - **The lesson shows the question's answer** (for example `5 + 5`, a bond to ten): it asks first. Cancel there so the answer stays unshown. No lesson is shown and no help is recorded, so the summary says "1 question: 1 correct on first response, no help".
 4. Choose "Practise again" once more: since the last session ended on an answered question, a new question appears, not the finished one.
 
 ## CI
