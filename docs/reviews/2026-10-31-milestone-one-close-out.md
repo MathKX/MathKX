@@ -89,7 +89,8 @@ The brief's §8 lists what milestone two holds: self-checks (F8), the one-step e
 The milestone did not aim to meet these, and they stay open for release:
 - persistent profiles and recovery (ADR 0006; F9);
 - iPad checked on actual devices;
-- contribution through review: `CONTRIBUTING.md` documents the path, but the first contributor check has not been run;
-- the privacy notice, which is among the proposed additions.
+- contribution through review: `CONTRIBUTING.md` documents the path, but the first contributor check has not been run.
+
+The brief's §9.2 additions are not gates, and the privacy notice is one of them. DL-007 deferred all of them to the profile design proposal, which evaluates each one as an input, not a requirement.
 
 Bilingual coverage of the interface, the lesson, exercises, help, and feedback holds for the pilot content, with dictionary parity enforced in CI. So do deterministic replay (ADR 0004), honest progress language with no mastery claims, and Designsystemet with Tailwind (ADR 0007).
