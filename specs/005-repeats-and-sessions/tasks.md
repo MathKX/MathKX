@@ -220,18 +220,20 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 4
 
-- [ ] T031 [P] [US4] Extend `src/web/tests/progress-wording.test.tsx`:
+- [X] T031 [P] [US4] Extend `src/web/tests/progress-wording.test.tsx`:
   - render `/session` after finishing a scripted session, in both languages, and scan it like "My work";
   - scan the `session` dictionary section and the new `practice` keys (`poolExhausted`, `repeat`, `finish`);
   - render "My work" and replay over records with repeats on request.
-- [ ] T032 [P] [US4] Add check 4 to `src/web/e2e/repeats.spec.ts` (keyboard and targets):
+- [X] T032 [P] [US4] Add check 4 to `src/web/e2e/repeats.spec.ts` (keyboard and targets):
   - **Keyboard**: using spec 004's `recordUnfocused` and `focusShows` (move them to a shared `src/web/e2e/focus.ts` and import them in both files), reach "Repeat this question" and "Finish practice" by Tab with visible focus; activate them with Enter; focus lands on the question and on the summary's `h1`.
   - **Notice**: `poolExhausted` is in the `role="status"` region (`data-testid="notice"`).
   - **Targets**: on the iPad project, "Repeat this question", "Finish practice", "Practise again", and replay's "Repeat this question" are at least 44 by 44.
 
 ### Implementation for User Story 4
 
-- [ ] T033 [US4] Fix what T031 and T032 find in `src/web/src/components/ExerciseShell.tsx`, `src/web/src/pages/SessionPage.tsx`, `src/web/src/pages/ReplayPage.tsx`, and `src/web/src/styles/index.css`. Record what was found, or that nothing was, in this task.
+- [X] T033 [US4] Fix what T031 and T032 find in `src/web/src/components/ExerciseShell.tsx`, `src/web/src/pages/SessionPage.tsx`, `src/web/src/pages/ReplayPage.tsx`, and `src/web/src/styles/index.css`. Record what was found, or that nothing was, in this task.
+  - **Found**: no code moved focus to a new question; the spec's "as it does for any new question" assumed it did. "Another question" kept focus only because its button stays. "Repeat this question" goes away with its question, so focus fell to the page; from a replay and from "Practise again", the question arrived by navigation with focus on the page. **Fixed** in `ExerciseShell.tsx` and `components/math/MathExpr.tsx`: the prompt is focusable from code (`tabIndex={-1}`), and a new question takes focus whenever focus is on the page, except on a page loaded directly. Covered by check 4 and a `repeat.test.tsx` focus test, both failing without the fix.
+  - **Nothing else found**: the wording scans of T031 pass in both languages; the exhausted notice is in the `role="status"` region and leaves focus on "Another question"; "Finish practice" focuses the summary's `h1`; every new control shows focus and is at least 44 by 44 on the iPad project. No CSS change was needed.
 
 **Checkpoint**: All four stories work; quickstart scenarios 1–4 can be run.
 

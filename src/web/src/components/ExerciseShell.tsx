@@ -5,7 +5,7 @@ import { Button, Textfield } from "@digdir/designsystemet-react";
 import { translate } from "../i18n";
 import { hasSubmission } from "../state/observations";
 import { useStore } from "../state/store";
-import { Link } from "../router";
+import { Link, hasNavigatedInApp } from "../router";
 import { AdditionPrompt } from "./math/MathExpr";
 import { Feedback } from "./Feedback";
 import { StepPanel } from "./StepPanel";
@@ -39,6 +39,21 @@ export function ExerciseShell() {
   const resultRef = useRef<HTMLDivElement>(null);
   const lastResult = useRef<unknown>(null);
 
+  // A new question takes focus when focus would otherwise fall to the page: "Repeat this question" goes away once its
+  // question is replaced, and a replay's repeat or "Practise again" arrive by navigation (specs/005 FR-016). A control
+  // that stays, such as "Another question", keeps it; a page loaded directly keeps the browser's own start.
+  const promptRef = useRef<HTMLParagraphElement>(null);
+  const firstQuestion = useRef(true);
+  const deliveryId = state.currentDeliveryId;
+  useEffect(() => {
+    if (!deliveryId) return;
+    const first = firstQuestion.current;
+    firstQuestion.current = false;
+    if (first && !hasNavigatedInApp()) return;
+    const active = document.activeElement;
+    if (!active || active === document.body) promptRef.current?.focus();
+  }, [deliveryId]);
+
   useEffect(() => {
     if (state.result && state.result !== lastResult.current) {
       lastResult.current = state.result;
@@ -58,7 +73,7 @@ export function ExerciseShell() {
 
   return (
     <div className="mkx-exercise" data-testid="exercise-shell">
-      <AdditionPrompt a={instance.a} b={instance.b} lang={lang} />
+      <AdditionPrompt ref={promptRef} a={instance.a} b={instance.b} lang={lang} />
 
       <form onSubmit={onSubmit} className="mkx-answer-form" noValidate>
         <Textfield
