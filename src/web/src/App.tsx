@@ -11,6 +11,7 @@ import { LessonPage } from "./pages/LessonPage";
 import { PracticePage } from "./pages/PracticePage";
 import { RecordPage } from "./pages/RecordPage";
 import { ReplayPage } from "./pages/ReplayPage";
+import { SessionPage } from "./pages/SessionPage";
 
 function Shell({ api }: { api?: PracticeApi }) {
   const { state } = useStore();
@@ -39,6 +40,7 @@ function Shell({ api }: { api?: PracticeApi }) {
         {route.name === "practice" ? <PracticePage skillId={route.skillId} /> : null}
         {route.name === "record" ? <RecordPage {...(api ? { api } : {})} /> : null}
         {route.name === "replay" ? <ReplayPage key={route.deliveryId} deliveryId={route.deliveryId} {...(api ? { api } : {})} /> : null}
+        {route.name === "session" ? <SessionPage {...(api ? { api } : {})} /> : null}
         {route.name === "unknown" ? <LessonListPage {...(api ? { api } : {})} /> : null}
       </main>
     </>

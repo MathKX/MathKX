@@ -172,7 +172,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 3
 
-- [ ] T025 [P] [US3] Add `src/web/tests/session.test.tsx` for `contracts/session.md` tests 1–11, with the fake API:
+- [X] T025 [P] [US3] Add `src/web/tests/session.test.tsx` for `contracts/session.md` tests 1–11, with the fake API:
   - the summary counts;
   - "Practise again" resumes an unfinished question, and loads a new one after a finish on an answered question;
   - a question resumed across sessions: its second summary has the new outcome, and the first summary, read before the second finish, still has the old one;
@@ -183,7 +183,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - the summary survives a reload, and "Clear my work" gives `session.none`;
   - `session.empty` after a load failure;
   - both languages.
-- [ ] T026 [P] [US3] Add check 3 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 4):
+- [X] T026 [P] [US3] Add check 3 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 4):
   - answer three questions, take a lesson detour, and type a draft on a fourth;
   - "Finish practice" shows "4 questions" with "1 unfinished";
   - "Practise again" shows the draft; answering it correctly and finishing again gives a summary of 1 question, correct (the resumed question belongs to the new session);
@@ -193,20 +193,20 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Add `finishPractice()` to `StoreApi` in `src/web/src/state/store.tsx` with one action `{ type: "finish"; at: string }` per `contracts/session.md`:
+- [X] T027 [US3] Add `finishPractice()` to `StoreApi` in `src/web/src/state/store.tsx` with one action `{ type: "finish"; at: string }` per `contracts/session.md`:
   - **Close**: apply `end`, so an unanswered question stays resumable.
   - **Snapshot**: record each `session.current` delivery's `derive` outcome and its `repeatKind` against the whole record, leaving out "none", as `session.last`.
   - **Release**: clear `instance`, `currentDeliveryId`, and the draft and panel state (kept in `resumable`).
   - **Next session**: empty `session.current`.
-- [ ] T028 [US3] Create `src/web/src/pages/SessionPage.tsx` per `contracts/session.md`:
+- [X] T028 [US3] Create `src/web/src/pages/SessionPage.tsx` per `contracts/session.md`:
   - `PageHeading` with `session.title`;
   - the snapshot in `session.last` grouped by skill through `skillOfDefinition` (no lesson history, no question list), with each skill's name from `getSkills`, its count sentence over the snapshot's outcomes, and the repeat sentences from its repeat kinds;
   - `session.empty` or `session.none` when there is nothing to count;
   - "Practise again" as a `Link` to `/practice/{skillId}`, and a link to `/record`.
 
   Add the route `{ name: "session" }` for `/session` to `src/web/src/router.tsx`, and render the page in `src/web/src/App.tsx` with `api`.
-- [ ] T029 [P] [US3] In `src/web/src/components/ExerciseShell.tsx`, add "Finish practice" (`data-testid="finish-practice"`, `mkx-target`), which calls `store.finishPractice()` and navigates to `/session`.
-- [ ] T030 [P] [US3] Add `practice.finish`, `session.title`, `session.empty`, `session.none`, and `session.again` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/session.md`. T025 and T026 pass.
+- [X] T029 [P] [US3] In `src/web/src/components/ExerciseShell.tsx`, add "Finish practice" (`data-testid="finish-practice"`, `mkx-target`), which calls `store.finishPractice()` and navigates to `/session`. Done in `src/web/src/pages/PracticePage.tsx` instead, below the shell: the shell is not shown when no question loaded, and the contract offers the button at any time (test 10 finishes after a load failure).
+- [X] T030 [P] [US3] Add `practice.finish`, `session.title`, `session.empty`, `session.none`, and `session.again` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/session.md`. T025 and T026 pass.
 
 **Checkpoint**: quickstart scenario 4 passes; this phase may merge on its own.
 

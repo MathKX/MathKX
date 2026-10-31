@@ -95,3 +95,49 @@ test.describe("Repeat this question", () => {
     await expect(page.getByTestId("answer")).toHaveValue("");
   });
 });
+
+test.describe("Finish practice", () => {
+  test("3. a session's summary counts its questions, and Practise again resumes the unfinished one", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-numbers.addition.within-10").click();
+
+    for (let i = 0; i < 3; i++) {
+      await expect(page.getByTestId("prompt")).toBeVisible();
+      const { a, b } = await operands(page);
+      await answer(page, a + b);
+      if (i < 2) await page.getByTestId("another").click();
+    }
+    // A lesson detour does not end the session; the lesson may first ask whether to show its answer.
+    await page.getByTestId("to-lesson").click();
+    await expect(page.getByTestId("lesson-content").or(page.getByTestId("lesson-gate"))).toBeVisible();
+    if (await page.getByTestId("lesson-gate").isVisible()) await page.getByTestId("gate-open").click();
+    await expect(page.getByTestId("lesson-content")).toBeVisible();
+    await page.getByTestId("return-to-question").click();
+    await page.getByTestId("another").click();
+    await expect(page.getByTestId("result")).toHaveCount(0);
+    const fourth = await operands(page);
+    await page.getByTestId("answer").fill("7");
+
+    await page.getByTestId("finish-practice").click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your practice session");
+    await expect(page.getByTestId("session-summary")).toHaveText(/^4 questions: .*, 1 unfinished$/);
+
+    // The unfinished question comes back with its draft and belongs to the next session.
+    await page.getByTestId("session-again").click();
+    await expect(page.getByTestId("answer")).toHaveValue("7");
+    await answer(page, fourth.a + fourth.b);
+    const finished = await page.getByTestId("prompt").getAttribute("aria-label");
+    await page.getByTestId("finish-practice").click();
+    await expect(page.getByTestId("session-summary")).toHaveText(/^1 question: 1 correct/);
+
+    // After a finish on an answered question, practice goes on with a new one.
+    await page.getByTestId("session-again").click();
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    await expect(page.getByTestId("prompt")).not.toHaveAttribute("aria-label", finished ?? "");
+    await expect(page.getByTestId("answer")).toHaveValue("");
+    await expect(page.getByTestId("result")).toHaveCount(0);
+  });
+});

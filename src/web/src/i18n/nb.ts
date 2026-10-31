@@ -68,6 +68,7 @@ export const nb = {
     resumed: "Du fortsetter der du slapp.",
     poolExhausted: "Denne varianten har ingen andre oppgaver akkurat nå, så denne kommer igjen.",
     loadError: "Oppgaven kunne ikke hentes. Prøv igjen.",
+    finish: "Avslutt øvingen",
   },
   record: {
     title: "Mitt arbeid",
@@ -105,6 +106,12 @@ export const nb = {
     viewNote: "At en leksjon er vist, betyr at du åpnet den, ikke at du har forstått den.",
     noPractice: "Ingen oppgaver øvd ennå.",
     historyUnavailable: "Leksjonshistorikken din kunne ikke vises akkurat nå.",
+  },
+  session: {
+    title: "Øvingsøkten din",
+    empty: "Du svarte ikke på noen oppgaver i denne økten.",
+    none: "Du har ingen avsluttet øvingsøkt ennå.",
+    again: "Øv igjen",
   },
   ladder: {
     current: "Nå: {description}",

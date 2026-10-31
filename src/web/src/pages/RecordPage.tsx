@@ -6,26 +6,11 @@ import { Button, Details, Heading, Paragraph } from "@digdir/designsystemet-reac
 import { practiceApi } from "../api/client";
 import type { LessonSummary, PracticeApi, SkillDto } from "../api/types";
 import { PageHeading } from "../components/PageHeading";
-import { formatDate, translate, translateCode, type Lang } from "../i18n";
+import { formatDate, translate, translateCode } from "../i18n";
 import { Link } from "../router";
-import type { Outcome, Summary } from "../state/outcomes";
 import { groupBySkill, inProgress, skillOrder } from "../state/progress";
 import { useStore } from "../state/store";
-
-/** Outcomes in the order the count sentence lists them, from the most independent to unfinished. */
-const OUTCOME_ORDER: Exclude<Outcome, "none">[] = [
-  "correctFirst", "correctAfterFeedback", "correctWithVisualHelp", "correctWithHelp", "correctAfterExplanation",
-  "partiallyCorrect", "notAssessed", "notYetCorrect", "skipped", "unfinished",
-];
-
-/** Spec 002's count sentence, "{questions} questions: 3 correct on first response, no help, …". */
-function summarySentence(lang: Lang, summary: Summary): string {
-  const details = OUTCOME_ORDER.filter((outcome) => summary.counts[outcome])
-    .map((outcome) => `${summary.counts[outcome]} ${translateCode(lang, "outcome", outcome).toLocaleLowerCase(lang)}`)
-    .join(", ");
-  return translate(lang, summary.questions === 1 ? "record.summaryOne" : "record.summary", { questions: summary.questions, details });
-}
-
+import { summarySentence } from "./summarySentence";
 
 export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
   const store = useStore();
