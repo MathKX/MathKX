@@ -139,6 +139,9 @@ const updateCurrent = (state: State, fn: (d: Delivery) => Delivery): State => up
 
 const isCurrent = (state: State, deliveryId: string) => state.currentDeliveryId === deliveryId;
 
+/** Notices about the question they came with; the next question clears them. */
+const questionNotices = new Set(["practice.poolExhausted", "practice.resumed"]);
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
@@ -425,7 +428,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         }
         dispatch({ type: "question", instance, delivery: toDelivery(instance, origin, repeat), ...questionCommit });
         if (repeat?.repeatReason === "exhausted") dispatch({ type: "notice", notice: { key: "practice.poolExhausted" } });
-        else if (latest.current.notice?.key === "practice.poolExhausted") dispatch({ type: "notice", notice: null }); // true only of the question it came with
+        else if (questionNotices.has(latest.current.notice?.key ?? "")) dispatch({ type: "notice", notice: null }); // true only of the question it came with
         return instance;
       } catch {
         if (!stale()) dispatch({ type: "loadError", failed: true });

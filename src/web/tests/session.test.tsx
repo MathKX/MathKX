@@ -104,6 +104,17 @@ describe("Practise again (tests 2 and 3)", () => {
     expect(stored().session.current).toEqual([unfinished]); // the resumed question belongs to the new session
   });
 
+  it("says the question continues only while it is on screen (test 13)", async () => {
+    const { user } = await practise();
+    await user.type(screen.getByTestId("answer"), "7");
+    await finish(user);
+    await practiseAgain(user);
+    expect(screen.getByTestId("notice").textContent).toBe("You continue where you left off.");
+
+    await another(user);
+    expect(screen.queryByTestId("notice")).toBeNull();
+  });
+
   it("delivers a new question after a finish on an answered one", async () => {
     const { user } = await practise();
     await answerCorrectly(user);
