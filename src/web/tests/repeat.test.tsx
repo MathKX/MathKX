@@ -182,6 +182,59 @@ describe("from a replay (test 4)", () => {
   });
 });
 
+describe("a repeat still on its way (test 7)", () => {
+  const old = delivery({ id: "old", definitionId: CROSSING, a: 8, b: 5, seed: "77", startedAt: at(1), events: [correct(13)] });
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+  async function leaveReplayWhileRepeating() {
+    window.localStorage.setItem(KEY, JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), language: "en", skillId: null, deliveries: [old], lessonViews: [] } }));
+    const api = createFakeApi({ pairs: { [CROSSING]: [8, 5] } });
+    render(<App api={api} initialPath="/record/old" />);
+    const user = userEvent.setup();
+    const button = await screen.findByTestId("replay-repeat");
+    await screen.findByTestId("prompt");
+    api.hold("getInstance");
+    await user.click(button);
+    await user.click(screen.getByTestId("replay-back"));
+    await screen.findByRole("heading", { level: 1, name: "My work" });
+    return { api, user };
+  }
+
+  it("is abandoned when the learner leaves the replay: nothing recorded, no move to practice", async () => {
+    const { api } = await leaveReplayWhileRepeating();
+    api.release("getInstance");
+    await settle();
+    expect(window.location.pathname).toBe("/record");
+    expect(deliveries()).toEqual([old]);
+    expect(screen.queryByText("The question could not be loaded. Try again.")).toBeNull();
+  });
+
+  it("does not come back into a record cleared after leaving the replay", async () => {
+    const { api, user } = await leaveReplayWhileRepeating();
+    await user.click(screen.getByTestId("clear"));
+    await user.click(screen.getByTestId("confirm-clear"));
+    api.release("getInstance");
+    await settle();
+    expect(window.location.pathname).toBe("/record");
+    expect(deliveries()).toEqual([]);
+  });
+
+  it("does not come back into a record cleared while a practice-screen repeat was loading", async () => {
+    const { api, user } = await practise();
+    const [first] = deliveries();
+    await answer(user, sumOf(first!));
+    api.hold("getInstance");
+    await user.click(screen.getByTestId("repeat-question"));
+    await user.click(screen.getByRole("link", { name: "Mitt arbeid" }));
+    await user.click(await screen.findByTestId("clear"));
+    await user.click(screen.getByTestId("confirm-clear"));
+    api.release("getInstance");
+    await settle();
+    expect(deliveries()).toEqual([]);
+    expect(stored().currentDeliveryId).toBeNull();
+  });
+});
+
 describe("spec 003's notice (test 5)", () => {
   it("still stands between a repeated question and a lesson that shows its answer", async () => {
     const { user } = await practise(createFakeApi({ pool: true, discloses: () => true }));

@@ -22,6 +22,7 @@ The control is a button `practice.repeat` ("Repeat this question" / "Gjenta denn
    - a fresh answer field, with help and explanation closed.
 4. **The previous question**: closed as any new question closes it: `skipped` when nothing was submitted, `ended` otherwise (spec 002).
 5. **On failure**: spec 002's load error. Nothing is recorded, and the question in progress is unchanged.
+   - **Abandoned**: a repeat still on its way when the learner leaves the replay is abandoned: nothing is recorded, replay does not navigate, and no error is shown. Clearing the record abandons any question still on its way, a repeat included.
 6. **Result**: the skill practised after the repeat (the resolved instance's `skill`), or null on failure; replay navigates with it.
 
 Avoidance never refuses or redirects a repeat on request.
@@ -53,5 +54,5 @@ Avoidance never refuses or redirects a repeat on request.
 4. **From a replay**: practice opens on the question's skill and variation; an unanswered question in progress becomes `skipped`; the replay recorded nothing; the in-progress question's replay offers "Continue" and no repeat.
 5. **The notice**: a repeated question whose answer the lesson shows still gets spec 003's notice on a detour.
 6. **"My work"**: tags and sentences in both languages; a repeat of a repeat.
-7. **Failure**: a failed repeat records nothing.
+7. **Failure**: a failed repeat records nothing; a repeat abandoned by leaving the replay, or by clearing the record, records nothing and does not navigate.
 8. **Replay**: every repeated delivery replays to the same question.

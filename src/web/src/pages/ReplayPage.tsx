@@ -2,7 +2,7 @@
 // with the one instance request practice makes, shows the recorded work, and records nothing. The only sum it can
 // show is one the learner answered correctly; it never computes one. "Repeat this question" hands the identity to
 // practice (specs/005 contracts/repeat.md), which records the new question; the page itself dispatches nothing.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { PracticeApi } from "../api/types";
@@ -22,6 +22,9 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
   const { navigate } = useRouter();
   const lang = state.language;
   const [repeating, setRepeating] = useState<"idle" | "busy" | "failed">("idle");
+  // A repeat still on its way when the learner leaves the replay is abandoned: nothing recorded, no navigation.
+  const pendingRepeat = useRef<AbortController | null>(null);
+  useEffect(() => () => pendingRepeat.current?.abort(), []);
   const delivery = state.deliveries.find((d) => d.id === deliveryId);
   const [shown, setShown] = useState<Shown>("loading");
   const identity = delivery?.instance;
@@ -62,8 +65,11 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
   const tags = [...derived.tags, ...revealsWithoutCorrect(delivery)];
   const repeat = repeatKind(delivery, repeats(state.deliveries));
   const onRepeat = async () => {
+    const pending = new AbortController();
+    pendingRepeat.current = pending;
     setRepeating("busy");
-    const skillId = await store.repeatQuestion(delivery.id);
+    const skillId = await store.repeatQuestion(delivery.id, pending.signal);
+    if (pending.signal.aborted) return;
     if (skillId) navigate(`/practice/${skillId}`);
     else setRepeating("failed");
   };
