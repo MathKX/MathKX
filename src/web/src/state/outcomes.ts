@@ -126,14 +126,18 @@ export interface Summary {
   counts: Partial<Record<Exclude<Outcome, "none">, number>>;
 }
 
-export function summarize(deliveries: Delivery[], resumableId: string | null): Summary {
+/** Counts outcomes; "none" is neither counted nor a question. */
+export function tally(outcomes: Outcome[]): Summary {
   const counts: Summary["counts"] = {};
   let questions = 0;
-  for (const d of deliveries) {
-    const { outcome } = derive(d, { resumable: d.id === resumableId });
+  for (const outcome of outcomes) {
     if (outcome === "none") continue;
     questions++;
     counts[outcome] = (counts[outcome] ?? 0) + 1;
   }
   return { questions, counts };
+}
+
+export function summarize(deliveries: Delivery[], resumableId: string | null): Summary {
+  return tally(deliveries.map((d) => derive(d, { resumable: d.id === resumableId }).outcome));
 }

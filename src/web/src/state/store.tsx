@@ -1,12 +1,13 @@
 // The session store: one reducer for language, the current question, draft, help and explanation state,
 // the ladder position, and the guest record. Persisted on every change through storage.ts.
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
-import type { InstanceDto, LadderEntry, PoolDto, PracticeApi, StepDto, ValidationResponse } from "../api/types";
+import type { InstanceDto, LadderEntry, PoolDto, PracticeApi, StepDto, StepKind, ValidationResponse } from "../api/types";
 import { newSeed, practiceApi } from "../api/client";
 import type { Lang } from "../i18n";
-import type { Outcome } from "./outcomes";
+import { derive, type Outcome } from "./outcomes";
 import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
+import { repeatKind, repeats, type RepeatKind } from "./progress";
 import { choose, pairKey, recentWindow } from "./selection";
 
 export interface DefinitionRef {
@@ -16,6 +17,12 @@ export interface DefinitionRef {
 
 export interface PendingChange extends DefinitionRef {
   request: "easier" | "harder";
+}
+
+/** The help and explanation steps a resumed question had reached, fetched again to show them. */
+interface RestoredSteps {
+  help: StepDto[];
+  explanation: StepDto[];
 }
 
 export interface Resumable {
@@ -60,7 +67,7 @@ export interface PersistedState {
 /** The questions worked in the current session, and a snapshot of the last finished one (specs/005). */
 export interface PracticeSession {
   current: string[];
-  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: "requested" | "chance" | null }[] } | null;
+  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: RepeatKind | null }[] } | null;
 }
 
 /** A record written before specs/005 has no session: every question in it belongs to the first one. */
@@ -101,7 +108,7 @@ type Action =
   | { type: "language"; language: Lang }
   | { type: "kept"; kept: boolean }
   | { type: "ladder"; skillId: string; entries: LadderEntry[]; current: DefinitionRef }
-  | { type: "question"; instance: InstanceDto; delivery: Delivery; resumedFrom?: Resumable; applied?: PendingChange; clearPending?: boolean }
+  | { type: "question"; instance: InstanceDto; delivery: Delivery; resumedFrom?: Resumable; restored?: RestoredSteps; applied?: PendingChange; clearPending?: boolean }
   | { type: "draft"; draft: string }
   // Asynchronous responses carry the id of the delivery they were requested for. A response that arrives after
   // the learner moved on is recorded on that delivery and never changes the screen of the current one.
@@ -119,6 +126,7 @@ type Action =
   | { type: "present" }
   | { type: "instanceLessons"; deliveryId: string; lessons: NonNullable<InstanceDto["lessons"]> }
   | { type: "end" }
+  | { type: "finish"; at: string }
   | { type: "lessonViewed"; view: LessonView }
   | { type: "clear" };
 
@@ -163,11 +171,12 @@ function reducer(state: State, action: Action): State {
         instance: action.instance,
         draft: resumed?.draft ?? "",
         helpOpen: resumed?.helpOpen ?? false,
-        helpSteps: [],
-        helpStep: -1,
+        // A resumed question shows the steps the learner had reached; they were recorded when first shown.
+        helpSteps: action.restored?.help ?? [],
+        helpStep: (action.restored?.help.length ?? 0) - 1,
         explanationOpen: resumed?.explanationOpen ?? false,
-        explanationSteps: [],
-        explanationStep: -1,
+        explanationSteps: action.restored?.explanation ?? [],
+        explanationStep: (action.restored?.explanation.length ?? 0) - 1,
         result: null,
         resumable: null,
         loadError: false,
@@ -228,6 +237,34 @@ function reducer(state: State, action: Action): State {
         : null;
       return { ...updateCurrent(state, (d) => recordEvent(d, { type: "ended" })), resumable, presenting: false };
     }
+    case "finish": {
+      // "Finish practice" (specs/005 contracts/session.md): close the question as leaving practice does (an
+      // unanswered one stays resumable), snapshot the session's questions as they are now, release the question,
+      // and start the next session. Repeats are judged against the whole record, not the session alone.
+      const ended = reducer(state, { type: "end" });
+      const resumableId = ended.resumable?.deliveryId ?? null;
+      const ordered = repeats(ended.deliveries);
+      const questions = ended.session.current.flatMap((id) => {
+        const d = ended.deliveries.find((x) => x.id === id);
+        const outcome = d ? derive(d, { resumable: id === resumableId }).outcome : "none";
+        return d && outcome !== "none" ? [{ id, outcome, repeat: repeatKind(d, ordered) }] : [];
+      });
+      return {
+        ...ended,
+        instance: null,
+        currentDeliveryId: null,
+        draft: "",
+        helpOpen: false,
+        helpSteps: [],
+        helpStep: -1,
+        explanationOpen: false,
+        explanationSteps: [],
+        explanationStep: -1,
+        result: null,
+        checking: false,
+        session: { current: [], last: { finishedAt: action.at, questions } },
+      };
+    }
     case "lessonViewed":
       return { ...state, lessonViews: [...state.lessonViews, action.view] };
     case "clear":
@@ -260,11 +297,13 @@ export interface StoreApi {
   ensureInstanceLessons(): Promise<boolean>;
   /**
    * "Repeat this question" (specs/005 contracts/repeat.md): the delivery's identity again, as a new question with a
-   * fresh state, moving practice to its skill when needed. Resolves to that skill, or null when it could not be loaded.
+   * fresh state, moving practice to its skill when needed. Resolves to that skill, or null when it could not be
+   * loaded or `signal` abandoned it.
    */
-  /** Resolves to the skill practised after the repeat, or null when it failed or `signal` abandoned it. */
   repeatQuestion(deliveryId: string, signal?: AbortSignal): Promise<string | null>;
   endSession(): void;
+  /** "Finish practice" (specs/005 contracts/session.md): ends the session and keeps its summary in `session.last`. */
+  finishPractice(): void;
   clearRecord(): void;
   dismissNotice(): void;
 }
@@ -292,6 +331,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const latest = useRef(state);
   latest.current = state;
   const loadToken = useRef(0); // only the most recent instance request may become the current question
+  const practiceRun = useRef(0); // a practice start still under way belongs to the run it began in
   const pendingHelpOpen = useRef<string | null>(null); // "Show visual help instead", for this delivery
 
   useEffect(() => {
@@ -395,20 +435,26 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     [api, toDelivery, poolFor],
   );
 
+  /** Resumes the unanswered question; "cancelled" when a later request or a finish superseded it, "failed" on an error. */
   const resume = useCallback(
-    async (resumable: Resumable) => {
+    async (resumable: Resumable): Promise<"resumed" | "cancelled" | "failed"> => {
       const delivery = latest.current.deliveries.find((d) => d.id === resumable.deliveryId);
-      if (!delivery) return false;
+      if (!delivery) return "failed";
       const token = ++loadToken.current;
       try {
         const identity = identityOf(delivery);
         const instance = await api.getInstance(identity.definitionId, identity.version, identity.seed ?? null);
-        if (token !== loadToken.current) return false;
-        dispatch({ type: "question", instance, delivery, resumedFrom: resumable });
+        if (token !== loadToken.current) return "cancelled";
+        // Steps that cannot be fetched again start over rather than keep the question from resuming.
+        const stepsUpTo = (kind: StepKind, last: number) =>
+          Promise.all(Array.from({ length: last + 1 }, (_, i) => api.getStep(instance.identity, kind, i))).catch(() => []);
+        const restored = { help: await stepsUpTo("help", resumable.helpStep), explanation: await stepsUpTo("explanation", resumable.explanationStep) };
+        if (token !== loadToken.current) return "cancelled";
+        dispatch({ type: "question", instance, delivery, resumedFrom: resumable, restored });
         dispatch({ type: "notice", notice: { key: "practice.resumed" } });
-        return true;
+        return "resumed";
       } catch {
-        return false;
+        return token !== loadToken.current ? "cancelled" : "failed";
       }
     },
     [api],
@@ -444,14 +490,17 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         await load(preferred, false, { clearPending: true, origin: originLessonId ?? null });
         return;
       }
+      const run = practiceRun.current;
       const skill = await api.getSkill(skillId);
+      if (run !== practiceRun.current) return; // finished or cleared while the skill was on its way
       const first = preferred ?? (skill.ladder[0] ? { definition: skill.ladder[0].definition, version: skill.ladder[0].version } : null);
       if (!first) return;
       dispatch({ type: "ladder", skillId, entries: skill.ladder, current: first });
       const resumable = current.resumable;
       const resumableDelivery = resumable ? current.deliveries.find((d) => d.id === resumable.deliveryId) : undefined;
       const resumeFits = resumableDelivery ? !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
-      if (resumable && resumeFits && (await resume(resumable))) return;
+      if (resumable && resumeFits && (await resume(resumable)) !== "failed") return;
+      if (run !== practiceRun.current) return;
       await load(first, false, { origin: originLessonId ?? null }); // a new practice run: its origin, or none
     },
     [api, load, resume],
@@ -587,8 +636,14 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         return instance ? instance.skill : null;
       },
       endSession: () => dispatch({ type: "end" }),
+      finishPractice() {
+        loadToken.current++; // a question still on its way belongs to the finished session
+        practiceRun.current++; // and so does a practice start still under way
+        dispatch({ type: "finish", at: new Date().toISOString() });
+      },
       clearRecord() {
         loadToken.current++; // a question still on its way belongs to the record being cleared
+        practiceRun.current++;
         store.clear();
         dispatch({ type: "clear" });
       },
