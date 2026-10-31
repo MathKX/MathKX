@@ -89,6 +89,9 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                 <Paragraph data-testid="record-no-practice">{translate(lang, "progress.noPractice")}</Paragraph>
               )}
               {group.repeatCount > 0 ? <Paragraph data-testid="record-repeats">{translate(lang, "progress.repeats", { n: group.repeatCount })}</Paragraph> : null}
+              {group.requestedCount > 0 ? (
+                <Paragraph data-testid="record-repeats-requested">{translate(lang, "progress.repeatsRequested", { n: group.requestedCount })}</Paragraph>
+              ) : null}
               {group.lessons.map((l) => (
                 <Paragraph key={l.lessonId} data-testid="lesson-viewed">
                   {translate(lang, l.views === 1 ? "progress.lessonViewedOnce" : "progress.lessonViewed", { title: titleOf(l.lessonId), n: l.views, date: formatDate(lang, l.last) })}
@@ -133,7 +136,7 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                               ))}
                               {q.repeat ? (
                                 <li className="mkx-tag" data-testid="record-tag">
-                                  {translate(lang, "progress.repeatTag")}
+                                  {translate(lang, q.repeat === "requested" ? "progress.repeatRequestedTag" : "progress.repeatTag")}
                                 </li>
                               ) : null}
                             </ul>

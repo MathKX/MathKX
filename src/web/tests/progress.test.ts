@@ -5,7 +5,7 @@ import { derive, summarize } from "../src/state/outcomes";
 import { groupBySkill, lessonHistory, repeatKind, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
 import {
   BONDS_DEFINITION, CROSSING, SKILLS, WITHIN_TEN, at, correct, delivery, ended, everyOutcome, guidanceOnly, incorrect, support,
-  twoSkills, unknownDefinition, withRepeats,
+  twoSkills, unknownDefinition, withRepeats, withRequestedRepeats,
 } from "./records";
 
 describe("skillOfDefinition", () => {
@@ -75,7 +75,7 @@ describe("repeats", () => {
     expect([...repeats(withRepeats())]).toEqual(["again"]);
     const [group] = groupBySkill(withRepeats(), SKILLS, null);
     expect(group!.repeatCount).toBe(1);
-    expect(group!.questions.map((q) => [q.delivery.id, q.repeat])).toEqual([["again", true], ["swapped", false], ["first", false]]);
+    expect(group!.questions.map((q) => [q.delivery.id, q.repeat])).toEqual([["again", "chance"], ["swapped", null], ["first", null]]);
   });
 
   it("treats a different seed with the same operands as a repeat, and a different version or definition as new", () => {
@@ -190,6 +190,24 @@ describe("repeat kinds (specs/005)", () => {
     expect(repeatKind(record[2]!, ordered)).toBeNull();
     const [group] = groupBySkill(record, SKILLS, null);
     expect(group!.repeatCount).toBe(1);
-    expect(group!.questions.find((q) => q.delivery.id === "exhausted")!.repeat).toBe(true);
+    expect(group!.questions.find((q) => q.delivery.id === "exhausted")!.repeat).toBe("chance");
+  });
+
+  it("calls a repeat on request requested before chance, and counts those repeats on their own", () => {
+    const record = withRequestedRepeats();
+    const ordered = repeats(record);
+    expect(ordered.has("asked")).toBe(true); // the same ordered numbers too, but the learner asked for it
+    expect(record.map((d) => repeatKind(d, ordered))).toEqual([null, "requested", "requested", "chance"]);
+    const [group] = groupBySkill(record, SKILLS, null);
+    expect(group!.repeatCount).toBe(3);
+    expect(group!.requestedCount).toBe(2);
+    expect(group!.questions.map((q) => [q.delivery.id, q.repeat])).toEqual([["chance", "chance"], ["askedAgain", "requested"], ["asked", "requested"], ["first", null]]);
+  });
+
+  it("gives every repeat its own outcome, from its own events only", () => {
+    const [group] = groupBySkill(withRequestedRepeats(), SKILLS, null);
+    const outcome = (id: string) => group!.questions.find((q) => q.delivery.id === id)!.derived.outcome;
+    expect(outcome("first")).toBe("correctWithVisualHelp");
+    expect(outcome("asked")).toBe("correctFirst");
   });
 });

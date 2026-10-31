@@ -118,6 +118,19 @@ export function withRepeats(): Delivery[] {
   ];
 }
 
+/**
+ * A question with help, a repeat of it on request, a repeat of that repeat, and a chance repeat in the other order
+ * (specs/005): three repeats, two of them on purpose.
+ */
+export function withRequestedRepeats(): Delivery[] {
+  return [
+    delivery({ id: "first", startedAt: at(1), a: 3, b: 7, seed: "10", events: [incorrect(9), support("visual-help-opened"), correct(10)] }),
+    delivery({ id: "asked", startedAt: at(2), a: 3, b: 7, seed: "10", repeatOf: "first", repeatReason: "requested", events: [correct(10)] }),
+    delivery({ id: "askedAgain", startedAt: at(3), a: 3, b: 7, seed: "10", repeatOf: "asked", repeatReason: "requested", events: [correct(10)] }),
+    delivery({ id: "chance", startedAt: at(4), a: 7, b: 3, seed: "11", repeatOf: "first", repeatReason: "exhausted", events: [correct(10)] }),
+  ];
+}
+
 /** A delivery whose definition the content no longer has. */
 export function unknownDefinition(): Delivery[] {
   return [delivery({ definitionId: "numbers.removed", startedAt: at(1), a: 2, b: 2, events: [correct(4)] })];

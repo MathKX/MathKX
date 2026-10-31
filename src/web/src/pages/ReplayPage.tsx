@@ -1,14 +1,15 @@
 // A read-only replay of one recorded question (specs/004 contracts/replay.md). It re-resolves the stored identity
 // with the one instance request practice makes, shows the recorded work, and records nothing. The only sum it can
-// show is one the learner answered correctly; it never computes one.
+// show is one the learner answered correctly; it never computes one. "Repeat this question" hands the identity to
+// practice (specs/005 contracts/repeat.md), which records the new question; the page itself dispatches nothing.
 import { useEffect, useState } from "react";
-import { Paragraph } from "@digdir/designsystemet-react";
+import { Button, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { PracticeApi } from "../api/types";
 import { AdditionPrompt } from "../components/math/MathExpr";
 import { PageHeading } from "../components/PageHeading";
 import { formatDate, translate, translateCode } from "../i18n";
-import { Link } from "../router";
+import { Link, useRouter } from "../router";
 import { derive } from "../state/outcomes";
 import { inProgress, repeatKind, repeats, revealsWithoutCorrect } from "../state/progress";
 import { useStore } from "../state/store";
@@ -16,8 +17,11 @@ import { useStore } from "../state/store";
 type Shown = "loading" | "matched" | "unavailable";
 
 export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: string; api?: PracticeApi }) {
-  const { state } = useStore();
+  const store = useStore();
+  const { state } = store;
+  const { navigate } = useRouter();
   const lang = state.language;
+  const [repeating, setRepeating] = useState<"idle" | "busy" | "failed">("idle");
   const delivery = state.deliveries.find((d) => d.id === deliveryId);
   const [shown, setShown] = useState<Shown>("loading");
   const identity = delivery?.instance;
@@ -56,7 +60,13 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
   const resumableId = state.resumable?.deliveryId ?? state.currentDeliveryId;
   const derived = derive(delivery, { resumable: delivery.id === resumableId });
   const tags = [...derived.tags, ...revealsWithoutCorrect(delivery)];
-  const repeated = repeatKind(delivery, repeats(state.deliveries)) !== null;
+  const repeat = repeatKind(delivery, repeats(state.deliveries));
+  const onRepeat = async () => {
+    setRepeating("busy");
+    const skillId = await store.repeatQuestion(delivery.id);
+    if (skillId) navigate(`/practice/${skillId}`);
+    else setRepeating("failed");
+  };
   const answers = delivery.events.flatMap((e) => (e.type === "submission" || e.type === "input-guidance" ? [e] : []));
 
   return (
@@ -68,16 +78,16 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
       <Paragraph>
         <strong data-testid="replay-outcome">{translateCode(lang, "outcome", derived.outcome)}</strong>
       </Paragraph>
-      {tags.length > 0 || repeated ? (
+      {tags.length > 0 || repeat ? (
         <ul className="mkx-tags">
           {tags.map((tag) => (
             <li key={tag} className="mkx-tag" data-testid="record-tag">
               {translateCode(lang, "tag", tag)}
             </li>
           ))}
-          {repeated ? (
+          {repeat ? (
             <li className="mkx-tag" data-testid="record-tag">
-              {translate(lang, "progress.repeatTag")}
+              {translate(lang, repeat === "requested" ? "progress.repeatRequestedTag" : "progress.repeatTag")}
             </li>
           ) : null}
         </ul>
@@ -107,7 +117,18 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
             {translate(lang, "progress.continue")}
           </Link>
         </Paragraph>
-      ) : null}
+      ) : (
+        <>
+          <Button type="button" variant="secondary" data-size="md" className="mkx-target" disabled={repeating === "busy"} onClick={() => void onRepeat()} data-testid="replay-repeat">
+            {translate(lang, "practice.repeat")}
+          </Button>
+          {repeating === "failed" ? (
+            <Paragraph role="alert" data-testid="replay-repeat-failed">
+              {translate(lang, "practice.loadError")}
+            </Paragraph>
+          ) : null}
+        </>
+      )}
       <Paragraph>{back}</Paragraph>
     </section>
   );

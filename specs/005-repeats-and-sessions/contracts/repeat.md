@@ -6,8 +6,8 @@ Part of [plan.md](../plan.md) Phase 1. Research R5 and R6; spec User Story 2, FR
 
 | Place | Shown when | Action |
 | --- | --- | --- |
-| Practice screen (`ExerciseShell`) | the current delivery has a submission (any status) | `store.repeatQuestion(currentDeliveryId)` |
-| Replay (`ReplayPage`) | the delivery is not the unanswered question in progress (which keeps "Continue") | `store.repeatQuestion(id)`, then navigate to `/practice/{skillId}` |
+| Practice screen (`ExerciseShell`) | the current delivery has a submission (any status; a reply that could not be read is input guidance, not a submission) | `store.repeatQuestion(currentDeliveryId)` |
+| Replay (`ReplayPage`) | the delivery is not the unanswered question in progress (which keeps "Continue") | `store.repeatQuestion(id)`, then navigate to `/practice/{skillId}`; on failure, stay on the replay and show `practice.loadError` there |
 
 The control is a button `practice.repeat` ("Repeat this question" / "Gjenta denne oppgaven"), `data-testid="repeat-question"` on the practice screen and `replay-repeat` in replay, at least 44 by 44 on touch screens.
 
@@ -22,6 +22,7 @@ The control is a button `practice.repeat` ("Repeat this question" / "Gjenta denn
    - a fresh answer field, with help and explanation closed.
 4. **The previous question**: closed as any new question closes it: `skipped` when nothing was submitted, `ended` otherwise (spec 002).
 5. **On failure**: spec 002's load error. Nothing is recorded, and the question in progress is unchanged.
+6. **Result**: the skill practised after the repeat (the resolved instance's `skill`), or null on failure; replay navigates with it.
 
 Avoidance never refuses or redirects a repeat on request.
 
