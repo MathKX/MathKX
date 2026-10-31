@@ -241,10 +241,12 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T034 Update `README.md` "Current status" and the spec 005 row of `specs/README.md` to say repeat avoidance, "Repeat this question", and "Finish practice" are implemented.
-- [ ] T035 Run the four quickstart scenarios by hand on the built app and service. Correct any quoted wording in `specs/005-repeats-and-sessions/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time in the quickstart's CI section (SC-006).
-- [ ] T036 Record the open human validation item in the pull-request description: the learner check of SC-005 (a learner repeats a question they found hard and, after one minute on "My work", says which questions they repeated on purpose). Findings are recorded, not scored.
-- [ ] T037 After Phases 1–3 deploy, check on the production URL in both languages that 20 "Another question" requests within ten do not repeat one of the previous eight. After Phase 4 deploys, check "Repeat this question" there too. Add both results to a dated walkthrough file under `docs/reviews/walkthroughs/`.
+- [X] T034 Update `README.md` "Current status" and the spec 005 row of `specs/README.md` to say repeat avoidance, "Repeat this question", and "Finish practice" are implemented.
+- [X] T035 Run the four quickstart scenarios by hand on the built app and service. Correct any quoted wording in `specs/005-repeats-and-sessions/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time in the quickstart's CI section (SC-006).
+- [X] T036 Record the open human validation item in the pull-request description: the learner check of SC-005 (a learner repeats a question they found hard and, after one minute on "My work", says which questions they repeated on purpose). Findings are recorded, not scored.
+- [X] T037 After Phases 1–3 deploy, check on the production URL in both languages that 20 "Another question" requests within ten do not repeat one of the previous eight. After Phase 4 deploys, check "Repeat this question" there too. Add both results to a dated walkthrough file under `docs/reviews/walkthroughs/`.
+  - **Done late**: both checks were made once, on 2026-10-31, with every release deployed (PR 48); see `docs/reviews/walkthroughs/2026-10-31-repeats-and-sessions-production.md`. Both pass in both languages.
+  - **Found**: spec 002's notice "You continue where you left off." stayed on screen after the learner moved on from the resumed question, until an answer was checked. **Fixed** in `src/web/src/state/store.tsx`: the next question clears it, as it clears the pool notice. Covered by `contracts/session.md` test 13 in `session.test.tsx`, which fails without the fix.
 
 ---
 

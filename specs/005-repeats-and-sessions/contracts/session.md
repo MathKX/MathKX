@@ -23,7 +23,7 @@ A button `practice.finish` ("Finish practice" / "Avslutt øvingen") on the pract
 
 The page then navigates to `/session`.
 
-**"Practise again"** goes to `/practice/{skillId}`. With no current question, `startPractice` resumes the resumable question when there is one, and otherwise loads a new question by the choosing rule ([selection.md](selection.md)). Either way, that question joins the new session. A resumed question comes back with the help and explanation steps the learner had reached (PR 46 review), fetched again and shown without being recorded again; steps that cannot be fetched start over rather than keep the question from resuming.
+**"Practise again"** goes to `/practice/{skillId}`. With no current question, `startPractice` resumes the resumable question when there is one, and otherwise loads a new question by the choosing rule ([selection.md](selection.md)). Either way, that question joins the new session. A resumed question comes back with the help and explanation steps the learner had reached (PR 46 review), fetched again and shown without being recorded again; steps that cannot be fetched start over rather than keep the question from resuming. Spec 002's notice "You continue where you left off." belongs to the resumed question: the next question clears it, as it clears the pool notice ([selection.md](selection.md)). Before the production walkthrough (T037) it stayed until an answer was checked, so it could sit above twenty skipped questions.
 
 ## `/session` (`SessionPage`)
 
@@ -60,3 +60,4 @@ The summary groups the snapshot's questions by skill with spec 004's `skillOfDef
 10. **No questions**: a session whose question never loaded shows `session.empty`.
 11. **Languages**: both.
 12. **Finishing while practice is still starting** (PR 46 review): finishing while the skill is still loading, or while "Practise again" is still resuming, delivers nothing and records nothing in the new session; the unfinished question stays resumable.
+13. **The resumed notice** (T037): after "Practise again" resumes a question, "You continue where you left off." shows; "Another question" clears it.

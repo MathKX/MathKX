@@ -51,16 +51,27 @@ The pilot pools do not run out within eight questions, so this scenario uses the
 
 1. Answer a question wrongly with visual help, then correctly.
 2. Choose "Repeat this question": the same question appears with an empty field and help closed. Answer it correctly at once.
-3. "My work" counts both. The second is "Correct on first response, no help", tagged "Repeated on request", and the skill says "1 of these you repeated on purpose."
+3. "My work" counts both. The second is "Correct on first response, no help", tagged "Repeated on request". The skill keeps spec 004's sentence, "1 of them repeated a question you had already had.", and adds "1 of these you repeated on purpose."
 4. In "My work", open the first question's replay and choose "Repeat this question": practice continues with that question again.
 
 ## Scenario 4: finishing a session (User Story 3)
 
 1. Answer three questions, take a lesson detour, and type a draft on a fourth.
 2. Choose "Finish practice": "Your practice session" counts 4 questions, one unfinished, with no percentage or score.
-3. "Practise again" brings back the fourth question with its draft. Answer it correctly and finish again: the new summary counts it as correct, in a session of its own.
+3. "Practise again" brings back the fourth question with its draft. Answer it correctly and finish again: the new summary counts it in a session of its own. What it says depends on the detour:
+   - **The lesson was shown**: "1 question: 1 correct with help", because seeing the lesson counts as help.
+   - **The lesson shows the question's answer** (for example `5 + 5`, a bond to ten): it asks first. Cancel there so the answer stays unshown. No lesson is shown and no help is recorded, so the summary says "1 question: 1 correct on first response, no help".
 4. Choose "Practise again" once more: since the last session ended on an answered question, a new question appears, not the finished one.
 
 ## CI
 
-`build-and-test.yml` runs everything above on each pull request, with no new job; `deploy.yml` deploys `main`. The measured CI time is recorded here at the end of implementation (spec SC-006, limit 10 minutes).
+`build-and-test.yml` runs everything above on each pull request, with no new job; `deploy.yml` deploys `main`. Measured on PR 48 (2026-10-31, head `db9a5f6`, with every spec 005 check):
+- **Build and test**: 3 min 1 s of wall time. The backend (33 s) and web (50 s) jobs run in parallel, then end to end (1 min 53 s).
+- **Content validation**: 29 s alongside.
+
+The spec SC-006 limit is 10 minutes.
+
+**Run by hand** on 2026-10-31 against the built app and service on `localhost:5080`, in the browser pane of the Claude desktop app, in English:
+- **Scenario 1** passes: 21 questions with none repeating one of the eight before it, 29 instance requests, and one pool request. After a reload, the question in progress came back, and eight more questions still avoided the last eight.
+- **Scenario 2** is covered by the component tests in `avoidance.test.tsx` ("an exhausted pool") and by end-to-end check 4, which serves a one-question pool.
+- **Scenarios 3 and 4** pass as written above.
