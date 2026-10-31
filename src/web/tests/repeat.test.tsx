@@ -85,6 +85,22 @@ describe("from the practice screen (tests 1 and 2)", () => {
   });
 });
 
+describe("focus (specs/005 FR-016)", () => {
+  it("moves to the repeated question, since its button goes away; Another question keeps it", async () => {
+    const { user } = await practise();
+    const [first] = deliveries();
+    await answer(user, sumOf(first!));
+    await user.click(screen.getByTestId("repeat-question"));
+    await waitFor(() => expect(deliveries()).toHaveLength(2));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("prompt")));
+    expect(screen.queryByTestId("repeat-question")).toBeNull();
+
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(deliveries()).toHaveLength(3));
+    expect(document.activeElement).toBe(screen.getByTestId("another"));
+  });
+});
+
 describe("outcomes (tests 3 and 6)", () => {
   it("gives the repeat its own outcome and leaves the first one as it was", async () => {
     const { user } = await practise();

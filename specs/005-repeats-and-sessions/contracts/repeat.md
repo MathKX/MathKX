@@ -9,7 +9,7 @@ Part of [plan.md](../plan.md) Phase 1. Research R5 and R6; spec User Story 2, FR
 | Practice screen (`ExerciseShell`) | the current delivery has a submission (any status; a reply that could not be read is input guidance, not a submission) | `store.repeatQuestion(currentDeliveryId)` |
 | Replay (`ReplayPage`) | the delivery is not the unanswered question in progress (which keeps "Continue") | `store.repeatQuestion(id)`, then navigate to `/practice/{skillId}`; on failure, stay on the replay and show `practice.loadError` there |
 
-The control is a button `practice.repeat` ("Repeat this question" / "Gjenta denne oppgaven"), `data-testid="repeat-question"` on the practice screen and `replay-repeat` in replay, at least 44 by 44 on touch screens.
+The control is a button `practice.repeat` ("Repeat this question" / "Gjenta denne oppgaven"), `data-testid="repeat-question"` on the practice screen and `replay-repeat` in replay, at least 44 by 44 on touch screens. The repeated question takes focus (FR-016): on the practice screen the button goes away with its question, and from a replay the question arrives by navigation, so in both cases focus would otherwise fall to the page. The practice screen moves focus to the question (`data-testid="prompt"`, focusable from code but not a Tab stop) whenever a new question arrives with focus on the page. A control that stays, such as "Another question", keeps focus, and a page loaded directly keeps the browser's own start.
 
 ## `store.repeatQuestion(deliveryId)`
 

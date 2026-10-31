@@ -1,5 +1,6 @@
 // The end-to-end checks of specs/004 (quickstart scenarios), against the real service and the built app.
 import { expect, test, type Page } from "@playwright/test";
+import { focusShows, recordUnfocused, tabTo } from "./focus";
 
 const LESSON = "/lessons/number-bonds-to-ten";
 
@@ -191,65 +192,6 @@ test.describe("the progress view", () => {
     const done = await operands(page);
     await answer(page, done.a + done.b, "correct");
     await next(page);
-  }
-
-  /**
-   * Records each control's unfocused outline and shadow, so a focus indicator is told apart from a permanent
-   * decoration (PR 41 review). Runs before Tab reaches the controls, while none of them has focus.
-   */
-  const recordUnfocused = (page: Page) =>
-    page.evaluate(() => {
-      const store = new WeakMap<Element, string>();
-      for (const el of document.querySelectorAll("a, button, summary, input, [tabindex]")) {
-        if (el === document.activeElement) continue;
-        const style = getComputedStyle(el);
-        store.set(el, style.outlineStyle + " " + style.outlineWidth + " " + style.outlineColor + " | " + style.boxShadow);
-      }
-      (window as unknown as { __mkxUnfocused: WeakMap<Element, string> }).__mkxUnfocused = store;
-    });
-
-  /**
-   * Whether the focused element shows a painted focus indicator: an outline with width and a visible colour, or a
-   * box shadow with a visible colour and some extent, either of which the element does not have unfocused. A
-   * transparent outline, a transparent or zero-size shadow, and an unchanged decorative shadow do not count.
-   */
-  const focusShows = (page: Page) =>
-    page.evaluate(() => {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return { name: "none", visible: false };
-      const alpha = (color: string) => {
-        if (color === "transparent") return 0;
-        const match = /rgba?\(([^)]*)\)/.exec(color);
-        if (!match) return 1;
-        const parts = match[1]!.split(/[\s,/]+/).filter(Boolean);
-        return parts.length >= 4 ? Number.parseFloat(parts[3]!) : 1;
-      };
-      const style = getComputedStyle(el);
-      const outline = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0 && alpha(style.outlineColor) > 0;
-      // Computed shadows list the colour first: "rgb(0, 0, 255) 0px 0px 0px 2px, ...".
-      const shadows = style.boxShadow === "none" ? [] : style.boxShadow.split(/,(?![^(]*\))/);
-      const paintedShadow = shadows.some((shadow) => {
-        const color = /rgba?\([^)]*\)|transparent/.exec(shadow)?.[0] ?? "rgb(0, 0, 0)";
-        const lengths = (shadow.replace(color, "").match(/-?[\d.]+px/g) ?? []).map((n) => Math.abs(Number.parseFloat(n)));
-        return alpha(color) > 0 && lengths.some((n) => n > 0);
-      });
-      const unfocused = (window as unknown as { __mkxUnfocused?: WeakMap<Element, string> }).__mkxUnfocused?.get(el);
-      const now = style.outlineStyle + " " + style.outlineWidth + " " + style.outlineColor + " | " + style.boxShadow;
-      const changed = unfocused === undefined || unfocused !== now;
-      return { name: el.dataset.testid ?? el.tagName.toLowerCase(), visible: changed && (outline || paintedShadow) };
-    });
-
-  async function tabTo(page: Page, testId: string) {
-    await recordUnfocused(page);
-    for (let i = 0; i < 30; i++) {
-      await page.keyboard.press("Tab");
-      const focus = await focusShows(page);
-      if (focus.name === testId) {
-        expect(focus.visible, `${testId} shows focus`).toBe(true);
-        return;
-      }
-    }
-    throw new Error(`Tab never reached ${testId}`);
   }
 
   test("4. keyboard only: My work, a question, its replay, and back, with focus visible and on each heading", async ({ page }) => {

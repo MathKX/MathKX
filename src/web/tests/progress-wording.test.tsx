@@ -1,14 +1,16 @@
 // specs/004 SC-002 and FR-002 (constitution I): "My work" and replay show counts in words, never a percentage, ratio,
 // score, streak, or mastery word, in either language. Scans the rendered pages (text, aria-label, title) and the
-// dictionary sections they draw on.
+// dictionary sections they draw on. specs/005 T031 adds the session summary, repeats on request, and the new
+// practice wording.
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
 import { en } from "../src/i18n/en";
 import { nb } from "../src/i18n/nb";
 import type { Delivery } from "../src/state/observations";
 import { createFakeApi } from "./fakeApi";
-import { CROSSING, at, beforeThisFeature, everyOutcome, withRepeats } from "./records";
+import { CROSSING, at, beforeThisFeature, everyOutcome, withRepeats, withRequestedRepeats } from "./records";
 
 const FORBIDDEN_WORDS = /\b(score|scores|streak|streaks|mastery|mastered|poeng|rekke|mestring|mestret)\b/i;
 const RATIO = /\d+\s*\/\s*\d+|\d+\s+(of|av)\s+\d+/i;
@@ -38,9 +40,14 @@ function pageTexts(): string[] {
   return texts;
 }
 
+/** specs/005's repeats on request, renamed so their ids do not meet those of `withRepeats`. */
+const requested = (): Delivery[] =>
+  withRequestedRepeats().map((d) => ({ ...d, id: `r-${d.id}`, ...(d.repeatOf ? { repeatOf: `r-${d.repeatOf}` } : {}) }));
+
 const record = (): Delivery[] => [
   ...everyOutcome(),
   ...withRepeats(),
+  ...requested(),
   { ...everyOutcome()[1]!, id: "crossing", instance: { ...everyOutcome()[1]!.instance, definitionId: CROSSING, a: 8, b: 5 }, events: [{ type: "support", kind: "lesson-reveal" }, { type: "ended" }] },
 ];
 const lessonViews = [
@@ -60,6 +67,7 @@ describe("no percentage, ratio, score, streak, or mastery word (SC-002)", () => 
     render(<App api={createFakeApi()} initialPath="/record" />);
     await screen.findAllByTestId("lesson-viewed");
     expect(screen.getAllByTestId("record-item").length).toBeGreaterThan(10);
+    expect(screen.getAllByTestId("record-repeats-requested").length).toBeGreaterThan(0);
     expect(pageTexts().flatMap(violations)).toEqual([]);
   });
 
@@ -74,12 +82,30 @@ describe("no percentage, ratio, score, streak, or mastery word (SC-002)", () => 
     }
   });
 
+  it.each(["nb", "en"] as const)("in the session summary, in %s", async (language) => {
+    // Every outcome and every kind of repeat worked in one session, finished from the practice screen.
+    const deliveries = record();
+    window.localStorage.setItem(
+      "mathkx.guest.v1",
+      JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), language, deliveries, lessonViews, session: { current: deliveries.map((d) => d.id), last: null } } }),
+    );
+    render(<App api={createFakeApi()} initialPath="/practice/numbers.addition-within-20" />);
+    await screen.findByTestId("prompt");
+    await userEvent.setup().click(screen.getByTestId("finish-practice"));
+    await screen.findAllByTestId("session-summary");
+    expect(screen.getAllByTestId("session-repeats").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("session-repeats-requested").length).toBeGreaterThan(0);
+    expect(pageTexts().flatMap(violations)).toEqual([]);
+  });
+
   it.each([
     ["nb", nb],
     ["en", en],
-  ] as const)("in the record, progress, and replay sections of the %s dictionary", (_language, dictionary) => {
-    const texts = [dictionary.record, dictionary.progress, dictionary.replay].flatMap((section) => Object.values(section as Record<string, string>));
-    expect(texts.length).toBeGreaterThan(20);
+  ] as const)("in the record, progress, replay, and session sections of the %s dictionary, and the new practice wording", (_language, dictionary) => {
+    const sections = [dictionary.record, dictionary.progress, dictionary.replay, dictionary.session];
+    const practice = [dictionary.practice.poolExhausted, dictionary.practice.repeat, dictionary.practice.finish];
+    const texts = [...sections.flatMap((section) => Object.values(section as Record<string, string>)), ...practice];
+    expect(texts.length).toBeGreaterThan(25);
     expect(texts.flatMap(violations)).toEqual([]);
   });
 
