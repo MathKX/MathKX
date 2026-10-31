@@ -1,6 +1,6 @@
 name: Deploy
 
-# Deploys main to the Azure App Service after the tests and content validation pass (ADR 0009).
+# Deploys main to the matkxv2 Azure App Service (Norway East) after the tests and content validation pass (ADR 0009).
 # Azure sign-in uses GitHub OIDC with a user-assigned managed identity; no secret is stored.
 on:
   push:
@@ -80,7 +80,7 @@ jobs:
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: mathkx
+          app-name: matkxv2
           package: publish
 
       - name: Check the deployed service is healthy
