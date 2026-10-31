@@ -46,3 +46,52 @@ test.describe("repeat avoidance", () => {
     await expect(page.getByTestId("notice")).toHaveCount(0); // within ten is never exhausted by eight questions
   });
 });
+
+async function answer(page: Page, value: number) {
+  await page.getByTestId("answer").fill(String(value));
+  await page.getByTestId("check").click();
+  await expect(page.getByTestId("result")).toBeVisible();
+}
+
+test.describe("Repeat this question", () => {
+  test("2. a repeat on the practice screen gets its own outcome and tag, and a replay repeats the same question", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-numbers.addition.within-10").click();
+    await expect(page.getByTestId("prompt")).toBeVisible();
+    const first = await operands(page);
+    const prompt = await page.getByTestId("prompt").getAttribute("aria-label");
+    await expect(page.getByTestId("repeat-question")).toHaveCount(0);
+
+    // Wrong, then visual help, then right.
+    await answer(page, first.a + first.b + 1);
+    await page.getByTestId("toggle-help").click();
+    await answer(page, first.a + first.b);
+    await expect(page.getByTestId("result")).toHaveAttribute("data-status", "correct");
+
+    // The same question again, answered at once.
+    await page.getByTestId("repeat-question").click();
+    await expect(page.getByTestId("result")).toHaveCount(0);
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", prompt ?? "");
+    await expect(page.getByTestId("answer")).toHaveValue("");
+    await answer(page, first.a + first.b);
+
+    await page.getByRole("link", { name: "My work" }).click();
+    await expect(page.getByTestId("record-repeats-requested")).toHaveText("1 of these you repeated on purpose.");
+    await page.getByTestId("progress-questions").first().click();
+    const [newest, oldest] = [page.getByTestId("record-item").nth(0), page.getByTestId("record-item").nth(1)];
+    await expect(newest).toHaveAttribute("data-outcome", "correctFirst");
+    await expect(newest.getByTestId("record-tag")).toHaveText(["Repeated on request"]);
+    await expect(oldest).not.toHaveAttribute("data-outcome", "correctFirst");
+
+    // From the first question's replay.
+    await oldest.getByTestId("record-question").click();
+    await expect(page.getByTestId("replay-outcome")).toBeVisible();
+    await page.getByTestId("replay-repeat").click();
+    await expect(page.getByTestId("practice-page")).toBeVisible();
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", prompt ?? "");
+    await expect(page.getByTestId("answer")).toHaveValue("");
+  });
+});

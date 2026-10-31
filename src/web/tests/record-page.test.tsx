@@ -7,7 +7,7 @@ import { App } from "../src/App";
 import { formatDate } from "../src/i18n";
 import type { Delivery } from "../src/state/observations";
 import { brokenStorage, createFakeApi } from "./fakeApi";
-import { at, beforeThisFeature, correct, delivery, unknownDefinition, withRepeats } from "./records";
+import { at, beforeThisFeature, correct, delivery, unknownDefinition, withRepeats, withRequestedRepeats } from "./records";
 
 const practicePath = "/practice/numbers.addition-within-20";
 afterEach(() => window.localStorage.clear());
@@ -95,6 +95,29 @@ describe("the record page", () => {
     expect(newest!.textContent).toContain(formatDate("en", at(3)));
     expect(newest!.textContent).toContain("Answers: 10");
     expect(within(oldest!).queryAllByTestId("record-tag")).toHaveLength(0);
+  });
+
+  it.each([
+    ["en", "3 of them repeated a question you had already had.", "2 of these you repeated on purpose.", "Repeated on request", "Repeated question"],
+    ["nb", "3 av dem var en oppgave du hadde hatt før.", "2 av disse gjentok du med vilje.", "Gjentatt etter ønske", "Gjentatt oppgave"],
+  ] as const)("in %s, tags a repeat on request as such, and says how many were repeated on purpose (specs/005)", async (language, repeatsSentence, requestedSentence, requestedTag, chanceTag) => {
+    openRecord(withRequestedRepeats(), { language });
+    await screen.findByTestId("skill-name");
+    expect(screen.getByTestId("record-repeats").textContent).toBe(repeatsSentence);
+    expect(screen.getByTestId("record-repeats-requested").textContent).toBe(requestedSentence);
+    const tagsOf = (item: HTMLElement) => within(item).queryAllByTestId("record-tag").map((t) => t.textContent);
+    const [chance, askedAgain, asked, first] = screen.getAllByTestId("record-item");
+    expect(tagsOf(chance!)).toEqual([chanceTag]);
+    expect(tagsOf(askedAgain!)).toEqual([requestedTag]);
+    expect(tagsOf(asked!)).toEqual([requestedTag]);
+    expect(tagsOf(first!)).not.toContain(requestedTag);
+    expect(tagsOf(first!)).not.toContain(chanceTag);
+  });
+
+  it("says nothing about repeats on purpose when there are none", async () => {
+    openRecord(withRepeats());
+    await screen.findByTestId("record-repeats");
+    expect(screen.queryByTestId("record-repeats-requested")).toBeNull();
   });
 
   it("lists a question whose answer was shown but never given with its reveal tag", async () => {

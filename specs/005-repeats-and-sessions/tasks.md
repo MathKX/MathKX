@@ -132,7 +132,7 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Add `src/web/tests/repeat.test.tsx` for `contracts/repeat.md` tests 1–8, with the fake API:
+- [X] T017 [P] [US2] Add `src/web/tests/repeat.test.tsx` for `contracts/repeat.md` tests 1–8, with the fake API:
   - the practice button appears only after a submission;
   - same identity, fresh state;
   - one `getInstance` and no `getPool`;
@@ -141,24 +141,24 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - spec 003's notice on a disclosing repeat;
   - a failed repeat records nothing;
   - every repeated delivery replays to the same question.
-- [ ] T018 [P] [US2] Extend the "My work" and replay tests:
+- [X] T018 [P] [US2] Extend the "My work" and replay tests:
   - **`src/web/tests/progress.test.ts`**: `repeatKind` is `"requested"` before `"chance"`, and `groupBySkill` counts repeats on request.
   - **`src/web/tests/record-page.test.tsx`**: "Repeated on request" replaces "Repeated question" for those questions, and `progress.repeatsRequested` appears in both languages.
   - **`src/web/tests/replay.test.tsx`**: the replay of a repeat shows its tag, and replay offers "Repeat this question" except for the question in progress.
-- [ ] T019 [P] [US2] Add check 2 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 3):
+- [X] T019 [P] [US2] Add check 2 to `src/web/e2e/repeats.spec.ts` (quickstart scenario 3):
   - **On the practice screen**: answer a question wrongly with help and then correctly, choose "Repeat this question", and answer at once. "My work" shows "Repeated on request" and "1 of these you repeated on purpose."
   - **From a replay**: open the first question's replay, choose "Repeat this question", and see the same prompt on the practice screen.
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Add `repeatQuestion(deliveryId)` to `StoreApi` in `src/web/src/state/store.tsx` per `contracts/repeat.md`:
+- [X] T020 [US2] Add `repeatQuestion(deliveryId)` to `StoreApi` in `src/web/src/state/store.tsx` per `contracts/repeat.md`:
   - **Skill and ladder**: when needed, set the skill and its ladder from the resolved instance's `skill` and `getSkill`, with the ladder position on the question's variation when it is on the ladder.
   - **Load**: call `load()` with the seed fixed, no avoidance, and `repeatOf` and `repeatReason: "requested"` on the new delivery. Extend `toDelivery` and the `question` action for these fields.
   - **Failure**: leave the state unchanged.
-- [ ] T021 [P] [US2] In `src/web/src/components/ExerciseShell.tsx`, add the "Repeat this question" button (`data-testid="repeat-question"`, `mkx-target`) beside "Another question". Show it only when the current delivery has a submission.
-- [ ] T022 [US2] Extend `repeatKind` in `src/web/src/state/progress.ts` with `"requested"`. In `src/web/src/pages/RecordPage.tsx` and `src/web/src/pages/ReplayPage.tsx`, use `progress.repeatRequestedTag` for it, and in `RecordPage.tsx` add the `progress.repeatsRequested` sentence after `progress.repeats`.
-- [ ] T023 [US2] In `src/web/src/pages/ReplayPage.tsx`, add "Repeat this question" (`data-testid="replay-repeat"`) for every delivery except the one `inProgress`. It calls `store.repeatQuestion(deliveryId)` and, on success, navigates to `/practice/{skillId}`. The page itself dispatches nothing.
-- [ ] T024 [P] [US2] Add `practice.repeat`, `progress.repeatRequestedTag`, and `progress.repeatsRequested` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/repeat.md`. T017–T019 pass.
+- [X] T021 [P] [US2] In `src/web/src/components/ExerciseShell.tsx`, add the "Repeat this question" button (`data-testid="repeat-question"`, `mkx-target`) beside "Another question". Show it only when the current delivery has a submission.
+- [X] T022 [US2] Extend `repeatKind` in `src/web/src/state/progress.ts` with `"requested"`. In `src/web/src/pages/RecordPage.tsx` and `src/web/src/pages/ReplayPage.tsx`, use `progress.repeatRequestedTag` for it, and in `RecordPage.tsx` add the `progress.repeatsRequested` sentence after `progress.repeats`.
+- [X] T023 [US2] In `src/web/src/pages/ReplayPage.tsx`, add "Repeat this question" (`data-testid="replay-repeat"`) for every delivery except the one `inProgress`. It calls `store.repeatQuestion(deliveryId)` and, on success, navigates to `/practice/{skillId}`. The page itself dispatches nothing.
+- [X] T024 [P] [US2] Add `practice.repeat`, `progress.repeatRequestedTag`, and `progress.repeatsRequested` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/repeat.md`. T017–T019 pass.
 
 **Checkpoint**: quickstart scenario 3 passes; this phase may merge on its own, with its tags.
 

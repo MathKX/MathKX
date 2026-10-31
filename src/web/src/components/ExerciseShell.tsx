@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, type FormEvent } from "react";
 import { Button, Textfield } from "@digdir/designsystemet-react";
 import { translate } from "../i18n";
+import { hasSubmission } from "../state/observations";
 import { useStore } from "../state/store";
 import { Link } from "../router";
 import { AdditionPrompt } from "./math/MathExpr";
@@ -23,7 +24,8 @@ export function ExerciseShell() {
   const { state } = store;
   const lang = state.language;
   const instance = state.instance;
-  const originLessonId = state.deliveries.find((d) => d.id === state.currentDeliveryId)?.originLessonId;
+  const current = state.deliveries.find((d) => d.id === state.currentDeliveryId);
+  const originLessonId = current?.originLessonId;
   const lessonId = lessonFor(instance?.lessons, originLessonId);
   const lessonHref = lessonId ? `/lessons/${encodeURIComponent(lessonId)}` : undefined;
 
@@ -126,6 +128,11 @@ export function ExerciseShell() {
         <Button type="button" variant="primary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("another")} data-testid="another">
           {translate(lang, "practice.another")}
         </Button>
+        {current && hasSubmission(current) ? (
+          <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.repeatQuestion(current.id)} data-testid="repeat-question">
+            {translate(lang, "practice.repeat")}
+          </Button>
+        ) : null}
         <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("same")} data-testid="more-like-this">
           {translate(lang, "practice.moreLikeThis")}
         </Button>

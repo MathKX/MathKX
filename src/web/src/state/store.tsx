@@ -258,6 +258,12 @@ export interface StoreApi {
   showHelpInstead(): void;
   /** Re-resolves the current question when it was stored before instances carried their lessons; false on failure. */
   ensureInstanceLessons(): Promise<boolean>;
+  /**
+   * "Repeat this question" (specs/005 contracts/repeat.md): the delivery's identity again, as a new question with a
+   * fresh state, moving practice to its skill when needed. Resolves to that skill, or null when it could not be loaded.
+   */
+  /** Resolves to the skill practised after the repeat, or null when it failed or `signal` abandoned it. */
+  repeatQuestion(deliveryId: string, signal?: AbortSignal): Promise<string | null>;
   endSession(): void;
   clearRecord(): void;
   dismissNotice(): void;
@@ -330,43 +336,60 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   );
 
   /**
-   * Loads a fresh question; returns whether it became the current one. `applied` is the pending change it fulfils;
-   * `clearPending` drops a pending change an explicit selection supersedes. Both take effect only with the question.
+   * Loads a fresh question; returns it when it became the current one, else null. `applied` is the pending change it
+   * fulfils; `clearPending` drops a pending change an explicit selection supersedes. Both take effect only with the
+   * question. `repeat` asks for that seed again, as a repeat on request of the delivery `of`, with no avoidance.
+   * `signal` abandons the request: once it is aborted, nothing is recorded and no error is shown.
    */
   const load = useCallback(
-    async (ref: DefinitionRef, fixed: boolean, commit: { applied?: PendingChange; clearPending?: boolean; origin?: string | null } = {}): Promise<boolean> => {
+    async (
+      ref: DefinitionRef,
+      fixed: boolean,
+      commit: { applied?: PendingChange; clearPending?: boolean; origin?: string | null; repeat?: { of: string; seed: string | null }; signal?: AbortSignal | undefined } = {},
+    ): Promise<InstanceDto | null> => {
       const token = ++loadToken.current;
+      const stale = () => token !== loadToken.current || commit.signal?.aborted === true; // superseded or abandoned
       // The lesson that started this practice run carries over to every later question of the run (specs/003).
       const current = latest.current;
       const continued = current.deliveries.find((x) => x.id === current.currentDeliveryId)?.originLessonId;
       const origin = commit.origin === undefined ? continued : (commit.origin ?? undefined);
-      const { origin: _origin, ...questionCommit } = commit;
+      const { origin: _origin, repeat: requested, signal: _signal, ...questionCommit } = commit;
       try {
-        let instance = await api.getInstance(ref.definition, ref.version, fixed ? null : newSeed());
-        if (token !== loadToken.current) return false; // superseded by a later request
+        let instance = await api.getInstance(ref.definition, ref.version, requested ? requested.seed : fixed ? null : newSeed());
+        if (stale()) return null;
         // specs/005: a question the learner did not choose avoids the variation's last eight, in either order.
         const window = recentWindow(latest.current.deliveries, ref.definition, ref.version);
         const recent = new Set(window.map((d) => pairKey(d.instance.a, d.instance.b)));
         let repeat: Pick<Delivery, "repeatOf" | "repeatReason"> | undefined;
-        if (recent.has(pairKey(instance.a, instance.b))) {
+        if (requested) {
+          repeat = { repeatOf: requested.of, repeatReason: "requested" };
+          // From a replay, practice moves to the question's skill and its ladder; the position follows the question.
+          const now = latest.current;
+          if (now.skillId !== instance.skill || !now.instance) {
+            const skill = await api.getSkill(instance.skill);
+            if (stale()) return null;
+            dispatch({ type: "ladder", skillId: skill.id, entries: skill.ladder, current: ref });
+            questionCommit.clearPending = true; // a pending change belonged to the practice that was left
+          }
+        } else if (recent.has(pairKey(instance.a, instance.b))) {
           const pool = await poolFor(ref);
-          if (token !== loadToken.current) return false;
+          if (stale()) return null;
           const choice = pool ? choose({ seed: instance.identity.seed ?? null, a: instance.a, b: instance.b }, recent, pool.questions) : { kind: "fresh" as const };
           if (choice.kind === "chosen") {
             instance = await api.getInstance(ref.definition, ref.version, choice.seed); // the first draw is never shown or recorded
-            if (token !== loadToken.current) return false;
+            if (stale()) return null;
           } else if (choice.kind === "exhausted") {
             const key = pairKey(instance.a, instance.b);
             repeat = { repeatReason: "exhausted", repeatOf: [...window].reverse().find((d) => pairKey(d.instance.a, d.instance.b) === key)!.id };
           }
         }
         dispatch({ type: "question", instance, delivery: toDelivery(instance, origin, repeat), ...questionCommit });
-        if (repeat) dispatch({ type: "notice", notice: { key: "practice.poolExhausted" } });
+        if (repeat?.repeatReason === "exhausted") dispatch({ type: "notice", notice: { key: "practice.poolExhausted" } });
         else if (latest.current.notice?.key === "practice.poolExhausted") dispatch({ type: "notice", notice: null }); // true only of the question it came with
-        return true;
+        return instance;
       } catch {
-        if (token === loadToken.current) dispatch({ type: "loadError", failed: true });
-        return false;
+        if (!stale()) dispatch({ type: "loadError", failed: true });
+        return null;
       }
     },
     [api, toDelivery, poolFor],
@@ -556,8 +579,16 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
           return false; // the caller keeps the lesson behind the notice rather than guess
         }
       },
+      async repeatQuestion(deliveryId, signal) {
+        const source = latest.current.deliveries.find((d) => d.id === deliveryId);
+        if (!source) return null;
+        const { definitionId, version, seed } = identityOf(source);
+        const instance = await load({ definition: definitionId, version }, false, { repeat: { of: deliveryId, seed: seed ?? null }, signal });
+        return instance ? instance.skill : null;
+      },
       endSession: () => dispatch({ type: "end" }),
       clearRecord() {
+        loadToken.current++; // a question still on its way belongs to the record being cleared
         store.clear();
         dispatch({ type: "clear" });
       },

@@ -35,12 +35,15 @@ export function repeats(deliveries: Delivery[]): Set<string> {
   return repeated;
 }
 
+export type RepeatKind = "requested" | "chance";
+
 /**
- * How a delivery repeats an earlier question (specs/005 contracts/repeat.md): "chance" for a question delivered again
- * because the pool was exhausted, or the same definition, version, and ordered numbers as an earlier delivery
- * (`ordered`, from `repeats`); null otherwise.
+ * How a delivery repeats an earlier question (specs/005 contracts/repeat.md): "requested" when the learner asked for
+ * it; else "chance" for a question delivered again because the pool was exhausted, or the same definition, version,
+ * and ordered numbers as an earlier delivery (`ordered`, from `repeats`); null otherwise.
  */
-export function repeatKind(delivery: Delivery, ordered: Set<string>): "chance" | null {
+export function repeatKind(delivery: Delivery, ordered: Set<string>): RepeatKind | null {
+  if (delivery.repeatReason === "requested") return "requested";
   return delivery.repeatReason === "exhausted" || ordered.has(delivery.id) ? "chance" : null;
 }
 
@@ -70,7 +73,7 @@ export interface ListedQuestion {
   derived: Derived;
   /** `derive`'s tags, then `revealsWithoutCorrect`. */
   tags: Tag[];
-  repeat: boolean;
+  repeat: RepeatKind | null;
 }
 
 export interface LessonHistory {
@@ -102,7 +105,10 @@ export interface SkillGroup {
   /** Counted questions, newest first. */
   questions: ListedQuestion[];
   summary: Summary;
+  /** Every repeat, on request or by chance. */
   repeatCount: number;
+  /** The repeats the learner asked for. */
+  requestedCount: number;
   /** Viewed lessons that teach the skill, latest view first; always empty for "Other practice". */
   lessons: LessonHistory[];
   /** The latest `startedAt` among its questions, or view among its lessons. */
@@ -136,7 +142,7 @@ export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumab
     const questions = members
       .map((delivery) => {
         const derived = derive(delivery, { resumable: delivery.id === resumableId });
-        return { delivery, derived, tags: [...derived.tags, ...revealsWithoutCorrect(delivery)], repeat: repeatKind(delivery, repeated) !== null };
+        return { delivery, derived, tags: [...derived.tags, ...revealsWithoutCorrect(delivery)], repeat: repeatKind(delivery, repeated) };
       })
       .filter((q) => q.derived.outcome !== "none")
       .reverse();
@@ -148,6 +154,7 @@ export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumab
       questions,
       summary: summarize(questions.map((q) => q.delivery), resumableId),
       repeatCount: questions.filter((q) => q.repeat).length,
+      requestedCount: questions.filter((q) => q.repeat === "requested").length,
       lessons: viewed,
       lastActivity: latest,
     });

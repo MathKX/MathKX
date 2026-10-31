@@ -147,6 +147,26 @@ describe("the question in progress and unknown questions (test 6)", () => {
   });
 });
 
+describe("repeats on request (specs/005 contracts/repeat.md)", () => {
+  it("tags the replay of a repeat on request, and of a chance repeat, with its kind", async () => {
+    const asked = delivery({ id: "asked", definitionId: CROSSING, a: 8, b: 5, startedAt: at(4), repeatOf: "q", repeatReason: "requested", events: [correct(13)] });
+    replay([eightPlusFive([incorrect(12), correct(13)]), asked], "asked");
+    await screen.findByTestId("prompt");
+    expect(screen.getAllByTestId("record-tag").map((t) => t.textContent)).toEqual(["Repeated on request"]);
+  });
+
+  it("offers to repeat any recorded question, but not the one in progress", async () => {
+    replay([eightPlusFive([incorrect(12), correct(13)])], "q");
+    expect((await screen.findByTestId("replay-repeat")).textContent).toBe("Repeat this question");
+  });
+
+  it("offers Continue and no repeat for the question in progress", async () => {
+    replay([eightPlusFive([incorrect(12)], "now")], "now", undefined, { currentDeliveryId: "now", skillId: "numbers.addition-within-20" });
+    await screen.findByTestId("replay-continue");
+    expect(screen.queryByTestId("replay-repeat")).toBeNull();
+  });
+});
+
 describe("a fixed task (test 7)", () => {
   it("resolves without a seed", async () => {
     const { api } = replay([delivery({ id: "f", definitionId: FOUR_PLUS_FOUR, seed: null, a: 4, b: 4, events: [correct(8)] })], "f", createFakeApi({ pairs: { [FOUR_PLUS_FOUR]: [4, 4] } }));
