@@ -1,12 +1,12 @@
 # Milestone one: close-out review
 
-**Date**: 2026-10-31. **Who**: the implementing session (Claude Opus 5.5), for the owner. **What**: what milestone one promised, what was built and how it was verified, and what is still open. The milestone was defined in the revised build brief §3, §7, and §10 and in the corrections addendum §D, both under [`docs/reviews/round-01/claude-fable/`](round-01/claude-fable/). This review is evidence for a decision; it does not close anything itself.
+**Date**: 2026-10-31. **Who**: the implementing session (Claude Opus 5.5), for the owner. **What**: what milestone one promised, what was built and how it was verified, and what is still open. The milestone was defined in the revised build brief §3, §7, and §10 and in the corrections addendum §D, both under [`docs/reviews/round-01/claude-fable/`](round-01/claude-fable/). This review was the evidence for the owner's decision. **Decided by the owner, 2026-10-31 (decision log DL-041): milestone one is closed, and the open checks are carried forward.**
 
 ## Summary
 
 - **Code**: every implementation item of the milestone backlog is built, tested in CI, and deployed: specs 001 to 005, PRs 20 to 49.
 - **Human checks**: of the brief's verification inside the milestone, the automated tests and the bilingual walkthrough are done. The physical-iPad pass and every learner and contributor check are not; only a person can do them.
-- **Decision for the owner**: the decision log puts self-checks (F8) "after milestone one". Either close milestone one with the human checks still open, carried forward as release gates, or run some of them first. Both are reasonable; the section "Owner decision" sets out the trade-off.
+- **Decision**: the decision log puts self-checks (F8) "after milestone one". The owner closed the milestone with the checks for a person still open and carried forward (DL-041), so F8 may begin. The section "Owner decision" keeps the trade-off as it was presented.
 
 ## The milestone as promised
 
@@ -53,7 +53,7 @@ These are recorded, not smoothed over. Each follows a later decision.
 
 ## Open checks for a person
 
-The validation plan is in the brief's §10. Each check below is recorded as findings, not scores.
+These are carried forward past the milestone (DL-041). The validation plan is in the brief's §10. Each check below is recorded as findings, not scores.
 
 | Check | Source | Who | Status |
 | --- | --- | --- | --- |
@@ -69,6 +69,8 @@ The validation plan is in the brief's §10. Each check below is recorded as find
 The three learner checks can be done in one session.
 
 ## Owner decision
+
+**Decided 2026-10-31 (DL-041): close now, with the checks carried forward.** The options as they were presented follow.
 
 The decision log's verdict for F8 is "specify with corrections, after milestone one".
 

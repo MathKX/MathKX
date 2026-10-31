@@ -13,7 +13,7 @@ Specifications follow the backlog order recorded in the decision log (feature ve
 | [003-lesson-rendering](003-lesson-rendering/spec.md) | F5 | Lesson rendering and the detour back to an exercise, with the honest answer-reveal notice and recording (implemented: first release PR 30, then US4, US5, and polish) |
 | [004-progress-view](004-progress-view/spec.md) | F6 | The progress view across skills and lessons, "Lesson viewed" history, and replay of recorded deliveries; adds localized skill names to the content contract (implemented: PRs 36, 38, 40, and 41, then polish) |
 | [005-repeats-and-sessions](005-repeats-and-sessions/spec.md) | F7 | Repeat avoidance, "Repeat this question", and further session controls (implemented: PRs 44, 45, 46, and 48, then polish) |
-| 006 (later) | F8 | Self-checks, after milestone one (see the [milestone one close-out](../docs/reviews/2026-10-31-milestone-one-close-out.md)) |
+| 006 (next) | F8 | Self-checks; milestone one is closed (DL-041, [close-out](../docs/reviews/2026-10-31-milestone-one-close-out.md)) |
 | F9 | — | Profiles, recovery, and persistence: a design proposal first, then a specification |
 
 ## Working on a checked-in specification
