@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using MathKX.Domain.Content;
+using MathKX.Domain.Generators;
 using MathKX.Domain.Instances;
 using MathKX.Domain.Results;
 
@@ -112,3 +114,16 @@ public sealed record StepDto(
     public static StepDto From(MathKX.Domain.Explanations.StepModel step) =>
         new(step.Kind, step.Representation, step.Index, step.Count, step.Reveals, step.Visual, new StepTextDto(step.Text.Code, step.Text.Values));
 }
+
+/// <summary>A variation's pool (specs/005 contracts/pool.md): operands and seeds only, never a sum.</summary>
+public sealed record PoolDto(string Definition, int Version, IReadOnlyList<PoolQuestionDto> Questions)
+{
+    public static PoolDto From(QuestionPool pool, int version) =>
+        new(pool.Definition[..pool.Definition.LastIndexOf('@')], version, pool.Questions.Select(q => new PoolQuestionDto(q.Seed?.Format(), q.A, q.B)).ToList());
+}
+
+/// <summary>One question; <c>seed</c> is written even when null (a fixed task), unlike other optional fields.</summary>
+public sealed record PoolQuestionDto(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] string? Seed,
+    int A,
+    int B);

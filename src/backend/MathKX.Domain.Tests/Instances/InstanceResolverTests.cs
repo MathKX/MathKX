@@ -110,5 +110,7 @@ public sealed class InstanceResolverTests
         }
 
         public int PoolSize(ExerciseDefinition definition) => AdditionPairGenerator.Enumerate(definition.Generator!).Count;
+
+        public IReadOnlyList<(int A, int B)> Enumerate(ExerciseDefinition definition) => AdditionPairGenerator.Enumerate(definition.Generator!).Reverse().ToList();
     }
 }

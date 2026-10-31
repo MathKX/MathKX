@@ -35,6 +35,15 @@ export function repeats(deliveries: Delivery[]): Set<string> {
   return repeated;
 }
 
+/**
+ * How a delivery repeats an earlier question (specs/005 contracts/repeat.md): "chance" for a question delivered again
+ * because the pool was exhausted, or the same definition, version, and ordered numbers as an earlier delivery
+ * (`ordered`, from `repeats`); null otherwise.
+ */
+export function repeatKind(delivery: Delivery, ordered: Set<string>): "chance" | null {
+  return delivery.repeatReason === "exhausted" || ordered.has(delivery.id) ? "chance" : null;
+}
+
 const REVEAL_TAG = { explanation: "revealExplanation", counting: "revealCounting", help: "revealHelp", lesson: "revealLesson" } as const;
 
 /**
@@ -127,7 +136,7 @@ export function groupBySkill(deliveries: Delivery[], skills: SkillDto[], resumab
     const questions = members
       .map((delivery) => {
         const derived = derive(delivery, { resumable: delivery.id === resumableId });
-        return { delivery, derived, tags: [...derived.tags, ...revealsWithoutCorrect(delivery)], repeat: repeated.has(delivery.id) };
+        return { delivery, derived, tags: [...derived.tags, ...revealsWithoutCorrect(delivery)], repeat: repeatKind(delivery, repeated) !== null };
       })
       .filter((q) => q.derived.outcome !== "none")
       .reverse();

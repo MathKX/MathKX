@@ -40,13 +40,15 @@ export interface DeliverySpec {
   b?: number;
   startedAt?: string;
   events?: Event[];
+  repeatOf?: string;
+  repeatReason?: "requested" | "exhausted";
 }
 
 export function delivery(spec: DeliverySpec = {}): Delivery {
   const { definitionId = WITHIN_TEN, version = 1, seed = "1", a = 4, b = 4 } = spec;
   const instance: Delivery["instance"] = { definitionId, version, validatorName: "integer-answer", validatorVersion: 1, a, b };
   if (seed !== null) instance.seed = seed;
-  return {
+  const d: Delivery = {
     id: spec.id ?? nextId("d"),
     instance,
     purpose: "practice",
@@ -54,6 +56,14 @@ export function delivery(spec: DeliverySpec = {}): Delivery {
     startedAt: spec.startedAt ?? "2026-10-24T10:00:00.000Z",
     events: spec.events ?? [],
   };
+  if (spec.repeatOf) d.repeatOf = spec.repeatOf;
+  if (spec.repeatReason) d.repeatReason = spec.repeatReason;
+  return d;
+}
+
+/** One answered delivery per pair, oldest first, one minute apart (specs/005: a recent window). */
+export function recentWindow(definitionId: string, pairs: [number, number][], startMinute = 0): Delivery[] {
+  return pairs.map(([a, b], i) => delivery({ definitionId, a, b, seed: String(1000 + startMinute + i), startedAt: at(startMinute + i), events: [correct(a + b)] }));
 }
 
 export const correct = (value: number): Event => ({ type: "submission", submissionId: nextId("s"), originalText: String(value), value, status: "correct", code: "correct" });

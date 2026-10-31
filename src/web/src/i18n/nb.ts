@@ -65,6 +65,7 @@ export const nb = {
     toLesson: "Til leksjonen",
     unreachable: "Svaret kunne ikke sjekkes akkurat nå. Svaret ditt er beholdt; prøv igjen.",
     resumed: "Du fortsetter der du slapp.",
+    poolExhausted: "Denne varianten har ingen andre oppgaver akkurat nå, så denne kommer igjen.",
     loadError: "Oppgaven kunne ikke hentes. Prøv igjen.",
   },
   record: {

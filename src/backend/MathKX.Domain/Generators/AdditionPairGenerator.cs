@@ -28,6 +28,8 @@ public sealed class AdditionPairGenerator : IGenerator
 
     public int PoolSize(ExerciseDefinition definition) => Enumerate(Spec(definition)).Count;
 
+    public IReadOnlyList<(int A, int B)> Enumerate(ExerciseDefinition definition) => Enumerate(Spec(definition));
+
     /// <summary>The canonical enumeration: part of the contract; changing it is a new generator version.</summary>
     public static IReadOnlyList<(int A, int B)> Enumerate(GeneratorSpec spec)
     {

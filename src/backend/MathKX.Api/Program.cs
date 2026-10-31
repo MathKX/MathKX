@@ -19,9 +19,13 @@ builder.Services.AddSingleton(_ => new ContentLocation(ContentRoot.Resolve(build
 builder.Services.AddSingleton<ContentCatalog>(services => ContentLoader.Load(services.GetRequiredService<ContentLocation>().Root));
 builder.Services.AddSingleton(GeneratorRegistry.Default());
 builder.Services.AddSingleton<InstanceResolver>();
+builder.Services.AddSingleton<QuestionPools>();
 builder.Services.AddSingleton<IntegerAnswerValidator>();
 
 var app = builder.Build();
+
+// Build every question pool now (specs/005): a pool that cannot be covered stops the start, naming its definition.
+app.Services.GetRequiredService<QuestionPools>();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -39,6 +43,7 @@ app.MapInstances();
 app.MapValidations();
 app.MapSteps();
 app.MapVisuals();
+app.MapDefinitions();
 
 // The built learner app, when present in wwwroot: static files plus a history-API fallback that never
 // shadows /api/* (an unknown API route stays a 404 problem, not the app shell). The shell is always

@@ -1,11 +1,13 @@
 // The session store: one reducer for language, the current question, draft, help and explanation state,
 // the ladder position, and the guest record. Persisted on every change through storage.ts.
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
-import type { InstanceDto, LadderEntry, PracticeApi, StepDto, ValidationResponse } from "../api/types";
+import type { InstanceDto, LadderEntry, PoolDto, PracticeApi, StepDto, ValidationResponse } from "../api/types";
 import { newSeed, practiceApi } from "../api/client";
 import type { Lang } from "../i18n";
+import type { Outcome } from "./outcomes";
 import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
+import { choose, pairKey, recentWindow } from "./selection";
 
 export interface DefinitionRef {
   definition: string;
@@ -51,7 +53,19 @@ export interface PersistedState {
   resumable: Resumable | null;
   /** Added by specs/004 without a schema version change; a record written before it has none. No cap, like deliveries. */
   lessonViews: LessonView[];
+  /** Added by specs/005 without a schema version change (contracts/session.md). */
+  session: PracticeSession;
 }
+
+/** The questions worked in the current session, and a snapshot of the last finished one (specs/005). */
+export interface PracticeSession {
+  current: string[];
+  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: "requested" | "chance" | null }[] } | null;
+}
+
+/** A record written before specs/005 has no session: every question in it belongs to the first one. */
+const sessionOf = (value: Partial<PersistedState>): PracticeSession =>
+  value.session ?? { current: (value.deliveries ?? []).map((d) => d.id), last: null };
 
 export interface State extends PersistedState {
   kept: boolean;
@@ -79,6 +93,7 @@ const initialPersisted: PersistedState = {
   result: null,
   resumable: null,
   lessonViews: [],
+  session: { current: [], last: null },
 };
 
 type Action =
@@ -119,7 +134,7 @@ const isCurrent = (state: State, deliveryId: string) => state.currentDeliveryId 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
-      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], kept: action.kept };
+      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], session: sessionOf(action.state), kept: action.kept };
     case "language":
       return { ...state, language: action.language };
     case "kept":
@@ -138,9 +153,12 @@ function reducer(state: State, action: Action): State {
         ? previousClosed.deliveries
         : [...previousClosed.deliveries, action.delivery];
       const resumed = action.resumedFrom;
+      // Delivered, resumed, or repeated: the question is worked in the current session (specs/005 FR-014).
+      const current = previousClosed.session.current.includes(action.delivery.id) ? previousClosed.session.current : [...previousClosed.session.current, action.delivery.id];
       return {
         ...previousClosed,
         deliveries,
+        session: { ...previousClosed.session, current },
         currentDeliveryId: action.delivery.id,
         instance: action.instance,
         draft: resumed?.draft ?? "",
@@ -262,7 +280,8 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const store = useMemo(() => storage ?? createStorage<PersistedState>(), [storage]);
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
-    return { ...initialPersisted, ...(loaded.value ?? {}), kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
+    const value = loaded.value ?? {};
+    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
   });
   const latest = useRef(state);
   latest.current = state;
@@ -274,7 +293,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     if (kept !== state.kept) dispatch({ type: "kept", kept });
   }, [state, store]);
 
-  const toDelivery = useCallback((instance: InstanceDto, originLessonId?: string): Delivery => {
+  const toDelivery = useCallback((instance: InstanceDto, originLessonId?: string, repeat?: Pick<Delivery, "repeatOf" | "repeatReason">): Delivery => {
     const d: Delivery["instance"] = {
       definitionId: instance.identity.definitionId,
       version: instance.identity.version,
@@ -287,8 +306,28 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     if (instance.generator) d.generatorVersion = instance.generator.version;
     const delivery: Delivery = { id: newId(), instance: d, purpose: "practice", provenance: "guest", startedAt: new Date().toISOString(), events: [] };
     if (originLessonId) delivery.originLessonId = originLessonId;
+    if (repeat?.repeatOf) delivery.repeatOf = repeat.repeatOf;
+    if (repeat?.repeatReason) delivery.repeatReason = repeat.repeatReason;
     return delivery;
   }, []);
+
+  /** A variation's pool, fetched at most once per visit; null when it cannot be loaded (questions are then delivered as before). */
+  const pools = useRef(new Map<string, PoolDto>());
+  const poolFor = useCallback(
+    async (ref: DefinitionRef): Promise<PoolDto | null> => {
+      const key = `${ref.definition}@${ref.version}`;
+      const cached = pools.current.get(key);
+      if (cached) return cached;
+      try {
+        const pool = await api.getPool(ref.definition, ref.version);
+        pools.current.set(key, pool);
+        return pool;
+      } catch {
+        return null;
+      }
+    },
+    [api],
+  );
 
   /**
    * Loads a fresh question; returns whether it became the current one. `applied` is the pending change it fulfils;
@@ -303,16 +342,34 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       const origin = commit.origin === undefined ? continued : (commit.origin ?? undefined);
       const { origin: _origin, ...questionCommit } = commit;
       try {
-        const instance = await api.getInstance(ref.definition, ref.version, fixed ? null : newSeed());
+        let instance = await api.getInstance(ref.definition, ref.version, fixed ? null : newSeed());
         if (token !== loadToken.current) return false; // superseded by a later request
-        dispatch({ type: "question", instance, delivery: toDelivery(instance, origin), ...questionCommit });
+        // specs/005: a question the learner did not choose avoids the variation's last eight, in either order.
+        const window = recentWindow(latest.current.deliveries, ref.definition, ref.version);
+        const recent = new Set(window.map((d) => pairKey(d.instance.a, d.instance.b)));
+        let repeat: Pick<Delivery, "repeatOf" | "repeatReason"> | undefined;
+        if (recent.has(pairKey(instance.a, instance.b))) {
+          const pool = await poolFor(ref);
+          if (token !== loadToken.current) return false;
+          const choice = pool ? choose({ seed: instance.identity.seed ?? null, a: instance.a, b: instance.b }, recent, pool.questions) : { kind: "fresh" as const };
+          if (choice.kind === "chosen") {
+            instance = await api.getInstance(ref.definition, ref.version, choice.seed); // the first draw is never shown or recorded
+            if (token !== loadToken.current) return false;
+          } else if (choice.kind === "exhausted") {
+            const key = pairKey(instance.a, instance.b);
+            repeat = { repeatReason: "exhausted", repeatOf: [...window].reverse().find((d) => pairKey(d.instance.a, d.instance.b) === key)!.id };
+          }
+        }
+        dispatch({ type: "question", instance, delivery: toDelivery(instance, origin, repeat), ...questionCommit });
+        if (repeat) dispatch({ type: "notice", notice: { key: "practice.poolExhausted" } });
+        else if (latest.current.notice?.key === "practice.poolExhausted") dispatch({ type: "notice", notice: null }); // true only of the question it came with
         return true;
       } catch {
         if (token === loadToken.current) dispatch({ type: "loadError", failed: true });
         return false;
       }
     },
-    [api, toDelivery],
+    [api, toDelivery, poolFor],
   );
 
   const resume = useCallback(

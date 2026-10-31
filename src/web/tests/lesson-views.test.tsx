@@ -179,6 +179,8 @@ describe("the record (tests 5 and 6)", () => {
     await screen.findByTestId("skill-name");
     await waitFor(() => expect(stored().lessonViews).toEqual([]));
     expect(deliveries()).toHaveLength(2);
+    // specs/005: without a session, every question of the old record belongs to the first one.
+    expect(stored().session).toEqual({ current: deliveries().map((d) => d.id), last: null });
     expect(stored()).not.toHaveProperty("schema"); // the value, inside the unchanged envelope
     expect(JSON.parse(window.localStorage.getItem("mathkx.guest.v1")!).schema).toBe(1);
   });

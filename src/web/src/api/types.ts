@@ -116,6 +116,14 @@ export interface SkillDto {
   definitions: string[];
 }
 
+/** A variation's pool (specs/005 contracts/pool.md): every question with the smallest seed giving it; never a sum. */
+export interface PoolDto {
+  definition: string;
+  version: number;
+  /** In the generator's canonical order; `seed` is null for a fixed task. */
+  questions: { seed: string | null; a: number; b: number }[];
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -134,6 +142,7 @@ export interface PracticeApi {
   getSkills(): Promise<SkillDto[]>;
   getSkill(id: string): Promise<SkillDto>;
   getInstance(definitionId: string, version: number, seed: string | null): Promise<InstanceDto>;
+  getPool(definitionId: string, version: number): Promise<PoolDto>;
   getStep(identity: Identity, kind: StepKind, index: number): Promise<StepDto>;
   validate(identity: Identity, originalText: string, submissionId: string): Promise<ValidationResponse>;
   getLessonContent(id: string, lang: string): Promise<LessonContentDto>;

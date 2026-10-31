@@ -29,9 +29,9 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 **Purpose**: Test fixtures every story reads.
 
-- [ ] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
+- [X] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
   - **`getPool(definitionId, version)` in the fake**: returns every question of the fake's pool for the definition in canonical order, each with a seed the fake's `getInstance` resolves to it. Use a seed-to-pair map the fake also honours, so a pool seed resolves to its pair. It logs `getPool …`.
-  - **New `FakeOptions`**: `poolSize` (limits a definition's pool to its first n pairs, for the exhausted case), `poolFails` (rejects `getPool`), and `sequence` (the pairs successive first draws resolve to, so a test can force a recent first draw).
+  - **New `FakeOptions`**: `pool` (serve pools at all; off by default, so `getPool` rejects and earlier tests keep their questions through the pool-unavailable fallback), `poolSize` (limits a definition's pool to its first n pairs, for the exhausted case), `poolFails` (rejects `getPool` even with `pool`), and `sequence` (the pairs successive first draws resolve to, so a test can force a recent first draw).
   - **`records.ts`**: add `repeatOf` and `repeatReason` to `DeliverySpec`, and a builder `recentWindow(definitionId, pairs)` that returns one delivery per pair, oldest first.
 
 ---
@@ -44,12 +44,12 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests
 
-- [ ] T002 [P] Add `src/backend/MathKX.Domain.Tests/Generators/QuestionPoolTests.cs` for `contracts/pool.md` "Tests" 1–6:
+- [X] T002 [P] Add `src/backend/MathKX.Domain.Tests/Generators/QuestionPoolTests.cs` for `contracts/pool.md` "Tests" 1–6:
   - **Sizes**: 45 for `within-10`, 36 for `crossing-ten`, and 1 for `four-plus-four`.
   - **Seeds**: each seed generates its pair; no smaller seed does; all seeds are below 65,536.
   - **Fixture**: the first ten entries of each generated pool match `src/backend/MathKX.Domain.Tests/Fixtures/pools.json`, which you create from the first run and review by hand against `Generate`.
   - **The limit**: with a lowered limit, building a pool fails with the definition key.
-- [ ] T003 [P] Add the `contracts/pool.md` contract tests 1–6 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
+- [X] T003 [P] Add the `contracts/pool.md` contract tests 1–6 to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - the shape, in canonical order;
   - every seed resolving through the instance endpoint to the listed operands (both pilot definitions);
   - the fixed task with `seed: null`;
@@ -61,19 +61,19 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Implementation
 
-- [ ] T004 Create `src/backend/MathKX.Domain/Generators/QuestionPool.cs`: `QuestionPool.For(ExerciseDefinition, GeneratorRegistry, ulong limit = 65_536)` returning the definition key and `IReadOnlyList<(Seed? Seed, int A, int B)>` per `contracts/pool.md`. A generated pool comes from `AdditionPairGenerator.Enumerate` and the smallest-seed search; a fixed task's pool is its prompt with no seed. Failure throws with the definition key. T002 passes.
-- [ ] T005 In `src/backend/MathKX.Api`:
+- [X] T004 Create `src/backend/MathKX.Domain/Generators/QuestionPool.cs`: `QuestionPool.For(ExerciseDefinition, GeneratorRegistry, ulong limit = 65_536)` returning the definition key and `IReadOnlyList<(Seed? Seed, int A, int B)>` per `contracts/pool.md`. A generated pool comes from `AdditionPairGenerator.Enumerate` and the smallest-seed search; a fixed task's pool is its prompt with no seed. Failure throws with the definition key. T002 passes.
+- [X] T005 In `src/backend/MathKX.Api`:
   - **Pools at startup**: add `QuestionPools` (a singleton holding every catalog definition's pool, built in its constructor) and register it in `Program.cs`. Resolve it once before `app.Run()`, so a pool that cannot be covered fails the start.
   - **Endpoint**: add `Endpoints/DefinitionsEndpoints.cs` with `GET /api/definitions/{definitionId}/{version:int}/pool`, returning `PoolDto` (new in `Dto/Dtos.cs`: `Definition`, `Version`, `Questions: { Seed, A, B }[]`, with the seed as a decimal string or null). An unknown definition gives `Problems.NotFound("unknown-definition", …)`. Map it in `Program.cs`.
 
   T003 passes.
-- [ ] T006 [P] In `src/web/src/api/types.ts`, add `PoolDto` and `getPool(definitionId, version): Promise<PoolDto>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts`.
-- [ ] T007 [P] Record fields:
+- [X] T006 [P] In `src/web/src/api/types.ts`, add `PoolDto` and `getPool(definitionId, version): Promise<PoolDto>` to `PracticeApi`. Implement it in `src/web/src/api/client.ts`.
+- [X] T007 [P] Record fields:
   - **`src/web/src/state/observations.ts`**: add optional `repeatOf?: string` and `repeatReason?: "requested" | "exhausted"` to `Delivery`.
   - **`src/web/src/state/store.tsx`**: add `session: { current: string[]; last: { finishedAt: string; questions: { id: string; outcome: Outcome; repeat: "requested" | "chance" | null }[] } | null }` to `PersistedState` and `initialPersisted`. Default a missing `session` on hydrate (the reducer initializer and the `hydrate` case) to `{ current: <every delivery ID>, last: null }`. Reset it in `clear`. Append a delivery's ID to `session.current` whenever it becomes current (the `question` action, for new, resumed, and repeated questions).
 
   Leave `SCHEMA_VERSION` unchanged. Extend `src/web/tests/lesson-views.test.tsx`'s old-record test to check `session` defaults and the deliveries stay intact.
-- [ ] T008 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/definitions/numbers.addition.within-10/1/pool` from the published service lists 45 questions and contains no `"sum"`.
+- [X] T008 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/definitions/numbers.addition.within-10/1/pool` from the published service lists 45 questions and contains no `"sum"`.
 
 **Checkpoint**: `dotnet test` and `npm test` pass; nothing visible changes.
 
@@ -87,12 +87,12 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Add `src/web/tests/selection.test.ts` for `contracts/selection.md` tests 1–4:
-  - `recentPairs`: the eight most recent per variation, by time, whatever the outcome or repeat reason;
+- [X] T009 [P] [US1] Add `src/web/tests/selection.test.ts` for `contracts/selection.md` tests 1–4:
+  - `recentWindow`: the eight most recent per variation, by time, whatever the outcome or repeat reason;
   - either order;
   - `choose` returns `fresh`, `chosen` (index `seed mod n`, never a recent pair), and `exhausted`;
   - determinism.
-- [ ] T010 [P] [US1] Add `src/web/tests/avoidance.test.tsx` for the `contracts/selection.md` store tests 1–7, with the fake API and `records.ts`:
+- [X] T010 [P] [US1] Add `src/web/tests/avoidance.test.tsx` for the `contracts/selection.md` store tests 1–7, with the fake API and `records.ts`:
   - 100 requests on each pilot variation with no pair from the previous eight;
   - `poolSize: 5`: a request is a repeat with `repeatReason: "exhausted"`, a `repeatOf`, and the notice exactly while all five pairs are in the window. A pair that has left the window is delivered next, without the notice (after `A, B, C, D, E, E, E, E, E`, the next is `A`);
   - the record never holds the passed-over question;
@@ -100,25 +100,25 @@ Backend under `src/backend/` (solution `MathKX.slnx`), learner app under `src/we
   - `poolFails` still delivers a question;
   - after a remount on the same storage, the window still applies;
   - a ladder change avoids the target variation's window.
-- [ ] T011 [P] [US1] Add `src/web/e2e/repeats.spec.ts` with check 1, on both projects:
+- [X] T011 [P] [US1] Add `src/web/e2e/repeats.spec.ts` with check 1, on both projects:
   - clear the record, start within ten, and ask for "Another question" 20 times, reading each prompt;
   - no question equals, in either order, any of the eight before it;
   - the page's request log shows at most two `/api/instances/` requests per question and one `/api/definitions/…/pool` request.
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Create `src/web/src/state/selection.ts` with `recentPairs(record, definitionId, version)` and `choose(firstDraw, window, pool)` per `contracts/selection.md` (pure; `BigInt` for the index). T009 passes.
-- [ ] T013 [US1] In `src/web/src/state/store.tsx`, extend `load()` for questions the learner did not choose:
+- [X] T012 [US1] Create `src/web/src/state/selection.ts` with `recentWindow(record, definitionId, version)`, `pairKey(a, b)`, and `choose(firstDraw, window, pool)` per `contracts/selection.md` (pure; `BigInt` for the index). T009 passes.
+- [X] T013 [US1] In `src/web/src/state/store.tsx`, extend `load()` for questions the learner did not choose:
   - **First draw**: as today.
   - **Window**: compute it from the record.
   - **Pool**: when the first draw is recent, get the pool from a per-visit cache (a `useRef<Map<string, PoolDto>>`).
   - **Choice**: on `chosen`, request the chosen seed and dispatch that question only. On `exhausted`, dispatch the first draw with `repeatReason: "exhausted"` and `repeatOf` (the most recent same-pair delivery in the window) through `toDelivery`, and dispatch the notice `practice.poolExhausted`.
   - **Pool failure**: dispatch the first draw.
 
-  Keep the supersede token checks around both requests. T010 passes.
-- [ ] T014 [P] [US1] Add `practice.poolExhausted` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/selection.md`. The dictionary and literal checks pass.
-- [ ] T015 [US1] Add `repeatKind(delivery, record)` to `src/web/src/state/progress.ts`, returning `"chance"` for `repeatReason: "exhausted"` or spec 004's ordered match, and none otherwise (`"requested"` follows in T022). Use it for the repeat tag in `src/web/src/pages/RecordPage.tsx` and `src/web/src/pages/ReplayPage.tsx` and for `repeatCount` in `groupBySkill`, so an exhausted repeat in either order is tagged "Repeated question". Extend `src/web/tests/progress.test.ts` for it.
-- [ ] T016 [US1] Make T011 pass against the built app and service on both projects. The spec 002 to 004 end-to-end checks still pass, since their golden first draws are unchanged and start from a cleared record.
+  Keep the supersede token checks around both requests. A question that is not exhausted clears a standing `practice.poolExhausted` notice. T010 passes.
+- [X] T014 [P] [US1] Add `practice.poolExhausted` to `src/web/src/i18n/en.ts` and `nb.ts` with the wording of `contracts/selection.md`. The dictionary and literal checks pass.
+- [X] T015 [US1] Add `repeatKind(delivery, record)` to `src/web/src/state/progress.ts`, returning `"chance"` for `repeatReason: "exhausted"` or spec 004's ordered match, and none otherwise (`"requested"` follows in T022). Use it for the repeat tag in `src/web/src/pages/RecordPage.tsx` and `src/web/src/pages/ReplayPage.tsx` and for `repeatCount` in `groupBySkill`, so an exhausted repeat in either order is tagged "Repeated question". Extend `src/web/tests/progress.test.ts` for it.
+- [X] T016 [US1] Make T011 pass against the built app and service on both projects. The spec 002 to 004 end-to-end checks still pass, since their golden first draws are unchanged and start from a cleared record.
 
 **Checkpoint (first merge)**: quickstart scenarios 1 and 2 pass; Phases 1–3 may merge.
 
