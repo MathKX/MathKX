@@ -104,22 +104,22 @@ test.describe("Finish practice", () => {
     await page.getByTestId("lang-en").click();
     await page.getByTestId("practice-numbers.addition.within-10").click();
 
+    await expect(page.getByTestId("prompt")).toBeVisible();
     for (let i = 0; i < 3; i++) {
-      await expect(page.getByTestId("prompt")).toBeVisible();
       const { a, b } = await operands(page);
       await answer(page, a + b);
-      if (i < 2) await page.getByTestId("another").click();
+      // Wait for the next question itself, so its operands are never read from the one before.
+      await page.getByTestId("another").click();
+      await expect(page.getByTestId("result")).toHaveCount(0);
     }
-    // A lesson detour does not end the session; the lesson may first ask whether to show its answer.
-    await page.getByTestId("to-lesson").click();
-    await expect(page.getByTestId("lesson-content").or(page.getByTestId("lesson-gate"))).toBeVisible();
-    if (await page.getByTestId("lesson-gate").isVisible()) await page.getByTestId("gate-open").click();
-    await expect(page.getByTestId("lesson-content")).toBeVisible();
-    await page.getByTestId("return-to-question").click();
-    await page.getByTestId("another").click();
-    await expect(page.getByTestId("result")).toHaveCount(0);
     const fourth = await operands(page);
     await page.getByTestId("answer").fill("7");
+    // A detour from the unanswered question does not end the session. A lesson that would show the answer asks
+    // first; leaving its gate closed keeps the answer unshown, so the question can still be answered correctly.
+    await page.getByTestId("to-lesson").click();
+    await expect(page.getByTestId("lesson-content").or(page.getByTestId("lesson-gate"))).toBeVisible();
+    await page.getByTestId("return-to-question").click();
+    await expect(page.getByTestId("answer")).toHaveValue("7");
 
     await page.getByTestId("finish-practice").click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your practice session");

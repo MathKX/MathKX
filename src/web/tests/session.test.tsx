@@ -118,6 +118,65 @@ describe("Practise again (tests 2 and 3)", () => {
   });
 });
 
+describe("Practise again keeps the help where the learner left it (test 2)", () => {
+  it("shows the help step reached, without recording it again", async () => {
+    const { user } = await practise();
+    await user.click(screen.getByTestId("toggle-help"));
+    await user.click(await screen.findByTestId("help-next"));
+    await screen.findByText(/^Step 1 of 4/);
+    await user.click(screen.getByTestId("help-next"));
+    await screen.findByText(/^Step 2 of 4/);
+    await user.type(screen.getByTestId("answer"), "7");
+    const steps = () => currentDelivery().events.filter((e) => e.type === "support" && e.kind === "help-step").length;
+    const shown = steps();
+    await finish(user);
+    expect(stored().resumable).toMatchObject({ helpOpen: true, helpStep: 1 });
+
+    await practiseAgain(user);
+    expect((await screen.findByTestId("help-step-text")).textContent).toMatch(/^Step 2 of 4/);
+    expect(stored().helpStep).toBe(1);
+    expect(steps()).toBe(shown);
+    await user.click(screen.getByTestId("help-next"));
+    await screen.findByText(/^Step 3 of 4/); // and carries on from there
+  });
+});
+
+describe("finishing while practice is still starting", () => {
+  it("drops a start still waiting for its skill", async () => {
+    const api = createFakeApi({ pool: true });
+    api.hold("getSkill");
+    render(<App api={api} initialPath={practicePath} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("lang-en"));
+    await finish(user);
+    api.release("getSkill");
+    await waitFor(() => expect(api.calls).toContain("getSkill numbers.addition-within-20"));
+    await screen.findByTestId("session-empty");
+    expect(api.calls.some((c) => c.startsWith("getInstance"))).toBe(false);
+    expect(deliveries()).toEqual([]);
+    expect(stored().session.current).toEqual([]);
+  });
+
+  it("drops a resume still on its way, and keeps the question resumable", async () => {
+    const { api, user } = await practise();
+    await user.type(screen.getByTestId("answer"), "7");
+    const unfinished = currentDelivery().id;
+    await finish(user);
+    api.hold("getInstance");
+    await user.click(screen.getByTestId("session-again"));
+    await screen.findByTestId("finish-practice");
+    await finish(user);
+    api.release("getInstance");
+    await screen.findByTestId("session-empty");
+    await waitFor(() => expect(api.calls.filter((c) => c.startsWith("getInstance"))).toHaveLength(2));
+    await act(() => Promise.resolve());
+    expect(deliveries().map((d) => d.id)).toEqual([unfinished]);
+    expect(stored().session.current).toEqual([]);
+    expect(stored().resumable).toMatchObject({ deliveryId: unfinished, draft: "7" });
+    expect(stored().currentDeliveryId).toBeNull();
+  });
+});
+
 describe("a question resumed across sessions (test 4)", () => {
   it("counts its new outcome in the next summary, and leaves the first summary as it was", async () => {
     const { user } = await practise();
