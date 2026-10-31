@@ -25,9 +25,9 @@ bash src/backend/scripts/smoke-published.sh   # publishes to a temp folder and r
 
 ## Deploy
 
-`.github/workflows/deploy.yml` runs on every push to `main` (and on manual dispatch). It runs the build-and-test and content-validation workflows, then builds the learner app, publishes the service with the app in `wwwroot/` and `content/` beside the binaries, deploys the folder to the `mathkx` App Service (resource group `evkx`, Norway East), and polls `/api/health`.
+`.github/workflows/deploy.yml` runs on every push to `main` (and on manual dispatch). It runs the build-and-test and content-validation workflows, then builds the learner app, publishes the service with the app in `wwwroot/` and `content/` beside the binaries, deploys the folder to the `matkxv2` App Service (resource group `evkxproductionsubscription` in the "Azure Production Sites" subscription, plan `evkxpremiumv4`, PremiumV4 P1v4, Norway East), and polls `/api/health`. The service answers at `https://matkxv2.azurewebsites.net`. The first app, `mathkx` (resource group `evkx` in the "Azure Med MSDN Subscription"), served production until 2026-10-31 and is no longer deployed to.
 
-Azure sign-in uses GitHub OIDC; no secret is stored. The user-assigned managed identity `id-mathkx-deploy` (resource group `evkx`) trusts only `repo:MathKX/MathKX:environment:production` and holds Website Contributor on the web app alone. The GitHub `production` environment accepts deployments from `main` only and holds `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` as variables. Basic-auth publishing is disabled on the web app, so publish profiles do not work.
+Azure sign-in uses GitHub OIDC; no secret is stored. The user-assigned managed identity `id-mathkx-deploy` (resource group `evkx`; both subscriptions share one Entra tenant, so the identity did not move with the app) trusts only `repo:MathKX/MathKX:environment:production` and holds Website Contributor on the `matkxv2` web app alone. The GitHub `production` environment accepts deployments from `main` only and holds `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` (the subscription that holds the web app) as variables. Basic-auth publishing is disabled on the web app, so publish profiles do not work.
 
 ## Rules the tests enforce
 
