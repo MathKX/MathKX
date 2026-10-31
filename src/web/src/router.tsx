@@ -1,4 +1,4 @@
-// A small history router: four routes, no dependency.
+// A small history router: a handful of routes, no dependency.
 import { createContext, useContext, useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 interface RouterState {
@@ -83,6 +83,7 @@ export type Route =
   | { name: "practice"; skillId: string }
   | { name: "record" }
   | { name: "replay"; deliveryId: string }
+  | { name: "session" }
   | { name: "unknown" };
 
 export function matchRoute(address: string): Route {
@@ -92,5 +93,6 @@ export function matchRoute(address: string): Route {
   if (parts[0] === "practice" && parts[1]) return { name: "practice", skillId: parts[1] };
   if (parts[0] === "record" && parts[1]) return { name: "replay", deliveryId: parts[1] };
   if (parts[0] === "record") return { name: "record" };
+  if (parts[0] === "session" && parts.length === 1) return { name: "session" };
   return { name: "unknown" };
 }

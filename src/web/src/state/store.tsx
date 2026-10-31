@@ -4,9 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { InstanceDto, LadderEntry, PoolDto, PracticeApi, StepDto, ValidationResponse } from "../api/types";
 import { newSeed, practiceApi } from "../api/client";
 import type { Lang } from "../i18n";
-import type { Outcome } from "./outcomes";
+import { derive, type Outcome } from "./outcomes";
 import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
+import { repeatKind, repeats, type RepeatKind } from "./progress";
 import { choose, pairKey, recentWindow } from "./selection";
 
 export interface DefinitionRef {
@@ -60,7 +61,7 @@ export interface PersistedState {
 /** The questions worked in the current session, and a snapshot of the last finished one (specs/005). */
 export interface PracticeSession {
   current: string[];
-  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: "requested" | "chance" | null }[] } | null;
+  last: { finishedAt: string; questions: { id: string; outcome: Exclude<Outcome, "none">; repeat: RepeatKind | null }[] } | null;
 }
 
 /** A record written before specs/005 has no session: every question in it belongs to the first one. */
@@ -119,6 +120,7 @@ type Action =
   | { type: "present" }
   | { type: "instanceLessons"; deliveryId: string; lessons: NonNullable<InstanceDto["lessons"]> }
   | { type: "end" }
+  | { type: "finish"; at: string }
   | { type: "lessonViewed"; view: LessonView }
   | { type: "clear" };
 
@@ -228,6 +230,34 @@ function reducer(state: State, action: Action): State {
         : null;
       return { ...updateCurrent(state, (d) => recordEvent(d, { type: "ended" })), resumable, presenting: false };
     }
+    case "finish": {
+      // "Finish practice" (specs/005 contracts/session.md): close the question as leaving practice does (an
+      // unanswered one stays resumable), snapshot the session's questions as they are now, release the question,
+      // and start the next session. Repeats are judged against the whole record, not the session alone.
+      const ended = reducer(state, { type: "end" });
+      const resumableId = ended.resumable?.deliveryId ?? null;
+      const ordered = repeats(ended.deliveries);
+      const questions = ended.session.current.flatMap((id) => {
+        const d = ended.deliveries.find((x) => x.id === id);
+        const outcome = d ? derive(d, { resumable: id === resumableId }).outcome : "none";
+        return d && outcome !== "none" ? [{ id, outcome, repeat: repeatKind(d, ordered) }] : [];
+      });
+      return {
+        ...ended,
+        instance: null,
+        currentDeliveryId: null,
+        draft: "",
+        helpOpen: false,
+        helpSteps: [],
+        helpStep: -1,
+        explanationOpen: false,
+        explanationSteps: [],
+        explanationStep: -1,
+        result: null,
+        checking: false,
+        session: { current: [], last: { finishedAt: action.at, questions } },
+      };
+    }
     case "lessonViewed":
       return { ...state, lessonViews: [...state.lessonViews, action.view] };
     case "clear":
@@ -260,11 +290,13 @@ export interface StoreApi {
   ensureInstanceLessons(): Promise<boolean>;
   /**
    * "Repeat this question" (specs/005 contracts/repeat.md): the delivery's identity again, as a new question with a
-   * fresh state, moving practice to its skill when needed. Resolves to that skill, or null when it could not be loaded.
+   * fresh state, moving practice to its skill when needed. Resolves to that skill, or null when it could not be
+   * loaded or `signal` abandoned it.
    */
-  /** Resolves to the skill practised after the repeat, or null when it failed or `signal` abandoned it. */
   repeatQuestion(deliveryId: string, signal?: AbortSignal): Promise<string | null>;
   endSession(): void;
+  /** "Finish practice" (specs/005 contracts/session.md): ends the session and keeps its summary in `session.last`. */
+  finishPractice(): void;
   clearRecord(): void;
   dismissNotice(): void;
 }
@@ -587,6 +619,10 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         return instance ? instance.skill : null;
       },
       endSession: () => dispatch({ type: "end" }),
+      finishPractice() {
+        loadToken.current++; // a question still on its way belongs to the finished session
+        dispatch({ type: "finish", at: new Date().toISOString() });
+      },
       clearRecord() {
         loadToken.current++; // a question still on its way belongs to the record being cleared
         store.clear();

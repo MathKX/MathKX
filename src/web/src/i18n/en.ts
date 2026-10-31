@@ -67,6 +67,7 @@ export const en = {
     resumed: "You continue where you left off.",
     poolExhausted: "This variation has no other questions right now, so this one repeats.",
     loadError: "The question could not be loaded. Try again.",
+    finish: "Finish practice",
   },
   record: {
     title: "My work",
@@ -104,6 +105,12 @@ export const en = {
     viewNote: "A view shows that you opened the lesson, not that you understood it.",
     noPractice: "No questions practised yet.",
     historyUnavailable: "Your lesson history could not be shown just now.",
+  },
+  session: {
+    title: "Your practice session",
+    empty: "You did not answer any questions in this session.",
+    none: "You have no finished practice session yet.",
+    again: "Practise again",
   },
   ladder: {
     current: "Now: {description}",
