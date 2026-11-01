@@ -3,6 +3,7 @@ using MathKX.Domain.Content;
 using MathKX.Domain.Lessons;
 using MathKX.Domain.Instances;
 using MathKX.Domain.Random;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Api.Endpoints;
 
@@ -14,6 +15,7 @@ public static class InstancesEndpoints
     public static IEndpointRouteBuilder MapInstances(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/instances/{definitionId}/{version:int}/{seed}", Resolve);
+        app.MapGet("/api/instances/{definitionId}/{version:int}/{seed}/answer", Answer);
         return app;
     }
 
@@ -28,6 +30,32 @@ public static class InstancesEndpoints
         {
             var instance = resolver.Resolve(new InstanceIdentity(definitionId, version, parsed));
             return Results.Ok(InstanceDto.From(instance, Lessons(catalog, instance)));
+        }
+        catch (UnknownDefinitionException error)
+        {
+            return Problems.NotFound("unknown-definition", error.Message);
+        }
+        catch (MissingSeedException error)
+        {
+            return Problems.BadRequest("invalid-seed", error.Message);
+        }
+    }
+
+    /// <summary>
+    /// The answer to one question with the operands it belongs to, for the check summary only (specs/006 contracts/api.md):
+    /// spec 002's third named exception to "no sum anywhere". Resolves and fails exactly as <see cref="Resolve"/> does.
+    /// </summary>
+    public static IResult Answer(string definitionId, int version, string seed, InstanceResolver resolver, IntegerAnswerValidator validator)
+    {
+        if (!TryParseSeed(seed, out var parsed, out var problem))
+        {
+            return problem!;
+        }
+
+        try
+        {
+            var instance = resolver.Resolve(new InstanceIdentity(definitionId, version, parsed));
+            return Results.Ok(new AnswerDto(IdentityDto.From(instance.Identity), instance.A, instance.B, new AnswerValueDto("integer", validator.ExpectedAnswer(instance))));
         }
         catch (UnknownDefinitionException error)
         {

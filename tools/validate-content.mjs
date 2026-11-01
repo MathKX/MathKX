@@ -7,6 +7,7 @@
 // 4. Definitions: unique (id, version), skill resolves, registered generator/validator/representations,
 //    parameter domains, feasibility, representation coverage, fixed-task artifacts, misconception codes.
 // 5. Lessons: folder and metadata, references, both translations, structure, directives, notation, pairing.
+// 6. Self-checks (specs/006): counted; their schema is checked in step 2.
 //
 // Exit code 0 when everything passes (warnings allowed), 1 on content errors, 2 on tooling errors.
 // Usage: node tools/validate-content.mjs [--root <repo root>]
@@ -40,7 +41,7 @@ async function main() {
   checkLadders(skills, definitions, diagnostics);
   const lessonCount = await checkLessons(ofKind("lesson"), { skills, definitions, registries, diagnostics });
 
-  const counts = { files: fileCount, skills: skills.size, lessons: lessonCount, definitions: definitions.size, registries: registries.count };
+  const counts = { files: fileCount, skills: skills.size, lessons: lessonCount, definitions: definitions.size, checks: ofKind("check").length, registries: registries.count };
   const line = summary(counts, { errors: diagnostics.errorCount, warnings: diagnostics.warningCount });
   const output = diagnostics.errorCount > 0 ? console.error : console.log;
   for (const d of diagnostics.sorted()) output(formatDiagnostic(d));

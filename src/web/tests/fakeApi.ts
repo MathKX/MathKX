@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ApiError, type Identity, type InstanceDto, type LadderEntry, type LessonDetail, type LessonSummary, type PracticeApi, type SkillDto, type StepDto, type StepKind, type ValidationResponse } from "../src/api/types";
+import { ApiError, type CheckDto, type Identity, type InstanceDto, type LadderEntry, type LessonDetail, type LessonSummary, type PracticeApi, type SkillDto, type StepDto, type StepKind, type ValidationResponse } from "../src/api/types";
 
 export const LADDER: LadderEntry[] = [
   { definition: "numbers.addition.within-10", version: 1, description: { nb: "Summen er høyst 10.", en: "The sum is at most 10." } },
@@ -36,6 +36,29 @@ const LESSON: LessonDetail = {
   practice: LADDER.map((l) => ({ definition: l.definition, version: l.version, skill: SKILL.id })),
   visuals: ["ten-frame-explorer", "make-ten"],
   translations: { nb: "nb.md", en: "en.md" },
+};
+
+/** The pilot check as the service lists it (specs/006 contracts/api.md). */
+export const PILOT_CHECK: CheckDto = {
+  id: "numbers.addition.check-within-20",
+  version: 1,
+  skill: SKILL.id,
+  title: { nb: "Tiervenner og addisjon", en: "Number bonds and addition" },
+  scope: { nb: "Addisjon innenfor ti og over tieren", en: "Addition within ten and across ten" },
+  questions: [
+    { definition: "numbers.addition.within-10", version: 1, seed: "22" },
+    { definition: "numbers.addition.within-10", version: 1, seed: "24" },
+    { definition: "numbers.addition.crossing-ten", version: 1, seed: "105" },
+    { definition: "numbers.addition.crossing-ten", version: 1, seed: "62" },
+  ],
+};
+
+/** What the pilot check's identities resolve to, keyed `definition@version:seed`: 7 + 3, 5 + 4, 8 + 5, and 9 + 4. */
+export const PILOT_OPERANDS: Record<string, [number, number]> = {
+  "numbers.addition.within-10@1:22": [7, 3],
+  "numbers.addition.within-10@1:24": [5, 4],
+  "numbers.addition.crossing-ten@1:105": [8, 5],
+  "numbers.addition.crossing-ten@1:62": [9, 4],
 };
 
 export interface FakeOptions {
@@ -71,6 +94,16 @@ export interface FakeOptions {
   sequence?: [number, number][];
   /** `getInstance` fails: an unknown definition (404) or an unreachable service. */
   instanceFails?: "404" | "network";
+  /** The check list (default: the pilot check); `[]` for none (specs/006). */
+  checks?: CheckDto[];
+  /** `getChecks` rejects. */
+  checksFail?: boolean;
+  /** `getAnswer` rejects. */
+  answerFails?: boolean;
+  /** The next `validate` rejects; later ones answer. */
+  validateFailsOnce?: boolean;
+  /** A check identity resolves to other operands (each `b` one more), in `getInstance` and `getAnswer` alike. */
+  resolveDiffers?: boolean;
 }
 
 /** The repository's own lesson files, so component tests render the real lesson. */
@@ -79,7 +112,7 @@ export function lessonMarkdown(lang: string): string {
   return readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../../content/lessons/number-bonds-to-ten", `${lang}.md`), "utf8");
 }
 
-type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer";
+type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getAnswer";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -98,7 +131,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [] };
+  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getAnswer: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -122,9 +155,15 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     if (next) drawn.set(key, next);
     return next;
   };
+  const checks = options.checks ?? [PILOT_CHECK];
+  let validateFailures = options.validateFailsOnce ? 1 : 0;
+  const checkPair = (identity: Identity): [number, number] | undefined => {
+    const pair = PILOT_OPERANDS[`${identity.definitionId}@${identity.version}:${identity.seed ?? "-"}`];
+    return pair && options.resolveDiffers ? [pair[0], pair[1] + 1] : pair;
+  };
   const instanceOf = (identity: Identity): InstanceDto => {
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
-    const pair: [number, number] = options.instanceOperands ?? bySeed ?? poolPair(identity) ?? pairs[identity.definitionId] ?? [3, 5];
+    const pair: [number, number] = options.instanceOperands ?? bySeed ?? checkPair(identity) ?? poolPair(identity) ?? pairs[identity.definitionId] ?? [3, 5];
     const crossing = identity.definitionId.includes("crossing");
     const representation = crossing ? "make-ten" : "groups";
     const dto: InstanceDto = {
@@ -227,6 +266,10 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     validate: async (identity, originalText, submissionId) => {
       calls.push(`validate ${originalText}`);
       if (options.failValidate) throw new Error("unreachable");
+      if (validateFailures > 0) {
+        validateFailures--;
+        throw new Error("unreachable");
+      }
       await gate("validate");
       const { a, b } = instanceOf(identity);
       const trimmed = originalText.trim();
@@ -256,6 +299,25 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       calls.push("getTenFrameExplorer");
       await gate("getTenFrameExplorer");
       return { type: "ten-frame-explorer", states: Array.from({ length: 11 }, (_, filled) => ({ filled, partner: 10 - filled })) };
+    },
+    getChecks: async () => {
+      calls.push("getChecks");
+      if (options.checksFail) throw new Error("unreachable");
+      return checks;
+    },
+    getCheck: async (id, version) => {
+      calls.push(`getCheck ${id}@${version}`);
+      if (options.checksFail) throw new Error("unreachable");
+      const check = checks.find((c) => c.id === id && c.version === version);
+      if (!check) throw new ApiError(404, "unknown-check", `Check ${id}@${version} is not defined.`);
+      return check;
+    },
+    getAnswer: async (identity) => {
+      calls.push(`getAnswer ${identity.definitionId}@${identity.version} ${identity.seed ?? "-"}`);
+      await gate("getAnswer");
+      if (options.answerFails) throw new Error("unreachable");
+      const { a, b } = instanceOf(identity);
+      return { identity, a, b, answer: { kind: "integer", value: a + b } };
     },
   };
 }

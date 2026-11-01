@@ -13,7 +13,8 @@ public sealed class ContentCatalog
         IReadOnlyDictionary<string, ExerciseDefinition> definitions,
         IReadOnlyDictionary<string, LessonMetadata> lessons,
         IReadOnlyDictionary<(string LessonId, string Language), LessonTranslation> translations,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> assets)
+        IReadOnlyDictionary<string, IReadOnlyList<string>> assets,
+        IReadOnlyDictionary<string, SelfCheck> checks)
     {
         Generators = generators;
         Validators = validators;
@@ -26,6 +27,7 @@ public sealed class ContentCatalog
         Translations = translations;
         FrontMatters = translations.ToDictionary(t => t.Key, t => t.Value.FrontMatter);
         _assets = assets;
+        Checks = checks;
     }
 
     private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _assets;
@@ -48,6 +50,20 @@ public sealed class ContentCatalog
     public IReadOnlyDictionary<string, ExerciseDefinition> Definitions { get; }
 
     public IReadOnlyDictionary<string, LessonMetadata> Lessons { get; }
+
+    /// <summary>Self-checks keyed by <c>id@version</c> (specs/006).</summary>
+    public IReadOnlyDictionary<string, SelfCheck> Checks { get; }
+
+    /// <summary>The newest version of each check, ordered by ID.</summary>
+    public IReadOnlyList<SelfCheck> LatestChecks() =>
+        Checks.Values
+            .GroupBy(c => c.Id, StringComparer.Ordinal)
+            .Select(g => g.MaxBy(c => c.Version)!)
+            .OrderBy(c => c.Id, StringComparer.Ordinal)
+            .ToList();
+
+    public bool TryGetCheck(string id, int version, out SelfCheck check) =>
+        Checks.TryGetValue($"{id}@{version}", out check!);
 
     public IReadOnlyDictionary<(string LessonId, string Language), LessonFrontMatter> FrontMatters { get; }
 

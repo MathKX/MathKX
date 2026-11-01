@@ -92,7 +92,7 @@ public sealed class InstanceResolverTests
         {
             [$"{generator}@{version}"] = Catalog.Generators["addition-pair@1"] with { Version = version },
         };
-        return new ContentCatalog(generators, Catalog.Validators, Catalog.Representations, Catalog.VisualComponents, Catalog.MisconceptionCodes, Catalog.Skills, definitions, Catalog.Lessons, Catalog.Translations, Catalog.Lessons.Keys.ToDictionary(id => id, Catalog.Assets));
+        return new ContentCatalog(generators, Catalog.Validators, Catalog.Representations, Catalog.VisualComponents, Catalog.MisconceptionCodes, Catalog.Skills, definitions, Catalog.Lessons, Catalog.Translations, Catalog.Lessons.Keys.ToDictionary(id => id, Catalog.Assets), Catalog.Checks);
     }
 
     /// <summary>A hypothetical addition-pair@2 that enumerates in the opposite order, so the same seed yields another pair.</summary>

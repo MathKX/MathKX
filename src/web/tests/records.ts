@@ -1,6 +1,7 @@
 // Scripted guest records for the progress and replay tests (specs/004 tasks T001). Plain data shaped like the
 // store's deliveries; nothing here derives anything.
 import type { SkillDto } from "../src/api/types";
+import type { CheckResume, CheckRun } from "../src/state/checks";
 import type { Delivery, Event } from "../src/state/observations";
 
 export const WITHIN_TEN = "numbers.addition.within-10";
@@ -160,4 +161,76 @@ export function beforeThisFeature(): Record<string, unknown> {
     result: null,
     resumable: null,
   };
+}
+
+/** The pilot check's questions with the operands they resolve to (specs/006 data-model.md). */
+export const PILOT_QUESTIONS = [
+  { definitionId: WITHIN_TEN, version: 1, seed: "22", a: 7, b: 3 },
+  { definitionId: WITHIN_TEN, version: 1, seed: "24", a: 5, b: 4 },
+  { definitionId: CROSSING, version: 1, seed: "105", a: 8, b: 5 },
+  { definitionId: CROSSING, version: 1, seed: "62", a: 9, b: 4 },
+] as const;
+
+/**
+ * One position of a scripted run: a correct or wrong save, a skip, input guidance only, a delivery with no events
+ * ("reached"), the events of a supported question, or `null` for a question never reached.
+ */
+export type PositionScript = "correct" | "wrong" | "skipped" | "guidance" | "reached" | Event[] | null;
+
+export interface CheckRunSpec {
+  id?: string;
+  /** One script per pilot position; reached positions come first, unreached (`null`) ones last. */
+  positions: PositionScript[];
+  /** Default: the last reached position, or 1. */
+  position?: number;
+  switchAt?: number | null;
+  startedAt?: string;
+  finishedAt?: string;
+  endedAt?: string;
+  resume?: CheckResume | null;
+}
+
+const scriptEvents = (script: Exclude<PositionScript, null>, sum: number): Event[] => {
+  switch (script) {
+    case "correct":
+      return [correct(sum)];
+    case "wrong":
+      return [incorrect(sum + 2)];
+    case "skipped":
+      return [skipped];
+    case "guidance":
+      return [guidance()];
+    case "reached":
+      return [];
+    default:
+      return script;
+  }
+};
+
+/** A run of the pilot check from per-position scripts (specs/006 tasks T001). Plain data; nothing is derived. */
+export function checkRun(spec: CheckRunSpec): CheckRun {
+  const unreached = spec.positions.indexOf(null);
+  const count = unreached === -1 ? spec.positions.length : unreached;
+  if (spec.positions.slice(count).some((p) => p !== null)) throw new Error("reached positions must come before unreached ones");
+  const startedAt = spec.startedAt ?? at(0);
+  const deliveries = spec.positions.slice(0, count).map((script, i): Delivery => {
+    const q = PILOT_QUESTIONS[i]!;
+    const d = delivery({ definitionId: q.definitionId, seed: q.seed, a: q.a, b: q.b, startedAt, events: scriptEvents(script!, q.a + q.b) });
+    return { ...d, purpose: "check" };
+  });
+  const run: CheckRun = {
+    id: spec.id ?? nextId("run"),
+    checkId: "numbers.addition.check-within-20",
+    checkVersion: 1,
+    skillId: "numbers.addition-within-20",
+    questions: PILOT_QUESTIONS.slice(0, spec.positions.length).map(({ definitionId, version, seed }) => ({ definitionId, version, seed })),
+    deliveries,
+    position: spec.position ?? Math.max(1, count),
+    switchAt: spec.switchAt ?? null,
+    startedAt,
+    resume: spec.resume ?? null,
+  };
+  if (spec.finishedAt) run.finishedAt = spec.finishedAt;
+  if (spec.endedAt) run.endedAt = spec.endedAt;
+  return run;
 }

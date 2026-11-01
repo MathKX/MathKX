@@ -36,6 +36,7 @@ app.MapGet("/api/health", (ContentCatalog catalog) => Results.Ok(new
     skills = catalog.Skills.Count,
     definitions = catalog.Definitions.Count,
     lessons = catalog.Lessons.Count,
+    checks = catalog.Checks.Count,
     registries = 5,
 }));
 app.MapContent();
@@ -44,6 +45,7 @@ app.MapValidations();
 app.MapSteps();
 app.MapVisuals();
 app.MapDefinitions();
+app.MapChecks();
 
 // The built learner app, when present in wwwroot: static files plus a history-API fallback that never
 // shadows /api/* (an unknown API route stays a 404 problem, not the app shell). The shell is always

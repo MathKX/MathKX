@@ -7,7 +7,7 @@ Part of [plan.md](../plan.md) Phase 1. A thin, stateless JSON service. No authen
 - Seeds are decimal strings matching `^(0|[1-9][0-9]*)$` within the unsigned 64-bit range, never numbers. A fixed task is addressed with `-` as the seed.
 - Versions are positive integers.
 - Language is a query parameter `lang=nb|en` where a response contains localized content; it never affects mathematics.
-- Private data (the sum, `instance.validation`) is never present in any response except the completed equation inside a `correct` validation result and a step whose `reveals` flag is true, which the learner app fetches only when the learner advances to it and records as a reveal.
+- Private data (the sum, `instance.validation`) is never present in any response except the completed equation inside a `correct` validation result and a step whose `reveals` flag is true, which the learner app fetches only when the learner advances to it and records as a reveal. Spec 006 adds a third, named exception: the answer endpoint the check summary alone requests ([specs/006 contracts/api.md](../../006-self-checks/contracts/api.md)).
 
 ## `GET /api/lessons`
 

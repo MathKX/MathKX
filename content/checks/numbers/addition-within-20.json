@@ -1,0 +1,15 @@
+{
+  "$schema": "../../../schemas/self-check.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.addition.check-within-20",
+  "version": 1,
+  "skill": "numbers.addition-within-20",
+  "title": { "nb": "Tiervenner og addisjon", "en": "Number bonds and addition" },
+  "scope": { "nb": "Addisjon innenfor ti og over tieren", "en": "Addition within ten and across ten" },
+  "questions": [
+    { "definition": "numbers.addition.within-10", "version": 1, "seed": "22" },
+    { "definition": "numbers.addition.within-10", "version": 1, "seed": "24" },
+    { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "105" },
+    { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "62" }
+  ]
+}
