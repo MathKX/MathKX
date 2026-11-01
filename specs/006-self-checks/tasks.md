@@ -43,7 +43,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
   - **The fake's checks**: `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)`, each logged (`getChecks`, `getCheck …`, `getAnswer …`) like the other calls. By default the fake serves one check shaped like the pilot (`numbers.addition.check-within-20`, version 1, the four identities of `contracts/api.md`). Its `getInstance` resolves those seeds to `7 + 3`, `5 + 4`, `8 + 5`, and `9 + 4`, and its `getAnswer` returns their sums.
   - **New `FakeOptions`**: `checks` (replace the list; `[]` for none), `checksFail` (reject `getChecks`), `answerFails` (reject `getAnswer`), `validateFailsOnce` (reject the next `validate`), and `resolveDiffers` (a check identity resolves to other operands, for the "explanation unavailable" case).
-  - **`records.ts`**: a builder `checkRun(spec)` that returns a `CheckRun` from per-position scripts. A script is `"correct"`, `"wrong"`, `"skipped"`, `"guidance"`, `"reached"` (a delivery with no closed result), a list of supported events, or `null` (unreached), with `switchAt`, `finishedAt`, and `endedAt`. The deliveries use the four pilot questions.
+  - **`records.ts`**: a builder `checkRun(spec)` that returns a `CheckRun` from per-position scripts. A script is `"correct"`, `"wrong"`, `"skipped"`, `"guidance"`, `"reached"` (a delivery that is not answered), a list of supported events, or `null` (unreached), with `position`, `switchAt`, `finishedAt`, and `endedAt`. The deliveries use the four pilot questions.
 
 ---
 
@@ -127,8 +127,8 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Add `src/web/tests/checks.test.ts` for `contracts/summary.md` "The grouping" and data-model "Position", over `checkRun` fixtures with no switch:
-  - **Position**: the first open position; `finishedAt` after the last.
+- [ ] T016 [P] [US1] Add `src/web/tests/checks.test.ts` for `contracts/summary.md` "The grouping" and data-model "Answered", over `checkRun` fixtures with no switch:
+  - **Answered**: membership reads only the deliveries' events; a finished run's last question is in its group, with no later delivery.
   - **The matrix**: all 81 combinations of correct, wrong, and skipped on four positions put each position in exactly one group, with "Worth revisiting" only on the wrong ones (DL-036).
   - **Input guidance**: a `"guidance"` position followed by a save is grouped by the save.
   - **Purity**: `summarizeRun` reads only the run (deep-frozen input).
@@ -143,7 +143,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T018 [P] [US1] Add `src/web/tests/check-summary.test.tsx`:
   - **Groups**: the scripted run of quickstart scenario 1 shows the counts, its questions, "Your answer"/"Correct answer", and the tag "Worth revisiting" once.
   - **Answer requests**: `getAnswer` is called only for the wrong and the skipped question. With `answerFails`, `check.answerUnavailable` shows and nothing reads as wrong.
-  - **Explanations**: opening one shows its steps and dispatches nothing; the record is deep-equal before and after. With `resolveDiffers`, `check.explanationUnavailable` replaces it.
+  - **Explanations**: opening one shows its steps and dispatches nothing; the record is deep-equal before and after. With `resolveDiffers`, `check.explanationUnavailable` replaces it, and the wrong and skipped questions show `check.answerUnavailable`, never the answer `getAnswer` returned for the other operands. No fetched answer is shown before the identity check completes.
   - **Wording**: no digit followed by `/`, no `%`, and none of the wording scan's words.
   - **Actions**: "Practise more" (with its note) to `/practice/numbers.addition-within-20`, and "Take a new check" to the start screen.
 - [ ] T019 [P] [US1] Add `src/web/e2e/checks.spec.ts` with check 1 (quickstart scenario 1, steps 1–7), on both projects:
@@ -154,7 +154,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] In `src/web/src/state/checks.ts`, add `position(run)`, `isUnfinished(run)`, `partOf(run, position)`, and `summarizeRun(run)` per `contracts/summary.md`, all pure. The supported and not-answered parts may stay empty until T034 and T048; T016 passes.
+- [ ] T020 [US1] In `src/web/src/state/checks.ts`, add `isAnswered(delivery)` (a submission or `skipped`), `isUnfinished(run)`, `partOf(run, position)`, and `summarizeRun(run)` per `contracts/summary.md`, all pure. The supported and not-answered parts may stay empty until T034 and T048; T016 passes.
 - [ ] T021 [US1] Add the check actions to `StoreApi` in `src/web/src/state/store.tsx` (`contracts/check-run.md`):
   - **`startCheck(checkId)`**: fetches the newest version with `getChecks`, ends an unfinished run of the same skill with `endedAt`, creates the run, and resolves to its ID.
   - **`openRun(runId)`**: marks the check view as presenting and loads the instance at the run's position, restoring `resume.draft`.
@@ -196,7 +196,8 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T030 [P] [US2] Extend `src/web/tests/checks.test.ts`:
   - with a switch at each of positions 1 to 4 over the 81 independent combinations of the positions before it, positions from `switchAt` are only in `supported`, each with spec 002's `derive` outcome;
   - `revisit` never holds a supported position, including a supported question answered wrongly and never correctly;
-  - a switch at position 1 leaves the three groups empty (shown as `check.noIndependent`).
+  - a switch at position 1 leaves the three groups empty (shown as `check.noIndependent`);
+  - **the PR 51 review cases**: a switch, the last question answered, and "See summary" put the last question in `supported` with its outcome. A run ended after a supported question was answered, but before "Next question", keeps that question in `supported` with its outcome, not in `notAnswered`.
 - [ ] T031 [P] [US2] Extend `src/web/tests/check-run.test.tsx` for the switch and the supported part:
   - **"I need help"**: opens the dialog with focus on its heading and the position in its body. "Continue without help" and Escape record nothing, leave `switchAt` null, and return focus.
   - **"Switch"**: sets `switchAt` to the current position, keeps the draft, and shows the workspace with the mode line.
@@ -216,11 +217,11 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (from `switchAt`, closed questions, spec 002's `derive`). T030 passes.
+- [ ] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (answered positions from `switchAt`, spec 002's `derive`). T030 passes.
 - [ ] T035 [US2] Add the supported part to the store, `src/web/src/state/store.tsx`:
   - **`switchToSupported()`**: sets `switchAt` to the current position.
   - **A check-bound question controller** for the workspace: submit with retries; help, explanation, and their steps through T014's helper; `resume` kept current, including `result`.
-  - **`nextCheckQuestion()`**: moves on after a submission; on the last question it sets `finishedAt`.
+  - **`nextCheckQuestion()`**: advances `position` after a submission; on the last question ("See summary") it sets `finishedAt` without creating a delivery.
   - **`skipCheckQuestion()`**: in the supported part, skips before any submission.
 - [ ] T036 [US2] In `src/web/src/pages/CheckRunPage.tsx`, add the switch dialog of `contracts/check-run.md` "The switch" (from `IndependentQuestion`'s "I need help"). For a supported position, render `QuestionWorkspace` with the check controller, the mode line, and the check's controls in its slot.
 - [ ] T037 [US2] In `src/web/src/pages/CheckSummary.tsx`, add the supported part: its heading naming `switchAt`, the note, and each question with its outcome label, answers, correct answer, and explanation. Add `check.noIndependent` when `switchAt` is 1.
@@ -285,7 +286,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **A reload** (new `App` over the same storage) on question 3 restores the question, draft, and part; in the supported part, it also restores the help and explanation steps reached, fetched again without new events.
   - **A language switch** keeps the run, the draft, and the position.
   - **The start screen** with an unfinished run of the skill shows `check.unfinished` and "Continue the check".
-  - **"Start the check"** ends the old run with `endedAt`, and its summary lists the unreached and the reached-but-open questions under "Not answered", never under "Skipped".
+  - **"Start the check"** ends the old run with `endedAt`, and its summary lists the unreached and the reached but unanswered questions under "Not answered", never under "Skipped". A supported question answered before the new start keeps its outcome in the supported part.
   - **The finished summary**: a reload on it shows the same summary.
 - [ ] T047 [P] [US4] Add checks 3 and 4 to `src/web/e2e/checks.spec.ts` (quickstart scenarios 3 and 4), on both projects.
 

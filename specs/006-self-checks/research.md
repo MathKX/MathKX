@@ -101,11 +101,12 @@ Each check is returned with its skill, title, scope, and questions as identities
 - its ID, the check's ID, version, and skill;
 - a copy of the question list as identities;
 - its deliveries in order (`purpose: "check"`), only for questions reached;
+- the position on screen, `position`, advanced only by the learner's actions;
 - the switch position `switchAt` (1-based, or `null`);
 - `startedAt`, and `finishedAt` or `endedAt` (ended by a new run of a check of the same skill);
 - `resume`: the draft and panel state of its current question.
 
-A question's part is derived from `switchAt`, never stored twice. A record written before this feature hydrates with `checkRuns: []`; the schema version stays 1. "Clear my work" empties it ([data-model.md](data-model.md)).
+A question's part is derived from `switchAt`, never stored twice. Whether a question is answered is derived from its own events (a submission or `skipped`), never from `position` or from a later delivery. So the last question, and a question answered just before the run was ended, are summarized like any other (PR 51 review). A record written before this feature hydrates with `checkRuns: []`; the schema version stays 1. "Clear my work" empties it ([data-model.md](data-model.md)).
 
 **Rationale**:
 - **Separation by construction (FR-014)**: practice's derivations all read `deliveries` (`groupBySkill`, `repeats`, `recentWindow`, the session). Keeping check questions out of that list means none of them changes, and no filter can be forgotten.
@@ -167,7 +168,7 @@ A question's part is derived from `switchAt`, never stored twice. A record writt
 
 ## R11. Explanations in the summary
 
-**Decision**: each question in the summary offers its explanation through `StepPanel`, fed by `api.getStep` in the summary component itself, not through the store. Nothing is dispatched, so nothing is recorded (FR-011). The panel opens only once the question's identity is confirmed: the summary re-resolves it with one instance request and compares the operands with the recorded ones, as spec 004's replay does. Otherwise the panel is replaced by a sentence saying the explanation is unavailable.
+**Decision**: each question in the summary offers its explanation through `StepPanel`, fed by `api.getStep` in the summary component itself, not through the store. Nothing is dispatched, so nothing is recorded (FR-011). The panel opens only once the question's identity is confirmed: the summary re-resolves it with one instance request and compares the operands with the recorded ones, as spec 004's replay does. Otherwise the panel is replaced by a sentence saying the explanation is unavailable. The same check guards R5's correct answer (PR 51 review): an answer fetched for an identity that now resolves to other operands is never shown beside the recorded expression; the summary says the answer is unavailable instead.
 
 **Rationale**: the summary comes after the check, so an explanation there is review, not help on an answer that could still change. Keeping it out of the store makes "records nothing" structural.
 

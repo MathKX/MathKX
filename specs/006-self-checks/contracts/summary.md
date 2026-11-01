@@ -11,17 +11,18 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 | `correct` ("Correct on your own") | independent positions whose only submission is `correct` | the answer |
 | `revisit` ("Worth revisiting") | independent positions whose only submission is anything else | the learner's answer and the correct answer |
 | `skipped` ("Skipped") | independent positions with `skipped` | the correct answer |
-| `supported` | positions from `switchAt` with a closed question | spec 002's `derive` outcome label, the learner's answers, and the correct answer |
-| `notAnswered` | positions of an ended run without a closed question, in either part | the correct answer |
+| `supported` | positions from `switchAt` whose question is answered (data-model "Answered": a submission or `skipped`) | spec 002's `derive` outcome label, the learner's answers, and the correct answer |
+| `notAnswered` | positions without an answered question, in either part; only an ended run has any | the correct answer |
 
 **Invariants**, each a unit test over scripted runs:
-- **Coverage**: every position of a finished run is in exactly one part.
+- **Coverage**: every position of a run that is over is in exactly one part.
+- **Membership never depends on moving on**: it reads only each delivery's events, never `position` or the existence of a later delivery. So the last question of a finished run is in its group or in `supported`, and a supported question answered before its run was ended keeps its outcome in `supported`, never in `notAnswered`.
 - **The independent groups**: they hold only positions before `switchAt` (all positions when it is null), and every independent position of a finished run is in one of them.
 - **DL-036**: `revisit` holds no supported, skipped, or unanswered position.
 - **Stability**: a supported question with a wrong submission, or no correct one, is never `revisit`.
 - **No new outcomes**: `derive` is spec 002's, unchanged. The pilot validator gives only `correct`, `incorrect`, or input guidance in a check; a later validator with other statuses needs its own decision before it is used in a check.
 
-**The test matrix (SC-002)**: all 3⁴ = 81 combinations of correct, wrong, and skipped on four positions, each with no switch, and with a switch at positions 1 to 4 (with supported outcomes scripted), and ended runs stopped at each position.
+**The test matrix (SC-002)**: all 3⁴ = 81 combinations of correct, wrong, and skipped on four positions, each with no switch, and with a switch at positions 1 to 4 (with supported outcomes scripted), and ended runs stopped at each position, both before and after the question there was answered. Two named cases: a switch with the last question answered and "See summary" chosen, and a run ended after a supported question was answered but before "Next question".
 
 ## The summary (`CheckSummary`, on the run's page)
 
@@ -39,9 +40,9 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 | Note | `check.summaryNote` |
 | Actions | "Practise more" (`check.practiseMore`) to `/practice/{skillId}`, with `check.practiseMoreNote`; "Take a new check" (`check.again`) to `/checks/{checkId}`; a link to "My work" |
 
-**The correct answer**: for a question with a correct submission, it is that submission's value. For any other question, it comes from `GET .../answer` (contracts/api.md), requested when the summary is shown. While it is loading, nothing is shown; if the request fails, `check.answerUnavailable` is shown. A missing answer is never presented as a wrong one.
+**The correct answer**: for a question with a correct submission, it is that submission's value. For any other question, it comes from `GET .../answer` (contracts/api.md), requested when the summary is shown. It is shown **only once the identity check below has confirmed** that the identity still resolves to the recorded operands. While either request is loading, nothing is shown. If the answer request fails, or the identity resolves to other operands or cannot be resolved, `check.answerUnavailable` is shown, and the recorded expression and answers stay. So a recorded `7 + 3` can never be shown with the answer of whatever the identity resolves to now. A missing answer is never presented as a wrong one.
 
-**Explanations** (research R11): the summary first re-resolves each question's identity with one instance request. If the operands match the record, "Show the explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. If the identity no longer resolves to the recorded operands, the disclosure is replaced by `check.explanationUnavailable`, and the recorded answers still show.
+**Explanations** (research R11): the same identity check guards them. The summary first re-resolves each question's identity with one instance request. If the operands match the record, "Show the explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. If the identity no longer resolves to the recorded operands, the disclosure is replaced by `check.explanationUnavailable`, and the recorded answers still show.
 
 **Never shown**: a score, a fraction such as "2/4", a percentage, a streak, time taken, or a mastery word ("mastered", "level", "grade"). The wording scan (`progress-wording.test.tsx`) gains the check components and the `check` dictionary section.
 

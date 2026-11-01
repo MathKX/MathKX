@@ -33,7 +33,7 @@ Leaving the start screen records nothing. A practice question in progress stays 
 
 ## `/checks/{checkId}/{runId}`: the run (`CheckRunPage`)
 
-The page shows the run's summary when the run is finished or ended. Otherwise, it shows the question at the run's position (data-model "Position") in its part. Mounting it marks the check view as presenting; unmounting ends presenting and keeps `resume`. An unknown run ID shows `check.runNotFound` with a link to "My work".
+The page shows the run's summary when the run is finished or ended. Otherwise, it shows the question at the run's `position` in its part. Mounting it marks the check view as presenting; unmounting ends presenting and keeps `resume`. An unknown run ID shows `check.runNotFound` with a link to "My work".
 
 ### Independent part (`IndependentQuestion`)
 
@@ -59,12 +59,12 @@ The page shows the run's summary when the run is finished or ended. Otherwise, i
 **Saving** (research R6):
 1. **Request**: `POST /api/validations` with the identity, the draft, and a new submission ID; the "Save" button is disabled while it is under way.
 2. **Input guidance**: on `invalid-response`, the `input-guidance` event is recorded, the guidance is shown, and the learner stays on the question with the draft.
-3. **A result**: on `correct` or `incorrect`, the `submission` event is recorded as the question's only submission, and the run moves to the next position. The response is never put in rendered state.
+3. **A result**: on `correct` or `incorrect`, the `submission` event is recorded as the question's only submission, and `position` advances. The response is never put in rendered state.
 4. **Failure**: on a failed request, nothing is recorded, `check.unsaved` is shown, and the draft stays.
 
 **Skipping** records `skipped` on the delivery and moves on.
 
-**Moving on** clears `resume` for the new question and requests its instance. After the last position, the run gets `finishedAt` and the summary appears with focus on its heading. A question whose instance cannot be loaded shows `practice.loadError` with "Try again" (`check-retry`); the run stays at that position.
+**Moving on** advances `position`, clears `resume` for the new question, and requests its instance. A save or skip on the last question sets `finishedAt` instead, and the summary appears with focus on its heading. A question whose instance cannot be loaded shows `practice.loadError` with "Try again" (`check-retry`); the run stays at that position.
 
 ### The switch (FR-007, FR-008)
 
@@ -81,7 +81,8 @@ From `switchAt` onward, each question is practice (spec 002, spec 003):
 - **The workspace**: help before answering, "Check answer" with feedback and retries, the explanation after a result, and the lesson link (below). Every event is recorded on the run's delivery with practice's rules, including "a step is recorded only when it is shown".
 - **Mode**: `check.modeSupported`, "Supported practice (from question {i})", and the position, as in the independent part.
 - **Before any submission**: only "Skip" (`check.skip`), which records `skipped` and moves on.
-- **After a submission**: only "Next question" (`check.next`, `check-next`), or "See summary" (`check.finish`, `check-finish`) on the last question.
+- **After a submission**: only "Next question" (`check.next`, `check-next`), which advances `position`, or "See summary" (`check.finish`, `check-finish`) on the last question, which sets `finishedAt`.
+- **What counts as answered**: the summary reads only the delivery's events (data-model "Answered"). A supported question with a submission is answered whether or not the learner pressed "Next question" or "See summary", so a run ended by a new check keeps its outcome.
 - **Never offered**: "Another question", "Repeat this question", "Make it easier", "More challenge", and "More like this".
 
 **The lesson link** goes to `/lessons/{id}?from=check`. The lesson page then takes the run's current supported question as the detour question, as spec 003 does for practice:
