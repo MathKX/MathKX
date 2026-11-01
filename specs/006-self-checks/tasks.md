@@ -40,7 +40,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 **Purpose**: Test fixtures every story reads.
 
-- [ ] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
+- [X] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
   - **The fake's checks**: `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)`, each logged (`getChecks`, `getCheck …`, `getAnswer …`) like the other calls. By default the fake serves one check shaped like the pilot (`numbers.addition.check-within-20`, version 1, the four identities of `contracts/api.md`). Its `getInstance` resolves those seeds to `7 + 3`, `5 + 4`, `8 + 5`, and `9 + 4`, and its `getAnswer` returns their operands and sums, as `contracts/api.md` shapes the response.
   - **New `FakeOptions`**: `checks` (replace the list; `[]` for none), `checksFail` (reject `getChecks`), `answerFails` (reject `getAnswer`), `validateFailsOnce` (reject the next `validate`), and `resolveDiffers` (a check identity resolves to other operands, in both `getInstance` and `getAnswer`, for the "explanation unavailable" case).
   - **`records.ts`**: a builder `checkRun(spec)` that returns a `CheckRun` from per-position scripts. A script is `"correct"`, `"wrong"`, `"skipped"`, `"guidance"`, `"reached"` (a delivery that is not answered), a list of supported events, or `null` (unreached), with `position`, `switchAt`, `finishedAt`, and `endedAt`. The deliveries use the four pilot questions.
@@ -55,60 +55,60 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests
 
-- [ ] T002 [P] Add the `contracts/api.md` contract tests to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
+- [X] T002 [P] Add the `contracts/api.md` contract tests to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - **`GET /api/checks`**: the pilot's shape in full, with no key `answer`, `sum`, `a`, or `b` anywhere.
   - **`GET /api/checks/{id}/{version}`**: the pilot; `404 unknown-check` for an unknown ID and for an unknown version.
   - **`GET …/answer`**: `7 + 3` → 10, `5 + 4` → 9, `8 + 5` → 13, and `9 + 4` → 13 for the four pilot identities, operands included; 8 for `numbers.addition.four-plus-four/1/-`; `404 unknown-definition`; `400 invalid-seed`.
   - **Health**: `/api/health` reports `checks: 1`.
 
   Add `/api/checks` to the unsolicited-response `[InlineData]` list.
-- [ ] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
+- [X] T003 [P] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`:
   - the repository content loads one check, `numbers.addition.check-within-20@1`, with its skill, both titles, both scopes, and four questions in order;
   - `LatestChecks()` returns the newest version per ID; test it with a temp copy that adds version 2;
   - a duplicate `id@version` fails the load, naming the second file.
-- [ ] T004 [P] Extend `tools/validate-content.test.mjs`:
+- [X] T004 [P] Extend `tools/validate-content.test.mjs`:
   - the repository content passes, and the summary line includes `1 check(s)`;
   - a file naming `self-check.pilot.schema.json` is dispatched to that schema, so a missing `title.en`, an empty `questions`, eleven questions, and a seed `"01"` each fail as schema violations naming the path;
   - an unknown-schema error lists the new schema;
   - a lesson with a `check` field fails with the new message of `contracts/check-content.md`.
 
   Update every existing assertion on the summary line.
-- [ ] T005 [P] Extend `src/web/tests/lesson-views.test.tsx`'s old-record test: a record without `checkRuns` hydrates with `checkRuns: []`, and its deliveries, lesson views, and session are intact. "Clear my work" empties `checkRuns`.
+- [X] T005 [P] Extend `src/web/tests/lesson-views.test.tsx`'s old-record test: a record without `checkRuns` hydrates with `checkRuns: []`, and its deliveries, lesson views, and session are intact. "Clear my work" empties `checkRuns`.
 
 ### Implementation
 
-- [ ] T006 [P] Create `schemas/self-check.pilot.schema.json` per `contracts/check-content.md` "The schema" (JSON Schema 2020-12, `additionalProperties: false` throughout, with a description in the style of `exercise-definition.pilot.schema.json`).
-- [ ] T007 Create `content/checks/numbers/addition-within-20.json`, the pilot check, exactly as in `contracts/check-content.md` "The file".
-- [ ] T008 Register the kind in the content check:
+- [X] T006 [P] Create `schemas/self-check.pilot.schema.json` per `contracts/check-content.md` "The schema" (JSON Schema 2020-12, `additionalProperties: false` throughout, with a description in the style of `exercise-definition.pilot.schema.json`).
+- [X] T007 Create `content/checks/numbers/addition-within-20.json`, the pilot check, exactly as in `contracts/check-content.md` "The file".
+- [X] T008 Register the kind in the content check:
   - **`tools/lib/files.mjs`**: add `check: "self-check.pilot.schema.json"` to `SCHEMAS`, and change the lesson `check` hint to the new message.
   - **`tools/validate-content.mjs`**: count the `check` entries.
   - **`tools/lib/diagnostics.mjs`**: the `summary` line includes `<n> check(s)` after the definitions.
 
   T004 passes, except for the cross-file rules, which come in T042.
-- [ ] T009 Load checks in the backend:
+- [X] T009 Load checks in the backend:
   - **`src/backend/MathKX.Domain/Content/Records.cs`**: add `SelfCheck(Id, Version, Skill, Localized Title, Localized Scope, IReadOnlyList<CheckQuestion> Questions)` with `Key`, and `CheckQuestion(Definition, Version, string? Seed)` with `Key`.
   - **`src/backend/MathKX.Domain/Content/ContentCatalog.cs`**: add `Checks` (by `id@version`) and `LatestChecks()` (the newest version of each ID, ordered by ID). Add the constructor parameter, and update every caller and test helper that builds a catalog.
   - **`src/backend/MathKX.Content/ContentLoader.cs`**: a `self-check.pilot.schema.json` case that deserializes into `SelfCheck` and adds it with the duplicate check.
 
   T003 passes.
-- [ ] T010 Serve checks and answers in `src/backend/MathKX.Api`:
+- [X] T010 Serve checks and answers in `src/backend/MathKX.Api`:
   - **`Endpoints/ChecksEndpoints.cs`** (new): `GET /api/checks` and `GET /api/checks/{id}/{version:int}`, with `Problems.NotFound("unknown-check", …)`.
-  - **`Endpoints/InstancesEndpoints.cs`**: `GET /api/instances/{definitionId}/{version:int}/{seed}/answer`. It resolves as `Resolve` does and returns `AnswerDto` with the resolved operands and the instance's validation answer, from the resolved `Instance`'s private validation data; do not add the operands to compute it. It has the same errors as `Resolve`.
+  - **`Endpoints/InstancesEndpoints.cs`**: `GET /api/instances/{definitionId}/{version:int}/{seed}/answer`. It resolves as `Resolve` does and returns `AnswerDto` with the resolved operands and the instance's validation answer, from the resolved `Instance`'s private validation data; do not add the operands to compute it. It has the same errors as `Resolve`. *Done as*: `IntegerAnswerValidator.ExpectedAnswer(instance)`, the answer the validator accepts and the one `Validate` judges against, since `Instance` deliberately carries no answer.
   - **`Dto/Dtos.cs`**: `CheckDto`, `CheckQuestionDto`, and `AnswerDto`.
   - **`Program.cs`**: map the endpoints; health gains `checks = catalog.Checks.Count`.
   - **`specs/002-practice-flow/contracts/api.md`**: extend the private-data sentence with a link to spec 006's third exception.
 
   T002 passes.
-- [ ] T011 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/checks` from the published service lists `numbers.addition.check-within-20` and contains no `"sum"`, and `GET /api/instances/numbers.addition.within-10/1/22/answer` gives 10.
-- [ ] T012 [P] In `src/web/src/api/types.ts`, add `CheckDto`, `CheckQuestionDto`, and `AnswerDto`, and add `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)` to `PracticeApi`. Implement them in `src/web/src/api/client.ts`; the answer route uses `-` for a fixed task, as `getStep` does.
-- [ ] T013 [P] Add the record field:
+- [X] T011 [P] Extend `src/backend/scripts/smoke-published.sh`: `GET /api/checks` from the published service lists `numbers.addition.check-within-20` and contains no `"sum"`, and `GET /api/instances/numbers.addition.within-10/1/22/answer` gives 10.
+- [X] T012 [P] In `src/web/src/api/types.ts`, add `CheckDto`, `CheckQuestionDto`, and `AnswerDto`, and add `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)` to `PracticeApi`. Implement them in `src/web/src/api/client.ts`; the answer route uses `-` for a fixed task, as `getStep` does.
+- [X] T013 [P] Add the record field:
   - **`src/web/src/state/checks.ts`** (new): the `CheckRun` and `CheckResume` types of `data-model.md`.
   - **`src/web/src/state/observations.ts`**: widen `Delivery.purpose` to `"practice" | "check"`.
   - **`src/web/src/state/store.tsx`**: add `checkRuns: CheckRun[]` to `PersistedState` and `initialPersisted`. Default a missing field to `[]` in the reducer initializer and in `hydrate`, and reset it in `clear`. Leave `SCHEMA_VERSION` unchanged.
 
   T005 passes.
-- [ ] T014 In `src/web/src/state/store.tsx`, factor the "a step is recorded only when it is shown" rule out of the `helpStep` and `explanationStep` cases into one pure helper. It takes the question's screen state, its delivery, the presenting flag, and a step, and returns the new state and delivery, or nothing when the step is not shown. Practice's cases call it; behaviour is unchanged, and every existing web test passes.
-- [ ] T015 Extract `src/web/src/components/QuestionWorkspace.tsx` from `src/web/src/components/ExerciseShell.tsx` (research R8):
+- [X] T014 In `src/web/src/state/store.tsx`, factor the "a step is recorded only when it is shown" rule out of the `helpStep` and `explanationStep` cases into one pure helper (`presentStep`). It takes the question's screen state, its delivery, the presenting flag, the step's kind, and a step, and returns the new state and delivery, or nothing when the step is not shown. Practice's cases call it; behaviour is unchanged, and every existing web test passes.
+- [X] T015 Extract `src/web/src/components/QuestionWorkspace.tsx` from `src/web/src/components/ExerciseShell.tsx` (research R8):
   - **The workspace**: the prompt with its focus rule, the answer form with "Check answer" and "Show visual help", the help panel, the result region with `Feedback` and the unreachable notice, the explanation, and the lesson link.
   - **Props**: a `QuestionController` that supplies the instance, draft, open panels, steps, result, checking flag, notice, and lesson link target, and handles the draft, submit, help, and explanation calls. The props also take a `controls` slot rendered where practice's controls are.
   - **`ExerciseShell`**: becomes the workspace, driven by a store-bound controller, with practice's controls in the slot. Every `data-testid` and focus behaviour is unchanged.
@@ -260,7 +260,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T042 [US3] Create `tools/lib/checks.mjs` with `checkChecks(entries, { skills, definitions, diagnostics })` per `contracts/check-content.md`, with seeds compared as `BigInt`. Call it from `tools/validate-content.mjs` after `checkLadders`. T039 passes.
 - [ ] T043 [US3] In `src/backend/MathKX.Content/ContentLoader.cs`, check each check's references after the definitions load: the skill exists, each definition exists, and a seed is present exactly when the definition is generated. Fail with `ContentLoadException(<file>, …)`. T040 and T041 pass.
 - [ ] T044 [P] [US3] Document checks:
-  - **`content/AUTHORING.md`**: a "Self-checks" section with every field, every rule of T042 and T043, finding a seed through `GET /api/definitions/{id}/{version}/pool`, and the pilot as the example.
+  - **`content/AUTHORING.md`**: complete section 10, "Add a self-check" (its fields, the schema rules, and the pool lookup landed with Phase 2, alongside the schema), with every rule of T042 and T043, finding a seed through `GET /api/definitions/{id}/{version}/pool`, and the pilot as the example.
   - **`content/README.md`**: list `checks/` in the layout and describe it in one paragraph.
 
 **Checkpoint**: quickstart "Automated checks" rows 1 and 2 pass; this phase may merge on its own after Phase 2.

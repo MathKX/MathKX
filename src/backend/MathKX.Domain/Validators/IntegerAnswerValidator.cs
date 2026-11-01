@@ -17,6 +17,9 @@ public sealed class IntegerAnswerValidator
 
     public int Version => Identity.Version;
 
+    /// <summary>The answer this validator accepts for the instance; served only to the check summary (specs/006 research R5).</summary>
+    public int ExpectedAnswer(Instance instance) => instance.A + instance.B;
+
     public ValidationResult Validate(Instance instance, ResponseArtifact artifact)
     {
         if (artifact.Value is not int v)
@@ -27,7 +30,7 @@ public sealed class IntegerAnswerValidator
 
         var a = instance.A;
         var b = instance.B;
-        var sum = a + b;
+        var sum = ExpectedAnswer(instance);
         if (v == sum)
         {
             return Result(ValidationStatus.Correct, FeedbackCodes.Correct, a, b, v, sum);

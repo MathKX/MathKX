@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
 import type { Delivery } from "../src/state/observations";
 import { createFakeApi } from "./fakeApi";
-import { beforeThisFeature } from "./records";
+import { beforeThisFeature, checkRun } from "./records";
 
 const practicePath = "/practice/numbers.addition-within-20";
 const lessonPath = "/lessons/number-bonds-to-ten";
@@ -183,6 +183,34 @@ describe("the record (tests 5 and 6)", () => {
     expect(stored().session).toEqual({ current: deliveries().map((d) => d.id), last: null });
     expect(stored()).not.toHaveProperty("schema"); // the value, inside the unchanged envelope
     expect(JSON.parse(window.localStorage.getItem("mathkx.guest.v1")!).schema).toBe(1);
+    expect(stored().checkRuns).toEqual([]); // specs/006
+  });
+
+  it("loads a record written before self-checks with no check runs, and its practice intact (specs/006 T005)", async () => {
+    const old = beforeThisFeature();
+    const before = { ...old, deliveries: old.deliveries as Delivery[], lessonViews: [{ lessonId: "number-bonds-to-ten", language: "en", at: "2026-10-24T10:05:00.000Z" }] };
+    const session = { current: [before.deliveries[1]!.id], last: null };
+    window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value: { ...before, session } }));
+    render(<App api={createFakeApi()} initialPath="/record" />);
+    await screen.findAllByTestId("skill-name");
+    await waitFor(() => expect(stored().checkRuns).toEqual([]));
+    expect(deliveries()).toEqual(before.deliveries);
+    expect(views()).toEqual(before.lessonViews);
+    expect(stored().session).toEqual(session);
+    expect(JSON.parse(window.localStorage.getItem("mathkx.guest.v1")!).schema).toBe(1);
+  });
+
+  it("empties the check runs with Clear my work (specs/006 T005)", async () => {
+    const run = checkRun({ positions: ["correct", "wrong", "skipped", "correct"], finishedAt: "2026-10-24T10:10:00.000Z" });
+    window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), checkRuns: [run] } }));
+    const user = userEvent.setup();
+    render(<App api={createFakeApi()} initialPath="/record" />);
+    await screen.findByTestId("skill-name");
+    expect(stored().checkRuns).toEqual([run]);
+
+    await user.click(await screen.findByTestId("clear"));
+    await user.click(screen.getByTestId("confirm-clear"));
+    await waitFor(() => expect(stored().checkRuns).toEqual([]));
   });
 
   it("keeps every view (no cap) and empties them with Clear my work", async () => {

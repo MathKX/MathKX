@@ -42,6 +42,8 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
     [InlineData("/api/skills/numbers.addition-within-20")]
     [InlineData("/api/skills")]
     [InlineData("/api/definitions/numbers.addition.within-10/1/pool")]
+    [InlineData("/api/checks")]
+    [InlineData("/api/checks/numbers.addition.check-within-20/1")]
     public async Task Unsolicited_responses_never_contain_sum_or_validation(string path)
     {
         using var client = _factory.CreateClient();
@@ -240,6 +242,93 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         Assert.Equal("unknown-definition", await Code(missing));
         var version = await client.GetAsync("/api/definitions/numbers.addition.within-10/9/pool");
         Assert.Equal(HttpStatusCode.NotFound, version.StatusCode);
+    }
+
+    private const string PilotCheck = """
+        {
+          "id": "numbers.addition.check-within-20",
+          "version": 1,
+          "skill": "numbers.addition-within-20",
+          "title": { "nb": "Tiervenner og addisjon", "en": "Number bonds and addition" },
+          "scope": { "nb": "Addisjon innenfor ti og over tieren", "en": "Addition within ten and across ten" },
+          "questions": [
+            { "definition": "numbers.addition.within-10", "version": 1, "seed": "22" },
+            { "definition": "numbers.addition.within-10", "version": 1, "seed": "24" },
+            { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "105" },
+            { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "62" }
+          ]
+        }
+        """;
+
+    [Fact]
+    public async Task The_check_list_is_the_pilot_with_identities_only()
+    {
+        using var client = _factory.CreateClient();
+        var body = await client.GetStringAsync("/api/checks");
+
+        using var list = JsonDocument.Parse(body);
+        using var pilot = JsonDocument.Parse(PilotCheck);
+        var check = Assert.Single(list.RootElement.EnumerateArray().ToList());
+        Assert.True(JsonElement.DeepEquals(pilot.RootElement, check), check.GetRawText());
+        Assert.DoesNotContain(PropertyNames(body), name => name is "answer" or "sum" or "a" or "b");
+    }
+
+    [Fact]
+    public async Task One_check_version_is_served_and_unknown_ones_are_not_found()
+    {
+        using var client = _factory.CreateClient();
+        using var check = JsonDocument.Parse(await client.GetStringAsync("/api/checks/numbers.addition.check-within-20/1"));
+        using var pilot = JsonDocument.Parse(PilotCheck);
+        Assert.True(JsonElement.DeepEquals(pilot.RootElement, check.RootElement));
+
+        foreach (var path in new[] { "/api/checks/numbers.addition.no-such-check/1", "/api/checks/numbers.addition.check-within-20/2" })
+        {
+            var response = await client.GetAsync(path);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.Equal("unknown-check", await Code(response));
+        }
+    }
+
+    [Theory]
+    [InlineData("numbers.addition.within-10", "22", 7, 3, 10)]
+    [InlineData("numbers.addition.within-10", "24", 5, 4, 9)]
+    [InlineData("numbers.addition.crossing-ten", "105", 8, 5, 13)]
+    [InlineData("numbers.addition.crossing-ten", "62", 9, 4, 13)]
+    [InlineData("numbers.addition.four-plus-four", "-", 4, 4, 8)]
+    public async Task The_answer_names_its_operands_and_value(string definition, string seed, int a, int b, int value)
+    {
+        using var client = _factory.CreateClient();
+        using var answer = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{definition}/1/{seed}/answer"));
+        var root = answer.RootElement;
+
+        Assert.Equal(definition, root.GetProperty("identity").GetProperty("definitionId").GetString());
+        Assert.Equal(1, root.GetProperty("identity").GetProperty("version").GetInt32());
+        Assert.Equal(seed == "-" ? null : seed, root.GetProperty("identity").TryGetProperty("seed", out var s) ? s.GetString() : null);
+        Assert.Equal(a, root.GetProperty("a").GetInt32());
+        Assert.Equal(b, root.GetProperty("b").GetInt32());
+        Assert.Equal("integer", root.GetProperty("answer").GetProperty("kind").GetString());
+        Assert.Equal(value, root.GetProperty("answer").GetProperty("value").GetInt32());
+    }
+
+    [Theory]
+    [InlineData("/api/instances/numbers.addition.nope/1/1/answer", HttpStatusCode.NotFound, "unknown-definition")]
+    [InlineData("/api/instances/numbers.addition.within-10/9/1/answer", HttpStatusCode.NotFound, "unknown-definition")]
+    [InlineData("/api/instances/numbers.addition.within-10/1/01/answer", HttpStatusCode.BadRequest, "invalid-seed")]
+    [InlineData("/api/instances/numbers.addition.within-10/1/-/answer", HttpStatusCode.BadRequest, "invalid-seed")]
+    public async Task Answer_errors_use_the_instance_codes(string path, HttpStatusCode status, string code)
+    {
+        using var client = _factory.CreateClient();
+        var response = await client.GetAsync(path);
+        Assert.Equal(status, response.StatusCode);
+        Assert.Equal(code, await Code(response));
+    }
+
+    [Fact]
+    public async Task Health_counts_the_checks()
+    {
+        using var client = _factory.CreateClient();
+        using var health = JsonDocument.Parse(await client.GetStringAsync("/api/health"));
+        Assert.Equal(1, health.RootElement.GetProperty("checks").GetInt32());
     }
 
     private static async Task<JsonDocument> Validate(HttpClient client, string definitionId, int version, string? seed, string text, string? submissionId = null)

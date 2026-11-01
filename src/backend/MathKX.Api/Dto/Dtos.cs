@@ -7,7 +7,7 @@ using MathKX.Domain.Results;
 namespace MathKX.Api.Dto;
 
 // Presentation shapes (specs/002 contracts/api.md). By construction none of these types has a sum or
-// validation member, so private data cannot be serialized by accident.
+// validation member, so private data cannot be serialized by accident; the one exception is AnswerDto (specs/006).
 
 public sealed record NamedVersionDto(string Name, int Version)
 {
@@ -114,6 +114,25 @@ public sealed record StepDto(
     public static StepDto From(MathKX.Domain.Explanations.StepModel step) =>
         new(step.Kind, step.Representation, step.Index, step.Count, step.Reveals, step.Visual, new StepTextDto(step.Text.Code, step.Text.Values));
 }
+
+/// <summary>A self-check (specs/006 contracts/api.md): question identities only, never operands or sums.</summary>
+public sealed record CheckDto(string Id, int Version, string Skill, LocalizedDto Title, LocalizedDto Scope, IReadOnlyList<CheckQuestionDto> Questions)
+{
+    public static CheckDto From(SelfCheck check) => new(
+        check.Id,
+        check.Version,
+        check.Skill,
+        new LocalizedDto(check.Title.Nb, check.Title.En),
+        new LocalizedDto(check.Scope.Nb, check.Scope.En),
+        check.Questions.Select(q => new CheckQuestionDto(q.Definition, q.Version, q.Seed)).ToList());
+}
+
+public sealed record CheckQuestionDto(string Definition, int Version, string? Seed);
+
+/// <summary>The answer to one question and the operands it belongs to; requested only by the check summary (specs/006).</summary>
+public sealed record AnswerDto(IdentityDto Identity, int A, int B, AnswerValueDto Answer);
+
+public sealed record AnswerValueDto(string Kind, int Value);
 
 /// <summary>A variation's pool (specs/005 contracts/pool.md): operands and seeds only, never a sum.</summary>
 public sealed record PoolDto(string Definition, int Version, IReadOnlyList<PoolQuestionDto> Questions)

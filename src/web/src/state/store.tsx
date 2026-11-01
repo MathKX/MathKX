@@ -9,6 +9,7 @@ import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
 import { repeatKind, repeats, type RepeatKind } from "./progress";
 import { choose, pairKey, recentWindow } from "./selection";
+import type { CheckRun } from "./checks";
 
 export interface DefinitionRef {
   definition: string;
@@ -62,6 +63,8 @@ export interface PersistedState {
   lessonViews: LessonView[];
   /** Added by specs/005 without a schema version change (contracts/session.md). */
   session: PracticeSession;
+  /** Added by specs/006 without a schema version change: self-check runs, kept apart from practice's deliveries. */
+  checkRuns: CheckRun[];
 }
 
 /** The questions worked in the current session, and a snapshot of the last finished one (specs/005). */
@@ -101,6 +104,7 @@ const initialPersisted: PersistedState = {
   resumable: null,
   lessonViews: [],
   session: { current: [], last: null },
+  checkRuns: [],
 };
 
 type Action =
@@ -142,10 +146,49 @@ const isCurrent = (state: State, deliveryId: string) => state.currentDeliveryId 
 /** Notices about the question they came with; the next question clears them. */
 const questionNotices = new Set(["practice.poolExhausted", "practice.resumed"]);
 
+/** A question's help and explanation panels as shown: practice's screen, and a supported check question's (specs/006). */
+export interface StepScreen {
+  helpOpen: boolean;
+  helpSteps: StepDto[];
+  helpStep: number;
+  explanationOpen: boolean;
+  explanationSteps: StepDto[];
+  explanationStep: number;
+}
+
+/**
+ * "A step is recorded only when it is shown" (spec 002): the step is shown, and recorded on the question's delivery,
+ * only while the view presents the question with that panel open. Returns the new screen and delivery together, or
+ * null when the step is not shown, so nothing is recorded either.
+ */
+export function presentStep<S extends StepScreen>(screen: S, delivery: Delivery, presenting: boolean, kind: StepKind, step: StepDto): { screen: S; delivery: Delivery } | null {
+  if (!presenting) return null;
+  if (kind === "help") {
+    if (!screen.helpOpen) return null;
+    const events: Event[] = [{ type: "support", kind: "help-step", step: step.index, reveals: step.reveals }];
+    if (step.reveals && step.representation === "groups") events.push({ type: "support", kind: "counting-complete" });
+    return { screen: { ...screen, helpSteps: [...screen.helpSteps.slice(0, step.index), step], helpStep: step.index }, delivery: events.reduce(recordEvent, delivery) };
+  }
+  if (!screen.explanationOpen) return null;
+  return {
+    screen: { ...screen, explanationSteps: [...screen.explanationSteps.slice(0, step.index), step], explanationStep: step.index },
+    delivery: recordEvent(delivery, { type: "support", kind: "explanation-step", step: step.index, reveals: step.reveals }),
+  };
+}
+
+/** Practice's step cases: the step belongs to the current question, and is shown and recorded through `presentStep`. */
+function practiceStep(state: State, deliveryId: string, kind: StepKind, step: StepDto): State {
+  // Not presented (the learner moved on, closed the panel, or left the view): nothing shown, nothing recorded.
+  const delivery = isCurrent(state, deliveryId) ? state.deliveries.find((d) => d.id === deliveryId) : undefined;
+  const shown = delivery ? presentStep(state, delivery, state.presenting, kind, step) : null;
+  if (!shown) return state;
+  return { ...shown.screen, deliveries: state.deliveries.map((d) => (d.id === deliveryId ? shown.delivery : d)) };
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
-      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], session: sessionOf(action.state), kept: action.kept };
+      return { ...state, ...action.state, lessonViews: action.state.lessonViews ?? [], session: sessionOf(action.state), checkRuns: action.state.checkRuns ?? [], kept: action.kept };
     case "language":
       return { ...state, language: action.language };
     case "kept":
@@ -204,23 +247,12 @@ function reducer(state: State, action: Action): State {
       return updateDelivery(state, action.deliveryId ?? state.currentDeliveryId, (d) => recordEvent(d, action.event));
     case "help":
       return { ...state, helpOpen: action.open };
-    case "helpStep": {
-      // Not presented (the learner moved on, closed the panel, or left the view): nothing shown, nothing recorded.
-      if (!isCurrent(state, action.deliveryId) || !state.presenting || !state.helpOpen) return state;
-      const { step } = action;
-      const events: Event[] = [{ type: "support", kind: "help-step", step: step.index, reveals: step.reveals }];
-      if (step.reveals && step.representation === "groups") events.push({ type: "support", kind: "counting-complete" });
-      const recorded = updateCurrent(state, (d) => events.reduce(recordEvent, d));
-      return { ...recorded, helpSteps: [...state.helpSteps.slice(0, step.index), step], helpStep: step.index };
-    }
+    case "helpStep":
+      return practiceStep(state, action.deliveryId, "help", action.step);
     case "explanation":
       return { ...state, explanationOpen: action.open };
-    case "explanationStep": {
-      if (!isCurrent(state, action.deliveryId) || !state.presenting || !state.explanationOpen) return state;
-      const { step } = action;
-      const recorded = updateCurrent(state, (d) => recordEvent(d, { type: "support", kind: "explanation-step", step: step.index, reveals: step.reveals }));
-      return { ...recorded, explanationSteps: [...state.explanationSteps.slice(0, step.index), step], explanationStep: step.index };
-    }
+    case "explanationStep":
+      return practiceStep(state, action.deliveryId, "explanation", action.step);
     case "pending":
       return { ...state, ladder: { ...state.ladder, pending: action.pending } };
     case "notice":
@@ -329,7 +361,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
     const value = loaded.value ?? {};
-    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
+    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false };
   });
   const latest = useRef(state);
   latest.current = state;

@@ -44,4 +44,9 @@ curl -fsS "http://127.0.0.1:$port/api/skills" | grep -q '"name":{"nb":"Addisjon 
 pool="$(curl -fsS "http://127.0.0.1:$port/api/definitions/numbers.addition.within-10/1/pool")"
 [ "$(echo "$pool" | grep -o '"seed":' | wc -l)" -eq 45 ] || { echo "the within-ten pool does not list 45 questions"; exit 1; }
 echo "$pool" | grep -q '"sum"' && { echo "the pool leaked a sum"; exit 1; }
+# specs/006 T011: the package carries the check files, serves them as identities only, and serves the summary's answers.
+checks="$(curl -fsS "http://127.0.0.1:$port/api/checks")"
+echo "$checks" | grep -q '"id":"numbers.addition.check-within-20"' || { echo "the pilot check was not published"; exit 1; }
+echo "$checks" | grep -q '"sum"' && { echo "the check list leaked a sum"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/instances/numbers.addition.within-10/1/22/answer" | grep -q '"answer":{"kind":"integer","value":10}' || { echo "the answer endpoint did not give 10"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

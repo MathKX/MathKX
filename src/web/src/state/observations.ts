@@ -37,7 +37,8 @@ export interface DeliveryInstance {
 export interface Delivery {
   id: string;
   instance: DeliveryInstance;
-  purpose: "practice";
+  /** A check delivery lives only inside its run (specs/006), never in the record's `deliveries`. */
+  purpose: "practice" | "check";
   provenance: "guest";
   startedAt: string;
   events: Event[];

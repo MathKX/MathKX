@@ -1,5 +1,5 @@
 // Shapes of the practice service (specs/002 contracts/api.md). No sum anywhere except a correct
-// validation result and a revealing step.
+// validation result, a revealing step, and the check summary's answer (specs/006).
 
 export interface NamedVersion {
   name: string;
@@ -124,6 +124,31 @@ export interface PoolDto {
   questions: { seed: string | null; a: number; b: number }[];
 }
 
+/** One question of a self-check (specs/006 contracts/api.md): an identity, never operands. `seed` is absent for a fixed task. */
+export interface CheckQuestionDto {
+  definition: string;
+  version: number;
+  seed?: string;
+}
+
+/** A self-check: its skill, title and scope per language, and its questions in order; never a sum. */
+export interface CheckDto {
+  id: string;
+  version: number;
+  skill: string;
+  title: Localized;
+  scope: Localized;
+  questions: CheckQuestionDto[];
+}
+
+/** The answer to one question and the operands it belongs to; requested only by the check summary (specs/006). */
+export interface AnswerDto {
+  identity: Identity;
+  a: number;
+  b: number;
+  answer: { kind: "integer"; value: number };
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -148,4 +173,9 @@ export interface PracticeApi {
   getLessonContent(id: string, lang: string): Promise<LessonContentDto>;
   getVisualSteps(type: string, a: number, b: number): Promise<VisualStepsDto>;
   getTenFrameExplorer(): Promise<TenFrameExplorerDto>;
+  /** The newest version of every check, by ID (specs/006). */
+  getChecks(): Promise<CheckDto[]>;
+  getCheck(id: string, version: number): Promise<CheckDto>;
+  /** Only the check summary calls this, and only after the check. */
+  getAnswer(identity: Identity): Promise<AnswerDto>;
 }
