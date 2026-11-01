@@ -41,8 +41,8 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 **Purpose**: Test fixtures every story reads.
 
 - [ ] T001 [P] Extend `src/web/tests/fakeApi.ts` and `src/web/tests/records.ts`:
-  - **The fake's checks**: `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)`, each logged (`getChecks`, `getCheck …`, `getAnswer …`) like the other calls. By default the fake serves one check shaped like the pilot (`numbers.addition.check-within-20`, version 1, the four identities of `contracts/api.md`). Its `getInstance` resolves those seeds to `7 + 3`, `5 + 4`, `8 + 5`, and `9 + 4`, and its `getAnswer` returns their sums.
-  - **New `FakeOptions`**: `checks` (replace the list; `[]` for none), `checksFail` (reject `getChecks`), `answerFails` (reject `getAnswer`), `validateFailsOnce` (reject the next `validate`), and `resolveDiffers` (a check identity resolves to other operands, for the "explanation unavailable" case).
+  - **The fake's checks**: `getChecks()`, `getCheck(id, version)`, and `getAnswer(identity)`, each logged (`getChecks`, `getCheck …`, `getAnswer …`) like the other calls. By default the fake serves one check shaped like the pilot (`numbers.addition.check-within-20`, version 1, the four identities of `contracts/api.md`). Its `getInstance` resolves those seeds to `7 + 3`, `5 + 4`, `8 + 5`, and `9 + 4`, and its `getAnswer` returns their operands and sums, as `contracts/api.md` shapes the response.
+  - **New `FakeOptions`**: `checks` (replace the list; `[]` for none), `checksFail` (reject `getChecks`), `answerFails` (reject `getAnswer`), `validateFailsOnce` (reject the next `validate`), and `resolveDiffers` (a check identity resolves to other operands, in both `getInstance` and `getAnswer`, for the "explanation unavailable" case).
   - **`records.ts`**: a builder `checkRun(spec)` that returns a `CheckRun` from per-position scripts. A script is `"correct"`, `"wrong"`, `"skipped"`, `"guidance"`, `"reached"` (a delivery that is not answered), a list of supported events, or `null` (unreached), with `position`, `switchAt`, `finishedAt`, and `endedAt`. The deliveries use the four pilot questions.
 
 ---
@@ -58,7 +58,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T002 [P] Add the `contracts/api.md` contract tests to `src/backend/MathKX.Api.Tests/ContractTests.cs`:
   - **`GET /api/checks`**: the pilot's shape in full, with no key `answer`, `sum`, `a`, or `b` anywhere.
   - **`GET /api/checks/{id}/{version}`**: the pilot; `404 unknown-check` for an unknown ID and for an unknown version.
-  - **`GET …/answer`**: 10, 9, 13, and 13 for the four pilot identities; 8 for `numbers.addition.four-plus-four/1/-`; `404 unknown-definition`; `400 invalid-seed`.
+  - **`GET …/answer`**: `7 + 3` → 10, `5 + 4` → 9, `8 + 5` → 13, and `9 + 4` → 13 for the four pilot identities, operands included; 8 for `numbers.addition.four-plus-four/1/-`; `404 unknown-definition`; `400 invalid-seed`.
   - **Health**: `/api/health` reports `checks: 1`.
 
   Add `/api/checks` to the unsolicited-response `[InlineData]` list.
@@ -93,7 +93,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   T003 passes.
 - [ ] T010 Serve checks and answers in `src/backend/MathKX.Api`:
   - **`Endpoints/ChecksEndpoints.cs`** (new): `GET /api/checks` and `GET /api/checks/{id}/{version:int}`, with `Problems.NotFound("unknown-check", …)`.
-  - **`Endpoints/InstancesEndpoints.cs`**: `GET /api/instances/{definitionId}/{version:int}/{seed}/answer`. It resolves as `Resolve` does and returns `AnswerDto` with the instance's validation answer, from the resolved `Instance`'s private validation data; do not add the operands. It has the same errors as `Resolve`.
+  - **`Endpoints/InstancesEndpoints.cs`**: `GET /api/instances/{definitionId}/{version:int}/{seed}/answer`. It resolves as `Resolve` does and returns `AnswerDto` with the resolved operands and the instance's validation answer, from the resolved `Instance`'s private validation data; do not add the operands to compute it. It has the same errors as `Resolve`.
   - **`Dto/Dtos.cs`**: `CheckDto`, `CheckQuestionDto`, and `AnswerDto`.
   - **`Program.cs`**: map the endpoints; health gains `checks = catalog.Checks.Count`.
   - **`specs/002-practice-flow/contracts/api.md`**: extend the private-data sentence with a link to spec 006's third exception.
@@ -143,7 +143,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T018 [P] [US1] Add `src/web/tests/check-summary.test.tsx`:
   - **Groups**: the scripted run of quickstart scenario 1 shows the counts, its questions, "Your answer"/"Correct answer", and the tag "Worth revisiting" once.
   - **Answer requests**: `getAnswer` is called only for the wrong and the skipped question. With `answerFails`, `check.answerUnavailable` shows and nothing reads as wrong.
-  - **Explanations**: opening one shows its steps and dispatches nothing; the record is deep-equal before and after. With `resolveDiffers`, `check.explanationUnavailable` replaces it, and the wrong and skipped questions show `check.answerUnavailable`, never the answer `getAnswer` returned for the other operands. No fetched answer is shown before the identity check completes.
+  - **Explanations**: opening one shows its steps and dispatches nothing; the record is deep-equal before and after. With `resolveDiffers`, `check.explanationUnavailable` replaces it, and the wrong and skipped questions show `check.answerUnavailable`, never the answer `getAnswer` returned for the other operands.
   - **Wording**: no digit followed by `/`, no `%`, and none of the wording scan's words.
   - **Actions**: "Practise more" (with its note) to `/practice/numbers.addition-within-20`, and "Take a new check" to the start screen.
 - [ ] T019 [P] [US1] Add `src/web/e2e/checks.spec.ts` with check 1 (quickstart scenario 1, steps 1–7), on both projects:
@@ -167,7 +167,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T024 [US1] Create `src/web/src/pages/CheckRunPage.tsx`. It calls `openRun` on mount and `leaveCheck` on unmount, and shows the independent question, the summary of a run that is over, or `check.runNotFound`. Focus moves to the prompt on each new question, and to the summary heading at the end.
 - [ ] T025 [US1] Create `src/web/src/pages/CheckSummary.tsx` per `contracts/summary.md` "The summary":
   - the check's title from `getCheck`;
-  - answers from the record, or from `getAnswer` for questions without a correct submission;
+  - answers from the record, or from `getAnswer` for questions without a correct submission, shown only when the response's operands equal the recorded ones;
   - one `getInstance` per question to confirm its operands;
   - explanations through a local `StepPanel` fed by `api.getStep`, with no store call.
 - [ ] T026 [US1] Add the routes:
@@ -288,6 +288,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **The start screen** with an unfinished run of the skill shows `check.unfinished` and "Continue the check".
   - **"Start the check"** ends the old run with `endedAt`, and its summary lists the unreached and the reached but unanswered questions under "Not answered", never under "Skipped". A supported question answered before the new start keeps its outcome in the supported part.
   - **The finished summary**: a reload on it shows the same summary.
+  - **An ended run's summary** (PR 51 review), ended on question 1 with question 1 typed but not saved. Question 1 is reached: its expression is from the record, and its answer is shown only when `getAnswer`'s operands match. Questions 2–4 are unreached: each shows the expression and answer from its `getAnswer` response, with its explanation offered. With `answerFails`, each unreached question shows `check.unreachedUnavailable` and stays counted under "Not answered". With `resolveDiffers`, the reached question shows `check.answerUnavailable`, while the unreached ones show the resolved expression with its matching answer.
 - [ ] T047 [P] [US4] Add checks 3 and 4 to `src/web/e2e/checks.spec.ts` (quickstart scenarios 3 and 4), on both projects.
 
 ### Implementation for User Story 4
@@ -298,7 +299,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - [ ] T051 [US4] Complete resuming:
   - **`src/web/src/pages/CheckStartPage.tsx`**: `check.unfinished` and "Continue the check".
   - **`src/web/src/state/store.tsx`**: `openRun` restores the supported part's help and explanation steps from `resume`, fetched again and not recorded, as spec 005's resume does.
-  - **`src/web/src/pages/CheckSummary.tsx`**: the "Not answered" section.
+  - **`src/web/src/pages/CheckSummary.tsx`**: the "Not answered" section, with unreached questions on their own path: the expression and answer from one `getAnswer` response, and the explanation when `getInstance` gives the same operands (`contracts/summary.md`).
 
   T045–T047 pass.
 

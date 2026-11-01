@@ -35,14 +35,22 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 | Independent result, under `check.independentTitle` | three groups in this order: `check.groupCorrect`, `check.groupRevisit`, `check.groupSkipped`. Each has a count (`check.groupCount`) and its questions. An empty group shows `check.groupNone`. With a switch at question 1, the three groups are replaced by `check.noIndependent`. |
 | Supported part | only with a switch: heading `check.supportedTitle` naming `switchAt`, then `check.supportedNote`, then each question with its outcome label (spec 002's `outcome` texts) |
 | Not answered | only for an ended run: heading `check.notAnsweredTitle`, then `check.notAnsweredNote`, then each question |
-| Each question | the expression (`record.question`), `check.yourAnswer`, `check.skippedAnswer`, or `check.noAnswer`; `check.correctAnswer`; a disclosure "Show the explanation" (`practice.showExplanation`) with a `StepPanel` |
+| Each question | the expression (`record.question`; for an unreached question, from its answer response, below), `check.yourAnswer`, `check.skippedAnswer`, or `check.noAnswer`; `check.correctAnswer`; a disclosure "Show the explanation" (`practice.showExplanation`) with a `StepPanel` |
 | The tag "Worth revisiting" | `check.groupRevisit` as a tag, on questions in that group only |
 | Note | `check.summaryNote` |
 | Actions | "Practise more" (`check.practiseMore`) to `/practice/{skillId}`, with `check.practiseMoreNote`; "Take a new check" (`check.again`) to `/checks/{checkId}`; a link to "My work" |
 
-**The correct answer**: for a question with a correct submission, it is that submission's value. For any other question, it comes from `GET .../answer` (contracts/api.md), requested when the summary is shown. It is shown **only once the identity check below has confirmed** that the identity still resolves to the recorded operands. While either request is loading, nothing is shown. If the answer request fails, or the identity resolves to other operands or cannot be resolved, `check.answerUnavailable` is shown, and the recorded expression and answers stay. So a recorded `7 + 3` can never be shown with the answer of whatever the identity resolves to now. A missing answer is never presented as a wrong one.
+**Reached and unreached questions**: a reached question has a delivery with recorded operands. An unreached question, one in `notAnswered` with no delivery, has only the identity in the run's copy of the list. The two take different paths (PR 51 review).
 
-**Explanations** (research R11): the same identity check guards them. The summary first re-resolves each question's identity with one instance request. If the operands match the record, "Show the explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. If the identity no longer resolves to the recorded operands, the disclosure is replaced by `check.explanationUnavailable`, and the recorded answers still show.
+**The correct answer of a reached question**: with a correct submission, it is that submission's value. Otherwise it comes from `GET .../answer` (contracts/api.md), requested when the summary is shown, and is shown **only when the response's operands equal the recorded ones**. If the request fails, or the operands differ, `check.answerUnavailable` is shown, and the recorded expression and answers stay. So a recorded `7 + 3` can never be shown with the answer of whatever the identity resolves to now. While the request is loading, nothing is shown. A missing answer is never presented as a wrong one.
+
+**An unreached question**: there are no recorded operands to compare, so its expression and its answer both come from the one `GET .../answer` response, which names the operands it answers. They therefore always agree. If the request fails, the question shows `check.unreachedUnavailable` with its position, with no expression, answer, or explanation. It is still listed and counted under "Not answered".
+
+**Explanations** (research R11): each question's identity is re-resolved with one instance request before its explanation is offered:
+- **A reached question**: the explanation is offered when the operands match the record.
+- **An unreached question**: it is offered when they match its answer response's operands.
+
+"Show the explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. Otherwise, the disclosure is replaced by `check.explanationUnavailable`, and whatever the question already shows stays.
 
 **Never shown**: a score, a fraction such as "2/4", a percentage, a streak, time taken, or a mastery word ("mastered", "level", "grade"). The wording scan (`progress-wording.test.tsx`) gains the check components and the `check` dictionary section.
 
@@ -78,6 +86,7 @@ In each skill group, after the practice lines and before the question list:
 | `noAnswer` | Not answered | Ikke besvart |
 | `correctAnswer` | Correct answer: {a} | Riktig svar: {a} |
 | `answerUnavailable` | The correct answer cannot be shown just now. | Det riktige svaret kan ikke vises akkurat nå. |
+| `unreachedUnavailable` | Question {n} cannot be shown just now. | Oppgave {n} kan ikke vises akkurat nå. |
 | `explanationUnavailable` | The explanation for this question is no longer available. Your answer is kept. | Forklaringen til denne oppgaven er ikke lenger tilgjengelig. Svaret ditt er tatt vare på. |
 | `summaryNote` | Help is part of learning. Questions worth revisiting are good candidates for a little more practice, whenever you choose. | Hjelp er en del av læringen. Oppgaver som er verdt å se på igjen, er gode kandidater for litt mer øving – når du selv ønsker det. |
 | `practiseMore` | Practise more | Øv mer |

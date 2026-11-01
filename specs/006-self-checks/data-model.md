@@ -31,7 +31,7 @@ The pilot check is `numbers.addition.check-within-20`, version 1, for `numbers.a
 | --- | --- | --- |
 | `CheckDto` (new) | `Id`, `Version`, `Skill`, `Title`, `Scope` (`LocalizedDto`), `Questions: CheckQuestionDto[]` | `GET /api/checks`, `GET /api/checks/{id}/{version}`; identities only, never a sum |
 | `CheckQuestionDto` (new) | `Definition`, `Version`, `Seed?` | — |
-| `AnswerDto` (new) | `Identity`, `Answer: { Kind: "integer", Value }` | `GET /api/instances/{id}/{version}/{seed}/answer`; requested only by the check summary ([contracts/api.md](contracts/api.md)) |
+| `AnswerDto` (new) | `Identity`, `A`, `B` (the operands the answer belongs to), `Answer: { Kind: "integer", Value }` | `GET /api/instances/{id}/{version}/{seed}/answer`; requested only by the check summary ([contracts/api.md](contracts/api.md)) |
 
 ## Learner app record (`src/web/src/state`)
 

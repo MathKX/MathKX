@@ -70,7 +70,7 @@ Each check is returned with its skill, title, scope, and questions as identities
 
 ## R5. The correct answer in the summary
 
-**Decision**: a new read-only endpoint, `GET /api/instances/{definitionId}/{version}/{seed}/answer`, returns `{ identity, answer: { kind: "integer", value } }` from the domain's resolved instance. A fixed task uses `-` as its seed segment, as the other instance routes do. The summary requests it only for questions without a correct saved answer. For a correct one, the learner's validated answer is the correct answer. Nothing else requests it, and the end-to-end check asserts that no answer request is made before the summary.
+**Decision**: a new read-only endpoint, `GET /api/instances/{definitionId}/{version}/{seed}/answer`, returns `{ identity, a, b, answer: { kind: "integer", value } }` from the domain's resolved instance: the answer together with the operands it belongs to. A fixed task uses `-` as its seed segment, as the other instance routes do. The summary requests it only for questions without a correct saved answer. For a correct one, the learner's validated answer is the correct answer. Nothing else requests it, and the end-to-end check asserts that no answer request is made before the summary.
 
 **Rationale**:
 - **Constitution III and spec 004**: the app never computes a sum, and the replay already follows this rule.
@@ -168,7 +168,7 @@ A question's part is derived from `switchAt`, never stored twice. Whether a ques
 
 ## R11. Explanations in the summary
 
-**Decision**: each question in the summary offers its explanation through `StepPanel`, fed by `api.getStep` in the summary component itself, not through the store. Nothing is dispatched, so nothing is recorded (FR-011). The panel opens only once the question's identity is confirmed: the summary re-resolves it with one instance request and compares the operands with the recorded ones, as spec 004's replay does. Otherwise the panel is replaced by a sentence saying the explanation is unavailable. The same check guards R5's correct answer (PR 51 review): an answer fetched for an identity that now resolves to other operands is never shown beside the recorded expression; the summary says the answer is unavailable instead.
+**Decision**: each question in the summary offers its explanation through `StepPanel`, fed by `api.getStep` in the summary component itself, not through the store. Nothing is dispatched, so nothing is recorded (FR-011). The panel opens only once the question's identity is confirmed: the summary re-resolves it with one instance request and compares the operands with the recorded ones, as spec 004's replay does. Otherwise the panel is replaced by a sentence saying the explanation is unavailable. The same check guards R5's correct answer (PR 51 review). The answer response names the operands it answers, and a reached question's fetched answer is shown only when they equal the recorded ones; otherwise the summary says the answer is unavailable. A question never reached, in an ended run, has no recorded operands, so its expression and answer both come from that one response and always agree.
 
 **Rationale**: the summary comes after the check, so an explanation there is review, not help on an answer that could still change. Keeping it out of the store makes "records nothing" structural.
 

@@ -39,9 +39,13 @@ The answer to one question, for the check summary only (research R5). `seed` is 
 ```json
 {
   "identity": { "definitionId": "numbers.addition.within-10", "version": 1, "seed": "22" },
+  "a": 7,
+  "b": 3,
   "answer": { "kind": "integer", "value": 10 }
 }
 ```
+
+The response names the operands the answer belongs to, from the same resolution. So the summary can check a reached question's answer against its recorded operands, and show an unreached question's expression and answer together, each with one request ([summary.md](summary.md)).
 
 - **Errors**, as `GET /api/instances/...`: `404 unknown-definition`, `400 invalid-seed`.
 - **The sum rule of spec 002's api contract** gains a third named exception: a sum appears in a correct validation result, in a revealing step, and in this response.
@@ -55,5 +59,5 @@ The answer to one question, for the check summary only (research R5). `seed` is 
 
 - **`/api/checks`**: the shape of the pilot check; no field named `answer`, `sum`, `a`, or `b` anywhere in it.
 - **`/api/checks/{id}/{version}`**: the pilot; `unknown-check` for an unknown ID and for an unknown version.
-- **`/answer`**: the four pilot answers (10, 9, 13, 13); a fixed task (`numbers.addition.four-plus-four`, version 1, seed `-`) gives 8; `unknown-definition` and `invalid-seed` as for instances.
+- **`/answer`**: the four pilot answers with their operands (`7 + 3` → 10, `5 + 4` → 9, `8 + 5` → 13, `9 + 4` → 13); a fixed task (`numbers.addition.four-plus-four`, version 1, seed `-`) gives 8; `unknown-definition` and `invalid-seed` as for instances.
 - **`/api/health`**: counts one check.
