@@ -9,7 +9,7 @@ import { createStorage, type Storage } from "./storage";
 import { hasCorrect, hasSubmission, identityOf, newId, recordEvent, type ChallengeRequest, type Delivery, type Event } from "./observations";
 import { repeatKind, repeats, type RepeatKind } from "./progress";
 import { choose, pairKey, recentWindow } from "./selection";
-import { isUnfinished, type CheckResume, type CheckRun } from "./checks";
+import { isUnfinished, partOf, type CheckResume, type CheckRun } from "./checks";
 
 export interface DefinitionRef {
   definition: string;
@@ -101,6 +101,8 @@ export interface State extends PersistedState {
   /** The practice view is mounted. A step is presented, and so recorded, only while it is and its panel is open. */
   presenting: boolean;
   check: CheckScreen | null;
+  /** The run the check view last presented, kept after it unmounts: a lesson visit `?from=check` is about it (R10). */
+  lastCheckRunId: string | null;
 }
 
 const emptyResume = (): CheckResume => ({ draft: "", helpOpen: false, helpStep: -1, explanationOpen: false, explanationStep: -1, result: null });
@@ -157,13 +159,19 @@ type Action =
   | { type: "checkStart"; run: CheckRun; at: string }
   | { type: "checkOpen"; runId: string }
   | { type: "checkLeave" }
-  | { type: "checkInstance"; runId: string; position: number; instance: InstanceDto; delivery: Delivery }
+  /** `restored`: a resumed supported question's steps, fetched again and shown without being recorded. */
+  | { type: "checkInstance"; runId: string; position: number; instance: InstanceDto; delivery: Delivery; restored?: RestoredSteps }
   | { type: "checkLoadError"; runId: string; failed: boolean }
   | { type: "checkDraft"; runId: string; draft: string }
   | { type: "checkSaving"; runId: string; checking: boolean }
   | { type: "checkNotice"; runId: string; notice: CheckScreen["notice"] }
-  /** Records the event on the delivery at `position`; `advance` then moves on, or finishes the run after the last question. */
-  | { type: "checkEvent"; runId: string; position: number; event: Event; advance: boolean; at: string };
+  /** Records the event, if any, on the delivery at `position`; `advance` then moves on, or finishes the run after the last question. */
+  | { type: "checkEvent"; runId: string; position: number; event: Event | null; advance: boolean; at: string }
+  // The supported part (specs/006 contracts/check-run.md "Supported part").
+  | { type: "checkSwitch"; runId: string; position: number }
+  | { type: "checkPanels"; runId: string; position: number; panels: Partial<Pick<CheckResume, "helpOpen" | "explanationOpen">> }
+  | { type: "checkResult"; runId: string; position: number; event: Event; result: ValidationResponse }
+  | { type: "checkStep"; runId: string; position: number; kind: StepKind; step: StepDto };
 
 function updateRun(state: State, runId: string, fn: (run: CheckRun) => CheckRun): State {
   return { ...state, checkRuns: state.checkRuns.map((r) => (r.id === runId ? fn(r) : r)) };
@@ -171,6 +179,15 @@ function updateRun(state: State, runId: string, fn: (run: CheckRun) => CheckRun)
 
 const updateScreen = (state: State, runId: string, fn: (screen: CheckScreen) => CheckScreen): State =>
   state.check && state.check.runId === runId ? { ...state, check: fn(state.check) } : state;
+
+/** The unfinished run whose question at `position` is on screen now, or null: a stale action changes nothing. */
+function onScreen(state: State, runId: string, position: number): CheckRun | null {
+  const run = state.checkRuns.find((r) => r.id === runId);
+  return run && isUnfinished(run) && run.position === position && run.deliveries[position - 1] ? run : null;
+}
+
+const withDelivery = (run: CheckRun, position: number, fn: (d: Delivery) => Delivery): Delivery[] =>
+  run.deliveries.map((d, i) => (i === position - 1 ? fn(d) : d));
 
 function checkReducer(state: State, action: Extract<Action, { type: `check${string}` }>): State {
   switch (action.type) {
@@ -180,15 +197,51 @@ function checkReducer(state: State, action: Extract<Action, { type: `check${stri
       return { ...state, checkRuns: [...ended, action.run] };
     }
     case "checkOpen":
-      return { ...state, check: { runId: action.runId, instance: null, helpSteps: [], explanationSteps: [], checking: false, presenting: true, notice: null, loadError: false } };
+      return { ...state, lastCheckRunId: action.runId, check: { runId: action.runId, instance: null, helpSteps: [], explanationSteps: [], checking: false, presenting: true, notice: null, loadError: false } };
     case "checkLeave":
       return state.check ? { ...state, check: null } : state; // `resume` stays on the run
     case "checkInstance": {
       const run = state.checkRuns.find((r) => r.id === action.runId);
       if (!run || !state.check || state.check.runId !== action.runId || run.position !== action.position || !isUnfinished(run)) return state;
       // A question is reached once it is shown: its delivery joins the run at its index.
-      const reached = run.deliveries.length >= action.position ? run : { ...run, deliveries: [...run.deliveries, action.delivery] };
-      return { ...updateRun(state, run.id, () => reached), check: { ...state.check, instance: action.instance, loadError: false } };
+      let reached = run.deliveries.length >= action.position ? run : { ...run, deliveries: [...run.deliveries, action.delivery] };
+      const restored = action.restored;
+      // Steps that could not be fetched again start over, so the next step asked for is the next one shown.
+      if (restored && reached.resume) reached = { ...reached, resume: { ...reached.resume, helpStep: restored.help.length - 1, explanationStep: restored.explanation.length - 1 } };
+      return {
+        ...updateRun(state, run.id, () => reached),
+        check: { ...state.check, instance: action.instance, helpSteps: restored?.help ?? [], explanationSteps: restored?.explanation ?? [], loadError: false },
+      };
+    }
+    case "checkSwitch": {
+      // One way (FR-008): from this position on, the run is supported practice; the draft stays.
+      const run = onScreen(state, action.runId, action.position);
+      if (!run || run.switchAt !== null) return state;
+      return updateScreen(updateRun(state, run.id, (r) => ({ ...r, switchAt: action.position })), run.id, (s) => ({ ...s, notice: null }));
+    }
+    case "checkPanels": {
+      const run = onScreen(state, action.runId, action.position);
+      if (!run) return state;
+      return updateRun(state, run.id, (r) => ({ ...r, resume: { ...(r.resume ?? emptyResume()), ...action.panels } }));
+    }
+    case "checkResult": {
+      const run = onScreen(state, action.runId, action.position);
+      if (!run || partOf(run, action.position) !== "supported") return updateScreen(state, action.runId, (s) => ({ ...s, checking: false }));
+      const next = updateRun(state, run.id, (r) => ({ ...r, deliveries: withDelivery(r, action.position, (d) => recordEvent(d, action.event)), resume: { ...(r.resume ?? emptyResume()), result: action.result } }));
+      return updateScreen(next, run.id, (s) => ({ ...s, checking: false, notice: null }));
+    }
+    case "checkStep": {
+      // Practice's rule through the same helper: a step is shown, and recorded, only while the view presents it.
+      const run = onScreen(state, action.runId, action.position);
+      const screen = state.check;
+      if (!run || !screen || screen.runId !== run.id || partOf(run, action.position) !== "supported") return state;
+      const resume = run.resume ?? emptyResume();
+      const stepScreen: StepScreen = { ...resume, helpSteps: screen.helpSteps, explanationSteps: screen.explanationSteps };
+      const shown = presentStep(stepScreen, run.deliveries[action.position - 1]!, screen.presenting, action.kind, action.step);
+      if (!shown) return state;
+      const s = shown.screen;
+      const next = updateRun(state, run.id, (r) => ({ ...r, deliveries: withDelivery(r, action.position, () => shown.delivery), resume: { ...resume, helpStep: s.helpStep, explanationStep: s.explanationStep } }));
+      return { ...next, check: { ...screen, helpSteps: s.helpSteps, explanationSteps: s.explanationSteps } };
     }
     case "checkLoadError":
       return updateScreen(state, action.runId, (s) => ({ ...s, loadError: action.failed }));
@@ -203,7 +256,8 @@ function checkReducer(state: State, action: Extract<Action, { type: `check${stri
       const target = run?.deliveries[action.position - 1];
       // Only the question on screen: an action that raced a move on (a second press before the render) changes nothing.
       if (!run || !target || !isUnfinished(run) || run.position !== action.position) return state;
-      const deliveries = run.deliveries.map((d, i) => (i === action.position - 1 ? recordEvent(d, action.event) : d));
+      const event = action.event;
+      const deliveries = event ? withDelivery(run, action.position, (d) => recordEvent(d, event)) : run.deliveries;
       if (!action.advance) return updateRun(state, run.id, (r) => ({ ...r, deliveries }));
       const last = action.position >= run.questions.length;
       const moved: CheckRun = last ? { ...run, deliveries, resume: null, finishedAt: action.at } : { ...run, deliveries, position: action.position + 1, resume: null };
@@ -215,8 +269,12 @@ function checkReducer(state: State, action: Extract<Action, { type: `check${stri
   }
 }
 
+/** Changes the delivery with this ID, in practice's deliveries or in a check run's (a lesson detour from a check, R10). */
 function updateDelivery(state: State, deliveryId: string | null | undefined, fn: (d: Delivery) => Delivery): State {
   if (!deliveryId) return state;
+  if (!state.deliveries.some((d) => d.id === deliveryId) && state.checkRuns.some((r) => r.deliveries.some((d) => d.id === deliveryId))) {
+    return { ...state, checkRuns: state.checkRuns.map((r) => (r.deliveries.some((d) => d.id === deliveryId) ? { ...r, deliveries: r.deliveries.map((d) => (d.id === deliveryId ? fn(d) : d)) } : r)) };
+  }
   return { ...state, deliveries: state.deliveries.map((d) => (d.id === deliveryId ? fn(d) : d)) };
 }
 
@@ -384,7 +442,7 @@ function reducer(state: State, action: Action): State {
     case "lessonViewed":
       return { ...state, lessonViews: [...state.lessonViews, action.view] };
     case "clear":
-      return { ...state, ...initialPersisted, language: state.language, check: null };
+      return { ...state, ...initialPersisted, language: state.language, check: null, lastCheckRunId: null };
     case "checkStart":
     case "checkOpen":
     case "checkLeave":
@@ -394,6 +452,10 @@ function reducer(state: State, action: Action): State {
     case "checkSaving":
     case "checkNotice":
     case "checkEvent":
+    case "checkSwitch":
+    case "checkPanels":
+    case "checkResult":
+    case "checkStep":
       return checkReducer(state, action);
     default:
       return state;
@@ -448,6 +510,18 @@ export interface StoreApi {
   skipCheckQuestion(): Promise<void>;
   /** The run page unmounts; the run keeps its `resume`. */
   leaveCheck(): void;
+  /** "Switch to supported practice": `switchAt` becomes the current position, for good; the draft stays. */
+  switchToSupported(): void;
+  /** "Check answer" on a supported question: practice's submit, with feedback and retries. */
+  submitCheckAnswer(): Promise<void>;
+  /** Opens or closes a supported question's help or explanation; opening records it, as in practice. */
+  toggleCheckPanel(kind: StepKind): void;
+  /** Fetches the next help or explanation step; it is recorded only when shown. */
+  nextCheckStep(kind: StepKind): Promise<void>;
+  /** "Next question", or "See summary" on the last one: only after a submission. */
+  nextCheckQuestion(): Promise<void>;
+  /** "Show visual help instead" from a lesson's notice: help opens when the run page next shows that question. */
+  showCheckHelpInstead(runId: string): void;
 }
 
 const StoreContext = createContext<StoreApi | null>(null);
@@ -459,7 +533,7 @@ export interface StoreProviderProps {
 }
 
 const persistedOf = (s: State): PersistedState => {
-  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, presenting: _presenting, check: _check, ...persisted } = s;
+  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, presenting: _presenting, check: _check, lastCheckRunId: _lastCheckRunId, ...persisted } = s;
   return persisted;
 };
 
@@ -468,7 +542,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
     const value = loaded.value ?? {};
-    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false, check: null };
+    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false, check: null, lastCheckRunId: null };
   });
   const checkToken = useRef(0); // the check's own load token: a check load never supersedes practice's, or the reverse
   const latest = useRef(state);
@@ -476,6 +550,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const loadToken = useRef(0); // only the most recent instance request may become the current question
   const practiceRun = useRef(0); // a practice start still under way belongs to the run it began in
   const pendingHelpOpen = useRef<string | null>(null); // "Show visual help instead", for this delivery
+  const pendingCheckHelp = useRef<{ runId: string; position: number } | null>(null); // the same, for a supported check question
 
   useEffect(() => {
     const kept = store.save(persistedOf(state));
@@ -664,7 +739,23 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     try {
       const instance = await api.getInstance(question.definitionId, question.version, question.seed ?? null);
       if (token !== checkToken.current) return;
-      dispatch({ type: "checkInstance", runId: run.id, position, instance, delivery: run.deliveries[position - 1] ?? toDelivery(instance, undefined, undefined, "check") });
+      // A resumed supported question shows the steps it had reached; they were recorded when first shown. Only the
+      // rendered position has a `resume` of its own: after a move on, `latest` still holds the previous one's.
+      const resume = at === undefined && partOf(run, position) === "supported" ? run.resume : null;
+      let restored: RestoredSteps | undefined;
+      if (resume) {
+        const stepsUpTo = (kind: StepKind, last: number) =>
+          Promise.all(Array.from({ length: last + 1 }, (_, i) => api.getStep(instance.identity, kind, i))).catch(() => []);
+        restored = { help: await stepsUpTo("help", resume.helpStep), explanation: await stepsUpTo("explanation", resume.explanationStep) };
+        if (token !== checkToken.current) return;
+      }
+      dispatch({ type: "checkInstance", runId: run.id, position, instance, delivery: run.deliveries[position - 1] ?? toDelivery(instance, undefined, undefined, "check"), ...(restored ? { restored } : {}) });
+      const wanted = pendingCheckHelp.current;
+      pendingCheckHelp.current = null;
+      if (wanted?.runId === run.id && wanted.position === position && partOf(run, position) === "supported" && !resume?.helpOpen && instance.representations.help.length > 0) {
+        dispatch({ type: "checkPanels", runId: run.id, position, panels: { helpOpen: true } });
+        dispatch({ type: "checkEvent", runId: run.id, position, event: { type: "support", kind: "visual-help-opened" }, advance: false, at: new Date().toISOString() });
+      }
     } catch {
       if (token === checkToken.current) dispatch({ type: "checkLoadError", runId: run.id, failed: true });
     }
@@ -775,7 +866,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         dispatch({ type: "notice", notice: null });
       },
       lessonShown({ deliveryId, detour, discloses, fromQuestion }) {
-        const delivery = deliveryId ? latest.current.deliveries.find((d) => d.id === deliveryId) : undefined;
+        const current = latest.current;
+        // Practice's question, or a supported check question (`?from=check`, research R10).
+        const delivery = deliveryId ? (current.deliveries.find((d) => d.id === deliveryId) ?? current.checkRuns.flatMap((r) => r.deliveries).find((d) => d.id === deliveryId)) : undefined;
         if (!delivery || !deliveryId) return;
         // The recording table of specs/003 contracts/detour.md: one event, only once the lesson is shown.
         const kind = detour ? (discloses ? "lesson-reveal" : "lesson-opened") : fromQuestion && hasCorrect(delivery) ? "lesson-opened" : null;
@@ -894,12 +987,79 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const shown = shownQuestion();
         if (!shown || shown.screen.checking) return;
         const { run, position } = shown;
+        if (partOf(run, position) === "supported" && hasSubmission(shown.delivery)) return; // after an answer, only "Next question"
         dispatch({ type: "checkEvent", runId: run.id, position, event: { type: "skipped" }, advance: true, at: new Date().toISOString() });
         if (position < run.questions.length) await loadCheckQuestion(run.id, position + 1);
       },
       leaveCheck() {
         checkToken.current++; // a question still on its way belongs to the page being left
         dispatch({ type: "checkLeave" });
+      },
+      switchToSupported() {
+        const shown = shownQuestion();
+        if (!shown || shown.screen.checking || shown.run.switchAt !== null) return;
+        dispatch({ type: "checkSwitch", runId: shown.run.id, position: shown.position });
+      },
+      async submitCheckAnswer() {
+        const shown = shownQuestion();
+        if (!shown || shown.screen.checking || partOf(shown.run, shown.position) !== "supported") return;
+        const { run, position, delivery } = shown;
+        const draft = run.resume?.draft ?? "";
+        const submissionId = newId();
+        dispatch({ type: "checkSaving", runId: run.id, checking: true });
+        let result: ValidationResponse;
+        try {
+          result = await api.validate(identityOf(delivery), draft, submissionId);
+        } catch {
+          dispatch({ type: "checkSaving", runId: run.id, checking: false });
+          dispatch({ type: "checkNotice", runId: run.id, notice: { kind: "unsaved" } });
+          return;
+        }
+        const event: Event =
+          result.status === "invalid-response"
+            ? { type: "input-guidance", submissionId, originalText: draft, code: result.code }
+            : { type: "submission", submissionId, originalText: draft, value: Number(result.values.v), status: result.status, code: result.code };
+        dispatch({ type: "checkResult", runId: run.id, position, event, result });
+      },
+      toggleCheckPanel(kind) {
+        const shown = shownQuestion();
+        if (!shown || partOf(shown.run, shown.position) !== "supported") return;
+        const { run, position } = shown;
+        const resume = run.resume ?? emptyResume();
+        const open = kind === "help" ? resume.helpOpen : resume.explanationOpen;
+        dispatch({ type: "checkPanels", runId: run.id, position, panels: kind === "help" ? { helpOpen: !open } : { explanationOpen: !open } });
+        if (open) return;
+        // Opening is recorded on this one path, as in practice (spec 002).
+        const event: Event = { type: "support", kind: kind === "help" ? "visual-help-opened" : "explanation-open" };
+        dispatch({ type: "checkEvent", runId: run.id, position, event, advance: false, at: new Date().toISOString() });
+      },
+      async nextCheckStep(kind) {
+        const shown = shownQuestion();
+        const instance = shown?.screen.instance;
+        if (!shown || !instance || partOf(shown.run, shown.position) !== "supported") return;
+        const { run, position, screen } = shown;
+        const resume = run.resume ?? emptyResume();
+        const index = (kind === "help" ? resume.helpStep : resume.explanationStep) + 1;
+        const steps = kind === "help" ? screen.helpSteps : screen.explanationSteps;
+        if (steps[0] && index >= steps[0].count) return;
+        let step: StepDto;
+        try {
+          step = await api.getStep(instance.identity, kind, index);
+        } catch {
+          return; // nothing shown, nothing recorded
+        }
+        dispatch({ type: "checkStep", runId: run.id, position, kind, step }); // shown and recorded together, or neither
+      },
+      async nextCheckQuestion() {
+        const shown = shownQuestion();
+        if (!shown || shown.screen.checking || partOf(shown.run, shown.position) !== "supported" || !hasSubmission(shown.delivery)) return;
+        const { run, position } = shown;
+        dispatch({ type: "checkEvent", runId: run.id, position, event: null, advance: true, at: new Date().toISOString() });
+        if (position < run.questions.length) await loadCheckQuestion(run.id, position + 1);
+      },
+      showCheckHelpInstead(runId) {
+        const run = latest.current.checkRuns.find((r) => r.id === runId);
+        pendingCheckHelp.current = run ? { runId, position: run.position } : null;
       },
     }),
     [api, load, state, store, startPracticeOnly, consumePendingHelp, openHelp, loadCheckQuestion, shownQuestion],

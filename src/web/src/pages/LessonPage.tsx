@@ -2,15 +2,18 @@
 // rendered by the lesson chunk, with the practice entries where the lesson places them. While the current
 // question is unanswered and this lesson practises its definition, the visit is a detour: a lesson that shows the
 // question's answer stays behind the notice (and is not even requested) until the learner chooses, the visit is
-// recorded once the lesson is shown, and "Back to your question" is offered (contracts/detour.md).
+// recorded once the lesson is shown, and "Back to your question" is offered (contracts/detour.md). A visit
+// `?from=check` is about the supported check question on screen in the run the check view last presented instead,
+// with the same rules and the way back to that run (specs/006 research R10).
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
-import type { LessonDetail, PracticeApi, SkillDto } from "../api/types";
+import type { InstanceDto, LessonDetail, PracticeApi, SkillDto } from "../api/types";
 import { practiceApi } from "../api/client";
 import { translate, type Lang } from "../i18n";
 import { useRouter } from "../router";
 import { useStore } from "../state/store";
-import { currentQuestion } from "../state/observations";
+import { currentQuestion, hasCorrect, identityOf } from "../state/observations";
+import { checkDetourOf } from "../state/checks";
 import { PracticeEntry } from "../lesson/PracticeEntry";
 import { CheckEntry } from "../components/CheckEntry";
 import { Placeholder } from "../lesson/Placeholder";
@@ -31,7 +34,14 @@ interface Visit {
   fromQuestion: boolean;
   gateOpen: boolean;
   question: { a: number; b: number; prompt: string; hasHelp: boolean } | null;
+  /** Where "Back to your question" and the notice's other choices lead; null without a question to return to. */
+  back: string | null;
+  /** The check run of a supported check question, for "Show visual help instead"; null for practice. */
+  checkRunId: string | null;
 }
+
+/** A supported check question resolved again for the notice: its lessons, prompt, and help; "failed" keeps the gate shut. */
+type CheckQuestion = { kind: "loading" } | { kind: "done"; instance: InstanceDto } | { kind: "failed" };
 
 export function LessonPage({ id, api = practiceApi }: { id: string; api?: PracticeApi }) {
   const store = useStore();
@@ -46,8 +56,27 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const [attempt, setAttempt] = useState(0);
   const [visit, setVisit] = useState<Visit | null>(null);
   const [lessonsCheck, setLessonsCheck] = useState<"none" | "pending" | "done" | "failed">("none");
-  const [fromQuestion] = useState(() => new URLSearchParams(search).get("from") === "question");
+  const [from] = useState(() => new URLSearchParams(search).get("from"));
+  const fromQuestion = from === "question";
+  // `?from=check`: the supported check question this visit is about, found once; none makes it spec 003's visit.
+  const [checkDetour] = useState(() => (from === "check" ? checkDetourOf(state.checkRuns, state.lastCheckRunId) : null));
+  const [checkQuestion, setCheckQuestion] = useState<CheckQuestion>({ kind: "loading" });
   const recorded = useRef(false);
+
+  useEffect(() => {
+    if (!checkDetour) return;
+    let live = true;
+    const { definitionId, version, seed } = identityOf(checkDetour.delivery);
+    const { a, b } = checkDetour.delivery.instance;
+    // Only the recorded question: an identity that now resolves to other operands keeps the gate shut.
+    api.getInstance(definitionId, version, seed ?? null).then(
+      (instance) => live && setCheckQuestion(instance.a === a && instance.b === b ? { kind: "done", instance } : { kind: "failed" }),
+      () => live && setCheckQuestion({ kind: "failed" }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [api, checkDetour]);
 
   // The origin is read once; dropping it means a reload or a later history visit is not a visit from the question.
   useEffect(() => {
@@ -78,6 +107,28 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   // Decide the visit once, from the store as it is now.
   useEffect(() => {
     if (!lesson || visit) return;
+    if (checkDetour) {
+      const { run, delivery } = checkDetour;
+      const { definitionId, version, a, b } = delivery.instance;
+      const listed = lesson.practice.some((p) => p.definition === definitionId && p.version === version);
+      const detour = listed && !hasCorrect(delivery) && !delivery.events.some((e) => e.type === "skipped");
+      if (detour && checkQuestion.kind === "loading") return;
+      const instance = checkQuestion.kind === "done" ? checkQuestion.instance : null;
+      const entry = instance?.lessons?.find((l) => l.id === lesson.id);
+      // As for practice: without a decision from the service, the gate stays shut.
+      const discloses = detour && (entry ? entry.discloses : !instance?.lessons);
+      setVisit({
+        deliveryId: delivery.id,
+        detour,
+        discloses,
+        fromQuestion: true,
+        gateOpen: !discloses,
+        question: detour ? { a, b, prompt: instance?.prompt ?? translate(lang, "record.question", { a, b }), hasHelp: (instance?.representations.help.length ?? 0) > 0 } : null,
+        back: `/checks/${encodeURIComponent(run.checkId)}/${encodeURIComponent(run.id)}`,
+        checkRunId: run.id,
+      });
+      return;
+    }
     const question = currentQuestion(state.deliveries, state.currentDeliveryId);
     const listed = Boolean(question && lesson.practice.some((p) => p.definition === question.instance.definitionId && p.version === question.instance.version));
     if (listed && !state.instance?.lessons && lessonsCheck !== "done" && lessonsCheck !== "failed") {
@@ -98,8 +149,10 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       fromQuestion,
       gateOpen: !discloses,
       question: listed && instance ? { a: instance.a, b: instance.b, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
+      back: state.skillId ? `/practice/${encodeURIComponent(state.skillId)}` : null,
+      checkRunId: null,
     });
-  }, [lesson, visit, state, lessonsCheck, fromQuestion, store]);
+  }, [lesson, visit, state, lessonsCheck, fromQuestion, store, checkDetour, checkQuestion, lang]);
 
   const gateOpen = visit?.gateOpen ?? false;
   const cached = contents[lang];
@@ -171,7 +224,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const loading = <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
   return (
     <article className="mkx-prose mkx-lesson" data-testid="lesson-page">
-      {visit.detour && visit.question && state.skillId ? <ReturnBanner a={visit.question.a} b={visit.question.b} skillId={state.skillId} lang={lang} /> : null}
+      {visit.detour && visit.question && visit.back ? <ReturnBanner a={visit.question.a} b={visit.question.b} href={visit.back} lang={lang} /> : null}
       <Heading level={1} data-size="lg">
         {lesson.titles[lang]}
       </Heading>
@@ -183,10 +236,11 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
           lang={lang}
           onOpen={() => setVisit({ ...visit, gateOpen: true })}
           onHelp={() => {
-            store.showHelpInstead();
-            navigate(practiceHref);
+            if (visit.checkRunId) store.showCheckHelpInstead(visit.checkRunId);
+            else store.showHelpInstead();
+            navigate(visit.back ?? practiceHref);
           }}
-          onCancel={() => navigate(practiceHref)}
+          onCancel={() => navigate(visit.back ?? practiceHref)}
         />
       ) : contentFailed && cached === undefined ? (
         // The selected language failed: say so, even when another language is cached, rather than keep showing it.

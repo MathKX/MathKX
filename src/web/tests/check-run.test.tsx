@@ -1,6 +1,6 @@
-// specs/006 contracts/check-run.md (tasks T017): the start screen, starting a run, the independent part's absences,
-// saving with its guidance and failures, skipping, the end of the run, and separation from practice.
-import { act, render, screen, waitFor } from "@testing-library/react";
+// specs/006 contracts/check-run.md (tasks T017, T031): the start screen, starting a run, the independent part's absences,
+// saving with its guidance and failures, skipping, the end of the run, separation from practice, and the switch.
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
@@ -276,5 +276,176 @@ describe("separation from practice", () => {
     expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("7");
     expect(screen.getByTestId("toggle-help").getAttribute("aria-expanded")).toBe("true");
     expect(stored().deliveries).toHaveLength(before.deliveries.length);
+  });
+});
+
+/** Question 1 saved wrong and question 2 skipped (quickstart scenario 2, step 1): question 3 is on screen. */
+async function atQuestionThree(api: Api = createFakeApi()) {
+  const started = await startCheck(api);
+  await moveOn(started.user, () => save(started.user, "11"));
+  await moveOn(started.user, () => started.user.click(screen.getByTestId("check-skip")));
+  expect(position()).toBe("Question 3 of 4");
+  return started;
+}
+
+async function switchHere(user: User) {
+  await user.click(screen.getByTestId("check-need-help"));
+  await user.click(screen.getByTestId("check-switch-yes"));
+  await screen.findByTestId("supported-question");
+}
+
+const PRACTICE_CONTROLS = ["another", "repeat-question", "easier", "harder", "more-like-this"];
+const supportKinds = (index: number) => onlyRun().deliveries[index]!.events.flatMap((e) => (e.type === "support" ? [e.kind] : []));
+const NO_WAY_BACK = ["check-need-help", "check-switch", "check-save", "independent-question"];
+
+async function check(user: User, answer: string) {
+  const run = onlyRun();
+  const submissions = () => onlyRun().deliveries[run.position - 1]!.events.filter((e) => e.type === "submission").length;
+  const before = submissions();
+  const field = screen.getByTestId("answer");
+  await user.clear(field);
+  await user.type(field, answer);
+  await user.click(screen.getByTestId("check"));
+  await waitFor(() => expect(submissions()).toBe(before + 1));
+  await screen.findByTestId("result");
+}
+
+describe("the switch", () => {
+  it("'I need help' explains the switch, focused on its heading, and 'Continue without help' records nothing", async () => {
+    const { user } = await atQuestionThree();
+    const before = JSON.stringify(stored());
+    const needHelp = screen.getByTestId("check-need-help");
+    await user.click(needHelp);
+    const dialog = screen.getByTestId("check-switch");
+    expect(dialog.getAttribute("role")).toBe("dialog");
+    const heading = screen.getByRole("heading", { name: "Switch to supported practice?" });
+    expect(dialog.getAttribute("aria-labelledby")).toBe(heading.id);
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(screen.getByTestId("check-switch-body").textContent).toBe(en.check.switchBody.replace(/\{i\}/g, "3"));
+    await user.click(screen.getByTestId("check-switch-no"));
+    expect(screen.queryByTestId("check-switch")).toBeNull();
+    expect(document.activeElement).toBe(needHelp);
+    expect(onlyRun().switchAt).toBeNull();
+    expect(JSON.stringify(stored())).toBe(before);
+  });
+
+  it("closes on Escape as 'Continue without help' does", async () => {
+    const { user } = await atQuestionThree();
+    await user.click(screen.getByTestId("check-need-help"));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("check-switch")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByTestId("check-need-help"));
+    expect(onlyRun().switchAt).toBeNull();
+    expect(screen.getByTestId("independent-question")).toBeTruthy();
+  });
+
+  it("'Switch' sets switchAt, keeps the draft, and shows the question as supported practice", async () => {
+    const { user } = await atQuestionThree();
+    await user.type(screen.getByTestId("answer"), "1");
+    await switchHere(user);
+    expect(onlyRun().switchAt).toBe(3);
+    expect(onlyRun().position).toBe(3);
+    expect(screen.getByTestId("check-mode").textContent).toBe("Supported practice (from question 3)");
+    expect(position()).toBe("Question 3 of 4");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("1");
+    expect(screen.getByTestId("toggle-help")).toBeTruthy();
+    expect(screen.getByTestId("check")).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("prompt")));
+    // The switch itself records nothing on the question, and the earlier answers stay as they were.
+    expect(onlyRun().deliveries[2]!.events).toEqual([]);
+    expect(onlyRun().deliveries[0]!.events).toEqual([expect.objectContaining({ type: "submission", status: "incorrect" })]);
+  });
+
+  it("cannot be undone: nothing on the screen offers a way back, on this question or the next", async () => {
+    const { user } = await atQuestionThree();
+    await switchHere(user);
+    for (const id of NO_WAY_BACK) expect(screen.queryByTestId(id), id).toBeNull();
+    await check(user, "13");
+    await moveOn(user, () => user.click(screen.getByTestId("check-next")));
+    expect(screen.getByTestId("check-mode").textContent).toBe("Supported practice (from question 3)");
+    for (const id of NO_WAY_BACK) expect(screen.queryByTestId(id), id).toBeNull();
+  });
+});
+
+describe("the supported part", () => {
+  it("offers only 'Skip' before an answer, only 'Next question' after one, and 'See summary' on question 4", async () => {
+    const { user } = await atQuestionThree();
+    await switchHere(user);
+    const controls = () => ["check-skip", "check-next", "check-finish"].filter((id) => screen.queryByTestId(id));
+    expect(controls()).toEqual(["check-skip"]);
+    await check(user, "12"); // wrong: feedback, and a retry is possible
+    expect(screen.getByTestId("result")).toBeTruthy();
+    expect(controls()).toEqual(["check-next"]);
+    await check(user, "13");
+    expect(controls()).toEqual(["check-next"]);
+    for (const id of PRACTICE_CONTROLS) expect(screen.queryByTestId(id), id).toBeNull();
+    await moveOn(user, () => user.click(screen.getByTestId("check-next")));
+    expect(position()).toBe("Question 4 of 4");
+    expect(controls()).toEqual(["check-skip"]);
+    await check(user, "13");
+    expect(controls()).toEqual(["check-finish"]);
+    for (const id of PRACTICE_CONTROLS) expect(screen.queryByTestId(id), id).toBeNull();
+    await moveOn(user, () => user.click(screen.getByTestId("check-finish")), true);
+    expect(onlyRun().finishedAt).toBeTruthy();
+    expect(onlyRun().deliveries).toHaveLength(4); // "See summary" creates no delivery
+  });
+
+  it("records help, steps, retries, and the explanation on the run's delivery, as practice does", async () => {
+    const { api, user } = await atQuestionThree();
+    await switchHere(user);
+    await user.click(screen.getByTestId("toggle-help"));
+    await screen.findByTestId("help-panel");
+    expect(supportKinds(2)).toEqual(["visual-help-opened"]);
+    await user.click(screen.getByTestId("help-next"));
+    await screen.findByTestId("help-step-text");
+    expect(supportKinds(2)).toEqual(["visual-help-opened", "help-step"]);
+    await check(user, "12");
+    await check(user, "13");
+    await user.click(screen.getByTestId("toggle-explanation"));
+    await user.click(await screen.findByTestId("explanation-next"));
+    await screen.findByTestId("explanation-step-text");
+    const events = onlyRun().deliveries[2]!.events;
+    expect(events.map((e) => (e.type === "submission" ? e.status : e.type === "support" ? e.kind : e.type))).toEqual([
+      "visual-help-opened",
+      "help-step",
+      "incorrect",
+      "correct",
+      "explanation-open",
+      "explanation-step",
+    ]);
+    expect(api.calls.filter((c) => c.startsWith("getStep"))).toEqual(["getStep help 0", "getStep explanation 0"]);
+    expect(stored().deliveries).toEqual([]); // practice's record is untouched
+  });
+
+  it("links to the lesson with ?from=check", async () => {
+    const { user } = await atQuestionThree();
+    await switchHere(user);
+    expect(screen.getByTestId("to-lesson").getAttribute("href")).toBe("/lessons/number-bonds-to-ten?from=check");
+  });
+
+  it("records a skip before an answer and moves on", async () => {
+    const { user } = await atQuestionThree();
+    await switchHere(user);
+    await moveOn(user, () => user.click(screen.getByTestId("check-skip")));
+    expect(onlyRun().deliveries[2]!.events).toEqual([{ type: "skipped" }]);
+    expect(onlyRun().position).toBe(4);
+  });
+
+  it("restores the draft, open help, and its steps after a reload, without recording them again", async () => {
+    const api = createFakeApi();
+    const { user } = await atQuestionThree(api);
+    await switchHere(user);
+    await user.click(screen.getByTestId("toggle-help"));
+    await user.click(await screen.findByTestId("help-next"));
+    await screen.findByTestId("help-step-text");
+    await user.type(screen.getByTestId("answer"), "13");
+    const before = onlyRun().deliveries[2]!.events;
+    const path = window.location.pathname;
+    cleanup();
+    render(<App api={api} initialPath={path} />);
+    expect((await screen.findByTestId("help-step-text")).textContent).toBeTruthy();
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("13");
+    expect(screen.getByTestId("toggle-help").getAttribute("aria-expanded")).toBe("true");
+    expect(onlyRun().deliveries[2]!.events).toEqual(before);
   });
 });

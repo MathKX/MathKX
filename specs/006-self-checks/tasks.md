@@ -203,12 +203,12 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 2
 
-- [ ] T030 [P] [US2] Extend `src/web/tests/checks.test.ts`:
+- [X] T030 [P] [US2] Extend `src/web/tests/checks.test.ts`:
   - with a switch at each of positions 1 to 4 over the 81 independent combinations of the positions before it, positions from `switchAt` are only in `supported`, each with spec 002's `derive` outcome;
   - `revisit` never holds a supported position, including a supported question answered wrongly and never correctly;
   - a switch at position 1 leaves the three groups empty (shown as `check.noIndependent`);
   - **the PR 51 review cases**: a switch, the last question answered, and "See summary" put the last question in `supported` with its outcome. A run ended after a supported question was answered, but before "Next question", keeps that question in `supported` with its outcome, not in `notAnswered`.
-- [ ] T031 [P] [US2] Extend `src/web/tests/check-run.test.tsx` for the switch and the supported part:
+- [X] T031 [P] [US2] Extend `src/web/tests/check-run.test.tsx` for the switch and the supported part:
   - **"I need help"**: opens the dialog with focus on its heading and the position in its body. "Continue without help" and Escape record nothing, leave `switchAt` null, and return focus.
   - **"Switch"**: sets `switchAt` to the current position, keeps the draft, and shows the workspace with the mode line.
   - **Before an answer**: only "Skip".
@@ -217,25 +217,25 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **Recording**: opening help and a help step record on the run's delivery only when shown; retries after feedback work; the explanation after a result records as in practice.
   - **Lesson link**: points to `/lessons/number-bonds-to-ten?from=check`.
   - **No way back**: after the switch, nothing on the screen can undo it.
-- [ ] T032 [P] [US2] Extend `src/web/tests/lesson-gate.test.tsx` (spec 003's detour tests) for `?from=check`:
+- [X] T032 [P] [US2] Extend `src/web/tests/lesson-gate.test.tsx` (spec 003's detour tests) for `?from=check`:
   - **The detour question**: the run's current supported question, with the gate when the lesson discloses its answer.
   - **Recording**: `lesson-opened` or `lesson-reveal` on that check delivery, never on practice's question.
   - **Return**: "Back to your question" goes to the run's address.
   - **Other visits**: without `from=check`, the visit is spec 003's, about practice's current question.
   - **The independent part**: a visit while the run is independent records nothing on the run.
-- [ ] T033 [P] [US2] Add check 2 to `src/web/e2e/checks.spec.ts` (quickstart scenario 2), on both projects.
+- [X] T033 [P] [US2] Add check 2 to `src/web/e2e/checks.spec.ts` (quickstart scenario 2), on both projects.
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (answered positions from `switchAt`, spec 002's `derive`). T030 passes.
-- [ ] T035 [US2] Add the supported part to the store, `src/web/src/state/store.tsx`:
+- [X] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (answered positions from `switchAt`, spec 002's `derive`). T030 passes.
+- [X] T035 [US2] Add the supported part to the store, `src/web/src/state/store.tsx`:
   - **`switchToSupported()`**: sets `switchAt` to the current position.
   - **A check-bound question controller** for the workspace: submit with retries; help, explanation, and their steps through T014's helper; `resume` kept current, including `result`.
   - **`nextCheckQuestion()`**: advances `position` after a submission; on the last question ("See summary") it sets `finishedAt` without creating a delivery.
   - **`skipCheckQuestion()`**: in the supported part, skips before any submission.
-- [ ] T036 [US2] In `src/web/src/pages/CheckRunPage.tsx`, add the switch dialog of `contracts/check-run.md` "The switch" (from `IndependentQuestion`'s "I need help"). For a supported position, render `QuestionWorkspace` with the check controller, the mode line, and the check's controls in its slot.
-- [ ] T037 [US2] In `src/web/src/pages/CheckSummary.tsx`, add the supported part: its heading naming `switchAt`, the note, and each question with its outcome label, answers, correct answer, and explanation. Add `check.noIndependent` when `switchAt` is 1.
-- [ ] T038 [US2] Wire the lesson detour from a supported check question (research R10):
+- [X] T036 [US2] In `src/web/src/pages/CheckRunPage.tsx`, add the switch dialog of `contracts/check-run.md` "The switch" (from `IndependentQuestion`'s "I need help"). For a supported position, render `QuestionWorkspace` with the check controller, the mode line, and the check's controls in its slot.
+- [X] T037 [US2] In `src/web/src/pages/CheckSummary.tsx`, add the supported part: its heading naming `switchAt`, the note, and each question with its outcome label, answers, correct answer, and explanation. Add `check.noIndependent` when `switchAt` is 1.
+- [X] T038 [US2] Wire the lesson detour from a supported check question (research R10):
   - **`src/web/src/pages/LessonPage.tsx`**: read `from=check` like `from=question`. With it, take the detour question from the run the check view last presented, and pass its delivery to `lessonShown`.
   - **`src/web/src/state/store.tsx`**: `lessonShown` and `updateDelivery` find a delivery in `checkRuns` as well as in `deliveries`.
   - **`src/web/src/components/ReturnBanner.tsx`**: "Back to your question" returns to the run's address.
@@ -243,6 +243,14 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   T031–T033 pass.
 
 **Checkpoint (first visible merge)**: quickstart scenarios 1 and 2 pass, and the spec 002 to 005 end-to-end checks still pass. Phases 3–4 merge together.
+
+**Done (Phase 4)**. Deviations from the task text:
+- **T034**: `summarizeRun` already had the `supported` part (Phase 3, T020); T030's matrix and review cases now cover it. `checks.ts` gains `supportedQuestionOf` and `checkDetourOf` for the lesson detour.
+- **T035**: the check controller is a set of store calls (`switchToSupported`, `submitCheckAnswer`, `toggleCheckPanel`, `nextCheckStep`, `nextCheckQuestion`, `showCheckHelpInstead`) with reducer cases `checkSwitch`, `checkPanels`, `checkResult`, and `checkStep`; `checkStep` uses `presentStep`. `checkEvent` takes `event: null` to move on without recording. A reload restores a supported question's steps without recording them, and steps that cannot be fetched again start over, as in practice. A failed "Check answer" shows `practice.unreachable` in the result region, as in practice.
+- **T036**: the switch's confirmation lives in `IndependentQuestion`, which owns "I need help" and returns focus to it; "I need help" is now always shown. The supported question is a new `SupportedQuestion` component around `QuestionWorkspace`, which gains an optional `takeFocus`, so the prompt takes focus after the switch and after "Next question" on a page loaded directly too.
+- **T037**: a supported question's answers are all its submissions in order ("Your answer: 12, 13"). With a switch and no answered supported question, the part shows `check.groupNone`.
+- **T038**: the store keeps the run the check view last presented (`lastCheckRunId`, not persisted). A page opened at `?from=check` without it, such as a new tab, takes the newest run with a supported question on screen. The lesson page resolves that question's identity once for the notice, and keeps the gate shut when it fails or resolves to other operands. "Show visual help instead" opens the check question's help when the run page shows it again. `ReturnBanner` takes the address to return to. A visit `?from=check` with no supported question on screen is spec 003's visit.
+- **T031–T033**: `npm test`: 490 passed. `npm run e2e`: 60 passed, 6 skipped (the project-specific skips), scenario 2 on both projects included.
 
 ---
 

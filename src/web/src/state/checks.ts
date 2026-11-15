@@ -89,3 +89,23 @@ export function summarizeRun(run: CheckRun): RunSummary {
   });
   return summary;
 }
+
+/** The question on screen in a run's supported part, while the run is unfinished; null otherwise. */
+export function supportedQuestionOf(run: CheckRun): Delivery | null {
+  if (!isUnfinished(run) || partOf(run, run.position) !== "supported") return null;
+  return run.deliveries[run.position - 1] ?? null;
+}
+
+/**
+ * The supported check question a lesson visit `?from=check` is about (research R10): the run the check view last
+ * presented, or else the most recently started run with a supported question on screen; null when there is none.
+ */
+export function checkDetourOf(runs: readonly CheckRun[], lastRunId: string | null): { run: CheckRun; delivery: Delivery } | null {
+  const last = runs.find((r) => r.id === lastRunId);
+  const candidates = last ? [last] : [...runs].sort((x, y) => y.startedAt.localeCompare(x.startedAt));
+  for (const run of candidates) {
+    const delivery = supportedQuestionOf(run);
+    if (delivery) return { run, delivery };
+  }
+  return null;
+}

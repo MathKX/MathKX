@@ -1,14 +1,16 @@
 // A check run (specs/006 contracts/check-run.md "The run"): the question at the run's position while it is
 // unfinished, and its summary once it is finished or ended. Mounting presents the run; unmounting keeps its `resume`.
+// From `switchAt` on, the question is supported practice; before it, independent.
 import { useEffect, useRef } from "react";
 import { Button, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { PracticeApi } from "../api/types";
 import { IndependentQuestion } from "../components/IndependentQuestion";
+import { SupportedQuestion } from "../components/SupportedQuestion";
 import { PageHeading } from "../components/PageHeading";
 import { translate } from "../i18n";
 import { Link, hasNavigatedInApp } from "../router";
-import { isUnfinished } from "../state/checks";
+import { isUnfinished, partOf } from "../state/checks";
 import { useStore } from "../state/store";
 import { CheckSummary } from "./CheckSummary";
 
@@ -58,6 +60,18 @@ export function CheckRunPage({ runId, api = practiceApi }: { checkId: string; ru
             {translate(lang, "lesson.retry")}
           </Button>
         </div>
+      ) : screen?.instance && partOf(run, run.position) === "supported" ? (
+        <SupportedQuestion
+          key={run.position}
+          lang={lang}
+          run={run}
+          screen={screen}
+          instance={screen.instance}
+          takeFocus={acted.current || hasNavigatedInApp()}
+          onAct={() => {
+            acted.current = true;
+          }}
+        />
       ) : screen?.instance ? (
         <IndependentQuestion
           key={run.position}
@@ -73,6 +87,10 @@ export function CheckRunPage({ runId, api = practiceApi }: { checkId: string; ru
           onDraft={(draft) => store.setCheckDraft(draft)}
           onSave={() => act(() => store.saveCheckAnswer())}
           onSkip={() => act(() => store.skipCheckQuestion())}
+          onSwitch={() => {
+            acted.current = true; // the supported question takes focus
+            store.switchToSupported();
+          }}
         />
       ) : (
         <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>

@@ -1,12 +1,12 @@
 // specs/006 contracts/summary.md "The summary" (tasks T018): the three groups of quickstart scenario 1, the answer
-// requests and their guard, explanations that record nothing, the wording, and the actions.
+// requests and their guard, explanations that record nothing, the wording, the actions, and the supported part (T037).
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
 import type { CheckRun } from "../src/state/checks";
 import { createFakeApi, PILOT_CHECK, type FakeOptions } from "./fakeApi";
-import { at, beforeThisFeature, checkRun } from "./records";
+import { at, beforeThisFeature, checkRun, correct, incorrect, support } from "./records";
 
 const KEY = "mathkx.guest.v1";
 const FORBIDDEN_WORDS = /\b(score|scores|streak|streaks|mastery|mastered|level|grade|poeng|rekke|mestring|mestret|nivå|karakter)\b/i;
@@ -157,5 +157,76 @@ describe("actions", () => {
     await user.click(screen.getByTestId("check-again"));
     await screen.findByTestId("check-start");
     expect(window.location.pathname).toBe(`/checks/${PILOT_CHECK.id}`);
+  });
+});
+
+/** Quickstart scenario 2: `7 + 3` answered 11, `5 + 4` skipped, a switch at 3, then visual help and feedback. */
+const scenarioTwo = (): CheckRun =>
+  checkRun({
+    id: "run-2",
+    positions: ["wrong", "skipped", [support("visual-help-opened"), correct(13)], [incorrect(12), correct(13)]],
+    switchAt: 3,
+    position: 4,
+    finishedAt: at(5),
+  });
+
+describe("the supported part (quickstart scenario 2)", () => {
+  it("shows the independent part, then the supported questions with their outcomes and no tag", async () => {
+    show(scenarioTwo());
+    await screen.findByTestId("check-summary");
+    expect(within(group("correct")).getByTestId("check-group-count").textContent).toBe("0 questions");
+    expect(questionsIn("revisit").map((q) => within(q).getByTestId("check-expression").textContent)).toEqual(["7 + 3"]);
+    expect(questionsIn("skipped").map((q) => within(q).getByTestId("check-expression").textContent)).toEqual(["5 + 4"]);
+
+    const part = screen.getByTestId("check-supported");
+    expect(within(part).getByRole("heading", { level: 2 }).textContent).toBe("Supported practice (from question 3)");
+    expect(within(part).getByTestId("check-supported-note").textContent).toBe(
+      "These questions were done after you switched to supported practice. They are not part of the result on your own.",
+    );
+    const questions = within(part).getAllByTestId("check-question");
+    expect(questions.map((q) => within(q).getByTestId("check-expression").textContent)).toEqual(["8 + 5", "9 + 4"]);
+    expect(questions.map((q) => within(q).getByTestId("check-outcome").textContent)).toEqual(["Correct with visual help", "Correct after feedback"]);
+    expect(within(questions[1]!).getByTestId("check-your-answer").textContent).toBe("Your answer: 12, 13");
+    expect(within(questions[1]!).getByTestId("check-correct-answer").textContent).toBe("Correct answer: 13");
+    expect(within(part).queryAllByTestId("check-revisit-tag")).toHaveLength(0);
+    expect(screen.getAllByTestId("check-revisit-tag")).toHaveLength(1); // only 7 + 3
+    expect(await within(questions[0]!).findByTestId("check-explanation-toggle")).toBeTruthy();
+  });
+
+  it("never tags a supported question answered wrongly and never correctly", async () => {
+    show(checkRun({ positions: ["correct", [incorrect(11)], "correct", "correct"], switchAt: 2, position: 4, finishedAt: at(5) }));
+    await screen.findByTestId("check-summary");
+    const [wrong] = within(screen.getByTestId("check-supported")).getAllByTestId("check-question");
+    expect(within(wrong!).getByTestId("check-outcome").textContent).toBe("Not correct yet");
+    expect(screen.queryAllByTestId("check-revisit-tag")).toHaveLength(0);
+    expect(questionsIn("revisit")).toHaveLength(0);
+  });
+
+  it("says no answers were given on your own after a switch at question 1, in both languages", async () => {
+    const run = () => checkRun({ positions: [[correct(10)], [correct(9)], [correct(13)], [correct(13)]], switchAt: 1, position: 4, finishedAt: at(5) });
+    show(run());
+    await screen.findByTestId("check-summary");
+    expect(screen.getByTestId("check-no-independent").textContent).toBe(
+      "You switched to supported practice before saving an answer, so no answers were given on your own.",
+    );
+    expect(screen.queryByTestId("check-group-correct")).toBeNull();
+    expect(within(screen.getByTestId("check-supported")).getAllByTestId("check-question")).toHaveLength(4);
+    cleanup();
+    show(run(), {}, "nb");
+    await screen.findByTestId("check-summary");
+    expect(screen.getByTestId("check-no-independent").textContent).toBe("Du byttet til øving med hjelp før du lagret et svar, så ingen svar ble gitt på egen hånd.");
+    expect(within(screen.getByTestId("check-supported")).getByRole("heading", { level: 2 }).textContent).toBe("Øving med hjelp (fra oppgave 1)");
+  });
+
+  it("has no fraction, percentage, score, streak, or mastery word with a supported part", async () => {
+    for (const language of ["en", "nb"] as const) {
+      cleanup();
+      show(scenarioTwo(), {}, language);
+      await screen.findByTestId("check-summary");
+      const text = screen.getByTestId("check-summary").textContent ?? "";
+      expect(text).not.toMatch(/\d\s*\//);
+      expect(text).not.toContain("%");
+      expect(text).not.toMatch(FORBIDDEN_WORDS);
+    }
   });
 });

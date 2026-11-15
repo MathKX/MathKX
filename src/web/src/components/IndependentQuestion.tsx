@@ -1,8 +1,9 @@
 // A check question in the independent part (specs/006 contracts/check-run.md "Independent part"): the prompt, its
 // position, the answer field, "Save answer", "Skip", and "I need help". It renders no help, explanation, lesson link,
 // result, or practice control, and imports none of them: their absence is by construction (research R8).
-import { useEffect, useId, useRef, type FormEvent } from "react";
-import { Button, Paragraph, Textfield } from "@digdir/designsystemet-react";
+// "I need help" opens the switch's inline confirmation (contracts/check-run.md "The switch").
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Button, Heading, Paragraph, Textfield } from "@digdir/designsystemet-react";
 import { translate, translateCode, type Lang } from "../i18n";
 import type { CheckScreen } from "../state/store";
 import { AdditionPrompt } from "./math/MathExpr";
@@ -21,14 +22,50 @@ export interface IndependentQuestionProps {
   onDraft(draft: string): void;
   onSave(): void;
   onSkip(): void;
-  /** "I need help" (the switch); not offered without it. */
-  onNeedHelp?: () => void;
+  /** "Switch to supported practice", confirmed. */
+  onSwitch(): void;
+}
+
+/** The switch's confirmation: inline, focused on its heading; "Continue without help" and Escape record nothing. */
+function SwitchConfirmation({ lang, position, onYes, onNo }: { lang: Lang; position: number; onYes(): void; onNo(): void }) {
+  const headingId = useId();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    onNo();
+  };
+  return (
+    <section role="dialog" aria-labelledby={headingId} className="mkx-panel-accent mkx-gate" onKeyDown={onKeyDown} data-testid="check-switch">
+      <Heading level={2} data-size="sm" id={headingId} ref={headingRef} tabIndex={-1}>
+        {translate(lang, "check.switchTitle")}
+      </Heading>
+      <Paragraph data-testid="check-switch-body">{translate(lang, "check.switchBody", { i: position })}</Paragraph>
+      <div className="mkx-controls">
+        <Button type="button" variant="primary" data-size="md" className="mkx-target" onClick={onYes} data-testid="check-switch-yes">
+          {translate(lang, "check.switchYes")}
+        </Button>
+        <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={onNo} data-testid="check-switch-no">
+          {translate(lang, "check.switchNo")}
+        </Button>
+      </div>
+    </section>
+  );
 }
 
 export function IndependentQuestion(props: IndependentQuestionProps) {
   const { lang, notice } = props;
   const fieldId = useId();
   const promptRef = useRef<HTMLParagraphElement>(null);
+  const needHelpRef = useRef<HTMLButtonElement>(null);
+  const [confirming, setConfirming] = useState(false);
+  const closeConfirmation = () => {
+    setConfirming(false);
+    needHelpRef.current?.focus();
+  };
   useEffect(() => {
     if (props.takeFocus) promptRef.current?.focus();
     // Mounted once per question (the page keys it by position).
@@ -64,13 +101,22 @@ export function IndependentQuestion(props: IndependentQuestionProps) {
           <Button type="button" variant="secondary" data-size="md" className="mkx-target" disabled={props.checking} onClick={() => props.onSkip()} data-testid="check-skip">
             {translate(lang, "check.skip")}
           </Button>
-          {props.onNeedHelp ? (
-            <Button type="button" variant="tertiary" data-size="md" className="mkx-target" onClick={() => props.onNeedHelp?.()} data-testid="check-need-help">
-              {translate(lang, "check.needHelp")}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="tertiary"
+            data-size="md"
+            className="mkx-target"
+            ref={needHelpRef}
+            aria-expanded={confirming}
+            onClick={() => setConfirming(true)}
+            data-testid="check-need-help"
+          >
+            {translate(lang, "check.needHelp")}
+          </Button>
         </div>
       </form>
+
+      {confirming ? <SwitchConfirmation lang={lang} position={props.position} onYes={() => props.onSwitch()} onNo={closeConfirmation} /> : null}
 
       {/* Input guidance says only that the input could not be read, never whether an answer would be right. */}
       {notice?.kind === "guidance" ? (

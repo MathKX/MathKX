@@ -11,7 +11,7 @@ import { QuestionWorkspace, type QuestionController } from "./QuestionWorkspace"
  * The lesson to link to from this question (specs/003 contracts/detour.md): the one that started the practice run
  * when the instance lists it, else the first listed (lesson-ID order); none when no lesson practises the definition.
  */
-function lessonFor(lessons: { id: string }[] | undefined, originLessonId: string | undefined): string | undefined {
+export function lessonFor(lessons: { id: string }[] | undefined, originLessonId: string | undefined): string | undefined {
   if (!lessons || lessons.length === 0) return undefined;
   return (lessons.find((l) => l.id === originLessonId) ?? lessons[0])?.id;
 }

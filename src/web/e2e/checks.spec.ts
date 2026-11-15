@@ -128,3 +128,81 @@ test.describe("an independent check with an honest summary", () => {
     await scenarioOne(page, "nb");
   });
 });
+
+/** A supported question's "Check answer": the answer, then its feedback. */
+async function checkAnswer(page: Page, answer: string) {
+  await page.getByTestId("answer").fill(answer);
+  await page.getByTestId("check").click();
+  await expect(page.getByTestId("result")).toBeVisible();
+}
+
+const storedRun = (page: Page) =>
+  page.evaluate(() => {
+    const value = JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}").value;
+    const run = (value.checkRuns ?? [])[0];
+    return run ? { switchAt: run.switchAt as number | null, position: run.position as number } : null;
+  });
+
+test.describe("the switch to supported practice", () => {
+  test("2. a switch at question 3: help, feedback, retries, and a summary that keeps them apart", async ({ page }) => {
+    await clearedLesson(page, "en");
+    await page.getByTestId(`check-entry-${CHECK}`).click();
+    await page.getByTestId("check-start").click();
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+
+    // 1. Question 1 wrong, question 2 skipped.
+    await saveAnswer(page, "11", "Question 2 of 4");
+    await page.getByTestId("check-skip").click();
+    await expect(page.getByTestId("check-position")).toHaveText("Question 3 of 4");
+
+    // 2. "I need help", then "Continue without help": nothing changes.
+    await page.getByTestId("check-need-help").click();
+    const dialog = page.getByRole("dialog", { name: "Switch to supported practice?" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("heading")).toBeFocused();
+    await expect(page.getByTestId("check-switch-body")).toContainText("From question 3 on");
+    await page.getByTestId("check-switch-no").click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByTestId("check-need-help")).toBeFocused();
+    expect(await storedRun(page)).toEqual({ switchAt: null, position: 3 });
+    await expectNoResult(page);
+
+    // 3. The switch: help, "Check answer", and "Skip", with the mode line.
+    await page.getByTestId("check-need-help").click();
+    await page.getByTestId("check-switch-yes").click();
+    await expect(page.getByTestId("check-mode")).toHaveText("Supported practice (from question 3)");
+    await expect(page.getByTestId("toggle-help")).toBeVisible();
+    await expect(page.getByTestId("check")).toBeVisible();
+    await expect(page.getByTestId("check-skip")).toBeVisible();
+    await expect(page.getByTestId("check-need-help")).toHaveCount(0);
+    expect(await storedRun(page)).toEqual({ switchAt: 3, position: 3 });
+
+    // 4. Visual help, then 13: feedback, and only "Next question".
+    await page.getByTestId("toggle-help").click();
+    await expect(page.getByTestId("help-panel")).toBeVisible();
+    await checkAnswer(page, "13");
+    await expect(page.getByTestId("check-next")).toBeVisible();
+    await expect(page.getByTestId("check-skip")).toHaveCount(0);
+    for (const id of ["another", "repeat-question", "easier", "harder", "more-like-this"]) await expect(page.getByTestId(id)).toHaveCount(0);
+
+    // 5. Question 4: 12, then 13, then "See summary".
+    await page.getByTestId("check-next").click();
+    await expect(page.getByTestId("check-position")).toHaveText("Question 4 of 4");
+    await checkAnswer(page, "12");
+    await checkAnswer(page, "13");
+    await page.getByTestId("check-finish").click();
+
+    // 6. The summary keeps the two parts apart.
+    await expect(page.getByTestId("check-summary-heading")).toBeFocused();
+    const group = (name: string) => page.getByTestId(`check-group-${name}`);
+    await expect(group("correct").getByTestId("check-group-count")).toHaveText("0 questions");
+    await expect(group("revisit").getByTestId("check-expression")).toHaveText(["7 + 3"]);
+    await expect(group("skipped").getByTestId("check-expression")).toHaveText(["5 + 4"]);
+    const supported = page.getByTestId("check-supported");
+    await expect(supported.getByRole("heading", { level: 2 })).toHaveText("Supported practice (from question 3)");
+    await expect(supported.getByTestId("check-expression")).toHaveText(["8 + 5", "9 + 4"]);
+    await expect(supported.getByTestId("check-outcome")).toHaveText(["Correct with visual help", "Correct after feedback"]);
+    await expect(supported.getByTestId("check-revisit-tag")).toHaveCount(0);
+    await expect(page.getByTestId("check-revisit-tag")).toHaveCount(1);
+  });
+});

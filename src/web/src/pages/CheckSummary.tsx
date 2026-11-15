@@ -1,15 +1,17 @@
 // A check's summary (specs/006 contracts/summary.md "The summary"): the independent part in three groups, each
-// question with the learner's answer, the correct answer, and its explanation. It is derived from the recorded run,
+// question with the learner's answer, the correct answer, and its explanation; then, after a switch, the supported
+// part, each question with its practice outcome and never the tag "Worth revisiting". It is derived from the recorded run,
 // so later content changes never change it, and it records nothing: explanations are fetched here, never through
 // the store. No score, fraction, percentage, streak, time, or mastery word.
 import { useEffect, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { InstanceDto, PracticeApi, StepDto } from "../api/types";
 import { StepPanel } from "../components/StepPanel";
-import { formatDate, translate, type Lang } from "../i18n";
+import { formatDate, translate, translateCode, type Lang } from "../i18n";
 import { Link, hasNavigatedInApp } from "../router";
 import { summarizeRun, type CheckRun } from "../state/checks";
 import { identityOf, type Delivery } from "../state/observations";
+import { derive } from "../state/outcomes";
 
 type Group = "correct" | "revisit" | "skipped";
 const GROUPS: { group: Group; key: string }[] = [
@@ -97,8 +99,13 @@ function CorrectAnswer({ delivery, lang, api }: { delivery: Delivery; lang: Lang
   return <Paragraph data-testid="check-correct-answer">{translate(lang, "check.correctAnswer", { a: answer.value })}</Paragraph>;
 }
 
-function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: Delivery; position: number; group: Group; lang: Lang; api: PracticeApi }) {
-  const submission = delivery.events.find((e) => e.type === "submission");
+/** The learner's answers: every submission in order (a supported question can have several), or the skip. */
+function yourAnswer(delivery: Delivery, lang: Lang): string {
+  const answers = delivery.events.flatMap((e) => (e.type === "submission" ? [e.originalText.trim()] : []));
+  return answers.length > 0 ? translate(lang, "check.yourAnswer", { a: answers.join(", ") }) : translate(lang, "check.skippedAnswer");
+}
+
+function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: Delivery; position: number; group: Group | "supported"; lang: Lang; api: PracticeApi }) {
   const { a, b } = delivery.instance;
   return (
     <li className="mkx-check-question" data-testid="check-question" data-position={position}>
@@ -113,9 +120,9 @@ function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: D
           </>
         ) : null}
       </Paragraph>
-      <Paragraph data-testid="check-your-answer">
-        {submission?.type === "submission" ? translate(lang, "check.yourAnswer", { a: submission.originalText.trim() }) : translate(lang, "check.skippedAnswer")}
-      </Paragraph>
+      {/* A supported question is practice: spec 002's outcome, derived from its events. */}
+      {group === "supported" ? <Paragraph data-testid="check-outcome">{translateCode(lang, "outcome", derive(delivery).outcome)}</Paragraph> : null}
+      <Paragraph data-testid="check-your-answer">{yourAnswer(delivery, lang)}</Paragraph>
       <CorrectAnswer delivery={delivery} lang={lang} api={api} />
       <Explanation delivery={delivery} lang={lang} api={api} />
     </li>
@@ -165,7 +172,8 @@ export function CheckSummary({ run, lang, api, takeFocus }: CheckSummaryProps) {
         <Heading level={2} data-size="md" id={`${run.id}-independent`}>
           {translate(lang, "check.independentTitle")}
         </Heading>
-        {GROUPS.map(({ group, key }) => {
+        {run.switchAt === 1 ? <Paragraph data-testid="check-no-independent">{translate(lang, "check.noIndependent")}</Paragraph> : null}
+        {run.switchAt === 1 ? null : GROUPS.map(({ group, key }) => {
           const positions = summary[group];
           const id = `${run.id}-${group}`;
           return (
@@ -188,6 +196,25 @@ export function CheckSummary({ run, lang, api, takeFocus }: CheckSummaryProps) {
           );
         })}
       </section>
+
+      {run.switchAt !== null ? (
+        <section aria-labelledby={`${run.id}-supported`} data-testid="check-supported">
+          <Heading level={2} data-size="md" id={`${run.id}-supported`}>
+            {translate(lang, "check.supportedTitle", { i: run.switchAt })}
+          </Heading>
+          <Paragraph data-testid="check-supported-note">{translate(lang, "check.supportedNote")}</Paragraph>
+          {summary.supported.length > 0 ? (
+            <ol className="mkx-check-questions">
+              {summary.supported.map((position) => {
+                const delivery = run.deliveries[position - 1];
+                return delivery ? <SummaryQuestion key={position} delivery={delivery} position={position} group="supported" lang={lang} api={api} /> : null;
+              })}
+            </ol>
+          ) : (
+            <Paragraph>{translate(lang, "check.groupNone")}</Paragraph>
+          )}
+        </section>
+      ) : null}
 
       <Paragraph data-testid="check-summary-note">{translate(lang, "check.summaryNote")}</Paragraph>
       <Paragraph>
