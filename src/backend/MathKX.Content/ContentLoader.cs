@@ -5,8 +5,8 @@ using MathKX.Domain.Content;
 namespace MathKX.Content;
 
 /// <summary>
-/// Loads content/ into a <see cref="ContentCatalog"/>: registries, skills, pilot definitions, lessons, and
-/// each translation's front matter. Schemas are not re-validated here (the content checks in CI do that);
+/// Loads content/ into a <see cref="ContentCatalog"/>: registries, skills, pilot definitions, lessons,
+/// each translation's front matter, and self-checks. Schemas are not re-validated here (the content checks in CI do that);
 /// the loader fails fast with the file path on anything it cannot use.
 /// </summary>
 public static class ContentLoader
@@ -33,6 +33,7 @@ public static class ContentLoader
         var lessons = new Dictionary<string, LessonMetadata>(StringComparer.Ordinal);
         var translations = new Dictionary<(string, string), LessonTranslation>();
         var assets = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var checks = new Dictionary<string, SelfCheck>(StringComparer.Ordinal);
 
         foreach (var file in EnumerateJson(root))
         {
@@ -79,6 +80,9 @@ public static class ContentLoader
                     assets[lesson.Id] = ListAssets(Path.Combine(folder, "assets"), root);
 
                     break;
+                case "self-check.pilot.schema.json":
+                    Add(checks, Deserialize<SelfCheck>(document, relative), c => c.Key, relative);
+                    break;
                 case "exercise.schema.json":
                     break; // the exploratory 0.1 example is not resolvable content
                 default:
@@ -88,7 +92,7 @@ public static class ContentLoader
 
         CheckReferences(definitions, definitionFiles, generators, validators, representations, codes);
 
-        return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, translations, assets);
+        return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, translations, assets, checks);
     }
 
     private static readonly Regex AssetName = new("^[A-Za-z0-9][A-Za-z0-9._-]*$", RegexOptions.CultureInvariant);

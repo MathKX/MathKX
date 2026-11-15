@@ -1,14 +1,11 @@
-// The exercise workspace (specs/002 contracts/learner-app.md "Practice screen"): expression, answer field,
-// help before answering, feedback by code, explanation after either result, and the learner controls.
-import { useEffect, useId, useRef, type FormEvent } from "react";
-import { Button, Textfield } from "@digdir/designsystemet-react";
+// The practice screen's exercise (specs/002 contracts/learner-app.md "Practice screen"): the question workspace,
+// driven by the store's current question, with practice's learner controls.
+import { useEffect } from "react";
+import { Button } from "@digdir/designsystemet-react";
 import { translate } from "../i18n";
 import { hasSubmission } from "../state/observations";
 import { useStore } from "../state/store";
-import { Link, hasNavigatedInApp } from "../router";
-import { AdditionPrompt } from "./math/MathExpr";
-import { Feedback } from "./Feedback";
-import { StepPanel } from "./StepPanel";
+import { QuestionWorkspace, type QuestionController } from "./QuestionWorkspace";
 
 /**
  * The lesson to link to from this question (specs/003 contracts/detour.md): the one that started the practice run
@@ -27,7 +24,6 @@ export function ExerciseShell() {
   const current = state.deliveries.find((d) => d.id === state.currentDeliveryId);
   const originLessonId = current?.originLessonId;
   const lessonId = lessonFor(instance?.lessons, originLessonId);
-  const lessonHref = lessonId ? `/lessons/${encodeURIComponent(lessonId)}` : undefined;
 
   // A question stored before instances carried their lessons is re-resolved once, so its link can be derived.
   const needsLessons = Boolean(instance && !instance.lessons);
@@ -35,139 +31,53 @@ export function ExerciseShell() {
     if (needsLessons) void store.ensureInstanceLessons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsLessons]);
-  const fieldId = useId();
-  const resultRef = useRef<HTMLDivElement>(null);
-  const lastResult = useRef<unknown>(null);
-
-  // A new question takes focus when focus would otherwise fall to the page: "Repeat this question" goes away once its
-  // question is replaced, and a replay's repeat or "Practise again" arrive by navigation (specs/005 FR-016). A control
-  // that stays, such as "Another question", keeps it; a page loaded directly keeps the browser's own start.
-  const promptRef = useRef<HTMLParagraphElement>(null);
-  const firstQuestion = useRef(true);
-  const deliveryId = state.currentDeliveryId;
-  useEffect(() => {
-    if (!deliveryId) return;
-    const first = firstQuestion.current;
-    firstQuestion.current = false;
-    if (first && !hasNavigatedInApp()) return;
-    const active = document.activeElement;
-    if (!active || active === document.body) promptRef.current?.focus();
-  }, [deliveryId]);
-
-  useEffect(() => {
-    if (state.result && state.result !== lastResult.current) {
-      lastResult.current = state.result;
-      resultRef.current?.focus();
-    }
-  }, [state.result]);
 
   if (!instance) return null;
 
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    void store.submit();
+  const controller: QuestionController = {
+    lang,
+    instance,
+    questionKey: state.currentDeliveryId,
+    draft: state.draft,
+    checking: state.checking,
+    helpOpen: state.helpOpen,
+    helpSteps: state.helpSteps,
+    helpStep: state.helpStep,
+    explanationOpen: state.explanationOpen,
+    explanationSteps: state.explanationSteps,
+    explanationStep: state.explanationStep,
+    result: state.result,
+    notice: state.notice?.key === "practice.unreachable" ? state.notice.key : null,
+    lessonHref: lessonId ? `/lessons/${encodeURIComponent(lessonId)}?from=question` : undefined,
+    setDraft: (draft) => store.setDraft(draft),
+    submit: () => void store.submit(),
+    toggleHelp: () => void store.toggleHelp(),
+    nextHelpStep: () => void store.nextHelpStep(),
+    toggleExplanation: () => void store.toggleExplanation(),
+    nextExplanationStep: () => void store.nextExplanationStep(),
   };
 
-  // Opening help shows the operands only; the first step is fetched when the learner asks for it.
-  const onToggleHelp = () => void store.toggleHelp();
-
-  return (
-    <div className="mkx-exercise" data-testid="exercise-shell">
-      <AdditionPrompt ref={promptRef} a={instance.a} b={instance.b} lang={lang} />
-
-      <form onSubmit={onSubmit} className="mkx-answer-form" noValidate>
-        <Textfield
-          id={fieldId}
-          label={translate(lang, "practice.answerLabel")}
-          value={state.draft}
-          onChange={(e) => store.setDraft(e.currentTarget.value)}
-          inputMode="numeric"
-          autoComplete="off"
-          data-size="lg"
-          data-testid="answer"
-        />
-        <div className="mkx-controls">
-          <Button type="submit" variant="primary" data-size="md" className="mkx-target" disabled={state.checking} data-testid="check">
-            {translate(lang, state.checking ? "practice.checking" : "practice.check")}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            data-size="md"
-            className="mkx-target"
-            aria-expanded={state.helpOpen}
-            aria-controls={`${fieldId}-help`}
-            onClick={onToggleHelp}
-            data-testid="toggle-help"
-          >
-            {translate(lang, state.helpOpen ? "practice.hideHelp" : "practice.showHelp")}
-          </Button>
-        </div>
-      </form>
-
-      <div id={`${fieldId}-help`} hidden={!state.helpOpen}>
-        {state.helpOpen ? (
-          <StepPanel kind="help" instance={instance} steps={state.helpSteps} currentIndex={state.helpStep} lang={lang} onNext={() => void store.nextHelpStep()} />
-        ) : null}
-      </div>
-
-      <div ref={resultRef} tabIndex={-1} className="mkx-result" data-testid="result-region">
-        {state.result ? <Feedback result={state.result} lang={lang} /> : null}
-        {state.notice && state.notice.key === "practice.unreachable" ? (
-          <p role="alert" data-testid="notice">
-            {translate(lang, state.notice.key)}
-          </p>
-        ) : null}
-      </div>
-
-      {state.result && state.result.status !== "invalid-response" ? (
-        <div className="mkx-explanation">
-          <Button
-            type="button"
-            variant="tertiary"
-            data-size="md"
-            className="mkx-target"
-            aria-expanded={state.explanationOpen}
-            onClick={() => void store.toggleExplanation()}
-            data-testid="toggle-explanation"
-          >
-            {translate(lang, state.explanationOpen ? "practice.hideExplanation" : "practice.showExplanation")}
-          </Button>
-          {state.explanationOpen ? (
-            <StepPanel kind="explanation" instance={instance} steps={state.explanationSteps} currentIndex={state.explanationStep} lang={lang} onNext={() => void store.nextExplanationStep()} />
-          ) : null}
-        </div>
+  const controls = (
+    <div className="mkx-controls mkx-controls--next">
+      <Button type="button" variant="primary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("another")} data-testid="another">
+        {translate(lang, "practice.another")}
+      </Button>
+      {current && hasSubmission(current) ? (
+        <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.repeatQuestion(current.id)} data-testid="repeat-question">
+          {translate(lang, "practice.repeat")}
+        </Button>
       ) : null}
-
-      <div className="mkx-controls mkx-controls--next">
-        <Button type="button" variant="primary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("another")} data-testid="another">
-          {translate(lang, "practice.another")}
-        </Button>
-        {current && hasSubmission(current) ? (
-          <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.repeatQuestion(current.id)} data-testid="repeat-question">
-            {translate(lang, "practice.repeat")}
-          </Button>
-        ) : null}
-        <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("same")} data-testid="more-like-this">
-          {translate(lang, "practice.moreLikeThis")}
-        </Button>
-        <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => store.requestChallenge("easier")} data-testid="easier">
-          {translate(lang, "practice.easier")}
-        </Button>
-        <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => store.requestChallenge("harder")} data-testid="harder">
-          {translate(lang, "practice.harder")}
-        </Button>
-      </div>
-
-      {lessonHref ? (
-        <p>
-          {/* The origin travels in the address, so a modified click (new tab) carries it and the source tab is
-              unchanged; the lesson page records the opening once the lesson is shown (specs/003 contracts/detour.md). */}
-          <Link to={`${lessonHref}?from=question`} className="mkx-lesson-link" data-testid="to-lesson">
-            {translate(lang, "practice.toLesson")}
-          </Link>
-        </p>
-      ) : null}
+      <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.nextQuestion("same")} data-testid="more-like-this">
+        {translate(lang, "practice.moreLikeThis")}
+      </Button>
+      <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => store.requestChallenge("easier")} data-testid="easier">
+        {translate(lang, "practice.easier")}
+      </Button>
+      <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => store.requestChallenge("harder")} data-testid="harder">
+        {translate(lang, "practice.harder")}
+      </Button>
     </div>
   );
+
+  return <QuestionWorkspace controller={controller} controls={controls} testId="exercise-shell" />;
 }

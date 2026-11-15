@@ -1,5 +1,7 @@
 import {
   ApiError,
+  type AnswerDto,
+  type CheckDto,
   type Identity,
   type InstanceDto,
   type LessonContentDto,
@@ -61,6 +63,10 @@ export const practiceApi: PracticeApi = {
   getLessonContent: (id, lang) => request<LessonContentDto>(`/api/lessons/${encodeURIComponent(id)}/content/${encodeURIComponent(lang)}`),
   getVisualSteps: (type, a, b) => request<VisualStepsDto>(`/api/visuals/${encodeURIComponent(type)}?a=${a}&b=${b}`),
   getTenFrameExplorer: () => request<TenFrameExplorerDto>("/api/visuals/ten-frame-explorer"),
+  getChecks: () => request<CheckDto[]>("/api/checks"),
+  getCheck: (id, version) => request<CheckDto>(`/api/checks/${encodeURIComponent(id)}/${version}`),
+  getAnswer: (identity) =>
+    request<AnswerDto>(`/api/instances/${encodeURIComponent(identity.definitionId)}/${identity.version}/${seedSegment(identity)}/answer`),
 };
 
 /** A fresh seed from the platform's cryptographic source: seed selection, not generation; never a secret. */

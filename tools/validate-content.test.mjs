@@ -16,6 +16,7 @@ const baseCrossingTen = await json("content/exercises/numbers/addition-crossing-
 const baseFourPlusFour = await json("content/exercises/numbers/addition-4-plus-4.json");
 const baseBonds = await json("content/skills/numbers.number-bonds-to-ten.json");
 const baseAddition = await json("content/skills/numbers.addition-within-20.json");
+const baseCheck = await json("content/checks/numbers/addition-within-20.json");
 const ADD_CODES = baseWithin10.misconceptionCodes;
 
 // Each test invokes the real CLI against an isolated repository-shaped fixture that holds the
@@ -171,7 +172,7 @@ Make ten first: $8 + 5 = 13$.
 
 test("accepts a valid definition and referenced skill", async (t) => {
   const f = await fixture(t);
-  expectPass(f.run(), /1 skill\(s\), 0 lesson\(s\), 1 definition\(s\), 5 registries/);
+  expectPass(f.run(), /1 skill\(s\), 0 lesson\(s\), 1 definition\(s\), 0 check\(s\), 5 registries/);
 });
 
 for (const changedParameters of [false, true]) {
@@ -319,7 +320,7 @@ const generated = (overrides = {}, parameters = {}) => ({
 test("accepts the pilot definitions, skills, and ladder", async (t) => {
   const f = await fixture(t);
   await f.pilot();
-  expectPass(f.run(), /3 skill\(s\), 0 lesson\(s\), 4 definition\(s\), 5 registries/);
+  expectPass(f.run(), /3 skill\(s\), 0 lesson\(s\), 4 definition\(s\), 0 check\(s\), 5 registries/);
 });
 
 test("rejects an unregistered generator version", async (t) => {
@@ -488,7 +489,7 @@ test("rejects the prototype's check field with a hint", async (t) => {
   const f = await fixture(t);
   await f.pilot();
   await f.lesson("my-lesson", { json: { check: "check-addition" } });
-  expectFailure(f.run(), /\(check\): check is not part of the pilot; self-checks are a later feature, remove this line/);
+  expectFailure(f.run(), /\(check\): check is not a lesson field; a check names its skill in content\/checks\/, remove this line/);
 });
 
 test("reports an extra language file", async (t) => {
@@ -789,6 +790,45 @@ test("accepts a directive inside a list item and a longer closing fence", async 
   const mutate = (s) => s.replace("## Øv {#practice}", listed + longer + "## Øv {#practice}").replace("## Practise {#practice}", listed + longer + "## Practise {#practice}");
   await f.lesson("my-lesson", { nb: mutate(NB), en: mutate(EN) });
   expectPass(f.run());
+});
+
+// ---------------------------------------------------------------------------------------------
+// specs/006: self-checks (contracts/check-content.md). The file kind and its schema; the cross-file rules come with US3.
+
+test("passes the repository's own content and counts its check", () => {
+  const result = spawnSync(process.execPath, [validator], { encoding: "utf8", timeout: 30000 });
+  assert.ifError(result.error);
+  expectPass({ status: result.status, output: result.stdout + result.stderr }, /Content validation passed: .*\d+ definition\(s\), 1 check\(s\), /);
+});
+
+test("dispatches a check file to the self-check schema and reports its violations with the path", async (t) => {
+  const cases = [
+    ["a missing title.en", (c) => ({ ...c, title: { nb: c.title.nb } }), /must have required property 'en'/],
+    ["an empty question list", (c) => ({ ...c, questions: [] }), /\/questions must NOT have fewer than 1 items/],
+    ["eleven questions", (c) => ({ ...c, questions: Array.from({ length: 11 }, (_, i) => ({ definition: "numbers.addition.within-10", version: 1, seed: String(i) })) }), /\/questions must NOT have more than 10 items/],
+    ["a seed with a leading zero", (c) => ({ ...c, questions: [{ ...c.questions[0], seed: "01" }] }), /\/questions\/0\/seed must match pattern/],
+  ];
+  for (const [name, mutate, pattern] of cases) {
+    await t.test(name, async (tt) => {
+      const f = await fixture(tt);
+      await f.pilot();
+      await f.write("content/checks/numbers/addition-within-20.json", mutate(baseCheck));
+      expectFailure(f.run(), new RegExp(`content/checks/numbers/addition-within-20\\.json schema violation: .*${pattern.source}`));
+    });
+  }
+});
+
+test("accepts a valid check file and counts it", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.write("content/checks/numbers/addition-within-20.json", baseCheck);
+  expectPass(f.run(), /3 skill\(s\), 0 lesson\(s\), 4 definition\(s\), 1 check\(s\), 5 registries/);
+});
+
+test("lists the self-check schema among the known schemas", async (t) => {
+  const f = await fixture(t);
+  await f.write("content/exercises/other.json", { $schema: "../../schemas/other.schema.json" });
+  expectFailure(f.run(), /unknown schema other\.schema\.json \(one of: .*self-check\.pilot\.schema\.json/);
 });
 
 // ---------------------------------------------------------------------------------------------

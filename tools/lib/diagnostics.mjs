@@ -45,6 +45,7 @@ export function summary(counts, { errors = 0, warnings = 0 } = {}) {
     `${counts.skills} skill(s)`,
     `${counts.lessons} lesson(s)`,
     `${counts.definitions} definition(s)`,
+    `${counts.checks ?? 0} check(s)`,
     `${counts.registries} ${counts.registries === 1 ? "registry" : "registries"}`,
   ];
   if (errors > 0) parts.push(`${errors} error(s)`);

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MathKX Self-Check (pilot)",
+  "description": "Pilot contract (specs/006). A short, bounded check of one skill: its learner-facing title and scope in both languages, and an authored list of questions, each a pilot exercise definition with the seed of the question when the definition is generated and none when it is fixed. Questions are identities only, never operands or answers. Cross-file rules (the skill and definitions exist, the definitions serve the check's skill, seeds match the source, no question listed twice) are checked by the content check, not by this schema. Experimental 0.1-pilot.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "skill", "title", "scope", "questions"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "schemaVersion": { "const": "0.1-pilot" },
+    "id": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "skill": { "$ref": "#/$defs/id" },
+    "title": { "$ref": "#/$defs/localized", "description": "The check's name, shown on its entry and start screen." },
+    "scope": { "$ref": "#/$defs/localized", "description": "What the check covers, shown on its start screen." },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "description": "The questions in the order the learner meets them.",
+      "items": {
+        "type": "object",
+        "required": ["definition", "version"],
+        "properties": {
+          "definition": { "$ref": "#/$defs/id" },
+          "version": { "type": "integer", "minimum": 1 },
+          "seed": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "The unsigned 64-bit seed of a generated definition's question, in decimal; find it with GET /api/definitions/{id}/{version}/pool. Omitted for a fixed task."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "localized": {
+      "type": "object",
+      "required": ["nb", "en"],
+      "properties": {
+        "nb": { "type": "string", "minLength": 1 },
+        "en": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

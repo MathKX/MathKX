@@ -10,6 +10,7 @@ export const SCHEMAS = {
   lesson: "lesson.schema.json",
   definition: "exercise-definition.pilot.schema.json",
   registry: "registry.schema.json",
+  check: "self-check.pilot.schema.json",
 };
 const KNOWN = new Map(Object.entries(SCHEMAS).map(([kind, name]) => [name, kind]));
 
@@ -63,7 +64,7 @@ export function formatAjvErrors(errors, schemaKind) {
       if (e.params?.additionalProperty) {
         text += ` (${e.params.additionalProperty})`;
         if (schemaKind === "lesson" && e.params.additionalProperty === "check") {
-          text += ": check is not part of the pilot; self-checks are a later feature, remove this line";
+          text += ": check is not a lesson field; a check names its skill in content/checks/, remove this line";
         }
       }
       return text;

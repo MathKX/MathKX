@@ -1,4 +1,4 @@
-# Authoring guide: lessons, exercise definitions, skill names, and ladders
+# Authoring guide: lessons, exercise definitions, skill names, ladders, and self-checks
 
 This guide documents every field, directive, and attribute the content check enforces. It is the pilot contract (`schemaVersion` `0.1-pilot`), defined by [spec 001](../specs/001-pilot-content-contract/spec.md); it is not Exercise Format v1. When the check reports something this guide does not explain, the guide has a defect: please open an issue.
 
@@ -34,7 +34,7 @@ It never stops at the first problem. Each line reads `path[:line] field: message
 | `visuals` | no | Registered visual component types the body may embed (see section 5); every `:::visual` must use a listed type |
 | `translations` | yes | Exactly `{ "nb": "nb.md", "en": "en.md" }` |
 
-The prototype's `check` field is not part of the pilot; the check tells you to remove it. A `practice` entry whose definition serves a skill not listed in `skills` is a warning, not an error: a lesson may send learners to a related skill.
+A lesson has no `check` field: a self-check names its skill in its own file under `content/checks/` (section 10), and the check tells you to remove the line. A `practice` entry whose definition serves a skill not listed in `skills` is a warning, not an error: a lesson may send learners to a related skill.
 
 ### `nb.md` and `en.md`
 
@@ -180,7 +180,40 @@ A skill may list its definitions from easiest to hardest in `content/skills/<id>
 
 Entries are unique, each definition exists at that version and belongs to this skill, and both sentences are present.
 
-## 10. Reading a diagnostic
+## 10. Add a self-check
+
+A self-check ("Check my understanding", [spec 006](../specs/006-self-checks/spec.md)) is a short list of questions on one skill. Add one file per check version under `content/checks/<domain>/`:
+
+```json
+{
+  "$schema": "../../../schemas/self-check.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "numbers.addition.check-within-20",
+  "version": 1,
+  "skill": "numbers.addition-within-20",
+  "title": { "nb": "Tiervenner og addisjon", "en": "Number bonds and addition" },
+  "scope": { "nb": "Addisjon innenfor ti og over tieren", "en": "Addition within ten and across ten" },
+  "questions": [
+    { "definition": "numbers.addition.within-10", "version": 1, "seed": "22" },
+    { "definition": "numbers.addition.within-10", "version": 1, "seed": "24" },
+    { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "105" },
+    { "definition": "numbers.addition.crossing-ten", "version": 1, "seed": "62" }
+  ]
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `id`, `skill` | Lowercase IDs, as for definitions |
+| `version` | Integer, at least 1 |
+| `title`, `scope` | Both `nb` and `en`, with text; learners see them on the check's start screen, so review them like lesson text |
+| `questions` | 1 to 10, in the order the learner meets them |
+| `questions[].definition`, `.version` | A pilot exercise definition at that version |
+| `questions[].seed` | For a generated definition, the decimal seed of the question; omitted for a fixed task |
+
+A question is an identity, never operands or an answer. To find the seed of a question, read the definition's pool from the service, `GET /api/definitions/{id}/{version}/pool`: it lists every question the definition admits with the smallest seed that gives it. The content check validates the file against its schema. Rules across files (the skill and each definition exist, every question serves the check's skill, a seed is present exactly when the definition is generated, and no question is listed twice) are added with spec 006's content rules and will be documented here.
+
+## 11. Reading a diagnostic
 
 ```text
 content/lessons/number-bonds-to-ten/en.md:24 anchor: {#pairs} is missing in nb.md (anchors must match across languages)
@@ -189,4 +222,4 @@ content/skills/numbers.addition-within-20.json ladder[1]: definition algebra.one
 warning: content/lessons/x/lesson.json practice[0]: definition numbers.addition.within-10@1 serves skill numbers.addition-within-20, which is not among this lesson's skills
 ```
 
-Path, then line when there is one, then the field or element, then what is wrong, then in parentheses what was expected. Warnings do not fail the check. The last line summarizes: `Content validation passed: 19 file(s), 9 skill(s), 1 lesson(s), 4 definition(s), 5 registries.`
+Path, then line when there is one, then the field or element, then what is wrong, then in parentheses what was expected. Warnings do not fail the check. The last line summarizes: `Content validation passed: 20 file(s), 9 skill(s), 1 lesson(s), 4 definition(s), 1 check(s), 5 registries.`

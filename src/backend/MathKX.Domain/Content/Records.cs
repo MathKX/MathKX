@@ -108,3 +108,15 @@ public sealed record LessonFrontMatter(string Title, string Objective);
 /// facts the disclosure rule reads (specs/003), all from the same snapshot so the notice and the shown lesson agree.
 /// </summary>
 public sealed record LessonTranslation(string Language, string File, string Markdown, LessonFrontMatter FrontMatter, MathKX.Domain.Lessons.LessonFacts Facts);
+
+/// <summary>One question of a self-check: a pilot definition and, for a generated one, the seed of the question (specs/006). Never operands.</summary>
+public sealed record CheckQuestion(string Definition, int Version, string? Seed)
+{
+    public string Key => $"{Definition}@{Version}";
+}
+
+/// <summary>A self-check as authored in content/checks/ (specs/006): one skill, its title and scope per language, and its questions in order.</summary>
+public sealed record SelfCheck(string Id, int Version, string Skill, Localized Title, Localized Scope, IReadOnlyList<CheckQuestion> Questions)
+{
+    public string Key => $"{Id}@{Version}";
+}

@@ -40,6 +40,58 @@ public sealed class ContentCatalogTests
     }
 
     [Fact]
+    public void Loads_the_pilot_check()
+    {
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+
+        var check = Assert.Single(catalog.Checks).Value;
+        Assert.Equal("numbers.addition.check-within-20@1", check.Key);
+        Assert.Equal("numbers.addition-within-20", check.Skill);
+        Assert.Equal(new Localized("Tiervenner og addisjon", "Number bonds and addition"), check.Title);
+        Assert.Equal(new Localized("Addisjon innenfor ti og over tieren", "Addition within ten and across ten"), check.Scope);
+        Assert.Equal(
+            [
+                new CheckQuestion("numbers.addition.within-10", 1, "22"),
+                new CheckQuestion("numbers.addition.within-10", 1, "24"),
+                new CheckQuestion("numbers.addition.crossing-ten", 1, "105"),
+                new CheckQuestion("numbers.addition.crossing-ten", 1, "62"),
+            ],
+            check.Questions);
+        Assert.Equal("numbers.addition.within-10@1", check.Questions[0].Key);
+    }
+
+    [Fact]
+    public void Lists_the_newest_version_of_each_check()
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        var second = Path.Combine(temp.Root, "checks/numbers/addition-within-20-v2.json");
+        var check = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(temp.Root, "checks/numbers/addition-within-20.json")))!;
+        check["version"] = 2;
+        File.WriteAllText(second, check.ToJsonString());
+
+        var catalog = ContentLoader.Load(temp.Root);
+
+        Assert.Equal(2, catalog.Checks.Count);
+        var latest = Assert.Single(catalog.LatestChecks());
+        Assert.Equal("numbers.addition.check-within-20@2", latest.Key);
+        Assert.Equal(["numbers.addition.check-within-20@1"], ContentLoader.Load(RepositoryContent.Root).LatestChecks().Select(c => c.Key));
+    }
+
+    [Fact]
+    public void A_duplicate_check_identity_fails_the_load_naming_the_second_file()
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        File.Copy(Path.Combine(temp.Root, "checks/numbers/addition-within-20.json"), Path.Combine(temp.Root, "checks/numbers/copy.json"));
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Equal("checks/numbers/copy.json", error.Path);
+        Assert.Contains("numbers.addition.check-within-20@1", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Definition_bounds_and_registry_entries_are_typed()
     {
         var catalog = ContentLoader.Load(RepositoryContent.Root);

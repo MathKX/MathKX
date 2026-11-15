@@ -9,6 +9,7 @@ content/
   skills/       curriculum-independent mathematical skills, their prerequisites, and optional challenge ladders
   exercises/    exercise definitions: generated families and fixed tasks (examples/ holds the exploratory 0.1 fixture)
   lessons/      one folder per lesson: lesson.json, nb.md, en.md, assets/
+  checks/       self-checks: short authored lists of questions on one skill
   registry/     reviewed lists of generators, validators, representations, visual components, and misconception codes
   _templates/   copyable lesson template with placeholders (the only folder the check skips)
   curricula/    competency goals and mappings from curricula to skills (not yet created)
@@ -31,6 +32,10 @@ The skills form a small seed graph: the Pythagorean theorem and the square roots
 Lessons follow the [learning experience](../docs/design/learning-experience.md): Markdown with controlled references to interactive components and exercise families. Shared metadata lives in `lesson.json`, translations in `nb.md` and `en.md`, assets in one folder per lesson. The pilot lesson is `lessons/number-bonds-to-ten/`. The format is the pilot contract from [spec 001](../specs/001-pilot-content-contract/spec.md); the in-app renderer arrives with a later feature.
 
 The first learner release requires Norwegian and English for all released lessons, exercises, hints, feedback, and accessibility text. Localized variants share mathematical identities and learner progress. The check compares each lesson's two languages by anchors, directives, and mathematics, never by prose. The English-only `0.1` exercise is an exploratory fixture, not release-ready content.
+
+### Self-checks
+
+`checks/` holds self-checks ("Check my understanding", [spec 006](../specs/006-self-checks/spec.md)): one file per check version, naming its skill, its title and scope in both languages, and its questions as exercise identities (definition, version, and the seed of a generated question), never operands or answers. The pilot is `checks/numbers/addition-within-20.json`. The schema is [`schemas/self-check.pilot.schema.json`](../schemas/self-check.pilot.schema.json); the [authoring guide](AUTHORING.md) explains each field.
 
 ### Registries
 
