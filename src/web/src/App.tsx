@@ -12,6 +12,8 @@ import { PracticePage } from "./pages/PracticePage";
 import { RecordPage } from "./pages/RecordPage";
 import { ReplayPage } from "./pages/ReplayPage";
 import { SessionPage } from "./pages/SessionPage";
+import { CheckStartPage } from "./pages/CheckStartPage";
+import { CheckRunPage } from "./pages/CheckRunPage";
 
 function Shell({ api }: { api?: PracticeApi }) {
   const { state } = useStore();
@@ -37,10 +39,12 @@ function Shell({ api }: { api?: PracticeApi }) {
       <main id="main" className="mkx-container" lang={lang} data-testid="app-root">
         {route.name === "lessons" ? <LessonListPage {...(api ? { api } : {})} /> : null}
         {route.name === "lesson" ? <LessonPage key={route.id} id={route.id} {...(api ? { api } : {})} /> : null}
-        {route.name === "practice" ? <PracticePage skillId={route.skillId} /> : null}
+        {route.name === "practice" ? <PracticePage skillId={route.skillId} {...(api ? { api } : {})} /> : null}
         {route.name === "record" ? <RecordPage {...(api ? { api } : {})} /> : null}
         {route.name === "replay" ? <ReplayPage key={route.deliveryId} deliveryId={route.deliveryId} {...(api ? { api } : {})} /> : null}
         {route.name === "session" ? <SessionPage {...(api ? { api } : {})} /> : null}
+        {route.name === "check" ? <CheckStartPage key={route.checkId} checkId={route.checkId} {...(api ? { api } : {})} /> : null}
+        {route.name === "checkRun" ? <CheckRunPage key={route.runId} checkId={route.checkId} runId={route.runId} {...(api ? { api } : {})} /> : null}
         {route.name === "unknown" ? <LessonListPage {...(api ? { api } : {})} /> : null}
       </main>
     </>

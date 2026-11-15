@@ -12,6 +12,7 @@ import { useRouter } from "../router";
 import { useStore } from "../state/store";
 import { currentQuestion } from "../state/observations";
 import { PracticeEntry } from "../lesson/PracticeEntry";
+import { CheckEntry } from "../components/CheckEntry";
 import { Placeholder } from "../lesson/Placeholder";
 import { editUrl, issueUrl } from "../lesson/contribute";
 import type { LessonComponents } from "../lesson/render";
@@ -227,6 +228,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       ) : (
         loading
       )}
+      <CheckEntry skills={lesson.skills} lang={lang} api={api} />
     </article>
   );
 }
