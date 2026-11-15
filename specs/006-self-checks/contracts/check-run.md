@@ -85,7 +85,7 @@ From `switchAt` onward, each question is practice (spec 002, spec 003):
 - **What counts as answered**: the summary reads only the delivery's events (data-model "Answered"). A supported question with a submission is answered whether or not the learner pressed "Next question" or "See summary", so a run ended by a new check keeps its outcome.
 - **Never offered**: "Another question", "Repeat this question", "Make it easier", "More challenge", and "More like this".
 
-**The lesson link** goes to `/lessons/{id}?from=check`. The lesson page then takes the run's current supported question as the detour question, as spec 003 does for practice:
+**The lesson link** goes to `/lessons/{id}?from=check&checkQuestion={deliveryId}`. While that delivery is the supported question on screen in its unfinished run, the lesson page takes it as the detour question, as spec 003 does for practice. The page then drops `from` from the address but keeps `checkQuestion`, so a reload or a history visit is about the same question; only the link itself counts as a visit from the question for `lesson-opened` after a correct answer. The detour applies:
 - the gate when the lesson shows the answer;
 - `lesson-opened` or `lesson-reveal` recorded on that delivery once the lesson is shown;
 - "Back to your question" to `/checks/{checkId}/{runId}`.
@@ -98,6 +98,8 @@ Every other lesson visit follows spec 003 unchanged, about practice's current qu
 - **A reload**: the run page restores the question from the run, fetches its instance and the steps reached again without recording them, and shows the draft.
 - **A language switch**: the store keeps the run and its screen state; every text changes language.
 - **Leaving and coming back**: from "My work" or the start screen, "Continue the check" goes to the run's address, with the same restoration.
+
+A reached question is shown only when its identity still resolves to the recorded operands. Otherwise the page shows `check.unreachedUnavailable` with the position and "Try again" (`check-retry`), records nothing, and keeps the run, its `resume`, and the draft (PR 53 review).
 
 Focus lands on the prompt when a question appears after an action or a navigation. A page loaded directly keeps the browser's own start, as in practice.
 

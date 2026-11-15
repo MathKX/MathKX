@@ -173,13 +173,17 @@ describe("the supported question on screen (research R10)", () => {
     expect(supportedQuestionOf({ ...run, finishedAt: at(5) })).toBeNull();
   });
 
-  it("comes from the run last presented, or else the newest run with one", () => {
-    const older = checkRun({ id: "older", positions: ["reached", null, null, null], switchAt: 1, startedAt: at(1) });
-    const newer = checkRun({ id: "newer", positions: ["reached", null, null, null], switchAt: 1, startedAt: at(2) });
+  it("is the question the address names, only while it is on screen in its run's supported part", () => {
+    const a = checkRun({ id: "a", positions: ["reached", null, null, null], switchAt: 1, startedAt: at(1) });
+    const b = checkRun({ id: "b", positions: ["wrong", "reached", null, null], switchAt: 2, startedAt: at(2) });
     const independent = checkRun({ id: "independent", positions: ["reached", null, null, null], startedAt: at(3) });
-    expect(checkDetourOf([older, newer, independent], null)?.run.id).toBe("newer");
-    expect(checkDetourOf([older, newer, independent], "older")?.run.id).toBe("older");
-    // The run last presented is independent: the visit is not about any check question.
-    expect(checkDetourOf([older, newer, independent], "independent")).toBeNull();
+    const runs = [a, b, independent];
+    expect(checkDetourOf(runs, a.deliveries[0]!.id)?.run.id).toBe("a");
+    expect(checkDetourOf(runs, b.deliveries[1]!.id)?.delivery).toBe(b.deliveries[1]);
+    // An earlier question of the run, an independent one, a finished run's, or an unknown ID: not a check visit.
+    expect(checkDetourOf(runs, b.deliveries[0]!.id)).toBeNull();
+    expect(checkDetourOf(runs, independent.deliveries[0]!.id)).toBeNull();
+    expect(checkDetourOf([{ ...a, finishedAt: at(5) }], a.deliveries[0]!.id)).toBeNull();
+    expect(checkDetourOf(runs, "unknown")).toBeNull();
   });
 });

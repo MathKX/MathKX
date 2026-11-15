@@ -90,7 +90,8 @@ export interface CheckScreen {
   presenting: boolean;
   /** Input guidance after an unreadable save, or "not saved" after a failed request. Never a result. */
   notice: { kind: "guidance"; code: string; text: string } | { kind: "unsaved" } | null;
-  loadError: boolean;
+  /** The question could not be loaded, or its identity now resolves to other operands than the recorded ones. */
+  loadError: false | "failed" | "changed";
 }
 
 export interface State extends PersistedState {
@@ -101,8 +102,6 @@ export interface State extends PersistedState {
   /** The practice view is mounted. A step is presented, and so recorded, only while it is and its panel is open. */
   presenting: boolean;
   check: CheckScreen | null;
-  /** The run the check view last presented, kept after it unmounts: a lesson visit `?from=check` is about it (R10). */
-  lastCheckRunId: string | null;
 }
 
 const emptyResume = (): CheckResume => ({ draft: "", helpOpen: false, helpStep: -1, explanationOpen: false, explanationStep: -1, result: null });
@@ -161,7 +160,7 @@ type Action =
   | { type: "checkLeave" }
   /** `restored`: a resumed supported question's steps, fetched again and shown without being recorded. */
   | { type: "checkInstance"; runId: string; position: number; instance: InstanceDto; delivery: Delivery; restored?: RestoredSteps }
-  | { type: "checkLoadError"; runId: string; failed: boolean }
+  | { type: "checkLoadError"; runId: string; error: CheckScreen["loadError"] }
   | { type: "checkDraft"; runId: string; draft: string }
   | { type: "checkSaving"; runId: string; checking: boolean }
   | { type: "checkNotice"; runId: string; notice: CheckScreen["notice"] }
@@ -197,7 +196,7 @@ function checkReducer(state: State, action: Extract<Action, { type: `check${stri
       return { ...state, checkRuns: [...ended, action.run] };
     }
     case "checkOpen":
-      return { ...state, lastCheckRunId: action.runId, check: { runId: action.runId, instance: null, helpSteps: [], explanationSteps: [], checking: false, presenting: true, notice: null, loadError: false } };
+      return { ...state, check: { runId: action.runId, instance: null, helpSteps: [], explanationSteps: [], checking: false, presenting: true, notice: null, loadError: false } };
     case "checkLeave":
       return state.check ? { ...state, check: null } : state; // `resume` stays on the run
     case "checkInstance": {
@@ -244,7 +243,7 @@ function checkReducer(state: State, action: Extract<Action, { type: `check${stri
       return { ...next, check: { ...screen, helpSteps: s.helpSteps, explanationSteps: s.explanationSteps } };
     }
     case "checkLoadError":
-      return updateScreen(state, action.runId, (s) => ({ ...s, loadError: action.failed }));
+      return updateScreen(state, action.runId, (s) => ({ ...s, loadError: action.error }));
     case "checkDraft":
       return updateRun(state, action.runId, (r) => ({ ...r, resume: { ...(r.resume ?? emptyResume()), draft: action.draft } }));
     case "checkSaving":
@@ -442,7 +441,7 @@ function reducer(state: State, action: Action): State {
     case "lessonViewed":
       return { ...state, lessonViews: [...state.lessonViews, action.view] };
     case "clear":
-      return { ...state, ...initialPersisted, language: state.language, check: null, lastCheckRunId: null };
+      return { ...state, ...initialPersisted, language: state.language, check: null };
     case "checkStart":
     case "checkOpen":
     case "checkLeave":
@@ -533,7 +532,7 @@ export interface StoreProviderProps {
 }
 
 const persistedOf = (s: State): PersistedState => {
-  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, presenting: _presenting, check: _check, lastCheckRunId: _lastCheckRunId, ...persisted } = s;
+  const { kept: _kept, checking: _checking, notice: _notice, loadError: _loadError, presenting: _presenting, check: _check, ...persisted } = s;
   return persisted;
 };
 
@@ -542,7 +541,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
   const [state, dispatch] = useReducer(reducer, undefined, (): State => {
     const loaded = store.load();
     const value = loaded.value ?? {};
-    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false, check: null, lastCheckRunId: null };
+    return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false, check: null };
   });
   const checkToken = useRef(0); // the check's own load token: a check load never supersedes practice's, or the reverse
   const latest = useRef(state);
@@ -739,6 +738,13 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     try {
       const instance = await api.getInstance(question.definitionId, question.version, question.seed ?? null);
       if (token !== checkToken.current) return;
+      // A reached question is the one recorded: an identity that now resolves to other operands is not shown, so an
+      // answer can never be recorded against operands the learner did not see (PR 53 review). The run and draft stay.
+      const recorded = run.deliveries[position - 1];
+      if (recorded && (recorded.instance.a !== instance.a || recorded.instance.b !== instance.b)) {
+        dispatch({ type: "checkLoadError", runId: run.id, error: "changed" });
+        return;
+      }
       // A resumed supported question shows the steps it had reached; they were recorded when first shown. Only the
       // rendered position has a `resume` of its own: after a move on, `latest` still holds the previous one's.
       const resume = at === undefined && partOf(run, position) === "supported" ? run.resume : null;
@@ -757,7 +763,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         dispatch({ type: "checkEvent", runId: run.id, position, event: { type: "support", kind: "visual-help-opened" }, advance: false, at: new Date().toISOString() });
       }
     } catch {
-      if (token === checkToken.current) dispatch({ type: "checkLoadError", runId: run.id, failed: true });
+      if (token === checkToken.current) dispatch({ type: "checkLoadError", runId: run.id, error: "failed" });
     }
   }, [api, toDelivery]);
 
@@ -947,7 +953,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       async retryCheckQuestion() {
         const screen = latest.current.check;
         if (!screen) return;
-        dispatch({ type: "checkLoadError", runId: screen.runId, failed: false });
+        dispatch({ type: "checkLoadError", runId: screen.runId, error: false });
         await loadCheckQuestion(screen.runId);
       },
       setCheckDraft(draft) {

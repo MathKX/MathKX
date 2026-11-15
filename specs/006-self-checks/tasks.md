@@ -215,7 +215,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **After an answer**: only "Next question", or "See summary" on question 4.
   - **Never offered**: "Another question", "Repeat this question", "Make it easier", "More challenge", or "More like this".
   - **Recording**: opening help and a help step record on the run's delivery only when shown; retries after feedback work; the explanation after a result records as in practice.
-  - **Lesson link**: points to `/lessons/number-bonds-to-ten?from=check`.
+  - **Lesson link**: points to `/lessons/number-bonds-to-ten?from=check&checkQuestion={deliveryId}` (PR 53 review).
   - **No way back**: after the switch, nothing on the screen can undo it.
 - [X] T032 [P] [US2] Extend `src/web/tests/lesson-gate.test.tsx` (spec 003's detour tests) for `?from=check`:
   - **The detour question**: the run's current supported question, with the gate when the lesson discloses its answer.
@@ -249,8 +249,9 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 - **T035**: the check controller is a set of store calls (`switchToSupported`, `submitCheckAnswer`, `toggleCheckPanel`, `nextCheckStep`, `nextCheckQuestion`, `showCheckHelpInstead`) with reducer cases `checkSwitch`, `checkPanels`, `checkResult`, and `checkStep`; `checkStep` uses `presentStep`. `checkEvent` takes `event: null` to move on without recording. A reload restores a supported question's steps without recording them, and steps that cannot be fetched again start over, as in practice. A failed "Check answer" shows `practice.unreachable` in the result region, as in practice.
 - **T036**: the switch's confirmation lives in `IndependentQuestion`, which owns "I need help" and returns focus to it; "I need help" is now always shown. The supported question is a new `SupportedQuestion` component around `QuestionWorkspace`, which gains an optional `takeFocus`, so the prompt takes focus after the switch and after "Next question" on a page loaded directly too.
 - **T037**: a supported question's answers are all its submissions in order ("Your answer: 12, 13"). With a switch and no answered supported question, the part shows `check.groupNone`.
-- **T038**: the store keeps the run the check view last presented (`lastCheckRunId`, not persisted). A page opened at `?from=check` without it, such as a new tab, takes the newest run with a supported question on screen. The lesson page resolves that question's identity once for the notice, and keeps the gate shut when it fails or resolves to other operands. "Show visual help instead" opens the check question's help when the run page shows it again. `ReturnBanner` takes the address to return to. A visit `?from=check` with no supported question on screen is spec 003's visit.
-- **T031–T033**: `npm test`: 490 passed. `npm run e2e`: 60 passed, 6 skipped (the project-specific skips), scenario 2 on both projects included.
+- **T038**: the lesson link names its question (`?from=check&checkQuestion={deliveryId}`), so the visit is about exactly that delivery while it is on screen in its run, in a new tab too. The page drops `from` and keeps `checkQuestion`, so a reload or a history visit keeps the gate (PR 53 review). The lesson page resolves that question's identity once for the notice, and keeps the gate shut when it fails or resolves to other operands. "Show visual help instead" opens the check question's help when the run page shows it again. `ReturnBanner` takes the address to return to. A visit `?from=check` with no supported question on screen is spec 003's visit.
+- **PR 53 review**: a reached question whose identity now resolves to other operands is not shown (`check.unreachedUnavailable` with "Try again"); the run, its `resume`, and the draft stay, and no step is fetched again.
+- **T031–T033**: `npm test`: 496 passed, the PR 53 review tests included. `npm run e2e`: 60 passed, 6 skipped (the project-specific skips), scenario 2 on both projects included.
 
 ---
 

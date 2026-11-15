@@ -2,9 +2,9 @@
 // rendered by the lesson chunk, with the practice entries where the lesson places them. While the current
 // question is unanswered and this lesson practises its definition, the visit is a detour: a lesson that shows the
 // question's answer stays behind the notice (and is not even requested) until the learner chooses, the visit is
-// recorded once the lesson is shown, and "Back to your question" is offered (contracts/detour.md). A visit
-// `?from=check` is about the supported check question on screen in the run the check view last presented instead,
-// with the same rules and the way back to that run (specs/006 research R10).
+// recorded once the lesson is shown, and "Back to your question" is offered (contracts/detour.md). A visit whose
+// address names a check question (`checkQuestion`) is about that supported check question instead, while it is on
+// screen in its run, with the same rules and the way back to that run (specs/006 research R10).
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { InstanceDto, LessonDetail, PracticeApi, SkillDto } from "../api/types";
@@ -25,6 +25,9 @@ import { StepVisual } from "../components/math/StepVisual";
 import { TenFrameExplorer } from "../components/math/TenFrameExplorer";
 
 const LessonView = lazy(() => import("../lesson/LessonView"));
+
+/** The query naming the supported check question a lesson visit is about (specs/006 research R10). */
+export const CHECK_QUESTION = "checkQuestion";
 
 /** A visit to this lesson, decided once when the page has what it needs (contracts/detour.md "Terms"). */
 interface Visit {
@@ -58,8 +61,10 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const [lessonsCheck, setLessonsCheck] = useState<"none" | "pending" | "done" | "failed">("none");
   const [from] = useState(() => new URLSearchParams(search).get("from"));
   const fromQuestion = from === "question";
-  // `?from=check`: the supported check question this visit is about, found once; none makes it spec 003's visit.
-  const [checkDetour] = useState(() => (from === "check" ? checkDetourOf(state.checkRuns, state.lastCheckRunId) : null));
+  // `checkQuestion`: the supported check question this visit is about, found once; none makes it spec 003's visit.
+  // It stays in the address, so a reload or a history visit is about the same question while it is on screen.
+  const [checkQuestionId] = useState(() => new URLSearchParams(search).get(CHECK_QUESTION));
+  const [checkDetour] = useState(() => (checkQuestionId ? checkDetourOf(state.checkRuns, checkQuestionId) : null));
   const [checkQuestion, setCheckQuestion] = useState<CheckQuestion>({ kind: "loading" });
   const recorded = useRef(false);
 
@@ -79,10 +84,13 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   }, [api, checkDetour]);
 
   // The origin is read once; dropping it means a reload or a later history visit is not a visit from the question.
+  // The check question it names stays: the notice must survive a reload as practice's does (PR 53 review).
   useEffect(() => {
+    if (!new URLSearchParams(search).has("from")) return;
+    const kept = checkQuestionId ? `?${CHECK_QUESTION}=${encodeURIComponent(checkQuestionId)}` : "";
     // Keep a section fragment (#why) when dropping the query, so a direct section link still lands there.
-    if (new URLSearchParams(search).has("from")) replace(`${path}${window.location.hash}`);
-  }, [path, search, replace]);
+    replace(`${path}${kept}${window.location.hash}`);
+  }, [path, search, replace, checkQuestionId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,7 +129,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
         deliveryId: delivery.id,
         detour,
         discloses,
-        fromQuestion: true,
+        fromQuestion: from === "check", // the link itself; a reload or a history visit is not
         gateOpen: !discloses,
         question: detour ? { a, b, prompt: instance?.prompt ?? translate(lang, "record.question", { a, b }), hasHelp: (instance?.representations.help.length ?? 0) > 0 } : null,
         back: `/checks/${encodeURIComponent(run.checkId)}/${encodeURIComponent(run.id)}`,

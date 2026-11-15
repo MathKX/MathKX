@@ -97,15 +97,13 @@ export function supportedQuestionOf(run: CheckRun): Delivery | null {
 }
 
 /**
- * The supported check question a lesson visit `?from=check` is about (research R10): the run the check view last
- * presented, or else the most recently started run with a supported question on screen; null when there is none.
+ * The supported check question a lesson visit names (research R10): that delivery, while it is the question on screen
+ * in its unfinished run's supported part; null otherwise, and the visit is then spec 003's.
  */
-export function checkDetourOf(runs: readonly CheckRun[], lastRunId: string | null): { run: CheckRun; delivery: Delivery } | null {
-  const last = runs.find((r) => r.id === lastRunId);
-  const candidates = last ? [last] : [...runs].sort((x, y) => y.startedAt.localeCompare(x.startedAt));
-  for (const run of candidates) {
+export function checkDetourOf(runs: readonly CheckRun[], deliveryId: string): { run: CheckRun; delivery: Delivery } | null {
+  for (const run of runs) {
     const delivery = supportedQuestionOf(run);
-    if (delivery) return { run, delivery };
+    if (delivery?.id === deliveryId) return { run, delivery };
   }
   return null;
 }

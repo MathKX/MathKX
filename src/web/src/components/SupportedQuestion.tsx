@@ -43,7 +43,7 @@ export function SupportedQuestion({ lang, run, screen, instance, takeFocus, onAc
     explanationStep: resume?.explanationStep ?? -1,
     result: resume?.result ?? null,
     notice: screen.notice?.kind === "unsaved" ? "practice.unreachable" : null,
-    lessonHref: lessonId ? `/lessons/${encodeURIComponent(lessonId)}?from=check` : undefined,
+    lessonHref: lessonId && delivery ? `/lessons/${encodeURIComponent(lessonId)}?from=check&checkQuestion=${encodeURIComponent(delivery.id)}` : undefined,
     setDraft: (draft) => store.setCheckDraft(draft),
     submit: () => void store.submitCheckAnswer(),
     toggleHelp: () => store.toggleCheckPanel("help"),

@@ -9,6 +9,7 @@ import { nb } from "../src/i18n/nb";
 import type { CheckRun } from "../src/state/checks";
 import type { Delivery } from "../src/state/observations";
 import { createFakeApi, PILOT_CHECK } from "./fakeApi";
+import { beforeThisFeature, checkRun } from "./records";
 
 const KEY = "mathkx.guest.v1";
 const CHECK_PATH = `/checks/${PILOT_CHECK.id}`;
@@ -417,10 +418,11 @@ describe("the supported part", () => {
     expect(stored().deliveries).toEqual([]); // practice's record is untouched
   });
 
-  it("links to the lesson with ?from=check", async () => {
+  it("links to the lesson with ?from=check and the question it is about", async () => {
     const { user } = await atQuestionThree();
     await switchHere(user);
-    expect(screen.getByTestId("to-lesson").getAttribute("href")).toBe("/lessons/number-bonds-to-ten?from=check");
+    const id = onlyRun().deliveries[2]!.id;
+    expect(screen.getByTestId("to-lesson").getAttribute("href")).toBe(`/lessons/number-bonds-to-ten?from=check&checkQuestion=${id}`);
   });
 
   it("records a skip before an answer and moves on", async () => {
@@ -447,5 +449,46 @@ describe("the supported part", () => {
     expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("13");
     expect(screen.getByTestId("toggle-help").getAttribute("aria-expanded")).toBe("true");
     expect(onlyRun().deliveries[2]!.events).toEqual(before);
+  });
+});
+
+// PR 53 review: a reached question is shown only when its identity still resolves to the recorded operands.
+describe("a resumed question whose identity now resolves to other operands", () => {
+  const seed = (run: CheckRun) => window.localStorage.setItem(KEY, JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), deliveries: [], checkRuns: [run] } }));
+  const resume = { draft: "9", helpOpen: true, helpStep: 0, explanationOpen: false, explanationStep: -1, result: null };
+
+  it("is not shown in the independent part: the run and its draft stay, and nothing can be saved against it", async () => {
+    seed(checkRun({ id: "run-r", positions: ["wrong", "reached", null, null], position: 2, resume: { ...resume, helpOpen: false, helpStep: -1 } }));
+    const api = createFakeApi({ resolveDiffers: true });
+    render(<App api={api} initialPath={`${CHECK_PATH}/run-r`} />);
+    expect((await screen.findByTestId("check-load-error")).textContent).toBe("Question 2 cannot be shown just now.");
+    expect(screen.getByTestId("check-retry")).toBeTruthy();
+    for (const id of ["prompt", "answer", "check-save", "check-skip"]) expect(screen.queryByTestId(id), id).toBeNull();
+    const run = onlyRun();
+    expect(run.resume?.draft).toBe("9");
+    expect(run.position).toBe(2);
+    expect(run.deliveries[1]!.instance).toMatchObject({ a: 5, b: 4 });
+    expect(run.deliveries[1]!.events).toEqual([]);
+    expect(api.calls.filter((c) => c.startsWith("validate"))).toEqual([]);
+  });
+
+  it("is not shown in the supported part, and its help steps are not fetched again", async () => {
+    seed(checkRun({ id: "run-s", positions: ["wrong", "reached", null, null], position: 2, switchAt: 2, resume }));
+    const api = createFakeApi({ resolveDiffers: true });
+    render(<App api={api} initialPath={`${CHECK_PATH}/run-s`} />);
+    expect((await screen.findByTestId("check-load-error")).textContent).toBe("Question 2 cannot be shown just now.");
+    for (const id of ["prompt", "answer", "check", "toggle-help", "help-panel"]) expect(screen.queryByTestId(id), id).toBeNull();
+    expect(api.calls.filter((c) => c.startsWith("getStep"))).toEqual([]);
+    expect(onlyRun().resume).toEqual(resume);
+    expect(onlyRun().deliveries[1]!.events).toEqual([]);
+  });
+
+  it("is shown as before when the identity resolves to the recorded operands", async () => {
+    seed(checkRun({ id: "run-ok", positions: ["wrong", "reached", null, null], position: 2, resume: { ...resume, helpOpen: false, helpStep: -1 } }));
+    render(<App api={createFakeApi()} initialPath={`${CHECK_PATH}/run-ok`} />);
+    await screen.findByTestId("independent-question");
+    expect(screen.getByTestId("prompt").getAttribute("aria-label")).toBe("5 plus 4. What is the sum?");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("9");
+    expect(screen.queryByTestId("check-load-error")).toBeNull();
   });
 });

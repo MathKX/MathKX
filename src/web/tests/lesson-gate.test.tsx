@@ -314,8 +314,8 @@ describe("the lesson link's origin travels in its address (test 10)", () => {
   });
 });
 
-// specs/006 research R10 (tasks T032): a lesson visit `?from=check` is about the supported check question on screen,
-// with spec 003's gate, recording, and way back; every other visit stays spec 003's, about practice.
+// specs/006 research R10 (tasks T032): a lesson visit whose address names a supported check question on screen is
+// about it, with spec 003's gate, recording, and way back; every other visit stays spec 003's, about practice.
 describe("a detour from a supported check question (?from=check)", () => {
   const runPath = (id: string) => `/checks/${PILOT_CHECK.id}/${id}`;
   const runs = (): CheckRun[] => stored()?.checkRuns ?? [];
@@ -393,15 +393,69 @@ describe("a detour from a supported check question (?from=check)", () => {
     expect(runKinds(3)).toEqual([]);
   });
 
-  it("records nothing on a run in its independent part, even with ?from=check", async () => {
+  it("records nothing on a run in its independent part, even when the address names its question", async () => {
     const run = checkRun({ id: "run-i", positions: ["wrong", "reached", null, null], position: 2 });
     const { view } = await fromCheck(run, disclosing());
     view.unmount();
-    render(<App api={disclosing()} initialPath={`${lessonPath}?from=check`} />);
+    render(<App api={disclosing()} initialPath={`${lessonPath}?from=check&checkQuestion=${run.deliveries[1]!.id}`} />);
     await screen.findByTestId("lesson-content");
     expect(screen.queryByTestId("lesson-gate")).toBeNull();
     expect(screen.queryByTestId("return-banner")).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(runs()[0]!.deliveries.flatMap((d) => d.events.filter((e) => e.type === "support"))).toEqual([]);
+  });
+});
+
+// PR 53 review: the check question stays in the address, so a reload or a history visit keeps the notice.
+describe("a check detour across a reload and history", () => {
+  const runPath = `/checks/${PILOT_CHECK.id}/run-s`;
+  const runKinds = (position: number) => ((stored()?.checkRuns ?? [])[0]?.deliveries[position - 1]?.events ?? []).flatMap((e: { type: string; kind?: string }) => (e.type === "support" ? [e.kind] : []));
+  const seed = (run: CheckRun) => window.localStorage.setItem("mathkx.guest.v1", JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), deliveries: [], checkRuns: [run] } }));
+
+  it("keeps the notice after a reload of the unopened gate, and Open anyway then records lesson-reveal on the check question", async () => {
+    const run = checkRun({ id: "run-s", positions: ["wrong", "skipped", "reached", null], switchAt: 3, position: 3 });
+    const id = run.deliveries[2]!.id;
+    seed(run);
+    const first = render(<App api={disclosing()} initialPath={runPath} />);
+    const user = userEvent.setup();
+    await screen.findByTestId("supported-question");
+    await user.click(screen.getByTestId("to-lesson"));
+    await screen.findByTestId("lesson-gate");
+    // The origin is dropped; the question stays.
+    await waitFor(() => expect(window.location.pathname + window.location.search).toBe(`${lessonPath}?checkQuestion=${id}`));
+
+    first.unmount(); // the reload
+    const api = disclosing();
+    render(<App api={api} initialPath={window.location.pathname + window.location.search} />);
+    const gate = await screen.findByTestId("lesson-gate");
+    expect(within(gate).getByRole("heading").textContent).toBe("This lesson shows the answer to 8 + 5");
+    expect(screen.getByTestId("return-to-question").getAttribute("href")).toBe(runPath);
+    expect(contentCalls(api)).toEqual([]);
+    await user.click(screen.getByTestId("gate-open"));
+    await screen.findByTestId("lesson-content");
+    await waitFor(() => expect(runKinds(3)).toEqual(["lesson-reveal"]));
+    expect(deliveries()).toEqual([]);
+  });
+
+  it("records nothing on a history visit after the question was answered correctly", async () => {
+    const answered = checkRun({ id: "run-s", positions: ["wrong", "skipped", [{ type: "submission", submissionId: "c", originalText: "13", value: 13, status: "correct", code: "correct" }], null], switchAt: 3, position: 3 });
+    seed(answered);
+    render(<App api={disclosing()} initialPath={`${lessonPath}?checkQuestion=${answered.deliveries[2]!.id}`} />);
+    await screen.findByTestId("lesson-content");
+    expect(screen.queryByTestId("lesson-gate")).toBeNull();
+    expect(screen.queryByTestId("return-banner")).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(runKinds(3)).toEqual([]);
+  });
+
+  it("is spec 003's visit once the run has moved past the question", async () => {
+    const moved = checkRun({ id: "run-s", positions: ["wrong", "skipped", [{ type: "submission", submissionId: "c", originalText: "13", value: 13, status: "correct", code: "correct" }], "reached"], switchAt: 3, position: 4 });
+    seed(moved);
+    render(<App api={disclosing()} initialPath={`${lessonPath}?checkQuestion=${moved.deliveries[2]!.id}`} />);
+    await screen.findByTestId("lesson-content");
+    expect(screen.queryByTestId("lesson-gate")).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(runKinds(3)).toEqual([]);
+    expect(runKinds(4)).toEqual([]);
   });
 });
