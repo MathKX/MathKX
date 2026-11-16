@@ -492,3 +492,54 @@ describe("a resumed question whose identity now resolves to other operands", () 
     expect(screen.queryByTestId("check-load-error")).toBeNull();
   });
 });
+
+// PR 53 review: a start or a save still on its way belongs to the screen it was asked from.
+describe("responses that arrive after the learner has moved on", () => {
+  it("creates no run when the start screen is left while the start is under way", async () => {
+    const { api, user } = await openStart("en");
+    api.hold("getChecks");
+    await user.click(screen.getByTestId("check-start"));
+    go("/record");
+    await screen.findByTestId("clear");
+    act(() => api.release("getChecks"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(runs()).toEqual([]);
+    expect(window.location.pathname).toBe("/record");
+  });
+
+  it("creates no run when the record is cleared while the start is under way", async () => {
+    const { api, user } = await openStart("en");
+    api.hold("getChecks");
+    await user.click(screen.getByTestId("check-start"));
+    go("/record");
+    await user.click(await screen.findByTestId("clear"));
+    await user.click(screen.getByTestId("confirm-clear"));
+    act(() => api.release("getChecks"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(runs()).toEqual([]);
+    expect(window.location.pathname).toBe("/record");
+  });
+
+  it("drops a save from a screen that was left, and the question on screen now still loads", async () => {
+    const api = createFakeApi();
+    const { user } = await startCheck(api);
+    const runPath = window.location.pathname;
+    api.hold("validate");
+    await save(user, "10");
+    // Leave and come back while the save is under way, then skip questions 1 and 2.
+    go("/record");
+    await screen.findByTestId("clear");
+    go(runPath);
+    await screen.findByTestId("independent-question");
+    await moveOn(user, () => user.click(screen.getByTestId("check-skip")));
+    api.hold("getInstance");
+    await user.click(screen.getByTestId("check-skip"));
+    act(() => api.release("validate"));
+    act(() => api.release("getInstance"));
+    await waitFor(() => expect(position()).toBe("Question 3 of 4"));
+    expect(screen.getByTestId("prompt").getAttribute("aria-label")).toBe("8 plus 5. What is the sum?");
+    const run = onlyRun();
+    expect(run.position).toBe(3);
+    expect(run.deliveries.map((d) => d.events)).toEqual([[{ type: "skipped" }], [{ type: "skipped" }], []]);
+  });
+});

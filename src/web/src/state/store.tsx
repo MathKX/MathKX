@@ -495,9 +495,10 @@ export interface StoreApi {
   dismissNotice(): void;
   /**
    * "Start the check" (specs/006 contracts/check-run.md): the check's newest version, ending an unfinished run of the
-   * same skill. Resolves to the new run's ID, or null when the check cannot be loaded.
+   * same skill. Resolves to the new run's ID, or null when the check cannot be loaded. A start still under way when
+   * `signal` aborts (the start screen is left) or the record is cleared creates nothing and resolves to null.
    */
-  startCheck(checkId: string): Promise<string | null>;
+  startCheck(checkId: string, signal?: AbortSignal): Promise<string | null>;
   /** The run page is mounted: presents the run and, while it is unfinished, loads the question at its position. */
   openRun(runId: string): Promise<void>;
   /** Fetches the current question again after a failed load. */
@@ -544,6 +545,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     return { ...initialPersisted, ...value, session: loaded.value ? sessionOf(loaded.value) : initialPersisted.session, checkRuns: loaded.value?.checkRuns ?? [], kept: loaded.kept, checking: false, notice: null, loadError: false, presenting: false, check: null };
   });
   const checkToken = useRef(0); // the check's own load token: a check load never supersedes practice's, or the reverse
+  const checkStarts = useRef(0); // a check start still under way belongs to the record it began in
   const latest = useRef(state);
   latest.current = state;
   const loadToken = useRef(0); // only the most recent instance request may become the current question
@@ -918,17 +920,21 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         loadToken.current++; // a question still on its way belongs to the record being cleared
         practiceRun.current++;
         checkToken.current++;
+        checkStarts.current++;
         store.clear();
         dispatch({ type: "clear" });
       },
       dismissNotice: () => dispatch({ type: "notice", notice: null }),
-      async startCheck(checkId) {
+      async startCheck(checkId, signal) {
+        const token = ++checkStarts.current;
         let check;
         try {
           check = (await api.getChecks()).find((c) => c.id === checkId);
         } catch {
           return null;
         }
+        // Left or cleared while the list was on its way: no run is created, and no older one is ended (PR 53 review).
+        if (token !== checkStarts.current || signal?.aborted) return null;
         if (!check || check.questions.length === 0) return null;
         const at = new Date().toISOString();
         const run: CheckRun = {
@@ -966,17 +972,22 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const { run, position, delivery, screen } = shown;
         const draft = run.resume?.draft ?? "";
         const submissionId = newId();
+        const token = checkToken.current;
         dispatch({ type: "checkSaving", runId: run.id, checking: true });
         dispatch({ type: "checkNotice", runId: run.id, notice: null });
         let result: ValidationResponse;
         try {
           result = await api.validate(identityOf(delivery), draft, submissionId);
         } catch {
+          if (token !== checkToken.current) return;
           // Not saved: nothing is recorded, and the draft stays to save again.
           dispatch({ type: "checkSaving", runId: run.id, checking: false });
           dispatch({ type: "checkNotice", runId: run.id, notice: { kind: "unsaved" } });
           return;
         }
+        // A response to a screen that is gone (the page left, the record cleared, another question loaded) belongs to
+        // none: nothing is recorded or loaded, and the question on screen now keeps its own state (PR 53 review).
+        if (token !== checkToken.current) return;
         const at = new Date().toISOString();
         if (result.status === "invalid-response") {
           dispatch({ type: "checkEvent", runId: run.id, position, event: { type: "input-guidance", submissionId, originalText: draft, code: result.code }, advance: false, at });
@@ -987,7 +998,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         // The question's only submission; the response itself never reaches the screen.
         const event: Event = { type: "submission", submissionId, originalText: draft, value: Number(result.values.v), status: result.status, code: result.code };
         dispatch({ type: "checkEvent", runId: run.id, position, event, advance: true, at });
-        if (latest.current.check?.runId === run.id && position < run.questions.length) await loadCheckQuestion(run.id, position + 1);
+        if (position < run.questions.length) await loadCheckQuestion(run.id, position + 1);
       },
       async skipCheckQuestion() {
         const shown = shownQuestion();
@@ -1012,15 +1023,20 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const { run, position, delivery } = shown;
         const draft = run.resume?.draft ?? "";
         const submissionId = newId();
+        const token = checkToken.current;
         dispatch({ type: "checkSaving", runId: run.id, checking: true });
         let result: ValidationResponse;
         try {
           result = await api.validate(identityOf(delivery), draft, submissionId);
         } catch {
+          if (token !== checkToken.current) return;
           dispatch({ type: "checkSaving", runId: run.id, checking: false });
           dispatch({ type: "checkNotice", runId: run.id, notice: { kind: "unsaved" } });
           return;
         }
+        // A response to a screen that is gone (the page left, the record cleared, another question loaded) belongs to
+        // none: nothing is recorded or loaded, and the question on screen now keeps its own state (PR 53 review).
+        if (token !== checkToken.current) return;
         const event: Event =
           result.status === "invalid-response"
             ? { type: "input-guidance", submissionId, originalText: draft, code: result.code }
@@ -1048,12 +1064,14 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         const index = (kind === "help" ? resume.helpStep : resume.explanationStep) + 1;
         const steps = kind === "help" ? screen.helpSteps : screen.explanationSteps;
         if (steps[0] && index >= steps[0].count) return;
+        const token = checkToken.current;
         let step: StepDto;
         try {
           step = await api.getStep(instance.identity, kind, index);
         } catch {
           return; // nothing shown, nothing recorded
         }
+        if (token !== checkToken.current) return; // asked for on a screen that is gone
         dispatch({ type: "checkStep", runId: run.id, position, kind, step }); // shown and recorded together, or neither
       },
       async nextCheckQuestion() {

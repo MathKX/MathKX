@@ -29,6 +29,8 @@ If the list cannot be loaded, no entry is shown and nothing else changes.
 3. **Creates the run**: a new run with a copy of the question list, `switchAt: null`, and `resume` empty.
 4. **Shows the first question**: the address is replaced with `/checks/{checkId}/{runId}`, and the run page loads question 1.
 
+A start still under way when the start screen is left or the record is cleared creates nothing, ends no older run, and navigates nowhere (PR 53 review).
+
 Leaving the start screen records nothing. A practice question in progress stays resumable, because the check never touches practice's current question (research R8).
 
 ## `/checks/{checkId}/{runId}`: the run (`CheckRunPage`)
@@ -61,6 +63,7 @@ The page shows the run's summary when the run is finished or ended. Otherwise, i
 2. **Input guidance**: on `invalid-response`, the `input-guidance` event is recorded, the guidance is shown, and the learner stays on the question with the draft.
 3. **A result**: on `correct` or `incorrect`, the `submission` event is recorded as the question's only submission, and `position` advances. The response is never put in rendered state.
 4. **Failure**: on a failed request, nothing is recorded, `check.unsaved` is shown, and the draft stays.
+5. **Too late**: a response that arrives after the screen it was asked from is gone (the page left, the record cleared, or another question loaded) is dropped. Nothing is recorded or loaded, and the question on screen keeps its own state (PR 53 review). The supported part's "Check answer" and its steps follow the same rule.
 
 **Skipping** records `skipped` on the delivery and moves on.
 

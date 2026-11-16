@@ -1,7 +1,7 @@
 // A check's start screen (specs/006 contracts/check-run.md "The start screen"): its title, scope, size, and support
 // policy before anything starts. Leaving it records nothing. "Start the check" ends an unfinished run of the skill,
 // creates a run, and replaces the address with the run's.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { CheckDto, PracticeApi } from "../api/types";
@@ -22,6 +22,9 @@ export function CheckStartPage({ checkId, api = practiceApi }: { checkId: string
   const lang = state.language;
   const [loaded, setLoaded] = useState<Loaded>({ kind: "loading" });
   const [starting, setStarting] = useState(false);
+  // A start still under way when the page is left creates nothing and navigates nowhere (PR 53 review).
+  const start = useRef<AbortController | null>(null);
+  useEffect(() => () => start.current?.abort(), [checkId]);
 
   useEffect(() => {
     let live = true;
@@ -56,8 +59,11 @@ export function CheckStartPage({ checkId, api = practiceApi }: { checkId: string
   const total = check.questions.length;
   const unfinished = [...state.checkRuns].reverse().find((r) => r.skillId === check.skill && isUnfinished(r));
   const onStart = async () => {
+    const controller = new AbortController();
+    start.current = controller;
     setStarting(true);
-    const runId = await store.startCheck(check.id);
+    const runId = await store.startCheck(check.id, controller.signal);
+    if (controller.signal.aborted) return;
     if (runId) replace(`/checks/${encodeURIComponent(check.id)}/${encodeURIComponent(runId)}`, true);
     else {
       setStarting(false);
