@@ -42,9 +42,11 @@ export interface QuestionWorkspaceProps {
   /** The caller's controls, rendered after the explanation. */
   controls?: ReactNode;
   testId: string;
+  /** Whether the first question shown takes focus; default: only after an in-app navigation. */
+  takeFocus?: boolean;
 }
 
-export function QuestionWorkspace({ controller: c, controls, testId }: QuestionWorkspaceProps) {
+export function QuestionWorkspace({ controller: c, controls, testId, takeFocus }: QuestionWorkspaceProps) {
   const { lang, instance } = c;
   const fieldId = useId();
   const resultRef = useRef<HTMLDivElement>(null);
@@ -59,7 +61,7 @@ export function QuestionWorkspace({ controller: c, controls, testId }: QuestionW
     if (!c.questionKey) return;
     const first = firstQuestion.current;
     firstQuestion.current = false;
-    if (first && !hasNavigatedInApp()) return;
+    if (first && !(takeFocus ?? hasNavigatedInApp())) return;
     const active = document.activeElement;
     if (!active || active === document.body) promptRef.current?.focus();
   }, [c.questionKey]);

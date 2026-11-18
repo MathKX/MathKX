@@ -29,6 +29,8 @@ If the list cannot be loaded, no entry is shown and nothing else changes.
 3. **Creates the run**: a new run with a copy of the question list, `switchAt: null`, and `resume` empty.
 4. **Shows the first question**: the address is replaced with `/checks/{checkId}/{runId}`, and the run page loads question 1.
 
+A start still under way when the start screen is left or the record is cleared creates nothing, ends no older run, and navigates nowhere (PR 53 review).
+
 Leaving the start screen records nothing. A practice question in progress stays resumable, because the check never touches practice's current question (research R8).
 
 ## `/checks/{checkId}/{runId}`: the run (`CheckRunPage`)
@@ -61,6 +63,7 @@ The page shows the run's summary when the run is finished or ended. Otherwise, i
 2. **Input guidance**: on `invalid-response`, the `input-guidance` event is recorded, the guidance is shown, and the learner stays on the question with the draft.
 3. **A result**: on `correct` or `incorrect`, the `submission` event is recorded as the question's only submission, and `position` advances. The response is never put in rendered state.
 4. **Failure**: on a failed request, nothing is recorded, `check.unsaved` is shown, and the draft stays.
+5. **Too late**: a response that arrives after the screen it was asked from is gone (the page left, the record cleared, or another question loaded) is dropped. Nothing is recorded or loaded, and the question on screen keeps its own state (PR 53 review). The supported part's "Check answer" and its steps follow the same rule.
 
 **Skipping** records `skipped` on the delivery and moves on.
 
@@ -85,7 +88,7 @@ From `switchAt` onward, each question is practice (spec 002, spec 003):
 - **What counts as answered**: the summary reads only the delivery's events (data-model "Answered"). A supported question with a submission is answered whether or not the learner pressed "Next question" or "See summary", so a run ended by a new check keeps its outcome.
 - **Never offered**: "Another question", "Repeat this question", "Make it easier", "More challenge", and "More like this".
 
-**The lesson link** goes to `/lessons/{id}?from=check`. The lesson page then takes the run's current supported question as the detour question, as spec 003 does for practice:
+**The lesson link** goes to `/lessons/{id}?from=check&checkQuestion={deliveryId}`. While that delivery is the supported question on screen in its unfinished run, the lesson page takes it as the detour question, as spec 003 does for practice. The page then drops `from` from the address but keeps `checkQuestion`, so a reload or a history visit is about the same question; only the link itself counts as a visit from the question for `lesson-opened` after a correct answer. The detour applies:
 - the gate when the lesson shows the answer;
 - `lesson-opened` or `lesson-reveal` recorded on that delivery once the lesson is shown;
 - "Back to your question" to `/checks/{checkId}/{runId}`.
@@ -98,6 +101,8 @@ Every other lesson visit follows spec 003 unchanged, about practice's current qu
 - **A reload**: the run page restores the question from the run, fetches its instance and the steps reached again without recording them, and shows the draft.
 - **A language switch**: the store keeps the run and its screen state; every text changes language.
 - **Leaving and coming back**: from "My work" or the start screen, "Continue the check" goes to the run's address, with the same restoration.
+
+A reached question is shown only when its identity still resolves to the recorded operands. Otherwise the page shows `check.unreachedUnavailable` with the position and "Try again" (`check-retry`), records nothing, and keeps the run, its `resume`, and the draft (PR 53 review).
 
 Focus lands on the prompt when a question appears after an action or a navigation. A page loaded directly keeps the browser's own start, as in practice.
 

@@ -2,6 +2,9 @@
 // exercise shell, and ends the session on leaving (FR-017). "Finish practice" (specs/005) is offered at any time,
 // even when no question could be loaded, and leads to the session summary.
 import { useEffect } from "react";
+import { practiceApi } from "../api/client";
+import type { PracticeApi } from "../api/types";
+import { CheckEntry } from "../components/CheckEntry";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import { translate } from "../i18n";
 import { useRouter } from "../router";
@@ -9,7 +12,7 @@ import { useStore } from "../state/store";
 import { ExerciseShell } from "../components/ExerciseShell";
 import { LadderNotice } from "../components/LadderControls";
 
-export function PracticePage({ skillId }: { skillId: string }) {
+export function PracticePage({ skillId, api = practiceApi }: { skillId: string; api?: PracticeApi }) {
   const store = useStore();
   const { state } = store;
   const { navigate } = useRouter();
@@ -50,6 +53,7 @@ export function PracticePage({ skillId }: { skillId: string }) {
           {translate(lang, "practice.finish")}
         </Button>
       </div>
+      <CheckEntry skills={[skillId]} lang={lang} api={api} />
       <Paragraph data-size="sm" className="mkx-storage-note" data-testid="storage-note">
         {translate(lang, state.kept ? "storage.kept" : "storage.notKept")}
       </Paragraph>

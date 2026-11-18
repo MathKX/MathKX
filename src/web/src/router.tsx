@@ -7,8 +7,11 @@ interface RouterState {
   /** The query string of the current address, including its "?" (or ""). */
   search: string;
   navigate(to: string): void;
-  /** Replaces the current address without a new history entry (used to drop a consumed query). */
-  replace(to: string): void;
+  /**
+   * Replaces the current address without a new history entry: to drop a consumed query, or, with `inApp`, to move on
+   * after a learner's action that should not leave a history entry behind ("Start the check").
+   */
+  replace(to: string, inApp?: boolean): void;
 }
 
 const RouterContext = createContext<RouterState>({ path: "/", search: "", navigate: () => undefined, replace: () => undefined });
@@ -41,7 +44,8 @@ export function RouterProvider({ children, initialPath }: { children: ReactNode;
     if (typeof window !== "undefined" && to !== currentAddress()) window.history.pushState(null, "", to);
     setAddress(splitAddress(to));
   };
-  const replace = (to: string) => {
+  const replace = (to: string, inApp = false) => {
+    if (inApp) navigatedInApp = true;
     if (typeof window !== "undefined") window.history.replaceState(null, "", to);
     setAddress(splitAddress(to));
   };
@@ -84,6 +88,8 @@ export type Route =
   | { name: "record" }
   | { name: "replay"; deliveryId: string }
   | { name: "session" }
+  | { name: "check"; checkId: string }
+  | { name: "checkRun"; checkId: string; runId: string }
   | { name: "unknown" };
 
 export function matchRoute(address: string): Route {
@@ -94,5 +100,7 @@ export function matchRoute(address: string): Route {
   if (parts[0] === "record" && parts[1]) return { name: "replay", deliveryId: parts[1] };
   if (parts[0] === "record") return { name: "record" };
   if (parts[0] === "session" && parts.length === 1) return { name: "session" };
+  if (parts[0] === "checks" && parts[1] && parts[2] && parts.length === 3) return { name: "checkRun", checkId: parts[1], runId: parts[2] };
+  if (parts[0] === "checks" && parts[1] && parts.length === 2) return { name: "check", checkId: parts[1] };
   return { name: "unknown" };
 }

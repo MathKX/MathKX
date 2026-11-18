@@ -112,7 +112,7 @@ export function lessonMarkdown(lang: string): string {
   return readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../../content/lessons/number-bonds-to-ten", `${lang}.md`), "utf8");
 }
 
-type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getAnswer";
+type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getAnswer" | "getChecks";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -131,7 +131,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getAnswer: [] };
+  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getAnswer: [], getChecks: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -303,6 +303,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     getChecks: async () => {
       calls.push("getChecks");
       if (options.checksFail) throw new Error("unreachable");
+      await gate("getChecks");
       return checks;
     },
     getCheck: async (id, version) => {

@@ -154,7 +154,7 @@ A question's part is derived from `switchAt`, never stored twice. Whether a ques
 
 **Decision**:
 - **Independent part**: no lesson link, and spec 003's notice never applies there.
-- **Supported part**: the workspace's lesson link carries `?from=check`. The lesson page then treats the check's current supported question as the detour question: the disclosure gate, the recording of `lesson-opened` or `lesson-reveal` on that delivery, and "Back to your question" to the run's address.
+- **Supported part**: the workspace's lesson link carries `?from=check&checkQuestion={deliveryId}`. While that delivery is the supported question on screen in its unfinished run, the lesson page treats it as the detour question: the disclosure gate, the recording of `lesson-opened` or `lesson-reveal` on that delivery, and "Back to your question" to the run's address. The page drops `from` as spec 003 does, but keeps `checkQuestion`, so a reload or a history visit is about the same question and keeps the gate (PR 53 review). Once the run has moved past the question, the visit is spec 003's.
 - **Any other lesson visit**: unchanged from spec 003, about practice's current question. A lesson visited while an independent check is unfinished is a lesson view (spec 004), not help on the check question.
 - **"Check my understanding"**: offered on the lesson page for each check of a skill the lesson teaches, on the practice page for the skill's checks, and in "My work" under the skill.
 

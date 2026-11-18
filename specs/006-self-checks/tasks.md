@@ -127,12 +127,12 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Add `src/web/tests/checks.test.ts` for `contracts/summary.md` "The grouping" and data-model "Answered", over `checkRun` fixtures with no switch:
+- [X] T016 [P] [US1] Add `src/web/tests/checks.test.ts` for `contracts/summary.md` "The grouping" and data-model "Answered", over `checkRun` fixtures with no switch:
   - **Answered**: membership reads only the deliveries' events; a finished run's last question is in its group, with no later delivery.
   - **The matrix**: all 81 combinations of correct, wrong, and skipped on four positions put each position in exactly one group, with "Worth revisiting" only on the wrong ones (DL-036).
   - **Input guidance**: a `"guidance"` position followed by a save is grouped by the save.
   - **Purity**: `summarizeRun` reads only the run (deep-frozen input).
-- [ ] T017 [P] [US1] Add `src/web/tests/check-run.test.tsx` with the fake API and `App`, in English and in Norwegian where marked:
+- [X] T017 [P] [US1] Add `src/web/tests/check-run.test.tsx` with the fake API and `App`, in English and in Norwegian where marked:
   - **Start screen** (both languages): the title, scope, "4 questions", the five policy sentences, and "Start the check". An unknown check or a failed list shows `check.unavailable`.
   - **Starting**: creates one run with a copy of the four identities, replaces the address with `/checks/{checkId}/{runId}`, and shows "Question 1 of 4" with `7 + 3`, focused on the prompt.
   - **Absences in the independent part**: no `toggle-help`, `toggle-explanation`, `to-lesson`, `result-region`, `another`, `repeat-question`, `easier`, `harder`, or `more-like-this`. No element with the text of any `status`, `outcome`, or `feedback` dictionary entry except input guidance. In the fake's log, no `getStep`, `getAnswer`, `getLessonContent`, or `getVisualSteps`, through all four questions.
@@ -140,13 +140,13 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **Skipping**: records `skipped` and moves on.
   - **The end**: after question 4, the run has `finishedAt` and the summary shows, with focus on its heading.
   - **Separation**: a practice question with a draft and help open before the check is still resumable with both afterwards, and practice's `deliveries` and `session` are unchanged by the check.
-- [ ] T018 [P] [US1] Add `src/web/tests/check-summary.test.tsx`:
+- [X] T018 [P] [US1] Add `src/web/tests/check-summary.test.tsx`:
   - **Groups**: the scripted run of quickstart scenario 1 shows the counts, its questions, "Your answer"/"Correct answer", and the tag "Worth revisiting" once.
   - **Answer requests**: `getAnswer` is called only for the wrong and the skipped question. With `answerFails`, `check.answerUnavailable` shows and nothing reads as wrong.
   - **Explanations**: opening one shows its steps and dispatches nothing; the record is deep-equal before and after. With `resolveDiffers`, `check.explanationUnavailable` replaces it, and the wrong and skipped questions show `check.answerUnavailable`, never the answer `getAnswer` returned for the other operands.
   - **Wording**: no digit followed by `/`, no `%`, and none of the wording scan's words.
   - **Actions**: "Practise more" (with its note) to `/practice/numbers.addition-within-20`, and "Take a new check" to the start screen.
-- [ ] T019 [P] [US1] Add `src/web/e2e/checks.spec.ts` with check 1 (quickstart scenario 1, steps 1–7), on both projects:
+- [X] T019 [P] [US1] Add `src/web/e2e/checks.spec.ts` with check 1 (quickstart scenario 1, steps 1–7), on both projects:
   - it records every request URL from "Start the check" to the summary, and asserts that none is under `/steps/`, `/answer`, `/content/`, or `/api/visuals`;
   - `getByRole` and the accessibility snapshot find no result text before the summary.
 
@@ -154,34 +154,44 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] In `src/web/src/state/checks.ts`, add `isAnswered(delivery)` (a submission or `skipped`), `isUnfinished(run)`, `partOf(run, position)`, and `summarizeRun(run)` per `contracts/summary.md`, all pure. The supported and not-answered parts may stay empty until T034 and T048; T016 passes.
-- [ ] T021 [US1] Add the check actions to `StoreApi` in `src/web/src/state/store.tsx` (`contracts/check-run.md`):
+- [X] T020 [US1] In `src/web/src/state/checks.ts`, add `isAnswered(delivery)` (a submission or `skipped`), `isUnfinished(run)`, `partOf(run, position)`, and `summarizeRun(run)` per `contracts/summary.md`, all pure. The supported and not-answered parts may stay empty until T034 and T048; T016 passes.
+- [X] T021 [US1] Add the check actions to `StoreApi` in `src/web/src/state/store.tsx` (`contracts/check-run.md`):
   - **`startCheck(checkId)`**: fetches the newest version with `getChecks`, ends an unfinished run of the same skill with `endedAt`, creates the run, and resolves to its ID.
   - **`openRun(runId)`**: marks the check view as presenting and loads the instance at the run's position, restoring `resume.draft`.
   - **`setCheckDraft`**, **`saveCheckAnswer`**, and **`skipCheckQuestion`**: as in the contract's independent part.
   - **`leaveCheck()`**: on unmount; ends presenting and keeps `resume`.
 
   The check screen state is a non-persisted `check` field of `State`, left out by `persistedOf`. The check has its own load token, so a check load never supersedes practice's or the reverse. Recording uses `recordEvent` on the run's delivery; a save's response never enters `check`.
-- [ ] T022 [P] [US1] Create `src/web/src/components/IndependentQuestion.tsx` per `contracts/check-run.md` "Independent part". It imports only the prompt, `Textfield`, `Button`, and the dictionaries; it never imports `StepPanel`, `Feedback`, `QuestionWorkspace`, or `Link`. Input guidance is rendered with `translateCode(lang, "feedback", code, { text })`.
-- [ ] T023 [P] [US1] Create `src/web/src/pages/CheckStartPage.tsx` per `contracts/check-run.md` "The start screen". "Start the check" calls `store.startCheck` and replaces the address with the run's.
-- [ ] T024 [US1] Create `src/web/src/pages/CheckRunPage.tsx`. It calls `openRun` on mount and `leaveCheck` on unmount, and shows the independent question, the summary of a run that is over, or `check.runNotFound`. Focus moves to the prompt on each new question, and to the summary heading at the end.
-- [ ] T025 [US1] Create `src/web/src/pages/CheckSummary.tsx` per `contracts/summary.md` "The summary":
+- [X] T022 [P] [US1] Create `src/web/src/components/IndependentQuestion.tsx` per `contracts/check-run.md` "Independent part". It imports only the prompt, `Textfield`, `Button`, and the dictionaries; it never imports `StepPanel`, `Feedback`, `QuestionWorkspace`, or `Link`. Input guidance is rendered with `translateCode(lang, "feedback", code, { text })`.
+- [X] T023 [P] [US1] Create `src/web/src/pages/CheckStartPage.tsx` per `contracts/check-run.md` "The start screen". "Start the check" calls `store.startCheck` and replaces the address with the run's.
+- [X] T024 [US1] Create `src/web/src/pages/CheckRunPage.tsx`. It calls `openRun` on mount and `leaveCheck` on unmount, and shows the independent question, the summary of a run that is over, or `check.runNotFound`. Focus moves to the prompt on each new question, and to the summary heading at the end.
+- [X] T025 [US1] Create `src/web/src/pages/CheckSummary.tsx` per `contracts/summary.md` "The summary":
   - the check's title from `getCheck`;
   - answers from the record, or from `getAnswer` for questions without a correct submission, shown only when the response's operands equal the recorded ones;
   - one `getInstance` per question to confirm its operands;
   - explanations through a local `StepPanel` fed by `api.getStep`, with no store call.
-- [ ] T026 [US1] Add the routes:
+- [X] T026 [US1] Add the routes:
   - **`src/web/src/router.tsx`**: `{ name: "check"; checkId }` for `/checks/{checkId}` and `{ name: "checkRun"; checkId; runId }` for `/checks/{checkId}/{runId}`.
   - **`src/web/src/App.tsx`**: render `CheckStartPage` and `CheckRunPage` (keyed by run ID).
 
   Extend `src/web/tests/app.test.tsx`'s route table.
-- [ ] T027 [US1] Create `src/web/src/components/CheckEntry.tsx`: it loads `getChecks` once and shows one link per check of the given skill (`contracts/check-run.md` "Entry"), or nothing on failure. Place it:
+- [X] T027 [US1] Create `src/web/src/components/CheckEntry.tsx`: it loads `getChecks` once and shows one link per check of the given skill (`contracts/check-run.md` "Entry"), or nothing on failure. Place it:
   - **`src/web/src/pages/LessonPage.tsx`**: below the practice entries, for the lesson's skills;
   - **`src/web/src/pages/PracticePage.tsx`**: below "Finish practice".
-- [ ] T028 [P] [US1] Add the whole `check` section of `contracts/check-run.md` "Texts" and `contracts/summary.md` "Texts" to `src/web/src/i18n/en.ts` and `nb.ts`, with singular keys (`…One`) for `groupCount`, `recordCounts`, and `recordSupported`. The dictionary-parity and literal checks pass.
-- [ ] T029 [US1] Make T017–T019 pass against the built app and service on both projects. The spec 002 to 005 end-to-end checks still pass.
+- [X] T028 [P] [US1] Add the whole `check` section of `contracts/check-run.md` "Texts" and `contracts/summary.md` "Texts" to `src/web/src/i18n/en.ts` and `nb.ts`, with singular keys (`…One`) for `groupCount`, `recordCounts`, and `recordSupported`. The dictionary-parity and literal checks pass.
+- [X] T029 [US1] Make T017–T019 pass against the built app and service on both projects. The spec 002 to 005 end-to-end checks still pass.
 
 **Checkpoint**: quickstart scenario 1 passes. Do not merge before Phase 4: the policy promises the switch.
+
+**Done (Phase 3)**. Deviations from the task text:
+- **T020**: `summarizeRun` already computes all five parts (`supported` and `notAnswered` too); it is a few lines and pure. T030 and T048 still add their tests, and T037 and T051 their rendering.
+- **T021**: `startCheck` resolves to the run's ID or null; `retryCheckQuestion` is added for the load error's "Try again" (`check-retry`). The check's next question is requested with its position explicitly, because the store's `latest` ref is only updated by the next render.
+- **T022**: "I need help" (`check-need-help`) renders only when the page passes `onNeedHelp`, which Phase 4 (T036) wires with the switch dialog.
+- **T023**: the unfinished-run sentence and "Continue the check" (`check-unfinished`, `check-continue`) are on the start screen already; T051 adds their tests.
+- **T024**: the run page's `h1` is `check.entry`. The router's `replace` takes an `inApp` flag, so "Start the check" counts as an in-app move for focus.
+- **T026**: `app.test.tsx` gains a route table for every route, plus the entry's placement (T027). Its lesson test's title assertion now names the `h1`: `getByText("Tiervenner")` raced the lesson body, which names the lesson too, and lost once the new lesson-page test warmed the lazy chunk.
+- **T028**: singular keys `countOne` and `groupCountOne`. `recordCounts` and `recordSupported` read correctly at 1 in both languages ("1 correct on your own", "1 som øving med hjelp"), so they have none. Added: `saving` ("Saving…") and `toRecord` ("Go to my work").
+- **T029**: `npm run e2e`: 58 passed, 6 skipped (the project-specific skips), the four new ones included.
 
 ---
 
@@ -193,39 +203,39 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 2
 
-- [ ] T030 [P] [US2] Extend `src/web/tests/checks.test.ts`:
+- [X] T030 [P] [US2] Extend `src/web/tests/checks.test.ts`:
   - with a switch at each of positions 1 to 4 over the 81 independent combinations of the positions before it, positions from `switchAt` are only in `supported`, each with spec 002's `derive` outcome;
   - `revisit` never holds a supported position, including a supported question answered wrongly and never correctly;
   - a switch at position 1 leaves the three groups empty (shown as `check.noIndependent`);
   - **the PR 51 review cases**: a switch, the last question answered, and "See summary" put the last question in `supported` with its outcome. A run ended after a supported question was answered, but before "Next question", keeps that question in `supported` with its outcome, not in `notAnswered`.
-- [ ] T031 [P] [US2] Extend `src/web/tests/check-run.test.tsx` for the switch and the supported part:
+- [X] T031 [P] [US2] Extend `src/web/tests/check-run.test.tsx` for the switch and the supported part:
   - **"I need help"**: opens the dialog with focus on its heading and the position in its body. "Continue without help" and Escape record nothing, leave `switchAt` null, and return focus.
   - **"Switch"**: sets `switchAt` to the current position, keeps the draft, and shows the workspace with the mode line.
   - **Before an answer**: only "Skip".
   - **After an answer**: only "Next question", or "See summary" on question 4.
   - **Never offered**: "Another question", "Repeat this question", "Make it easier", "More challenge", or "More like this".
   - **Recording**: opening help and a help step record on the run's delivery only when shown; retries after feedback work; the explanation after a result records as in practice.
-  - **Lesson link**: points to `/lessons/number-bonds-to-ten?from=check`.
+  - **Lesson link**: points to `/lessons/number-bonds-to-ten?from=check&checkQuestion={deliveryId}` (PR 53 review).
   - **No way back**: after the switch, nothing on the screen can undo it.
-- [ ] T032 [P] [US2] Extend `src/web/tests/lesson-gate.test.tsx` (spec 003's detour tests) for `?from=check`:
+- [X] T032 [P] [US2] Extend `src/web/tests/lesson-gate.test.tsx` (spec 003's detour tests) for `?from=check`:
   - **The detour question**: the run's current supported question, with the gate when the lesson discloses its answer.
   - **Recording**: `lesson-opened` or `lesson-reveal` on that check delivery, never on practice's question.
   - **Return**: "Back to your question" goes to the run's address.
   - **Other visits**: without `from=check`, the visit is spec 003's, about practice's current question.
   - **The independent part**: a visit while the run is independent records nothing on the run.
-- [ ] T033 [P] [US2] Add check 2 to `src/web/e2e/checks.spec.ts` (quickstart scenario 2), on both projects.
+- [X] T033 [P] [US2] Add check 2 to `src/web/e2e/checks.spec.ts` (quickstart scenario 2), on both projects.
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (answered positions from `switchAt`, spec 002's `derive`). T030 passes.
-- [ ] T035 [US2] Add the supported part to the store, `src/web/src/state/store.tsx`:
+- [X] T034 [US2] Complete `summarizeRun` in `src/web/src/state/checks.ts` with the `supported` part (answered positions from `switchAt`, spec 002's `derive`). T030 passes.
+- [X] T035 [US2] Add the supported part to the store, `src/web/src/state/store.tsx`:
   - **`switchToSupported()`**: sets `switchAt` to the current position.
   - **A check-bound question controller** for the workspace: submit with retries; help, explanation, and their steps through T014's helper; `resume` kept current, including `result`.
   - **`nextCheckQuestion()`**: advances `position` after a submission; on the last question ("See summary") it sets `finishedAt` without creating a delivery.
   - **`skipCheckQuestion()`**: in the supported part, skips before any submission.
-- [ ] T036 [US2] In `src/web/src/pages/CheckRunPage.tsx`, add the switch dialog of `contracts/check-run.md` "The switch" (from `IndependentQuestion`'s "I need help"). For a supported position, render `QuestionWorkspace` with the check controller, the mode line, and the check's controls in its slot.
-- [ ] T037 [US2] In `src/web/src/pages/CheckSummary.tsx`, add the supported part: its heading naming `switchAt`, the note, and each question with its outcome label, answers, correct answer, and explanation. Add `check.noIndependent` when `switchAt` is 1.
-- [ ] T038 [US2] Wire the lesson detour from a supported check question (research R10):
+- [X] T036 [US2] In `src/web/src/pages/CheckRunPage.tsx`, add the switch dialog of `contracts/check-run.md` "The switch" (from `IndependentQuestion`'s "I need help"). For a supported position, render `QuestionWorkspace` with the check controller, the mode line, and the check's controls in its slot.
+- [X] T037 [US2] In `src/web/src/pages/CheckSummary.tsx`, add the supported part: its heading naming `switchAt`, the note, and each question with its outcome label, answers, correct answer, and explanation. Add `check.noIndependent` when `switchAt` is 1.
+- [X] T038 [US2] Wire the lesson detour from a supported check question (research R10):
   - **`src/web/src/pages/LessonPage.tsx`**: read `from=check` like `from=question`. With it, take the detour question from the run the check view last presented, and pass its delivery to `lessonShown`.
   - **`src/web/src/state/store.tsx`**: `lessonShown` and `updateDelivery` find a delivery in `checkRuns` as well as in `deliveries`.
   - **`src/web/src/components/ReturnBanner.tsx`**: "Back to your question" returns to the run's address.
@@ -233,6 +243,16 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   T031–T033 pass.
 
 **Checkpoint (first visible merge)**: quickstart scenarios 1 and 2 pass, and the spec 002 to 005 end-to-end checks still pass. Phases 3–4 merge together.
+
+**Done (Phase 4)**. Deviations from the task text:
+- **T034**: `summarizeRun` already had the `supported` part (Phase 3, T020); T030's matrix and review cases now cover it. `checks.ts` gains `supportedQuestionOf` and `checkDetourOf` for the lesson detour.
+- **T035**: the check controller is a set of store calls (`switchToSupported`, `submitCheckAnswer`, `toggleCheckPanel`, `nextCheckStep`, `nextCheckQuestion`, `showCheckHelpInstead`) with reducer cases `checkSwitch`, `checkPanels`, `checkResult`, and `checkStep`; `checkStep` uses `presentStep`. `checkEvent` takes `event: null` to move on without recording. A reload restores a supported question's steps without recording them, and steps that cannot be fetched again start over, as in practice. A failed "Check answer" shows `practice.unreachable` in the result region, as in practice.
+- **T036**: the switch's confirmation lives in `IndependentQuestion`, which owns "I need help" and returns focus to it; "I need help" is now always shown. The supported question is a new `SupportedQuestion` component around `QuestionWorkspace`, which gains an optional `takeFocus`, so the prompt takes focus after the switch and after "Next question" on a page loaded directly too.
+- **T037**: a supported question's answers are all its submissions in order ("Your answer: 12, 13"). With a switch and no answered supported question, the part shows `check.groupNone`.
+- **T038**: the lesson link names its question (`?from=check&checkQuestion={deliveryId}`), so the visit is about exactly that delivery while it is on screen in its run, in a new tab too. The page drops `from` and keeps `checkQuestion`, so a reload or a history visit keeps the gate (PR 53 review). The lesson page resolves that question's identity once for the notice, and keeps the gate shut when it fails or resolves to other operands. "Show visual help instead" opens the check question's help when the run page shows it again. `ReturnBanner` takes the address to return to. A visit `?from=check` with no supported question on screen is spec 003's visit.
+- **PR 53 review**: a reached question whose identity now resolves to other operands is not shown (`check.unreachedUnavailable` with "Try again"); the run, its `resume`, and the draft stay, and no step is fetched again.
+- **PR 53 review, second round**: a check start still under way when the start screen is left or the record is cleared creates no run and navigates nowhere (the page aborts its start; clearing invalidates it). A save, a supported answer, or a step that comes back after its screen is gone (the page left, the record cleared, another question loaded) is dropped instead of recording or loading the next question, so the question on screen now always finishes loading.
+- **T031–T033**: `npm test`: 499 passed, the PR 53 review tests included. `npm run e2e`: 60 passed, 6 skipped (the project-specific skips), scenario 2 on both projects included.
 
 ---
 
