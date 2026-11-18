@@ -264,7 +264,7 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 3
 
-- [ ] T039 [P] [US3] Extend `tools/validate-content.test.mjs` with one temp-copy case per row of `contracts/check-content.md` "The content check". Each asserts the exact diagnostic line, field included:
+- [X] T039 [P] [US3] Extend `tools/validate-content.test.mjs` with one temp-copy case per row of `contracts/check-content.md` "The content check". Each asserts the exact diagnostic line, field included:
   - a duplicate identity;
   - an unknown skill;
   - an unknown definition, and an unknown version;
@@ -272,18 +272,25 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - a generated question without a seed, and a fixed one with a seed;
   - a seed of 2^64;
   - the same question listed twice (generated, and fixed).
-- [ ] T040 [P] [US3] Add `src/backend/MathKX.Domain.Tests/Content/CheckQuestionsTests.cs` and `src/backend/MathKX.Domain.Tests/Fixtures/checks.pilot.json` for `contracts/check-content.md` "The domain tests" 1–3. Every check in `content/` resolves and is distinct as questions; the pilot resolves to the fixture's operands. Add a temp-copy case where two seeds give the same question, to show the test catches it.
-- [ ] T041 [P] [US3] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`: a check naming an unknown skill, an unknown definition, a generated definition without a seed, or a fixed one with a seed fails the load with `ContentLoadException` naming the check's file.
+- [X] T040 [P] [US3] Add `src/backend/MathKX.Domain.Tests/Content/CheckQuestionsTests.cs` and `src/backend/MathKX.Domain.Tests/Fixtures/checks.pilot.json` for `contracts/check-content.md` "The domain tests" 1–3. Every check in `content/` resolves and is distinct as questions; the pilot resolves to the fixture's operands. Add a temp-copy case where two seeds give the same question, to show the test catches it.
+- [X] T041 [P] [US3] Extend `src/backend/MathKX.Domain.Tests/Content/ContentCatalogTests.cs`: a check naming an unknown skill, an unknown definition, a generated definition without a seed, or a fixed one with a seed fails the load with `ContentLoadException` naming the check's file.
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Create `tools/lib/checks.mjs` with `checkChecks(entries, { skills, definitions, diagnostics })` per `contracts/check-content.md`, with seeds compared as `BigInt`. Call it from `tools/validate-content.mjs` after `checkLadders`. T039 passes.
-- [ ] T043 [US3] In `src/backend/MathKX.Content/ContentLoader.cs`, check each check's references after the definitions load: the skill exists, each definition exists, and a seed is present exactly when the definition is generated. Fail with `ContentLoadException(<file>, …)`. T040 and T041 pass.
-- [ ] T044 [P] [US3] Document checks:
+- [X] T042 [US3] Create `tools/lib/checks.mjs` with `checkChecks(entries, { skills, definitions, diagnostics })` per `contracts/check-content.md`, with seeds compared as `BigInt`. Call it from `tools/validate-content.mjs` after `checkLadders`. T039 passes.
+- [X] T043 [US3] In `src/backend/MathKX.Content/ContentLoader.cs`, check each check's references after the definitions load: the skill exists, each definition exists, and a seed is present exactly when the definition is generated. Fail with `ContentLoadException(<file>, …)`. T040 and T041 pass.
+- [X] T044 [P] [US3] Document checks:
   - **`content/AUTHORING.md`**: complete section 10, "Add a self-check" (its fields, the schema rules, and the pool lookup landed with Phase 2, alongside the schema), with every rule of T042 and T043, finding a seed through `GET /api/definitions/{id}/{version}/pool`, and the pilot as the example.
   - **`content/README.md`**: list `checks/` in the layout and describe it in one paragraph.
 
 **Checkpoint**: quickstart "Automated checks" rows 1 and 2 pass; this phase may merge on its own after Phase 2.
+
+**Done (Phase 5)**. Deviations from the task text:
+- **T039**: the cases also cover a retired `arithmetic.*` skill (with the registry hint), a 0.1 exploratory exercise (not a pilot definition), the largest 64-bit seed (accepted), and two versions of one check (accepted). An unknown definition stops that question's other checks; the duplicate rule compares every question, known or not.
+- **T040**: the temp-copy case finds another seed of `numbers.addition.within-10@1` that gives 7 + 3 by running the generator, so it does not depend on a hard-coded seed.
+- **T043**: the loader's messages name the question (`questions[i]: …`) and match the content check's wording. It does not repeat the content check's same-skill, 64-bit, or listed-twice rules: an out-of-range seed already fails at resolution, and the domain tests cover distinct questions.
+- **T044**: `content/README.md` already listed `checks/` with its paragraph (Phase 2); it now names the cross-file rules and the domain tests, and the validation list gains a rule 8.
+- **Results**: `npm test` (root): 101 passed. `dotnet test`: 157 + 81 passed. `npm run validate`: passed, 1 check.
 
 ---
 

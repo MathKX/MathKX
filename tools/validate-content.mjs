@@ -7,7 +7,8 @@
 // 4. Definitions: unique (id, version), skill resolves, registered generator/validator/representations,
 //    parameter domains, feasibility, representation coverage, fixed-task artifacts, misconception codes.
 // 5. Lessons: folder and metadata, references, both translations, structure, directives, notation, pairing.
-// 6. Self-checks (specs/006): counted; their schema is checked in step 2.
+// 6. Self-checks (specs/006): unique identities; each question a pilot definition of the check's skill, with a seed
+//    exactly when it is generated, within 64 bits, and listed once.
 //
 // Exit code 0 when everything passes (warnings allowed), 1 on content errors, 2 on tooling errors.
 // Usage: node tools/validate-content.mjs [--root <repo root>]
@@ -20,6 +21,7 @@ import { indexRegistries } from "./lib/registry.mjs";
 import { checkLadders, checkNames, indexSkills } from "./lib/skills.mjs";
 import { indexDefinitions } from "./lib/definitions.mjs";
 import { checkLessons } from "./lib/lessons.mjs";
+import { checkChecks } from "./lib/checks.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const rootArg = process.argv.indexOf("--root");
@@ -39,6 +41,7 @@ async function main() {
   const definitions = indexDefinitions([...ofKind("exercise"), ...ofKind("definition")], { skills, registries, diagnostics });
   checkNames(skills, diagnostics);
   checkLadders(skills, definitions, diagnostics);
+  checkChecks(ofKind("check"), { skills, definitions, diagnostics });
   const lessonCount = await checkLessons(ofKind("lesson"), { skills, definitions, registries, diagnostics });
 
   const counts = { files: fileCount, skills: skills.size, lessons: lessonCount, definitions: definitions.size, checks: ofKind("check").length, registries: registries.count };

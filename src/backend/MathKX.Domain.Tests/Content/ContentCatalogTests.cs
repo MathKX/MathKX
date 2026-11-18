@@ -91,6 +91,28 @@ public sealed class ContentCatalogTests
         Assert.Contains("numbers.addition.check-within-20@1", error.Message, StringComparison.Ordinal);
     }
 
+    // specs/006 tasks T041: a check's broken reference fails the load with the check's file, as a lesson's does.
+    [Theory]
+    [InlineData("\"skill\": \"numbers.addition-within-20\"", "\"skill\": \"numbers.nope\"", "skill numbers.nope is not a defined skill")]
+    [InlineData("\"definition\": \"numbers.addition.crossing-ten\", \"version\": 1, \"seed\": \"62\"", "\"definition\": \"numbers.addition.nope\", \"version\": 1, \"seed\": \"62\"", "questions[3]: numbers.addition.nope@1 is not a pilot exercise definition")]
+    [InlineData("\"definition\": \"numbers.addition.crossing-ten\", \"version\": 1, \"seed\": \"62\"", "\"definition\": \"numbers.addition.crossing-ten\", \"version\": 1", "questions[3]: numbers.addition.crossing-ten@1 is generated; give the seed of the question")]
+    [InlineData("\"definition\": \"numbers.addition.crossing-ten\", \"version\": 1, \"seed\": \"62\"", "\"definition\": \"numbers.addition.four-plus-four\", \"version\": 1, \"seed\": \"62\"", "questions[3]: numbers.addition.four-plus-four@1 is a fixed task; remove the seed")]
+    public void A_check_with_a_broken_reference_fails_the_load_naming_its_file(string original, string broken, string message)
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        temp.Rewrite("checks/numbers/addition-within-20.json", text =>
+        {
+            Assert.Contains(original, text, StringComparison.Ordinal); // the rewrite must change the file
+            return text.Replace(original, broken, StringComparison.Ordinal);
+        });
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Equal("checks/numbers/addition-within-20.json", error.Path);
+        Assert.Equal($"checks/numbers/addition-within-20.json: {message}", error.Message);
+    }
+
     [Fact]
     public void Definition_bounds_and_registry_entries_are_typed()
     {

@@ -793,7 +793,7 @@ test("accepts a directive inside a list item and a longer closing fence", async 
 });
 
 // ---------------------------------------------------------------------------------------------
-// specs/006: self-checks (contracts/check-content.md). The file kind and its schema; the cross-file rules come with US3.
+// specs/006: self-checks (contracts/check-content.md). The file kind, its schema, and the cross-file rules (US3).
 
 test("passes the repository's own content and counts its check", () => {
   const result = spawnSync(process.execPath, [validator], { encoding: "utf8", timeout: 30000 });
@@ -823,6 +823,63 @@ test("accepts a valid check file and counts it", async (t) => {
   await f.pilot();
   await f.write("content/checks/numbers/addition-within-20.json", baseCheck);
   expectPass(f.run(), /3 skill\(s\), 0 lesson\(s\), 4 definition\(s\), 1 check\(s\), 5 registries/);
+});
+
+// specs/006 tasks T039: the cross-file rules of contracts/check-content.md "The content check", one exact line each.
+const CHECK_FILE = "content/checks/numbers/addition-within-20.json";
+const question = (definition, seed) => (seed === undefined ? { definition, version: 1 } : { definition, version: 1, seed });
+
+function expectLine(result, line) {
+  assert.equal(result.status, 1, result.output);
+  assert.ok(result.output.split(/\r?\n/).includes(line), `expected the line\n  ${line}\nin\n${result.output}`);
+  assert.doesNotMatch(result.output, /Validation tooling error/);
+}
+
+test("reports each malformed check with its file, field, and problem", async (t) => {
+  const cases = [
+    ["an unknown skill", (c) => ({ ...c, skill: "numbers.nope" }), `${CHECK_FILE} skill: skill numbers.nope is not a defined skill`],
+    ["a retired skill ID, with the hint", (c) => ({ ...c, skill: "arithmetic.addition" }), `${CHECK_FILE} skill: skill arithmetic.addition is not a defined skill (the registry uses numbers.*)`],
+    ["an unknown definition", (c) => ({ ...c, questions: [question("numbers.addition.nope", "1")] }), `${CHECK_FILE} questions[0].definition: numbers.addition.nope@1 is not a pilot exercise definition`],
+    ["an unknown version", (c) => ({ ...c, questions: [c.questions[0], { ...c.questions[1], version: 2 }] }), `${CHECK_FILE} questions[1].definition: numbers.addition.within-10@2 is not a pilot exercise definition`],
+    ["a 0.1 exploratory exercise", (c) => ({ ...c, questions: [question("algebra.linear-equations.basic")] }), `${CHECK_FILE} questions[0].definition: algebra.linear-equations.basic@1 is not a pilot exercise definition`],
+    ["another skill's definition", (c) => ({ ...c, skill: "numbers.number-bonds-to-ten" }), `${CHECK_FILE} questions[0].definition: numbers.addition.within-10@1 serves numbers.addition-within-20, not numbers.number-bonds-to-ten; a check covers one skill`],
+    ["a generated question without a seed", (c) => ({ ...c, questions: [c.questions[0], question("numbers.addition.crossing-ten")] }), `${CHECK_FILE} questions[1]: numbers.addition.crossing-ten@1 is generated; give the seed of the question`],
+    ["a fixed question with a seed", (c) => ({ ...c, questions: [question("numbers.addition.four-plus-four", "3")] }), `${CHECK_FILE} questions[0].seed: numbers.addition.four-plus-four@1 is a fixed task; remove the seed`],
+    ["a seed of 2^64", (c) => ({ ...c, questions: [question("numbers.addition.within-10", "18446744073709551616")] }), `${CHECK_FILE} questions[0].seed: seed is outside the unsigned 64-bit range`],
+    ["the same generated question twice", (c) => ({ ...c, questions: [...c.questions, question("numbers.addition.within-10", "24")] }), `${CHECK_FILE} questions[4]: the same question as questions[1]`],
+    ["the same fixed question twice", (c) => ({ ...c, questions: [question("numbers.addition.four-plus-four"), c.questions[0], question("numbers.addition.four-plus-four")] }), `${CHECK_FILE} questions[2]: the same question as questions[0]`],
+  ];
+  for (const [name, mutate, line] of cases) {
+    await t.test(name, async (tt) => {
+      const f = await fixture(tt);
+      await f.pilot();
+      await f.write(CHECK_FILE, mutate(baseCheck));
+      expectLine(f.run(), line);
+    });
+  }
+});
+
+test("accepts the largest unsigned 64-bit seed", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.write(CHECK_FILE, { ...baseCheck, questions: [question("numbers.addition.within-10", "18446744073709551615")] });
+  expectPass(f.run(), /1 check\(s\)/);
+});
+
+test("rejects a duplicate check identity, naming the other file", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.write(CHECK_FILE, baseCheck);
+  await f.write("content/checks/numbers/copy.json", baseCheck);
+  expectLine(f.run(), `content/checks/numbers/copy.json duplicate check identity numbers.addition.check-within-20 version 1; also defined in ${CHECK_FILE}`);
+});
+
+test("allows two versions of the same check", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  await f.write(CHECK_FILE, baseCheck);
+  await f.write("content/checks/numbers/addition-within-20-v2.json", { ...baseCheck, version: 2 });
+  expectPass(f.run(), /2 check\(s\)/);
 });
 
 test("lists the self-check schema among the known schemas", async (t) => {

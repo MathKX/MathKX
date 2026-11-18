@@ -1,0 +1,9 @@
+{
+  "$comment": "specs/006 contracts/check-content.md \"The domain tests\" 3: the operands the pilot check's questions resolve to, in order. Reviewed against the prototype's check-addition (iteration 2).",
+  "numbers.addition.check-within-20@1": [
+    { "a": 7, "b": 3 },
+    { "a": 5, "b": 4 },
+    { "a": 8, "b": 5 },
+    { "a": 9, "b": 4 }
+  ]
+}
