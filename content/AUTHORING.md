@@ -211,7 +211,28 @@ A self-check ("Check my understanding", [spec 006](../specs/006-self-checks/spec
 | `questions[].definition`, `.version` | A pilot exercise definition at that version |
 | `questions[].seed` | For a generated definition, the decimal seed of the question; omitted for a fixed task |
 
-A question is an identity, never operands or an answer. To find the seed of a question, read the definition's pool from the service, `GET /api/definitions/{id}/{version}/pool`: it lists every question the definition admits with the smallest seed that gives it. The content check validates the file against its schema. Rules across files (the skill and each definition exist, every question serves the check's skill, a seed is present exactly when the definition is generated, and no question is listed twice) are added with spec 006's content rules and will be documented here.
+A question is an identity, never operands or an answer.
+
+**Finding a seed.** Read the definition's pool from the service, `GET /api/definitions/{id}/{version}/pool`. It lists every question the definition admits, each with the smallest seed that gives it. Pick the questions you want and copy their seeds. In the pilot, seed `22` of `numbers.addition.within-10@1` is 7 + 3, and seed `105` of `numbers.addition.crossing-ten@1` is 8 + 5. A fixed task such as `numbers.addition.four-plus-four@1` is one question and takes no seed.
+
+**Rules across files.** The content check (`npm run validate`) reports each of these with the file and the field:
+
+| Rule | Diagnostic |
+| --- | --- |
+| `id` and `version` together are unique | `duplicate check identity <id> version <v>; also defined in <file>` |
+| `skill` is a defined skill | `skill: skill <id> is not a defined skill` |
+| Each question names a pilot definition at that version | `questions[i].definition: <id>@<v> is not a pilot exercise definition` |
+| Each definition serves the check's skill | `questions[i].definition: <id>@<v> serves <other>, not <skill>; a check covers one skill` |
+| A generated definition has a seed | `questions[i]: <id>@<v> is generated; give the seed of the question` |
+| A fixed task has no seed | `questions[i].seed: <id>@<v> is a fixed task; remove the seed` |
+| A seed fits in 64 bits (at most 18446744073709551615) | `questions[i].seed: seed is outside the unsigned 64-bit range` |
+| No question is listed twice (the same definition, version, and seed) | `questions[i]: the same question as questions[j]` |
+
+The service checks the skill, the definitions, and the seeds again when it loads content, and does not start if one is wrong.
+
+**Two seeds, one question.** The content check runs no generator, so it cannot tell that two different seeds give the same operands. The domain tests (`CheckQuestionsTests`, run by `dotnet test`) resolve every question of every check and fail when two give the same question. They also pin the pilot to 7 + 3, 5 + 4, 8 + 5, and 9 + 4. Seeds from the pool never collide, because the pool lists each question once.
+
+**A new version.** A changed question list is a new version of the check, as for a definition. Add a file with the next `version` instead of editing the released one. Runs already taken keep their own copy of the questions, and the service offers the newest version to new runs.
 
 ## 11. Reading a diagnostic
 
@@ -219,6 +240,7 @@ A question is an identity, never operands or an answer. To find the seed of a qu
 content/lessons/number-bonds-to-ten/en.md:24 anchor: {#pairs} is missing in nb.md (anchors must match across languages)
 content/exercises/numbers/addition-within-20.json representations.help[0]: make-ten supports sum 11–18 but the definition allows sum 11–20
 content/skills/numbers.addition-within-20.json ladder[1]: definition algebra.one-step@1 belongs to skill algebra.one-step-equations, not numbers.addition-within-20
+content/checks/numbers/addition-within-20.json questions[3]: numbers.addition.crossing-ten@1 is generated; give the seed of the question
 warning: content/lessons/x/lesson.json practice[0]: definition numbers.addition.within-10@1 serves skill numbers.addition-within-20, which is not among this lesson's skills
 ```
 

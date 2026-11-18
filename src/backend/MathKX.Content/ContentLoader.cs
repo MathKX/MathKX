@@ -34,6 +34,7 @@ public static class ContentLoader
         var translations = new Dictionary<(string, string), LessonTranslation>();
         var assets = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var checks = new Dictionary<string, SelfCheck>(StringComparer.Ordinal);
+        var checkFiles = new Dictionary<string, string>(StringComparer.Ordinal); // id@version -> the file it was read from
 
         foreach (var file in EnumerateJson(root))
         {
@@ -81,7 +82,9 @@ public static class ContentLoader
 
                     break;
                 case "self-check.pilot.schema.json":
-                    Add(checks, Deserialize<SelfCheck>(document, relative), c => c.Key, relative);
+                    var check = Deserialize<SelfCheck>(document, relative);
+                    Add(checks, check, c => c.Key, relative);
+                    checkFiles[check.Key] = relative;
                     break;
                 case "exercise.schema.json":
                     break; // the exploratory 0.1 example is not resolvable content
@@ -91,6 +94,7 @@ public static class ContentLoader
         }
 
         CheckReferences(definitions, definitionFiles, generators, validators, representations, codes);
+        CheckCheckReferences(checks, checkFiles, skills, definitions);
 
         return new ContentCatalog(generators, validators, representations, components, codes, skills, definitions, lessons, translations, assets, checks);
     }
@@ -261,6 +265,45 @@ public static class ContentLoader
         if (!map.TryAdd(k, item))
         {
             throw new ContentLoadException(relative, $"duplicate {k}");
+        }
+    }
+
+    /// <summary>
+    /// A self-check's references (specs/006 contracts/check-content.md "The loader"): its skill exists, each question's
+    /// definition exists, and a seed is given exactly when that definition is generated. The service does not start otherwise.
+    /// </summary>
+    private static void CheckCheckReferences(
+        Dictionary<string, SelfCheck> checks,
+        Dictionary<string, string> checkFiles,
+        Dictionary<string, Skill> skills,
+        Dictionary<string, ExerciseDefinition> definitions)
+    {
+        foreach (var check in checks.Values)
+        {
+            var path = checkFiles[check.Key];
+            if (!skills.ContainsKey(check.Skill))
+            {
+                throw new ContentLoadException(path, $"skill {check.Skill} is not a defined skill");
+            }
+
+            for (var i = 0; i < check.Questions.Count; i++)
+            {
+                var question = check.Questions[i];
+                if (!definitions.TryGetValue(question.Key, out var definition))
+                {
+                    throw new ContentLoadException(path, $"questions[{i}]: {question.Key} is not a pilot exercise definition");
+                }
+
+                if (definition.IsFixed && question.Seed is not null)
+                {
+                    throw new ContentLoadException(path, $"questions[{i}]: {question.Key} is a fixed task; remove the seed");
+                }
+
+                if (!definition.IsFixed && question.Seed is null)
+                {
+                    throw new ContentLoadException(path, $"questions[{i}]: {question.Key} is generated; give the seed of the question");
+                }
+            }
         }
     }
 

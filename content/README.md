@@ -35,7 +35,7 @@ The first learner release requires Norwegian and English for all released lesson
 
 ### Self-checks
 
-`checks/` holds self-checks ("Check my understanding", [spec 006](../specs/006-self-checks/spec.md)): one file per check version, naming its skill, its title and scope in both languages, and its questions as exercise identities (definition, version, and the seed of a generated question), never operands or answers. The pilot is `checks/numbers/addition-within-20.json`. The schema is [`schemas/self-check.pilot.schema.json`](../schemas/self-check.pilot.schema.json); the [authoring guide](AUTHORING.md) explains each field.
+`checks/` holds self-checks ("Check my understanding", [spec 006](../specs/006-self-checks/spec.md)): one file per check version, naming its skill, its title and scope in both languages, and its questions as exercise identities (definition, version, and the seed of a generated question), never operands or answers. The pilot is `checks/numbers/addition-within-20.json`. The schema is [`schemas/self-check.pilot.schema.json`](../schemas/self-check.pilot.schema.json). The content check confirms that each question is a definition of the check's skill, with a seed exactly when it is generated, and listed once. The domain tests confirm that the questions resolve to distinct operands. The [authoring guide](AUTHORING.md) explains each field and rule, and how to find a question's seed.
 
 ### Registries
 
@@ -47,13 +47,14 @@ Every JSON file under `content/` (except `_templates/`) must name its schema in 
 
 1. each file against the schema it declares, and that the schema is one it knows;
 2. that the registries are internally consistent;
-3. that skill IDs, lesson IDs, and exercise `(id, version)` pairs are unique;
-4. that every reference resolves: skills, prerequisites, related skills and lessons, practice definitions, ladder definitions, generators, validators, representations, visual components, misconception codes, assets, and anchors;
+3. that skill IDs, lesson IDs, and exercise and check `(id, version)` pairs are unique;
+4. that every reference resolves: skills, prerequisites, related skills and lessons, practice definitions, ladder definitions, check questions, generators, validators, representations, visual components, misconception codes, assets, and anchors;
 5. that the prerequisite graph has no cycles and ladders refer to the skill's own definitions;
 6. that generated families stay within their generator's domain, admit at least one task, and are covered by every representation they list; that fixed tasks fit their validator's artifact;
-7. that each lesson's two languages share anchors, directives, and mathematics, with tables, images, directives, and notation well formed.
+7. that each lesson's two languages share anchors, directives, and mathematics, with tables, images, directives, and notation well formed;
+8. that each check's questions serve its skill, carry a seed exactly when the definition is generated, fit in 64 bits, and are listed once.
 
-Run it locally with `npm ci` followed by `npm run validate`. Run `npm test` for the validator regression suite. Both checks run in CI on every pull request. Validation does not run generators or validators; whether generated values are safe and answers validate correctly is checked by the domain tests that arrive with the application.
+Run it locally with `npm ci` followed by `npm run validate`. Run `npm test` for the validator regression suite. Both checks run in CI on every pull request. Validation does not run generators or validators. The domain tests under `src/backend/` (`dotnet test`) check that generated values are safe, that answers validate correctly, and that each check's questions resolve to distinct operands.
 
 Content under this directory is licensed under Creative Commons Attribution-ShareAlike 4.0 International; see [LICENSE](LICENSE) and [ADR 0010](../docs/architecture/decisions/0010-license-code-and-content.md).
 
