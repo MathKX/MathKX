@@ -34,7 +34,7 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 | Snapshot | `check.policySnapshot` |
 | Independent result, under `check.independentTitle` | three groups in this order: `check.groupCorrect`, `check.groupRevisit`, `check.groupSkipped`. Each has a count (`check.groupCount`) and its questions. An empty group shows `check.groupNone`. With a switch at question 1, the three groups are replaced by `check.noIndependent`. |
 | Supported part | only with a switch: heading `check.supportedTitle` naming `switchAt`, then `check.supportedNote`, then each question with its outcome label (spec 002's `outcome` texts) |
-| Not answered | only for an ended run: heading `check.notAnsweredTitle`, then `check.notAnsweredNote`, then each question |
+| Not answered | only for an ended run with a question not answered: heading `check.notAnsweredTitle`, then `check.notAnsweredNote`, then each question |
 | Each question | the expression (`record.question`; for an unreached question, from its answer response, below), `check.yourAnswer`, `check.skippedAnswer`, or `check.noAnswer`; `check.correctAnswer`; a disclosure "Show the explanation" (`practice.showExplanation`) with a `StepPanel` |
 | The tag "Worth revisiting" | `check.groupRevisit` as a tag, on questions in that group only |
 | Note | `check.summaryNote` |
@@ -60,9 +60,9 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 
 In each skill group, after the practice lines and before the question list:
 - **The part**: a sub-heading `check.recordTitle`, then the skill's runs, newest first (`data-testid="check-run"`). Any check entry for the skill follows ([check-run.md](check-run.md)).
-- **A finished or ended run**: the date, then `check.recordCounts` ("{correct} correct on your own, {revisit} worth revisiting, {skipped} skipped"). It adds `check.recordSupported` ("{n} as supported practice from question {i}") when there was a switch, and `check.recordNotAnswered` when the run was ended. The run links to its summary at `/checks/{checkId}/{runId}`.
+- **A finished or ended run**: the date, then `check.recordCounts` ("{correct} correct on your own, {revisit} worth revisiting, {skipped} skipped"). It adds `check.recordSupported` ("{n} as supported practice from question {i}") when there was a switch, and `check.recordNotAnswered` when the run was ended with a question not answered. The date links to the run's summary at `/checks/{checkId}/{runId}`, with the accessible name `check.recordRunLink`.
 - **An unfinished run**: the date and `check.recordUnfinished` ("Unfinished, at question {n} of {total}"), with "Continue the check" to its run. It never shows counts, which would state correctness before the summary.
-- **Skills with only checks**: a skill whose only activity is check runs is listed, like a skill with only lesson views (spec 004). Its practice sentence is `progress.noPractice`.
+- **Skills with only checks**: a skill whose only activity is check runs is listed, like a skill with only lesson views (spec 004). Its practice sentence is `progress.noPractice`. As with lesson views, runs are listed only under a skill the content names, never under "Other practice".
 - **Separation**: practice's summary sentence, repeat sentences, lesson lines, and question list are computed from `deliveries` and `lessonViews` exactly as before, so check questions never appear in them (FR-014). Tests compare "My work" before and after a check.
 
 ## Texts (`check` section, continued)
@@ -97,5 +97,6 @@ In each skill group, after the practice lines and before the question list:
 | `recordSupported` | {n} as supported practice from question {i} | {n} som øving med hjelp fra oppgave {i} |
 | `recordNotAnswered` | {n} not answered | {n} ikke besvart |
 | `recordUnfinished` | Unfinished, at question {n} of {total} | Ikke ferdig, på oppgave {n} av {total} |
+| `recordRunLink` | Your check from {date} | Sjekken din fra {date} |
 
 `groupCount`, `recordCounts`, and `recordSupported` need the singular for 1 ("1 question" / "1 oppgave"). As with spec 002's `record.summaryOne`, each gets a `…One` key or the sentence is built from per-count parts. The tasks choose which; the parity and wording tests cover both.

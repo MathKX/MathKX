@@ -90,6 +90,19 @@ export function summarizeRun(run: CheckRun): RunSummary {
   return summary;
 }
 
+/**
+ * Each skill's runs, newest first (specs/006 contracts/summary.md "Checks in 'My work'"): by `startedAt`, and for runs
+ * started at the same moment, the later one in the record first.
+ */
+export function runsBySkill(runs: readonly CheckRun[]): Map<string, CheckRun[]> {
+  const bySkill = new Map<string, CheckRun[]>();
+  runs
+    .map((run, index) => ({ run, index }))
+    .sort((x, y) => (x.run.startedAt < y.run.startedAt ? 1 : x.run.startedAt > y.run.startedAt ? -1 : y.index - x.index))
+    .forEach(({ run }) => bySkill.set(run.skillId, [...(bySkill.get(run.skillId) ?? []), run]));
+  return bySkill;
+}
+
 /** The question on screen in a run's supported part, while the run is unfinished; null otherwise. */
 export function supportedQuestionOf(run: CheckRun): Delivery | null {
   if (!isUnfinished(run) || partOf(run, run.position) !== "supported") return null;

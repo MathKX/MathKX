@@ -173,6 +173,7 @@ export const en = {
     recordSupported: "{n} as supported practice from question {i}",
     recordNotAnswered: "{n} not answered",
     recordUnfinished: "Unfinished, at question {n} of {total}",
+    recordRunLink: "Your check from {date}",
   },
   ladder: {
     current: "Now: {description}",

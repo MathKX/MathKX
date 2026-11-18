@@ -3,7 +3,7 @@
 // revisiting" holds only independent wrong answers (DL-036), and from `switchAt` on, answered questions are only in
 // `supported`, each with spec 002's outcome.
 import { describe, expect, it } from "vitest";
-import { checkDetourOf, isAnswered, isUnfinished, partOf, summarizeRun, supportedQuestionOf, type CheckRun, type RunSummary } from "../src/state/checks";
+import { checkDetourOf, isAnswered, isUnfinished, partOf, runsBySkill, summarizeRun, supportedQuestionOf, type CheckRun, type RunSummary } from "../src/state/checks";
 import { derive, type Outcome } from "../src/state/outcomes";
 import type { Event } from "../src/state/observations";
 import { at, checkRun, correct, delivery, guidance, incorrect, skipped, support, type PositionScript } from "./records";
@@ -82,6 +82,56 @@ describe("the matrix (SC-002, no switch)", () => {
       expect(summary[group], `position ${i + 1}`).toContain(i + 1);
     });
     expect(summary.revisit).toEqual(answers.flatMap((a, i) => (a === "wrong" ? [i + 1] : [])));
+  });
+});
+
+// specs/006 tasks T048: a run ended by a new check, stopped at each position before and after the question there was
+// answered, with no switch and with a switch at each position up to it. Unanswered positions, reached or not, are
+// "not answered"; answered ones keep their group or their supported outcome.
+describe("the matrix of ended runs (SC-002)", () => {
+  const cases = combinations(4).flatMap((answers) =>
+    [1, 2, 3, 4].flatMap((stop) =>
+      [false, true].flatMap((answered) => [null, 1, 2, 3, 4].filter((s) => s === null || s <= stop).map((switchAt) => ({ answers, stop, answered, switchAt }))),
+    ),
+  );
+
+  it("covers every combination, stop, and switch", () => {
+    expect(cases).toHaveLength(81 * 2 * (2 + 3 + 4 + 5));
+  });
+
+  it("puts each position in exactly one part, and only unanswered ones under 'Not answered'", () => {
+    for (const { answers, stop, answered, switchAt } of cases) {
+      const positions: PositionScript[] = [...answers.slice(0, stop - 1), answered ? answers[stop - 1]! : "reached", ...Array<null>(4 - stop).fill(null)];
+      const summary = summarizeRun(checkRun({ positions, position: stop, switchAt, endedAt: at(9) }));
+      const label = `${answers.join(", ")}; stopped at ${stop}${answered ? " after answering" : ""}; switch ${switchAt ?? "none"}`;
+      expect([...PARTS.flatMap((part) => summary[part])].sort(), label).toEqual([1, 2, 3, 4]);
+      const reachedAnswered = answered ? stop : stop - 1;
+      expect(summary.notAnswered, label).toEqual([1, 2, 3, 4].filter((p) => p > reachedAnswered));
+      expect(summary.supported, label).toEqual(switchAt === null ? [] : [1, 2, 3, 4].filter((p) => p >= switchAt && p <= reachedAnswered));
+      const independent = (answer: Answer) => [1, 2, 3, 4].filter((p) => p <= reachedAnswered && (switchAt === null || p < switchAt) && answers[p - 1] === answer);
+      expect(summary.correct, label).toEqual(independent("correct"));
+      expect(summary.revisit, label).toEqual(independent("wrong"));
+      expect(summary.skipped, label).toEqual(independent("skipped"));
+    }
+  });
+});
+
+describe("runsBySkill", () => {
+  const run = (id: string, startedAt: string, skillId = "numbers.addition-within-20"): CheckRun => ({ ...checkRun({ id, positions: ["correct"], startedAt, finishedAt: startedAt }), skillId });
+
+  it("lists each skill's runs, newest first", () => {
+    const bySkill = runsBySkill([run("a", at(1)), run("b", at(5)), run("c", at(3), "numbers.number-bonds-to-ten"), run("d", at(2))]);
+    expect([...bySkill.keys()].sort()).toEqual(["numbers.addition-within-20", "numbers.number-bonds-to-ten"]);
+    expect(bySkill.get("numbers.addition-within-20")!.map((r) => r.id)).toEqual(["b", "d", "a"]);
+    expect(bySkill.get("numbers.number-bonds-to-ten")!.map((r) => r.id)).toEqual(["c"]);
+  });
+
+  it("puts the later of two runs started at the same moment first", () => {
+    expect(runsBySkill([run("first", at(1)), run("second", at(1))]).get("numbers.addition-within-20")!.map((r) => r.id)).toEqual(["second", "first"]);
+  });
+
+  it("is empty for no runs", () => {
+    expect(runsBySkill([]).size).toBe(0);
   });
 });
 

@@ -174,6 +174,7 @@ export const nb = {
     recordSupported: "{n} som øving med hjelp fra oppgave {i}",
     recordNotAnswered: "{n} ikke besvart",
     recordUnfinished: "Ikke ferdig, på oppgave {n} av {total}",
+    recordRunLink: "Sjekken din fra {date}",
   },
   ladder: {
     current: "Nå: {description}",
