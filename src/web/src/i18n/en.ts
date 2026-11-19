@@ -155,7 +155,7 @@ export const en = {
     supportedTitle: "Supported practice (from question {i})",
     supportedNote: "These questions were done after you switched to supported practice. They are not part of the result on your own.",
     notAnsweredTitle: "Not answered",
-    notAnsweredNote: "You started a new check before reaching these questions.",
+    notAnsweredNote: "You started a new check before answering these questions.",
     yourAnswer: "Your answer: {a}",
     skippedAnswer: "You skipped this question.",
     noAnswer: "Not answered",

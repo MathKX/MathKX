@@ -205,7 +205,7 @@ Every new screen, action, notice, policy sentence, group, and tag exists in Norw
 **The summary**
 
 - **FR-009**: At the end, the summary MUST place every independent question in exactly one group: "Correct on your own" (a correct saved answer), "Worth revisiting" (a saved answer that was not correct), or "Skipped". Each group MUST show its count and its questions. The tag "Worth revisiting" MUST appear only on questions in that group (DL-036).
-- **FR-010**: Supported questions MUST appear apart from the groups, under a heading naming the question the switch started from, with practice's outcome labels and the note that they are not part of the independent result. Questions not reached in an ended check MUST appear apart as not answered.
+- **FR-010**: Supported questions MUST appear apart from the groups, under a heading naming the question the switch started from, with practice's outcome labels and the note that they are not part of the independent result. Questions an ended check left without an answer, whether reached or not, MUST appear apart as not answered.
 - **FR-011**: Each question in the summary MUST show the learner's answer (or that it was skipped or not answered) and the correct answer, and MUST offer its step-by-step explanation. Opening an explanation MUST record nothing and MUST change no group.
 - **FR-012**: The summary MUST show no score, percentage, streak, time, or mastery word. It MUST say that a check is a snapshot, not a final judgement. It MUST offer "Practise more", stating that more practice does not change this check's result, and "Take a new check" (mastery; product principles; constitution VII).
 
@@ -263,7 +263,7 @@ Every new screen, action, notice, policy sentence, group, and tag exists in Norw
 - **Check run**: one attempt at a check by the learner, in the guest record. It holds the check's ID and version, its start and its end or finish, the position of the switch if any, and its questions as deliveries.
 - **Independent part / supported part**: the questions of a check run before the switch, and from the switch onward.
 - **Check question (delivery)**: a delivery belonging to a check run. It holds its position, its part, its identity, and practice's events. In the independent part, a saved answer is its only submission.
-- **Check summary**: three groups over the independent part, plus the supported part and any questions not reached. It is derived from the recorded run, never a score.
+- **Check summary**: three groups over the independent part, plus the supported part and any questions left without an answer. It is derived from the recorded run, never a score.
 
 ## Success Criteria *(mandatory)*
 
@@ -285,7 +285,7 @@ Every new screen, action, notice, policy sentence, group, and tag exists in Norw
 - **Order and saved answers**: a check goes forward one question at a time, and a saved answer is final. This keeps "answers saved before the switch" well defined (DL-028). Going back to change answers is a reversible assumption for a later feature.
 - **Question limit**: 1 to 10 questions per check keeps a check short and bounded (learning experience). The pilot check has four, as in the prototype's `check-addition`: two within ten (`7 + 3`, `5 + 4`) and two across ten (`8 + 5`, `9 + 4`), each written as definition, version, and the seed that produces it.
 - **Where a check is found**: a check names its skill, and the lesson page offers the checks of the skills it teaches. Lessons gain no check field, so spec 001's report of the prototype's `check` field stays. This is reversible if a lesson needs to choose among several checks.
-- **Questions not reached**: in a check that was ended by starting a new one, these are a fourth category, "not answered". They are not skipped, because the learner never chose to skip them.
+- **Questions not answered**: in a check that was ended by starting a new one, the questions left without an answer (the one the learner was on, and any not reached) are a fourth category, "not answered". They are not skipped, because the learner never chose to skip them.
 - **Separation from practice**: check questions do not count in practice's numbers, repeats, avoidance window, or sessions. A check observes independent work and must not change what practice reports. A replayed check question can still be repeated as practice ("Repeat this question", spec 005).
 - **When validation happens**: answers are validated by the service as in practice, and the results stay hidden until the summary. Whether each answer is validated on save or all at the end is a plan decision. The requirement is only that correctness is never shown or announced before the summary.
 - **Dependencies**: specs 001 to 005 merged and deployed; spec 002's explanation steps for both pilot definitions; spec 004's "My work" and replay.

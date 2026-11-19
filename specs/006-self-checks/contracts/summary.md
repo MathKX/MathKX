@@ -80,7 +80,7 @@ In each skill group, after the practice lines and before the question list:
 | `supportedTitle` | Supported practice (from question {i}) | Øving med hjelp (fra oppgave {i}) |
 | `supportedNote` | These questions were done after you switched to supported practice. They are not part of the result on your own. | Disse oppgavene ble gjort etter at du byttet til øving med hjelp. De er ikke en del av resultatet på egen hånd. |
 | `notAnsweredTitle` | Not answered | Ikke besvart |
-| `notAnsweredNote` | You started a new check before reaching these questions. | Du startet en ny sjekk før du kom til disse oppgavene. |
+| `notAnsweredNote` | You started a new check before answering these questions. | Du startet en ny sjekk før du svarte på disse oppgavene. |
 | `yourAnswer` | Your answer: {a} | Ditt svar: {a} |
 | `skippedAnswer` | You skipped this question. | Du hoppet over denne oppgaven. |
 | `noAnswer` | Not answered | Ikke besvart |

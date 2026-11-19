@@ -633,7 +633,7 @@ describe("resuming", () => {
     go(`${CHECK_PATH}/${oldId}`);
     const notAnswered = await screen.findByTestId("check-not-answered");
     expect(within(notAnswered).getByRole("heading", { level: 2 }).textContent).toBe("Not answered");
-    expect(within(notAnswered).getByTestId("check-not-answered-note").textContent).toBe("You started a new check before reaching these questions.");
+    expect(within(notAnswered).getByTestId("check-not-answered-note").textContent).toBe("You started a new check before answering these questions.");
     const questions = within(notAnswered).getAllByTestId("check-question");
     expect(questions.map((q) => q.getAttribute("data-position"))).toEqual(["3", "4"]);
     await waitFor(() => expect(within(notAnswered).getAllByTestId("check-expression").map((e) => e.textContent)).toEqual(["8 + 5", "9 + 4"]));

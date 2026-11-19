@@ -156,7 +156,7 @@ export const nb = {
     supportedTitle: "Øving med hjelp (fra oppgave {i})",
     supportedNote: "Disse oppgavene ble gjort etter at du byttet til øving med hjelp. De er ikke en del av resultatet på egen hånd.",
     notAnsweredTitle: "Ikke besvart",
-    notAnsweredNote: "Du startet en ny sjekk før du kom til disse oppgavene.",
+    notAnsweredNote: "Du startet en ny sjekk før du svarte på disse oppgavene.",
     yourAnswer: "Ditt svar: {a}",
     skippedAnswer: "Du hoppet over denne oppgaven.",
     noAnswer: "Ikke besvart",
