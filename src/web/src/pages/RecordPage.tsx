@@ -1,16 +1,55 @@
 // "My work" as the progress view (specs/004 contracts/progress-view.md): the guest record grouped by skill, with
-// spec 002's counts and wording, repeats marked, each skill's questions newest first, and the lessons viewed for
-// the skill; the storage notice and clearing stay as in spec 002.
+// spec 002's counts and wording, repeats marked, each skill's questions newest first, the lessons viewed for the
+// skill, and its self-checks apart from practice (specs/006 contracts/summary.md "Checks in 'My work'"); the storage
+// notice and clearing stay as in spec 002.
 import { useEffect, useState } from "react";
 import { Button, Details, Heading, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { LessonSummary, PracticeApi, SkillDto } from "../api/types";
+import { CheckEntry } from "../components/CheckEntry";
 import { PageHeading } from "../components/PageHeading";
-import { formatDate, translate, translateCode } from "../i18n";
+import { formatDate, translate, translateCode, type Lang } from "../i18n";
 import { Link } from "../router";
+import { isUnfinished, summarizeRun, type CheckRun } from "../state/checks";
 import { groupBySkill, inProgress, skillOrder } from "../state/progress";
 import { useStore } from "../state/store";
 import { summarySentence } from "./summarySentence";
+
+/** A run that is over: its groups' counts, then the supported part and the questions not answered, when it has them. */
+function runCounts(lang: Lang, run: CheckRun): string {
+  const summary = summarizeRun(run);
+  const parts = [translate(lang, "check.recordCounts", { correct: summary.correct.length, revisit: summary.revisit.length, skipped: summary.skipped.length })];
+  if (run.switchAt !== null) parts.push(translate(lang, "check.recordSupported", { n: summary.supported.length, i: run.switchAt }));
+  if (summary.notAnswered.length > 0) parts.push(translate(lang, "check.recordNotAnswered", { n: summary.notAnswered.length }));
+  return parts.join(", ");
+}
+
+/**
+ * One run in "My work". A run that is over links to its summary and states its counts. An unfinished one states only
+ * where it stands, with "Continue the check": counts would state correctness before the summary.
+ */
+function RunLine({ run, lang }: { run: CheckRun; lang: Lang }) {
+  const to = `/checks/${encodeURIComponent(run.checkId)}/${encodeURIComponent(run.id)}`;
+  const date = formatDate(lang, run.startedAt);
+  if (isUnfinished(run)) {
+    return (
+      <li data-testid="check-run" data-state="unfinished">
+        {date} · <span data-testid="check-run-text">{translate(lang, "check.recordUnfinished", { n: run.position, total: run.questions.length })}</span>{" "}
+        <Link to={to} className="mkx-inline-target" data-testid="check-run-continue">
+          {translate(lang, "check.continue")}
+        </Link>
+      </li>
+    );
+  }
+  return (
+    <li data-testid="check-run" data-state={run.endedAt === undefined ? "finished" : "ended"}>
+      <Link to={to} className="mkx-inline-target" data-testid="check-run-link" aria-label={translate(lang, "check.recordRunLink", { date })}>
+        {date}
+      </Link>{" "}
+      · <span data-testid="check-run-text">{runCounts(lang, run)}</span>
+    </li>
+  );
+}
 
 export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
   const store = useStore();
@@ -38,7 +77,7 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
   const resumableId = state.resumable?.deliveryId ?? state.currentDeliveryId;
   const known = Array.isArray(skills) ? skills : [];
   const knownLessons = Array.isArray(lessons) ? lessons : [];
-  const groups = skillOrder(groupBySkill(state.deliveries, known, resumableId, state.lessonViews, knownLessons));
+  const groups = skillOrder(groupBySkill(state.deliveries, known, resumableId, state.lessonViews, knownLessons, state.checkRuns));
   const noteAfter = groups.find((g) => g.lessons.length > 0)?.skillId; // the honest note, once, after the first lesson lines
   const titleOf = (lessonId: string) => knownLessons.find((l) => l.id === lessonId)?.titles[lang] ?? lessonId;
   const nameOf = (skillId: string | null) => {
@@ -53,7 +92,7 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
       <Paragraph data-size="sm" data-testid="storage-note">
         {translate(lang, state.kept ? "storage.kept" : "storage.notKept")}
       </Paragraph>
-      {groups.length === 0 && state.lessonViews.length === 0 ? (
+      {groups.length === 0 && state.lessonViews.length === 0 && state.checkRuns.length === 0 ? (
         <Paragraph data-testid="record-empty">
           {translate(lang, "record.empty")} <Link to="/lessons" className="mkx-inline-target">{translate(lang, "progress.toLessons")}</Link>
         </Paragraph>
@@ -87,6 +126,19 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                   {translate(lang, "progress.viewNote")}
                 </Paragraph>
               ) : null}
+              {group.checkRuns.length > 0 ? (
+                <section aria-labelledby={`checks-${group.skillId}`} data-testid="check-record">
+                  <Heading level={3} data-size="xs" id={`checks-${group.skillId}`}>
+                    {translate(lang, "check.recordTitle")}
+                  </Heading>
+                  <ul className="mkx-record">
+                    {group.checkRuns.map((run) => (
+                      <RunLine key={run.id} run={run} lang={lang} />
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              {group.skillId !== null ? <CheckEntry skills={[group.skillId]} lang={lang} api={api} /> : null}
               {group.questions.length > 0 ? (
                 <Details className="mkx-questions">
                   <Details.Summary className="mkx-target" data-testid="progress-questions">

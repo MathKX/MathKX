@@ -1,15 +1,16 @@
 // A check's summary (specs/006 contracts/summary.md "The summary"): the independent part in three groups, each
 // question with the learner's answer, the correct answer, and its explanation; then, after a switch, the supported
-// part, each question with its practice outcome and never the tag "Worth revisiting". It is derived from the recorded run,
-// so later content changes never change it, and it records nothing: explanations are fetched here, never through
-// the store. No score, fraction, percentage, streak, time, or mastery word.
+// part, each question with its practice outcome and never the tag "Worth revisiting"; then, for a run ended by a new
+// check, the questions not answered. It is derived from the recorded run, so later content changes never change it,
+// and it records nothing: answers and explanations are fetched here, never through the store. No score, fraction,
+// percentage, streak, time, or mastery word.
 import { useEffect, useRef, useState } from "react";
 import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
-import type { InstanceDto, PracticeApi, StepDto } from "../api/types";
+import type { Identity, InstanceDto, PracticeApi, StepDto } from "../api/types";
 import { StepPanel } from "../components/StepPanel";
 import { formatDate, translate, translateCode, type Lang } from "../i18n";
 import { Link, hasNavigatedInApp } from "../router";
-import { summarizeRun, type CheckRun } from "../state/checks";
+import { summarizeRun, type CheckQuestionRef, type CheckRun } from "../state/checks";
 import { identityOf, type Delivery } from "../state/observations";
 import { derive } from "../state/outcomes";
 
@@ -23,25 +24,27 @@ const GROUPS: { group: Group; key: string }[] = [
 /** A fetched value: still loading, the confirmed value, or unavailable (failed, or for other operands). */
 type Fetched<T> = { kind: "loading" } | { kind: "matched"; value: T } | { kind: "unavailable" };
 
-/** The explanation of one reached question: offered only when its identity still resolves to the recorded operands. */
-function Explanation({ delivery, lang, api }: { delivery: Delivery; lang: Lang; api: PracticeApi }) {
+/**
+ * The explanation of one question: offered only when its identity still resolves to the operands it is shown with,
+ * the recorded ones for a reached question, or its answer response's for an unreached one (research R11).
+ */
+function Explanation({ identity, a, b, lang, api }: { identity: Identity; a: number; b: number; lang: Lang; api: PracticeApi }) {
   const [instance, setInstance] = useState<Fetched<InstanceDto>>({ kind: "loading" });
   const [open, setOpen] = useState(false);
   const [steps, setSteps] = useState<StepDto[]>([]);
   const [failed, setFailed] = useState(false);
-  const { a, b } = delivery.instance;
+  const { definitionId, version, seed } = identity;
 
   useEffect(() => {
     let live = true;
-    const identity = identityOf(delivery);
-    api.getInstance(identity.definitionId, identity.version, identity.seed ?? null).then(
+    api.getInstance(definitionId, version, seed ?? null).then(
       (resolved) => live && setInstance(resolved.a === a && resolved.b === b ? { kind: "matched", value: resolved } : { kind: "unavailable" }),
       () => live && setInstance({ kind: "unavailable" }),
     );
     return () => {
       live = false;
     };
-  }, [api, delivery, a, b]);
+  }, [api, definitionId, version, seed, a, b]);
 
   const fetchStep = async (resolved: InstanceDto, index: number) => {
     try {
@@ -99,13 +102,14 @@ function CorrectAnswer({ delivery, lang, api }: { delivery: Delivery; lang: Lang
   return <Paragraph data-testid="check-correct-answer">{translate(lang, "check.correctAnswer", { a: answer.value })}</Paragraph>;
 }
 
-/** The learner's answers: every submission in order (a supported question can have several), or the skip. */
+/** The learner's answers: every submission in order (a supported question can have several), the skip, or none. */
 function yourAnswer(delivery: Delivery, lang: Lang): string {
   const answers = delivery.events.flatMap((e) => (e.type === "submission" ? [e.originalText.trim()] : []));
-  return answers.length > 0 ? translate(lang, "check.yourAnswer", { a: answers.join(", ") }) : translate(lang, "check.skippedAnswer");
+  if (answers.length > 0) return translate(lang, "check.yourAnswer", { a: answers.join(", ") });
+  return translate(lang, delivery.events.some((e) => e.type === "skipped") ? "check.skippedAnswer" : "check.noAnswer");
 }
 
-function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: Delivery; position: number; group: Group | "supported"; lang: Lang; api: PracticeApi }) {
+function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: Delivery; position: number; group: Group | "supported" | "notAnswered"; lang: Lang; api: PracticeApi }) {
   const { a, b } = delivery.instance;
   return (
     <li className="mkx-check-question" data-testid="check-question" data-position={position}>
@@ -124,7 +128,50 @@ function SummaryQuestion({ delivery, position, group, lang, api }: { delivery: D
       {group === "supported" ? <Paragraph data-testid="check-outcome">{translateCode(lang, "outcome", derive(delivery).outcome)}</Paragraph> : null}
       <Paragraph data-testid="check-your-answer">{yourAnswer(delivery, lang)}</Paragraph>
       <CorrectAnswer delivery={delivery} lang={lang} api={api} />
-      <Explanation delivery={delivery} lang={lang} api={api} />
+      <Explanation identity={identityOf(delivery)} a={a} b={b} lang={lang} api={api} />
+    </li>
+  );
+}
+
+/**
+ * A question the run never reached: it has an identity and no recorded operands, so its expression and answer both
+ * come from one answer response, which names the operands it answers. If that fails, the question is still listed,
+ * by its position only. While it loads nothing is shown.
+ */
+function UnreachedQuestion({ question, position, lang, api }: { question: CheckQuestionRef; position: number; lang: Lang; api: PracticeApi }) {
+  const [answer, setAnswer] = useState<Fetched<{ a: number; b: number; value: number }>>({ kind: "loading" });
+  const { definitionId, version, seed } = question;
+
+  useEffect(() => {
+    let live = true;
+    const identity: Identity = { definitionId, version };
+    if (seed !== undefined) identity.seed = seed;
+    api.getAnswer(identity).then(
+      (response) => live && setAnswer({ kind: "matched", value: { a: response.a, b: response.b, value: response.answer.value } }),
+      () => live && setAnswer({ kind: "unavailable" }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [api, definitionId, version, seed]);
+
+  if (answer.kind === "loading") return <li className="mkx-check-question" data-testid="check-question" data-position={position} />;
+  if (answer.kind === "unavailable") {
+    return (
+      <li className="mkx-check-question" data-testid="check-question" data-position={position}>
+        <Paragraph data-testid="check-unreached-unavailable">{translate(lang, "check.unreachedUnavailable", { n: position })}</Paragraph>
+      </li>
+    );
+  }
+  const { a, b, value } = answer.value;
+  return (
+    <li className="mkx-check-question" data-testid="check-question" data-position={position}>
+      <Paragraph>
+        <strong data-testid="check-expression">{translate(lang, "record.question", { a, b })}</strong>
+      </Paragraph>
+      <Paragraph data-testid="check-your-answer">{translate(lang, "check.noAnswer")}</Paragraph>
+      <Paragraph data-testid="check-correct-answer">{translate(lang, "check.correctAnswer", { a: value })}</Paragraph>
+      <Explanation identity={question} a={a} b={b} lang={lang} api={api} />
     </li>
   );
 }
@@ -213,6 +260,26 @@ export function CheckSummary({ run, lang, api, takeFocus }: CheckSummaryProps) {
           ) : (
             <Paragraph>{translate(lang, "check.groupNone")}</Paragraph>
           )}
+        </section>
+      ) : null}
+
+      {summary.notAnswered.length > 0 ? (
+        <section aria-labelledby={`${run.id}-not-answered`} data-testid="check-not-answered">
+          <Heading level={2} data-size="md" id={`${run.id}-not-answered`}>
+            {translate(lang, "check.notAnsweredTitle")}
+          </Heading>
+          <Paragraph data-testid="check-not-answered-note">{translate(lang, "check.notAnsweredNote")}</Paragraph>
+          <ol className="mkx-check-questions">
+            {summary.notAnswered.map((position) => {
+              const delivery = run.deliveries[position - 1];
+              const question = run.questions[position - 1]!;
+              return delivery ? (
+                <SummaryQuestion key={position} delivery={delivery} position={position} group="notAnswered" lang={lang} api={api} />
+              ) : (
+                <UnreachedQuestion key={position} question={question} position={position} lang={lang} api={api} />
+              );
+            })}
+          </ol>
         </section>
       ) : null}
 

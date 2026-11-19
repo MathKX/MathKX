@@ -1,10 +1,11 @@
 // specs/004 contracts/progress-view.md "Derivation": grouping by skill, repeats, reveals without a correct
 // answer, and order, checked against spec 002's derive and summarize applied to the same deliveries.
 import { describe, expect, it } from "vitest";
+import type { CheckRun } from "../src/state/checks";
 import { derive, summarize } from "../src/state/outcomes";
 import { groupBySkill, lessonHistory, repeatKind, repeats, revealsWithoutCorrect, skillOfDefinition, skillOrder } from "../src/state/progress";
 import {
-  BONDS_DEFINITION, CROSSING, SKILLS, WITHIN_TEN, at, correct, delivery, ended, everyOutcome, guidanceOnly, incorrect, support,
+  BONDS_DEFINITION, CROSSING, SKILLS, WITHIN_TEN, at, checkRun, correct, delivery, ended, everyOutcome, guidanceOnly, incorrect, support,
   twoSkills, unknownDefinition, withRepeats, withRequestedRepeats,
 } from "./records";
 
@@ -175,6 +176,43 @@ describe("lesson history (User Story 2)", () => {
     const groups = groupBySkill([], SKILLS, null, [view(1), view(7, "other-lesson")], LESSONS);
     const addition = groups.find((g) => g.skillId === "numbers.addition-within-20")!;
     expect(addition.lessons.map((l) => l.lessonId)).toEqual(["other-lesson", "number-bonds-to-ten"]);
+  });
+});
+
+// specs/006 tasks T049: check runs are listed per named skill beside practice, and never change practice's fields.
+describe("groupBySkill with check runs", () => {
+  const ADDITION = "numbers.addition-within-20";
+  const run = (id: string, startedAt: string, skillId = ADDITION): CheckRun => ({ ...checkRun({ id, positions: ["correct", "wrong", "skipped", "correct"], startedAt, finishedAt: startedAt }), skillId });
+  const practiceOf = ({ checkRuns: _runs, lastActivity: _last, ...rest }: ReturnType<typeof groupBySkill>[number]) => rest;
+
+  it("puts a skill's runs on its group, newest first, and computes practice's fields exactly as without them", () => {
+    const record = [...everyOutcome(), ...twoSkills(), ...withRepeats()];
+    const without = groupBySkill(record, SKILLS, null);
+    const withRuns = groupBySkill(record, SKILLS, null, [], [], [run("old", at(2)), run("new", at(40))]);
+    expect(withRuns.map(practiceOf)).toEqual(without.map(practiceOf));
+    const addition = withRuns.find((g) => g.skillId === ADDITION)!;
+    expect(addition.checkRuns.map((r) => r.id)).toEqual(["new", "old"]);
+    expect(addition.lastActivity).toBe(at(40));
+    for (const group of withRuns.filter((g) => g.skillId !== ADDITION)) expect(group.checkRuns).toEqual([]);
+  });
+
+  it("lists a skill whose only activity is check runs, with no questions and an empty summary", () => {
+    const groups = groupBySkill([], SKILLS, null, [], [], [run("only", at(3))]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toMatchObject({ skillId: ADDITION, questions: [], summary: { questions: 0, counts: {} }, repeatCount: 0, requestedCount: 0, lessons: [], lastActivity: at(3) });
+    expect(groups[0]!.checkRuns.map((r) => r.id)).toEqual(["only"]);
+  });
+
+  it("orders skills by their latest activity, a check run included", () => {
+    const record = [delivery({ startedAt: at(1), events: [correct(8)] }), delivery({ definitionId: BONDS_DEFINITION, startedAt: at(3), a: 3, b: 7, events: [correct(10)] })];
+    expect(skillOrder(groupBySkill(record, SKILLS, null)).map((g) => g.skillId)).toEqual(["numbers.number-bonds-to-ten", ADDITION]);
+    expect(skillOrder(groupBySkill(record, SKILLS, null, [], [], [run("r", at(5))])).map((g) => g.skillId)).toEqual([ADDITION, "numbers.number-bonds-to-ten"]);
+  });
+
+  it("leaves out runs of a skill the content does not name, and never puts a run under 'Other practice'", () => {
+    expect(groupBySkill([], SKILLS, null, [], [], [run("gone", at(1), "numbers.unknown")])).toEqual([]);
+    const groups = groupBySkill(unknownDefinition(), SKILLS, null, [], [], [run("gone", at(9), "numbers.unknown")]);
+    expect(groups.map((g) => [g.skillId, g.checkRuns.length])).toEqual(groupBySkill(unknownDefinition(), SKILLS, null).map((g) => [g.skillId, 0]));
   });
 });
 

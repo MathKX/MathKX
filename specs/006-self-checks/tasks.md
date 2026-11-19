@@ -302,28 +302,28 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 4
 
-- [ ] T045 [P] [US4] Add `src/web/tests/check-record.test.tsx` for `contracts/summary.md` "Checks in 'My work'":
+- [X] T045 [P] [US4] Add `src/web/tests/check-record.test.tsx` for `contracts/summary.md` "Checks in 'My work'":
   - **Order**: runs under their skill, newest first.
   - **Counts**: a finished run shows its counts; a switch adds the supported sentence; an ended run adds "not answered".
   - **An unfinished run**: shows only its position and "Continue the check", and no count or group word.
   - **Skills with only checks**: a skill with only check runs is listed with `progress.noPractice`.
   - **Separation**: the practice sentence, repeat sentences, lesson lines, and question list are identical before and after a finished check (compare the rendered text of the practice lines).
   - **Opening a summary**: a run's link opens its summary, which records nothing.
-- [ ] T046 [P] [US4] Extend `src/web/tests/check-run.test.tsx` for resuming:
+- [X] T046 [P] [US4] Extend `src/web/tests/check-run.test.tsx` for resuming:
   - **A reload** (new `App` over the same storage) on question 3 restores the question, draft, and part; in the supported part, it also restores the help and explanation steps reached, fetched again without new events.
   - **A language switch** keeps the run, the draft, and the position.
   - **The start screen** with an unfinished run of the skill shows `check.unfinished` and "Continue the check".
   - **"Start the check"** ends the old run with `endedAt`, and its summary lists the unreached and the reached but unanswered questions under "Not answered", never under "Skipped". A supported question answered before the new start keeps its outcome in the supported part.
   - **The finished summary**: a reload on it shows the same summary.
   - **An ended run's summary** (PR 51 review), ended on question 1 with question 1 typed but not saved. Question 1 is reached: its expression is from the record, and its answer is shown only when `getAnswer`'s operands match. Questions 2–4 are unreached: each shows the expression and answer from its `getAnswer` response, with its explanation offered. With `answerFails`, each unreached question shows `check.unreachedUnavailable` and stays counted under "Not answered". With `resolveDiffers`, the reached question shows `check.answerUnavailable`, while the unreached ones show the resolved expression with its matching answer.
-- [ ] T047 [P] [US4] Add checks 3 and 4 to `src/web/e2e/checks.spec.ts` (quickstart scenarios 3 and 4), on both projects.
+- [X] T047 [P] [US4] Add checks 3 and 4 to `src/web/e2e/checks.spec.ts` (quickstart scenarios 3 and 4), on both projects.
 
 ### Implementation for User Story 4
 
-- [ ] T048 [US4] Complete `summarizeRun` in `src/web/src/state/checks.ts` with `notAnswered` for ended runs. Add `runsBySkill(checkRuns)`, newest first.
-- [ ] T049 [US4] In `src/web/src/state/progress.ts`, let `groupBySkill` take the check runs, so that a skill with runs and no practice or lesson views is listed. Use the latest run's `startedAt` in `lastActivity`. Practice's fields are computed exactly as before. Extend `src/web/tests/progress.test.ts`.
-- [ ] T050 [US4] In `src/web/src/pages/RecordPage.tsx`, add the checks part of each skill group, with `CheckEntry` after the runs.
-- [ ] T051 [US4] Complete resuming:
+- [X] T048 [US4] Complete `summarizeRun` in `src/web/src/state/checks.ts` with `notAnswered` for ended runs. Add `runsBySkill(checkRuns)`, newest first.
+- [X] T049 [US4] In `src/web/src/state/progress.ts`, let `groupBySkill` take the check runs, so that a skill with runs and no practice or lesson views is listed. Use the latest run's `startedAt` in `lastActivity`. Practice's fields are computed exactly as before. Extend `src/web/tests/progress.test.ts`.
+- [X] T050 [US4] In `src/web/src/pages/RecordPage.tsx`, add the checks part of each skill group, with `CheckEntry` after the runs.
+- [X] T051 [US4] Complete resuming:
   - **`src/web/src/pages/CheckStartPage.tsx`**: `check.unfinished` and "Continue the check".
   - **`src/web/src/state/store.tsx`**: `openRun` restores the supported part's help and explanation steps from `resume`, fetched again and not recorded, as spec 005's resume does.
   - **`src/web/src/pages/CheckSummary.tsx`**: the "Not answered" section, with unreached questions on their own path: the expression and answer from one `getAnswer` response, and the explanation when `getInstance` gives the same operands (`contracts/summary.md`).
@@ -331,6 +331,13 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   T045–T047 pass.
 
 **Checkpoint**: quickstart scenarios 3 and 4 pass; this phase may merge on its own.
+
+**Done (Phase 6)**. Deviations from the task text:
+- **T048**: `summarizeRun` already had `notAnswered` (Phase 3, T020); `checks.test.ts` now adds the matrix of ended runs, all 81 answer combinations stopped at each position before and after answering, with no switch and with a switch at each position up to the stop. `runsBySkill` puts the later of two runs started at the same moment first.
+- **T049**: `groupBySkill` takes the runs as a sixth argument and lists them only under a skill the content names, as lesson views are; a run never goes under "Other practice". A unit test compares every practice field with and without runs.
+- **T050**: a run that is over links its date to its summary, with the accessible name `check.recordRunLink` ("Your check from {date}"), a key added to both dictionaries. `CheckEntry` follows the runs in every named skill group, with or without runs. The "Checks" sub-heading appears only when the skill has runs. `check.recordNotAnswered` is added only when the count is above 0: a run ended after its last question was answered has nothing to list.
+- **T051**: the start screen's unfinished sentence and "Continue the check" were already there (T023), and the store already restored the supported part's steps on a reload (T035). T046's tests for both pass against the Phase 5 code; the summary's tests failed before this phase. The summary's "Not answered" section appears only when it has a question, for the same reason as `recordNotAnswered`. A reached question in it shows `check.noAnswer`; an unreached one renders nothing while its answer loads.
+- **T045–T047**: `npm test`: 527 passed. `npm run e2e`: 64 passed, 6 skipped (the project-specific skips), scenarios 3 and 4 on both projects included.
 
 ---
 

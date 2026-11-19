@@ -206,3 +206,129 @@ test.describe("the switch to supported practice", () => {
     await expect(page.getByTestId("check-revisit-tag")).toHaveCount(1);
   });
 });
+
+/** The "My work" group of the pilot's skill. */
+const additionGroup = (page: Page) => page.locator('[data-testid="skill-group"][data-skill="numbers.addition-within-20"]');
+
+async function toRecord(page: Page) {
+  await page.getByRole("link", { name: "My work", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "My work" })).toBeVisible();
+}
+
+test.describe("resuming a check and checks in My work", () => {
+  test("3. a reload, a language switch, and Continue keep question 3 and its draft; a new check ends the old run", async ({ page }) => {
+    await clearedLesson(page, "en");
+    await page.getByTestId(`check-entry-${CHECK}`).click();
+    await page.getByTestId("check-start").click();
+
+    // 1. Save questions 1 and 2, and type 5 into question 3.
+    await saveAnswer(page, "10", "Question 2 of 4");
+    await saveAnswer(page, "9", "Question 3 of 4");
+    await page.getByTestId("answer").fill("5");
+    const runUrl = page.url();
+
+    // 2. A reload restores question 3 with its draft, in the independent part.
+    await page.reload();
+    await expect(page.getByTestId("check-position")).toHaveText("Question 3 of 4");
+    await expect(page.getByTestId("check-mode")).toHaveText("On your own");
+    await expect(page.getByTestId("answer")).toHaveValue("5");
+    await expectNoResult(page);
+
+    // 3. A language switch keeps the question, the draft, and the position.
+    await page.getByTestId("lang-nb").click();
+    await expect(page.getByTestId("check-position")).toHaveText("Oppgave 3 av 4");
+    await expect(page.getByTestId("answer")).toHaveValue("5");
+    await page.getByTestId("lang-en").click();
+
+    // 4. My work: the run is unfinished at question 3 of 4, with no counts; no practice yet.
+    await toRecord(page);
+    const group = additionGroup(page);
+    await expect(group.getByTestId("check-record").getByRole("heading", { level: 3 })).toHaveText("Checks");
+    await expect(group.getByTestId("check-run")).toHaveCount(1);
+    await expect(group.getByTestId("check-run-text")).toHaveText("Unfinished, at question 3 of 4");
+    await expect(group.getByTestId("check-run")).not.toContainText(/correct|revisiting|skipped/);
+    await expect(group.getByTestId("check-run-link")).toHaveCount(0);
+    await expect(group.getByTestId("record-no-practice")).toHaveText("No questions practised yet.");
+
+    // 5. "Continue the check": question 3 with its draft.
+    await group.getByTestId("check-run-continue").click();
+    await expect(page).toHaveURL(runUrl);
+    await expect(page.getByTestId("check-position")).toHaveText("Question 3 of 4");
+    await expect(page.getByTestId("answer")).toHaveValue("5");
+
+    // 6. "Check my understanding" again: the start screen offers both, and "Start the check" starts anew.
+    await toRecord(page);
+    await additionGroup(page).getByTestId(`check-entry-${CHECK}`).click();
+    await expect(page.getByTestId("check-unfinished")).toContainText("You have a check you have not finished, at question 3 of 4.");
+    await expect(page.getByTestId("check-continue")).toBeVisible();
+    await page.getByTestId("check-start").click();
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+    await expect(page.getByTestId("answer")).toHaveValue("");
+
+    // 7. The old run shows its counts and "2 not answered"; its summary lists questions 3 and 4 as not answered.
+    await toRecord(page);
+    const runs = additionGroup(page).getByTestId("check-run");
+    await expect(runs).toHaveCount(2);
+    await expect(runs.nth(0).getByTestId("check-run-text")).toHaveText("Unfinished, at question 1 of 4");
+    await expect(runs.nth(1).getByTestId("check-run-text")).toHaveText("2 correct on your own, 0 worth revisiting, 0 skipped, 2 not answered");
+    await runs.nth(1).getByTestId("check-run-link").click();
+    const notAnswered = page.getByTestId("check-not-answered");
+    await expect(notAnswered.getByRole("heading", { level: 2 })).toHaveText("Not answered");
+    await expect(notAnswered.getByTestId("check-expression")).toHaveText(["8 + 5", "9 + 4"]);
+    await expect(notAnswered.getByTestId("check-correct-answer")).toHaveText(["Correct answer: 13", "Correct answer: 13"]);
+    await expect(page.getByTestId("check-group-skipped").getByTestId("check-group-count")).toHaveText("0 questions");
+    await expect(page.getByTestId("check-group-correct").getByTestId("check-expression")).toHaveText(["7 + 3", "5 + 4"]);
+  });
+
+  test("4. a finished check leaves practice's sentence, question list, and question in progress unchanged", async ({ page }) => {
+    await clearedLesson(page, "en");
+    await page.getByTestId("practice-numbers.addition.within-10").click();
+
+    // 1. Three practice questions answered, the fourth left with a draft.
+    for (let i = 0; i < 3; i++) {
+      const label = (await page.getByTestId("prompt").getAttribute("aria-label")) ?? "";
+      const [, a, b] = /(\d+)\D+(\d+)/.exec(label) ?? [];
+      await page.getByTestId("answer").fill(String(Number(a) + Number(b)));
+      await page.getByTestId("check").click();
+      await expect(page.getByTestId("result")).toHaveAttribute("data-status", "correct");
+      await page.getByTestId("another").click();
+      await expect(page.getByTestId("result")).toHaveCount(0);
+    }
+    const fourth = await page.getByTestId("prompt").getAttribute("aria-label");
+    await page.getByTestId("answer").fill("1");
+
+    await toRecord(page);
+    const group = additionGroup(page);
+    const practiceLines = async () => ({
+      summary: await group.getByTestId("record-summary").textContent(),
+      repeats: await group.getByTestId("record-repeats").allTextContents(),
+      lessons: await group.getByTestId("lesson-viewed").allTextContents(),
+      questions: await group.getByTestId("record-item").allTextContents(),
+    });
+    await expect(group.getByTestId("record-summary")).toContainText("4 questions:");
+    const before = await practiceLines();
+
+    // 2. Take and finish a check.
+    await group.getByTestId(`check-entry-${CHECK}`).click();
+    await page.getByTestId("check-start").click();
+    await saveAnswer(page, "10", "Question 2 of 4");
+    await saveAnswer(page, "9", "Question 3 of 4");
+    await saveAnswer(page, "13", "Question 4 of 4");
+    await page.getByTestId("answer").fill("13");
+    await page.getByTestId("check-save").click();
+    await expect(page.getByTestId("check-summary-heading")).toHaveText("Your check");
+
+    // 3. Practice's lines are unchanged, and the check is listed apart.
+    await toRecord(page);
+    await expect(group.getByTestId("check-run-text")).toHaveText("4 correct on your own, 0 worth revisiting, 0 skipped");
+    expect(await practiceLines()).toEqual(before);
+
+    // "Practise more" resumes the fourth practice question with its draft; "Finish practice" sums up practice only.
+    await group.getByTestId("check-run-link").click();
+    await page.getByTestId("check-practise-more").click();
+    await expect(page.getByTestId("prompt")).toHaveAttribute("aria-label", fourth ?? "");
+    await expect(page.getByTestId("answer")).toHaveValue("1");
+    await page.getByTestId("finish-practice").click();
+    await expect(page.getByTestId("session-summary")).toHaveText(/^4 questions: .*, 1 unfinished$/);
+  });
+});

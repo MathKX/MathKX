@@ -1,6 +1,6 @@
 // specs/006 contracts/check-run.md (tasks T017, T031): the start screen, starting a run, the independent part's absences,
 // saving with its guidance and failures, skipping, the end of the run, separation from practice, and the switch.
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
@@ -9,7 +9,7 @@ import { nb } from "../src/i18n/nb";
 import type { CheckRun } from "../src/state/checks";
 import type { Delivery } from "../src/state/observations";
 import { createFakeApi, PILOT_CHECK } from "./fakeApi";
-import { beforeThisFeature, checkRun } from "./records";
+import { at, beforeThisFeature, checkRun } from "./records";
 
 const KEY = "mathkx.guest.v1";
 const CHECK_PATH = `/checks/${PILOT_CHECK.id}`;
@@ -541,5 +541,190 @@ describe("responses that arrive after the learner has moved on", () => {
     const run = onlyRun();
     expect(run.position).toBe(3);
     expect(run.deliveries.map((d) => d.events)).toEqual([[{ type: "skipped" }], [{ type: "skipped" }], []]);
+  });
+});
+
+// specs/006 contracts/check-run.md "Resuming" and contracts/summary.md "Not answered" (task T046).
+describe("resuming", () => {
+  async function typedAtThree(api: Api = createFakeApi()) {
+    const started = await startCheck(api);
+    await moveOn(started.user, () => save(started.user, "10"));
+    await moveOn(started.user, () => save(started.user, "9"));
+    await started.user.type(screen.getByTestId("answer"), "5");
+    await waitFor(() => expect(onlyRun().resume?.draft).toBe("5"));
+    return started;
+  }
+
+  it("restores question 3, its draft, and the independent part after a reload", async () => {
+    const { api } = await typedAtThree();
+    const path = window.location.pathname;
+    const before = onlyRun();
+    cleanup();
+    render(<App api={api} initialPath={path} />);
+    await screen.findByTestId("independent-question");
+    expect(position()).toBe("Question 3 of 4");
+    expect(screen.getByTestId("check-mode").textContent).toBe("On your own");
+    expect(screen.getByTestId("prompt").getAttribute("aria-label")).toBe("8 plus 5. What is the sum?");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("5");
+    expect(onlyRun().deliveries).toEqual(before.deliveries);
+  });
+
+  it("restores the supported part's result and explanation steps after a reload, fetched again without new events", async () => {
+    const api = createFakeApi();
+    const { user } = await atQuestionThree(api);
+    await switchHere(user);
+    await check(user, "13");
+    await user.click(screen.getByTestId("toggle-explanation"));
+    await user.click(await screen.findByTestId("explanation-next"));
+    await screen.findByTestId("explanation-step-text");
+    const before = onlyRun().deliveries[2]!.events;
+    const path = window.location.pathname;
+    cleanup();
+    const calls = api.calls.length;
+    render(<App api={api} initialPath={path} />);
+    expect((await screen.findByTestId("explanation-step-text")).textContent).toBeTruthy();
+    expect(screen.getByTestId("toggle-explanation").getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByTestId("result")).toBeTruthy();
+    expect(screen.getByTestId("check-next")).toBeTruthy();
+    expect(api.calls.slice(calls)).toContain("getStep explanation 0");
+    expect(onlyRun().deliveries[2]!.events).toEqual(before);
+  });
+
+  it("keeps the run, the draft, and the position across a language switch", async () => {
+    const { user } = await typedAtThree();
+    const before = onlyRun();
+    await user.click(screen.getByTestId("lang-nb"));
+    await waitFor(() => expect(position()).toBe("Oppgave 3 av 4"));
+    expect(screen.getByTestId("check-mode").textContent).toBe("På egen hånd");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("5");
+    expect(onlyRun()).toEqual(before);
+  });
+
+  it("offers 'Continue the check' on the start screen, which returns to question 3 with its draft", async () => {
+    const { user } = await typedAtThree();
+    const runPath = window.location.pathname;
+    go(CHECK_PATH);
+    expect((await screen.findByTestId("check-unfinished")).textContent).toBe("You have a check you have not finished, at question 3 of 4. Continue the check");
+    expect(screen.getByTestId("check-start")).toBeTruthy();
+    await user.click(screen.getByTestId("check-continue"));
+    await screen.findByTestId("independent-question");
+    expect(window.location.pathname).toBe(runPath);
+    expect(position()).toBe("Question 3 of 4");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("5");
+    expect(runs()).toHaveLength(1);
+  });
+
+  it("ends the old run on 'Start the check'; its summary lists questions 3 and 4 as not answered, never as skipped", async () => {
+    const { user } = await typedAtThree();
+    const oldId = onlyRun().id;
+    go(CHECK_PATH);
+    await user.click(await screen.findByTestId("check-start"));
+    await waitFor(() => expect(runs()).toHaveLength(2));
+    await screen.findByTestId("independent-question");
+    expect(position()).toBe("Question 1 of 4");
+    const old = runs().find((r) => r.id === oldId)!;
+    const fresh = runs().find((r) => r.id !== oldId)!;
+    expect(old.endedAt).toBeTruthy();
+    expect(old.finishedAt).toBeUndefined();
+    expect(fresh.position).toBe(1);
+    expect(fresh.switchAt).toBeNull();
+    expect(fresh.endedAt).toBeUndefined();
+
+    go(`${CHECK_PATH}/${oldId}`);
+    const notAnswered = await screen.findByTestId("check-not-answered");
+    expect(within(notAnswered).getByRole("heading", { level: 2 }).textContent).toBe("Not answered");
+    expect(within(notAnswered).getByTestId("check-not-answered-note").textContent).toBe("You started a new check before answering these questions.");
+    const questions = within(notAnswered).getAllByTestId("check-question");
+    expect(questions.map((q) => q.getAttribute("data-position"))).toEqual(["3", "4"]);
+    await waitFor(() => expect(within(notAnswered).getAllByTestId("check-expression").map((e) => e.textContent)).toEqual(["8 + 5", "9 + 4"]));
+    expect(within(questions[0]!).getByTestId("check-your-answer").textContent).toBe("Not answered");
+    expect(within(screen.getByTestId("check-group-skipped")).getByTestId("check-group-count").textContent).toBe("0 questions");
+    expect(within(screen.getByTestId("check-group-correct")).getByTestId("check-group-count").textContent).toBe("2 questions");
+  });
+
+  it("keeps a supported question answered before a new start in the supported part, with its outcome", async () => {
+    const { user } = await atQuestionThree();
+    await switchHere(user);
+    await check(user, "13");
+    const oldId = onlyRun().id;
+    go(CHECK_PATH);
+    await user.click(await screen.findByTestId("check-start"));
+    await waitFor(() => expect(runs()).toHaveLength(2));
+    go(`${CHECK_PATH}/${oldId}`);
+    const supported = await screen.findByTestId("check-supported");
+    const [question] = within(supported).getAllByTestId("check-question");
+    expect(question!.getAttribute("data-position")).toBe("3");
+    expect(within(question!).getByTestId("check-outcome").textContent).toBe(en.outcome.correctFirst);
+    const notAnswered = within(screen.getByTestId("check-not-answered")).getAllByTestId("check-question");
+    expect(notAnswered.map((q) => q.getAttribute("data-position"))).toEqual(["4"]);
+  });
+
+  it("shows the same summary after a reload on a finished run", async () => {
+    const api = createFakeApi();
+    const { user } = await startCheck(api);
+    await moveOn(user, () => save(user, "10"));
+    await moveOn(user, () => save(user, "9"));
+    await moveOn(user, () => save(user, "12"));
+    await moveOn(user, () => user.click(screen.getByTestId("check-skip")), true);
+    const settled = async () => {
+      await screen.findByTestId("check-title");
+      await waitFor(() => expect(screen.getAllByTestId("check-correct-answer")).toHaveLength(4));
+      await waitFor(() => expect(screen.getAllByTestId("check-explanation-toggle")).toHaveLength(4));
+      return screen.getByTestId("check-summary").textContent;
+    };
+    const before = await settled();
+    const path = window.location.pathname;
+    cleanup();
+    render(<App api={api} initialPath={path} />);
+    expect(await settled()).toBe(before);
+  });
+});
+
+// PR 51 review: an ended run's reached and unreached questions take different paths to their expression and answer.
+describe("an ended run's summary", () => {
+  const resume = { draft: "7", helpOpen: false, helpStep: -1, explanationOpen: false, explanationStep: -1, result: null };
+  function show(options: Parameters<typeof createFakeApi>[0] = {}) {
+    const run = checkRun({ id: "run-e", positions: ["reached", null, null, null], position: 1, startedAt: at(1), endedAt: at(5), resume });
+    window.localStorage.setItem(KEY, JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), deliveries: [], checkRuns: [run] } }));
+    const api = createFakeApi(options);
+    render(<App api={api} initialPath={`${CHECK_PATH}/run-e`} />);
+    return { api, user: userEvent.setup() };
+  }
+  const notAnswered = () => within(screen.getByTestId("check-not-answered")).getAllByTestId("check-question");
+  const textsOf = (id: string) => notAnswered().map((q) => within(q).queryByTestId(id)?.textContent ?? null);
+
+  it("shows question 1 from the record and questions 2 to 4 from their answers, each with its explanation", async () => {
+    const { api, user } = show();
+    await screen.findByTestId("check-not-answered");
+    await waitFor(() => expect(textsOf("check-correct-answer")).toEqual(["Correct answer: 10", "Correct answer: 9", "Correct answer: 13", "Correct answer: 13"]));
+    expect(textsOf("check-expression")).toEqual(["7 + 3", "5 + 4", "8 + 5", "9 + 4"]);
+    expect(textsOf("check-your-answer")).toEqual(["Not answered", "Not answered", "Not answered", "Not answered"]);
+    await waitFor(() => expect(textsOf("check-explanation-toggle")).toEqual(Array(4).fill("Show explanation")));
+    for (const name of ["correct", "revisit", "skipped"]) expect(within(screen.getByTestId(`check-group-${name}`)).getByTestId("check-group-count").textContent).toBe("0 questions");
+
+    const before = JSON.stringify(stored().checkRuns);
+    await user.click(within(notAnswered()[1]!).getByTestId("check-explanation-toggle"));
+    await screen.findByTestId("explanation-panel");
+    expect(JSON.stringify(stored().checkRuns)).toBe(before);
+    expect(api.calls.filter((c) => c.startsWith("getAnswer"))).toHaveLength(4);
+  });
+
+  it("lists an unreached question it cannot show by its position, still under 'Not answered'", async () => {
+    show({ answerFails: true });
+    await screen.findByTestId("check-not-answered");
+    await waitFor(() => expect(textsOf("check-unreached-unavailable")).toEqual([null, "Question 2 cannot be shown just now.", "Question 3 cannot be shown just now.", "Question 4 cannot be shown just now."]));
+    expect(textsOf("check-answer-unavailable")).toEqual(["The correct answer cannot be shown just now.", null, null, null]);
+    expect(textsOf("check-expression")).toEqual(["7 + 3", null, null, null]);
+    expect(notAnswered()).toHaveLength(4);
+  });
+
+  it("shows a reached question's answer only for its recorded operands, and an unreached one with the operands it resolves to", async () => {
+    show({ resolveDiffers: true });
+    await screen.findByTestId("check-not-answered");
+    await waitFor(() => expect(textsOf("check-correct-answer")).toEqual([null, "Correct answer: 10", "Correct answer: 14", "Correct answer: 14"]));
+    expect(textsOf("check-expression")).toEqual(["7 + 3", "5 + 5", "8 + 6", "9 + 5"]);
+    expect(textsOf("check-answer-unavailable")).toEqual(["The correct answer cannot be shown just now.", null, null, null]);
+    await waitFor(() => expect(textsOf("check-explanation-unavailable")[0]).toBe("The explanation for this question is no longer available. Your answer is kept."));
+    await waitFor(() => expect(textsOf("check-explanation-toggle")).toEqual([null, "Show explanation", "Show explanation", "Show explanation"]));
   });
 });
