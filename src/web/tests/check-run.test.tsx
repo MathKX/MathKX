@@ -452,6 +452,26 @@ describe("the supported part", () => {
   });
 });
 
+// specs/006 T054: "Try again" is the learner's action, so the question it brings takes focus even on a page loaded
+// directly, where the button it replaces would otherwise leave focus on the page.
+describe("a question that could not be loaded", () => {
+  it("takes focus when 'Try again' brings it, on a page loaded directly", async () => {
+    const run = checkRun({ id: "run-l", positions: ["correct", "reached", null, null], position: 2 });
+    window.localStorage.setItem(KEY, JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), deliveries: [], checkRuns: [run] } }));
+    const options: Parameters<typeof createFakeApi>[0] = { instanceFails: "network" };
+    render(<App api={createFakeApi(options)} initialPath={`${CHECK_PATH}/run-l`} />);
+    const retry = await screen.findByTestId("check-retry");
+    expect(screen.getByTestId("check-load-error").textContent).toBe(en.practice.loadError);
+    delete options.instanceFails;
+    const user = userEvent.setup();
+    retry.focus();
+    await user.keyboard("{Enter}");
+    await screen.findByTestId("independent-question");
+    expect(position()).toBe("Question 2 of 4");
+    expect(document.activeElement).toBe(screen.getByTestId("prompt"));
+  });
+});
+
 // PR 53 review: a reached question is shown only when its identity still resolves to the recorded operands.
 describe("a resumed question whose identity now resolves to other operands", () => {
   const seed = (run: CheckRun) => window.localStorage.setItem(KEY, JSON.stringify({ schema: 1, value: { ...beforeThisFeature(), deliveries: [], checkRuns: [run] } }));

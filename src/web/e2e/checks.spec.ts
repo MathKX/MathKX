@@ -1,5 +1,6 @@
 // The end-to-end checks of specs/006 (quickstart scenarios), against the real service and the built app.
 import { expect, test, type Page } from "@playwright/test";
+import { tabTo } from "./focus";
 
 const LESSON = "/lessons/number-bonds-to-ten";
 const CHECK = "numbers.addition.check-within-20";
@@ -330,5 +331,124 @@ test.describe("resuming a check and checks in My work", () => {
     await expect(page.getByTestId("answer")).toHaveValue("1");
     await page.getByTestId("finish-practice").click();
     await expect(page.getByTestId("session-summary")).toHaveText(/^4 questions: .*, 1 unfinished$/);
+  });
+});
+
+// Quickstart scenario 5 (User Story 5, SC-005, FR-022): the whole check by keyboard alone. Focus lands on each new
+// question, the confirmation's heading, and the summary heading; every control shows focus (tabTo); on the iPad
+// project every new control is at least 44 by 44.
+test.describe("keyboard and targets", () => {
+  test("5. take the check, switch on question 3, open an explanation, and reach the checks in My work, by keyboard", async ({ page }, testInfo) => {
+    const measured: string[] = [];
+    const atLeast44 = async (testId: string) => {
+      measured.push(testId);
+      if (testInfo.project.name !== "ipad") return; // touch targets are checked on the touch project
+      const box = await page.getByTestId(testId).first().boundingBox();
+      expect(box && box.width >= 44 && box.height >= 44, `${testId} is ${JSON.stringify(box)}`).toBe(true);
+    };
+    const press = async (testId: string) => {
+      await atLeast44(testId);
+      await tabTo(page, testId);
+      await page.keyboard.press("Enter");
+    };
+    const typeAnswer = async (answer: string) => {
+      await tabTo(page, "answer");
+      await page.keyboard.type(answer);
+    };
+
+    await clearedLesson(page, "en");
+    await page.locator("body").focus();
+
+    // 1. "Check my understanding", then "Start the check": focus on the first question.
+    await press(`check-entry-${CHECK}`);
+    await expect(page.getByTestId("check-start-page")).toBeVisible();
+    await press("check-start");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+
+    // 2. Save question 1 with the button and question 2 with Enter in the field: focus on each next question.
+    await typeAnswer("10");
+    await atLeast44("check-skip");
+    await press("check-save");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 2 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+    await typeAnswer("9");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 3 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+
+    // 3. "I need help": focus on the confirmation's heading; Escape closes it and returns focus, recording nothing.
+    await press("check-need-help");
+    const dialog = page.getByRole("dialog", { name: "Switch to supported practice?" });
+    await expect(dialog.getByRole("heading")).toBeFocused();
+    await atLeast44("check-switch-no");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByTestId("check-need-help")).toBeFocused();
+    expect(await storedRun(page)).toEqual({ switchAt: null, position: 3 });
+
+    // 4. Open it again and switch: focus on the question, now in the supported part.
+    await page.keyboard.press("Enter");
+    await expect(dialog.getByRole("heading")).toBeFocused();
+    await press("check-switch-yes");
+    await expect(page.getByTestId("check-mode")).toHaveText("Supported practice (from question 3)");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+
+    // 5. Question 3 with visual help, then "Next question": focus on question 4.
+    await press("toggle-help");
+    await expect(page.getByTestId("help-panel")).toBeVisible();
+    await typeAnswer("13");
+    await press("check");
+    await expect(page.getByTestId("result")).toBeVisible();
+    await press("check-next");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 4 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+
+    // 6. Question 4, then "See summary": focus on the summary heading.
+    await typeAnswer("13");
+    await press("check");
+    await expect(page.getByTestId("result")).toBeVisible();
+    await press("check-finish");
+    await expect(page.getByTestId("check-summary-heading")).toBeFocused();
+
+    // 7. One explanation, opened and stepped through by keyboard.
+    await press("check-explanation-toggle");
+    await expect(page.getByTestId("check-explanation-toggle").first()).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByTestId("explanation-step-text").first()).toBeVisible();
+    for (const id of ["check-practise-more", "check-again", "check-to-record"]) await atLeast44(id);
+
+    // 8. "Go to my work": the run's link, and the entry after it.
+    await press("check-to-record");
+    await expect(page.getByRole("heading", { level: 1, name: "My work" })).toBeVisible();
+    await atLeast44("check-run-link");
+    await tabTo(page, "check-run-link");
+    await press(`check-entry-${CHECK}`);
+
+    // 9. With an unfinished check, the start screen's and My work's "Continue the check".
+    await press("check-start");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+    await page.getByTestId("check-position").waitFor();
+    await toRecord(page);
+    await page.locator("body").focus();
+    await press("check-run-continue");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+    await page.goto(`/checks/${CHECK}`);
+    await page.locator("body").focus();
+    await press("check-continue");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+
+    // 10. A question that cannot be loaded on a direct visit: "Try again" brings it, with focus on it.
+    const runUrl = page.url();
+    let failures = 1;
+    await page.route(/\/api\/instances\//, (route) => (failures-- > 0 ? route.fulfill({ status: 503, body: "" }) : route.fallback()));
+    await page.goto(runUrl);
+    await expect(page.getByTestId("check-load-error")).toBeVisible();
+    await page.locator("body").focus();
+    await press("check-retry");
+    await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
+    await expect(page.getByTestId("prompt")).toBeFocused();
+
+    expect(measured).toEqual(expect.arrayContaining(["check-start", "check-save", "check-skip", "check-need-help", "check-switch-yes", "check-switch-no", "check-next", "check-finish", "check-explanation-toggle", "check-practise-more", "check-again", "check-to-record", "check-run-link", "check-run-continue", "check-continue", "check-retry"]));
   });
 });

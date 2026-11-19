@@ -58,7 +58,7 @@ export function CheckRunPage({ runId, api = practiceApi }: { checkId: string; ru
           <Paragraph data-testid="check-load-error">
             {screen.loadError === "changed" ? translate(lang, "check.unreachedUnavailable", { n: run.position }) : translate(lang, "practice.loadError")}
           </Paragraph>
-          <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => void store.retryCheckQuestion()} data-testid="check-retry">
+          <Button type="button" variant="secondary" data-size="md" className="mkx-target" onClick={() => act(() => store.retryCheckQuestion())} data-testid="check-retry">
             {translate(lang, "lesson.retry")}
           </Button>
         </div>

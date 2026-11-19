@@ -80,12 +80,14 @@ Each starts from a cleared record (`localStorage.clear()`), in English unless st
 ### 5. Keyboard and targets (User Story 5, SC-005)
 
 With the keyboard only, on both projects:
-1. Start the check.
-2. Save question 1.
-3. Open "I need help" (focus on the confirmation heading) and switch.
-4. Answer question 2 with help.
+1. Start the check (focus on the first question).
+2. Save question 1 with "Save answer" and question 2 with Enter (focus on each next question).
+3. Open "I need help" (focus on the confirmation heading), close it with Escape (focus back on "I need help"), open it again, and switch on question 3.
+4. Answer question 3 with help, then question 4.
 5. Finish (focus on the summary heading).
 6. Open one explanation.
+7. From "Go to my work", reach the run's link and "Check my understanding", and continue a new check from "My work" and from the start screen.
+8. On a check page loaded directly, with the question's request failing once, "Try again" brings the question with focus on it.
 
 Every control shows focus. On the iPad project, every new control is at least 44 by 44.
 
