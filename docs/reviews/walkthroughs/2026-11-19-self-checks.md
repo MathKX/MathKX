@@ -15,7 +15,11 @@
 - **Scenario 5** used real keystrokes in the pane (Tab, Shift+Tab, Enter, Escape, typing).
 - **Results** were read from the DOM, the focused element and its computed focus style, the `localStorage` guest record, and the browser's resource timing.
 
-**Not done**: a physical iPad, VoiceOver, or a learner session (SC-006). The 44-by-44 targets were measured by end-to-end check 5 on the iPad project in CI, not here.
+**Projects**: the quickstart runs scenario 5 on the desktop and iPad projects.
+- **Desktop, by hand**: all eight steps of scenario 5, in the pane at 1024 by 768 with a keyboard and no touch emulation.
+- **iPad, in CI only**: end-to-end check 5 runs all eight steps on the iPad project (1024 by 768 with touch) and measures the 44-by-44 targets there. No step was done by hand on it.
+
+**Not done**: a physical iPad, VoiceOver, or a learner session (SC-006).
 
 ## Local: quickstart scenarios 1 to 5
 
@@ -93,6 +97,8 @@
 
 ### Scenario 5 in detail
 
+All eight steps were done by hand on the desktop. Steps 7 and 8 were added after review, on the same build. Step 7 began from the summary of a finished run, and step 8 from an unfinished run at question 2 with the draft 8.
+
 | Step | Focus |
 | --- | --- |
 | Start the check | the question |
@@ -106,8 +112,21 @@
 | "Next question" | question 4 |
 | "See summary" | "Your check" |
 | The first "Show explanation" | its first step shows, with `aria-expanded="true"` |
+| 7. Tab to "Go to my work", Enter | "My work"'s heading |
+| Tab to each run's link, then "Check my understanding" | each in turn |
+| Enter, Tab, Enter ("Start the check") | the new check's question; question 1 saved with Enter, 8 typed into question 2 |
+| Shift+Tab to the header's "My work", Enter, Tab, Enter ("Continue the check") | question 2, with the draft 8 |
+| Back to "My work", Tab to "Check my understanding", Enter | the start screen's heading, with "You have a check you have not finished, at question 2 of 4." |
+| Tab, Enter ("Continue the check") | question 2, with the draft 8 |
+| 8. The check page loaded directly, its question request failing once | stays on the page, with "The question could not be loaded. Try again." |
+| Tab to "Try again", Enter | question 2 (`5 + 4`), with the draft 8 |
 
-Every control reached by Tab showed a 2.4-pixel outline with a 3-pixel ring. The prompt and the summary heading showed their own outlines.
+Step 8's failure came from a throwaway copy of the page in the local build. It failed the first `/api/instances/` request with a 503, then started the app at the check's address, so the app saw a direct load. The copy was deleted afterwards.
+
+**Focus styles**: every control reached by Tab showed focus.
+- **Buttons and the answer field**: the app's 2.4-pixel outline with a 3-pixel ring.
+- **Links and the language buttons**: the browser's default focus ring. That covers "Go to my work", the run links, "Check my understanding", "Continue the check", and the header.
+- **The prompt and the page headings**: their own outlines.
 
 ## Production: the pilot check and "My work"
 
@@ -122,8 +141,8 @@ Every control reached by Tab showed a 2.4-pixel outline with a 3-pixel ring. The
 | The independent part | pass | pass | Only "Lagre svaret", "Hopp over", "Jeg trenger hjelp" / "Save answer", "Skip", "I need help"; focus on the question; no result text; no request to steps, answers, lesson content, or visuals |
 | The switch on question 3 | pass | pass | The confirmation "Bytte til øving med hjelp?" / "Switch to supported practice?" with focus on its heading; then "Øving med hjelp (fra oppgave 3)" / "Supported practice (from question 3)", visual help, and feedback on "Check answer" |
 | The summary | pass | pass | See below; focus on "Sjekken din" / "Your check"; the snapshot sentence; no fraction or percentage |
-| "My work" | — | pass | See below |
-| "Continue the check" | — | pass | From "My work" and from the start screen, to the same address, at question 2 with the draft 8 |
+| "My work" | pass | pass | See below |
+| "Continue the check" | pass | pass | From "Mitt arbeid" / "My work" and from the start screen, to the same address, at "Oppgave 2 av 4" / "Question 2 of 4" with the draft 8; the start screen said "Du har en sjekk du ikke er ferdig med, på oppgave 2 av 4." |
 
 **The summaries**:
 
@@ -142,10 +161,18 @@ Every control reached by Tab showed a 2.4-pixel outline with a 3-pixel ring. The
 
 Each finished run's date links to its summary. "Check my understanding" follows the runs, and practice's line reads "No questions practised yet."
 
+**In Norwegian**, added after review on the same record and build, with no new run: "Mitt arbeid" → "Addisjon opp til 20" → "Sjekker" listed the same three runs:
+- "Ikke ferdig, på oppgave 2 av 4", with "Fortsett sjekken";
+- "1 riktig på egen hånd, 1 verdt å se på igjen, 0 hoppet over, 2 som øving med hjelp fra oppgave 3";
+- "1 riktig på egen hånd, 0 verdt å se på igjen, 1 hoppet over, 2 som øving med hjelp fra oppgave 3".
+
+The first run link, "Sjekken din fra 19. november 2026", opened "Sjekken din" with focus on it. "Sjekk forståelsen min" follows the runs, and practice's line reads "Ingen oppgaver øvd ennå."
+
 ## Findings to carry forward
 
 - **Self-checks work locally and in production in both languages.** That covers the independent part, the switch, the summary, "My work", and "Continue the check", and the quickstart's quoted wording matches the dictionaries. One phrase in `contracts/summary.md`, "Show the explanation", was corrected to the app's "Show explanation".
 - **Run links can share a name.** Two runs finished on the same day have the same link name, "Your check from 19 November 2026". The counts beside each link tell them apart in context, but a screen reader's list of links reads them alike. Adding the time to the name would separate them. This is left for a later change, because the contract names the link by date only.
 - **Moving on during "Check answer" is ignored.** In the supported part, "See summary" or "Next question" pressed while a "Check answer" request is in flight does nothing, as in practice's "Another question". The button stays enabled. The window is the request's duration; only a script hit it here.
+- **Links show the browser's focus ring, not the app's.** Buttons and the answer field show the app's outline and ring. Links and the language buttons show the browser's default ring. That ring is visible, but it differs from the buttons beside it, for example "Continue the check" beside "Start the check". This holds across the app, not only in self-checks, so it is left for a design change.
 - **Test data stays in the pane.** On production, the guest record in this pane now holds three check runs and one lesson view. "My work" → "Clear my work" clears it.
 - **Still open**: the learner check of SC-006 (quickstart scenario 6), alongside the learner checks carried forward by DL-041, and a physical iPad with VoiceOver.

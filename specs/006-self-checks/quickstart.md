@@ -32,7 +32,7 @@ CI runs all of them on every pull request. The run must stay under 10 minutes (S
 **Measured**: the two workflows run in parallel, so the wall time is the longer one, "Build and test".
 - **The first PR with the end-to-end checks**: PR 53, commit `ccfd561`. "Build and test" took 2 min 31 s, and "Validate content" 49 s.
 - **The last PR with feature code**: PR 56, commit `d18ffed`. "Build and test" took 2 min 57 s, with 66 Playwright tests.
-- **The slowest run of the feature**: PR 56, commit `af83b15`, at 6 min 25 s. Its Playwright tests took 52 s; the rest of the end-to-end job was setup.
+- **The slowest run measured**: PR 57, commit `abda630`, the first run of the close-out, at 7 min 39 s. Its Playwright tests took 52 s; the rest of the end-to-end job was setup. Through PR 56, the slowest was commit `af83b15`, at 6 min 25 s.
 
 ## Scenarios
 

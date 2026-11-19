@@ -383,13 +383,14 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
   - **`docs/learning/mastery.md`**: the guest record holds check runs apart from practice, and a check gives evidence, not a mastery judgement.
   - **Done**: the README's "Current status" describes self-checks. The spec 006 row lists PRs 52 to 56. `mastery.md` names the check runs in the guest record, keeps their questions out of practice's counts, and says a check is evidence at one moment, not a mastery judgement.
 - [X] T056 Run quickstart scenarios 1–5 by hand on the built app and service. Correct any quoted wording in `specs/006-self-checks/quickstart.md` or the contracts to match the dictionaries, and record the measured CI wall time in the quickstart (SC-007).
-  - **Done**: scenarios 1 to 5 pass by hand on the built app and service. Scenario 5 used real keystrokes in the browser pane. The results are in `docs/reviews/walkthroughs/2026-11-19-self-checks.md`.
+  - **Done**: scenarios 1 to 5 pass by hand on the built app and service. Scenario 5 used real keystrokes in the browser pane, for all eight steps, on the desktop. The results are in `docs/reviews/walkthroughs/2026-11-19-self-checks.md`.
+  - **The iPad project**: no step was done by hand on it. End-to-end check 5 runs all eight steps there in CI and measures the 44-by-44 targets.
   - **Wording**: every quoted text in the quickstart and the contracts was compared with the dictionaries and the content, and every text table row with both dictionaries. One phrase was wrong: `contracts/summary.md` said "Show the explanation" where the app says "Show explanation".
-  - **CI**: the quickstart records the times: 2 min 31 s for the first PR with the end-to-end checks (PR 53), and 2 min 57 s for the last (PR 56).
+  - **CI**: the quickstart records the times: 2 min 31 s for the first PR with the end-to-end checks (PR 53), 2 min 57 s for the last with feature code (PR 56), and 7 min 39 s for the slowest, this phase's first run.
 - [X] T057 Record the open human validation item in the pull-request description: the learner check of SC-006, recorded as findings, not scores, alongside the learner checks carried forward by DL-041.
   - **Done**: recorded in the description of the Phase 8 pull request.
 - [X] T058 After Phases 3–4 deploy, take the pilot check on the production URL in both languages, with a switch on question 3, and check the summary. After Phase 6 deploys, check "My work" and "Continue the check" there too. Add the results to a dated walkthrough under `docs/reviews/walkthroughs/`.
-  - **Done**: all three were made on 2026-11-19, once with every phase deployed (merge commit `1e9bbb5`). The pilot check passed in both languages with a switch on question 3, and "My work" and "Continue the check" passed in English. The results are in `docs/reviews/walkthroughs/2026-11-19-self-checks.md`.
+  - **Done**: all three were made on 2026-11-19, once with every phase deployed (merge commit `1e9bbb5`). The pilot check passed in both languages with a switch on question 3. "My work" and "Continue the check" passed in English, and then in Norwegian after review. The results are in `docs/reviews/walkthroughs/2026-11-19-self-checks.md`.
   - **A finding carried forward**: two runs finished on the same day have the same link name in "My work".
 
 ---
