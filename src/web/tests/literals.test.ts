@@ -42,6 +42,13 @@ function violations(file: string): string[] {
 }
 
 describe("learner-visible literals", () => {
+  it("scan the self-check components (specs/006 T052)", () => {
+    const scanned = walk(root).map((file) => relative(root, file).replace(/\\/g, "/"));
+    for (const file of ["components/CheckEntry.tsx", "components/IndependentQuestion.tsx", "components/SupportedQuestion.tsx", "pages/CheckStartPage.tsx", "pages/CheckRunPage.tsx", "pages/CheckSummary.tsx", "pages/RecordPage.tsx"]) {
+      expect(scanned).toContain(file);
+    }
+  });
+
   it("do not appear outside the dictionaries", () => {
     const all = walk(root).flatMap(violations);
     expect(all, all.join("\n")).toEqual([]);

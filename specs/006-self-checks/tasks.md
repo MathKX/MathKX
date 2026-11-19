@@ -349,16 +349,30 @@ Content under `content/` and `schemas/`, the content check under `tools/`, the b
 
 ### Tests for User Story 5
 
-- [ ] T052 [P] [US5] Extend `src/web/tests/progress-wording.test.tsx` and `src/web/tests/literals.test.ts`:
+- [X] T052 [P] [US5] Extend `src/web/tests/progress-wording.test.tsx` and `src/web/tests/literals.test.ts`:
   - **The wording scan**: covers the `check` section of both dictionaries and renders the start screen, both parts, the summary of a switched and of an ended run, and the checks part of "My work", in both languages.
   - **The literal check**: covers the new components.
-- [ ] T053 [P] [US5] Add check 5 to `src/web/e2e/checks.spec.ts` (quickstart scenario 5): keyboard only with `tabTo`, focus after each step, and `boundingBox` at least 44 by 44 for every new control on the iPad project.
+- [X] T053 [P] [US5] Add check 5 to `src/web/e2e/checks.spec.ts` (quickstart scenario 5): keyboard only with `tabTo`, focus after each step, and `boundingBox` at least 44 by 44 for every new control on the iPad project.
 
 ### Implementation for User Story 5
 
-- [ ] T054 [US5] Fix what T052 and T053 find in the check components and `src/web/src/styles/index.css`. Record what was found, or that nothing was, in this task.
+- [X] T054 [US5] Fix what T052 and T053 find in the check components and `src/web/src/styles/index.css`. Record what was found, or that nothing was, in this task.
 
 **Checkpoint**: All five stories work; quickstart scenarios 1–5 can be run.
+
+**Done (Phase 7)**. What was found, and deviations from the task text:
+- **T052**:
+  - **The wording scan** renders, in both languages: the start screen with an unfinished check; the independent part with the switch's confirmation open; the supported part with help shown; the summary of a switched run with an explanation open; the summary of an ended run; and the checks part of "My work" with an unfinished, a finished and an ended run. It also scans the whole `check` dictionary section.
+  - **Its rules for checks** add the level and grade words of `contracts/summary.md` in both languages, and time taken (a number with a time unit).
+  - **Positions**: a question's or a step's position ("Question 3 of 4", "Steg 1 av 3") is where the learner is, not a result, so the check scan allows it. Any other "n of m" still fails. Practice's scans are unchanged.
+  - **A mutation check**: "2 of 4 correct", "Your level" and "(score)" in the English dictionary fail 5 of the new cases.
+  - **The literal check** already walked every component; it now also asserts that the seven self-check sources are among those it scans.
+- **T053**: check 5 runs the whole check by keyboard. It saves question 1 with the button and question 2 with Enter, opens "I need help", closes it with Escape, then switches on question 3, as in the spec's independent test (the quickstart's steps said question 2 and are corrected). It goes on to help, "Check answer", "Next question", "See summary", one explanation, "Go to my work", and "Continue the check" from "My work" and from the start screen, and asserts focus after each step. Every new control is reached with `tabTo`, which asserts that it takes focus and shows it. On the iPad project the test measures 17 new controls, the independent answer field and "Try again" among them.
+- **T054**: the scans and target sizes found nothing. The keyboard run found one fault:
+  - **The fault**: on a check page loaded directly (a reload or a bookmark), "Try again" after a failed question load did not count as the learner's action. The question appeared without focus, and the focused button vanished, so focus fell to the page.
+  - **The fix**: `CheckRunPage` now marks "Try again" as an action, as a save or a skip is.
+  - **The tests**: a unit test in `check-run.test.tsx` fails on the old page, and check 5 covers it end to end.
+- **Results**: `npm test`: 543 passed. `npm run e2e`: 66 passed, 6 skipped (the project-specific skips).
 
 ---
 
