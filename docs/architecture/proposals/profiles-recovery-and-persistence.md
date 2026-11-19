@@ -59,7 +59,7 @@ These are inputs, not choices:
 **The password hash.** Recommendation: ASP.NET Core Identity's `PasswordHasher`, with its iteration count raised to OWASP's current figure for PBKDF2-HMAC-SHA512. That figure is 210,000; it is external guidance, to confirm when specified. The stored format carries its version, so a later move (for example to Argon2id) can rehash at the next sign-in.
 - **The alternative, Argon2id**: OWASP's first preference. It needs a third-party library in .NET, and contributors would have to keep it current.
 
-**The framework.** Recommendation: ASP.NET Core Identity's core (user manager, sign-in manager, lockout, security stamp) on the EF Core store with Npgsql. The learner ID is the user name, and the email is optional and not unique.
+**The framework.** Recommendation: ASP.NET Core Identity's core (user manager, sign-in manager, lockout, security stamp) on the EF Core store with Npgsql. The learner ID is the user name, and the email is optional and not unique ([section 4](#4-recovery) covers recovery for a shared address).
 - **For**: reviewed code for hashing, throttling, and invalidating sessions. R01-007's warning is that "the first person to need login will build something plausible and insecure."
 - **Against**: Identity's tables carry columns this design never uses (phone, two-factor). Its email flows assume links, and this design uses codes, so its defaults must be turned off.
 - **The alternative**: cookie authentication with `PasswordHasher` alone and a small schema of our own. It is smaller, but MathKX would own throttling and session revocation.
@@ -120,6 +120,10 @@ The prototype's setup and its reviewed corrections:
 **Three honest cases**, kept from the prototype's recovery page:
 - **I know my ID but not my password**: reset it with a recovery code, or with a code sent to the verified email.
 - **I don't know my ID**: if the profile has a verified email, entering the address sends the ID and a reset code. The page says "If this address is on a profile, we have sent it a message.", whether or not it is.
+- **One address on several profiles**: an email is not unique ([section 1](#1-identity-and-credentials)), so siblings may share a parent's inbox. One message then lists each profile verified with that address, by learner ID, each with its own reset code.
+  - **Bound codes**: a reset code belongs to one profile and works only with that profile's ID. Using one never touches the others.
+  - **One message**: the profile count is not revealed on the page, and the per-address send limit counts the message once.
+  - **The setup copy** for the email step says that whoever reads the inbox can reset the profile. It never says whether other profiles share the address.
 - **I have neither**: the profile cannot be recovered. MathKX has no other details to find it by, and the page offers to create a new profile. This is the ADR's honest sentence, said once at setup and again here.
 
 **Codes, not links.** The prototype's page offered to "send a link to choose a new password". This design sends a code instead, the same kind as email verification. A link would carry a reset token in a URL, which mail scanners open and logs keep, against ADR 0009's rule on URLs.
@@ -127,7 +131,7 @@ The prototype's setup and its reviewed corrections:
 **Email recovery** is ADR 0006's established option.
 - **Who it reaches**: only a verified address receives reset codes.
 - **The reset**: a reset ends every session and, when an email is verified, sends a short notice to it.
-- **The email service**: sending needs a provider, and the email address and message pass through it. The provider must fit ADR 0009's residency rule or the privacy notice must name the transfer. The choice is open (section 9, question 9).
+- **The email service**: sending needs a provider, and learner data passes through it. A verification message carries the address and a code. A forgotten-ID message carries the address, the learner ID, and a reset code. ADR 0009 keeps learner data in Norway East unless a later decision changes that, so the provider must keep these data within that rule. If no suitable provider does, the owner must approve and record a residency exception, as a decision that amends ADR 0009, before a provider is chosen. Naming the transfer in the privacy notice is required either way, but it is not enough on its own. The choice is open (section 9, question 9).
 
 **Recovery codes** (DL-007):
 - **What they are**: ten one-time codes, generated at step 2, shown once, and offered as a separate download from the ID reminder.
@@ -142,15 +146,26 @@ The prototype's setup and its reviewed corrections:
 
 **Signed-in work is the server's.**
 - **Recording**: each answer, support event, lesson view, check-run step, and session change is written to the server as it happens.
-- **Idempotency**: writes reuse the existing `submissionId` and delivery IDs, so a retry never duplicates.
+- **Idempotency**: every logical write carries its own write ID, made once in the browser when the learner acts and reused on every retry. The server stores each write ID once per profile, so a retry never duplicates.
+  - **Why not the delivery ID**: one question can have several genuine support events, and today only submissions and input-guidance events carry an ID (`submissionId`). A help event saved with its response lost would count twice on retry, and deduplicating by delivery would drop later genuine events.
+  - **Submissions** keep `submissionId` as their write ID.
 - **Server results**: a submission is validated and recorded in one request, so the stored result is the server's, never the browser's. Today the browser records the result `/api/validations` returned to it, and that is acceptable only for a guest.
-- **The browser** keeps the current screen state in memory while signed in. A failed write shows the existing "could not be saved" pattern and retries; it never silently drops work.
+- **Resume state**: the question in progress keeps its screen state on the server, as the guest record keeps it today: the typed draft, whether help and the explanation are open, and their steps. That is what lets a draft survive a reload (spec 006 FR-015; DL-026 (4)).
+  - **When it is saved**: after a pause in typing (about a second, to set in the specification), on each help or explanation change, and when the page is hidden or left, with a request that outlives the page.
+  - **Order**: each save carries a sequence number, so an older save that arrives late never overwrites a newer one. A save replaces the previous one; it is screen state, not an event.
+  - **Restoring it**: on load, the app reads the resume state with the question, as it reads the guest record today.
+  - **The limit**: characters typed in the last moment before a crash or a lost connection may be lost. The draft as of the last save is restored.
+- **The browser** keeps nothing about the profile between page loads. A failed write shows the existing "could not be saved" pattern and retries with the same write ID; it never silently drops work.
 
 **Guest work on sign-in**: R01-008 and the brief's §9.2 attach prompt.
 - **Creating a profile** attaches the browser's guest work, marked as guest work, and says so on step 1.
 - **Signing in to an existing profile** with guest work in the browser asks once, with the prototype's two choices: "Add it to the profile" or "Don't add it".
   - **No preselection**: the prompt has no default, because on a shared iPad the guest work may be someone else's.
-  - **Either way**, the guest record is then removed from the browser.
+  - **Either way**, the guest record is then removed from the browser. With "Add it", that happens only after the server confirms the import. The import carries its own write ID, so a retried import is stored once.
+- **Two unfinished checks**: the browser and the profile may each hold an unfinished check of the same skill. Spec 006 allows one per skill (FR-003), so the import applies FR-003's own rule, as if the later check had been started while the earlier one was unfinished.
+  - **The run started later stays resumable**, with its draft.
+  - **The other run is ended**: its answers and their results are kept, its unreached questions are recorded as not answered, and "My work" shows it with its summary.
+  - **Practice** has the same pair, a question in progress in each. The question delivered later stays resumable, and the other is closed as a practice entry closes it (specs 002 and 003).
 - **Re-validation**: the guest record is client-written, so the server treats it as untrusted.
   - It resolves each instance from its identity and validates each submission's original text again, so stored results are its own.
   - It drops events it cannot place, and keeps provenance `guest-import`.
@@ -164,7 +179,8 @@ The prototype's setup and its reviewed corrections:
 The schema is the specification's work (ADR 0008). These are the shape's rules:
 - **Accounts**: one profile row holds the internal ID, the learner ID, the credential hash, and the email state (verified address, pending address, and their code state). It is the only place an email exists.
 - **Observations**: one delivery row per resolved instance, with indexed definition ID, version, seed, generator and validator versions, purpose, and provenance. Its events are JSONB, in order (ADR 0008).
-- **Other records**: lesson views, check runs, sessions, recovery-code hashes, and pending setups each have their own rows, keyed by the internal ID.
+- **Other records**: lesson views, check runs, resume state, sessions, recovery-code hashes, and pending setups each have their own rows, keyed by the internal ID.
+- **Write IDs**: every stored write keeps its write ID, unique per profile ([section 5](#5-guest-work-and-the-server-record)).
 - **Separation**: no learning row holds the learner ID or an email, and deletion is one cascade from the profile.
 
 ## 7. Deletion, retention, and export
@@ -234,7 +250,7 @@ The owner should check what the law requires for learners under the age of digit
 6. **Inactive profiles**: deleted after how long, if at all (suggested: 3 years)?
 7. **Log retention**: 30 days suggested.
 8. **The legal check** for the privacy notice and for learners under 13.
-9. **The email provider** and where it processes data.
+9. **The email provider**: one that keeps learner data within ADR 0009's rule, or, if none fits, a recorded residency exception approved before the choice ([section 4](#4-recovery)).
 
 When the owner decides, the decision log records each choice. An ADR follows for the durable ones (the authentication framework and the session model), and F9's specification starts from this document.
 
@@ -245,7 +261,11 @@ From ADR 0006's consequences and ADR 0008, as acceptance for the built feature:
 - **Unauthorized access is rejected**: a learner ID alone, a wrong password, a used or another profile's recovery code, an expired or wrong email code, and a revoked session all fail.
 - **Email changes**: progress and identity are unchanged after an email is added, changed, cancelled, or removed, and a verified address stays usable until its replacement is verified.
 - **Setup**: a pending setup cannot sign in; confirming step 2 creates the profile and attaches guest work in one transaction; an expired setup leaves nothing.
-- **Guest import**: both answers to the prompt; re-validation replaces a forged result; provenance is kept; the browser record is cleared.
+- **Shared recovery address**: two profiles verified with one address both appear in one forgotten-ID message, and each reset code works only with its own profile's ID.
+- **Retries**: a retried support event is stored once, and a second genuine support event on the same question is stored as a second event.
+- **Drafts**: a signed-in learner types an answer, reloads before submitting, and finds the draft, in practice and in a check. An older draft save arriving late does not replace a newer one.
+- **Guest import**: both answers to the prompt; re-validation replaces a forged result; provenance is kept; a retried import is stored once; the browser record is cleared only after the server confirms.
+- **Two unfinished checks**: an import with an unfinished check of the same skill in the browser and on the profile leaves the later one resumable with its draft and the earlier one ended with its answers kept. The browser record is cleared only after that merge is stored.
 - **Sessions**: idle expiry, kept expiry, "Sign out everywhere", and password change and recovery ending other sessions.
 - **Throttling**: it slows a guessing loop and never locks a profile.
 - **Deletion**: cancelled by signing in within the grace period, and complete after it.
