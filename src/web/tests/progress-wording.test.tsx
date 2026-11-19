@@ -119,6 +119,12 @@ describe("no percentage, ratio, score, streak, or mastery word (SC-002)", () => 
     expect(checkViolations("Question 3 of 4, 3 of 4 correct")).not.toEqual([]);
     expect(checkViolations("Your level")).not.toEqual([]);
     expect(checkViolations("Karakter: 5")).not.toEqual([]);
+    expect(checkViolations("Ditt nivå.")).not.toEqual([]);
+    expect(checkViolations("Nivået ditt")).not.toEqual([]);
+    expect(checkViolations("Karakteren din")).not.toEqual([]);
+    expect(checkViolations("Grades")).not.toEqual([]);
+    expect(checkViolations("Upgrade")).toEqual([]);
+    expect(checkViolations("Nivåløs")).toEqual([]);
     expect(checkViolations("Done in 4 minutes")).not.toEqual([]);
     expect(checkViolations("Ferdig på 30 sekunder")).not.toEqual([]);
     expect(checkViolations("There is no time limit.")).toEqual([]);
@@ -138,7 +144,8 @@ describe("no percentage, ratio, score, streak, or mastery word (SC-002)", () => 
 // word ("mastered", "level", "grade"). A question's or a step's position ("Question 3 of 4", "Step 1 of 3") is where the
 // learner is, not a result, so it is allowed; any other "n of m" is not.
 const POSITION = /\b(question|oppgave|step|steg)\s+\d+\s+(of|av)\s+\d+/gi;
-const CHECK_WORDS = /\b(level|levels|grade|grades|nivå|nivåer|karakter|karakterer)\b/i;
+// Letter boundaries, not \b: JavaScript's \b treats "å" as a non-letter, so "Ditt nivå." would slip through (PR 56 review).
+const CHECK_WORDS = /(?<![\p{L}\p{N}_])(levels?|grades?|nivå|nivået|nivåer|nivåene|karakter|karakteren|karakterer|karakterene)(?![\p{L}\p{N}_])/iu;
 const TIME_TAKEN = /\d+\s*(seconds?|minutes?|hours?|sekund(er)?|minutt(er)?|timer?)\b/i;
 
 function checkViolations(text: string): string[] {

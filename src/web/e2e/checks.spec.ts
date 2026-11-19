@@ -352,6 +352,7 @@ test.describe("keyboard and targets", () => {
       await page.keyboard.press("Enter");
     };
     const typeAnswer = async (answer: string) => {
+      await atLeast44("answer");
       await tabTo(page, "answer");
       await page.keyboard.type(answer);
     };
@@ -368,11 +369,16 @@ test.describe("keyboard and targets", () => {
 
     // 2. Save question 1 with the button and question 2 with Enter in the field: focus on each next question.
     await typeAnswer("10");
-    await atLeast44("check-skip");
     await press("check-save");
     await expect(page.getByTestId("check-position")).toHaveText("Question 2 of 4");
     await expect(page.getByTestId("prompt")).toBeFocused();
     await typeAnswer("9");
+    // "Skip" takes focus and shows it; Shift+Tab goes back past "Save answer" to the field.
+    await atLeast44("check-skip");
+    await tabTo(page, "check-skip");
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.getByTestId("answer")).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("check-position")).toHaveText("Question 3 of 4");
     await expect(page.getByTestId("prompt")).toBeFocused();
@@ -382,6 +388,7 @@ test.describe("keyboard and targets", () => {
     const dialog = page.getByRole("dialog", { name: "Switch to supported practice?" });
     await expect(dialog.getByRole("heading")).toBeFocused();
     await atLeast44("check-switch-no");
+    await tabTo(page, "check-switch-no");
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(page.getByTestId("check-need-help")).toBeFocused();
@@ -411,11 +418,14 @@ test.describe("keyboard and targets", () => {
     await press("check-finish");
     await expect(page.getByTestId("check-summary-heading")).toBeFocused();
 
-    // 7. One explanation, opened and stepped through by keyboard.
+    // 7. One explanation, opened by keyboard; then "Practise more" and "Take a new check" take focus and show it.
     await press("check-explanation-toggle");
     await expect(page.getByTestId("check-explanation-toggle").first()).toHaveAttribute("aria-expanded", "true");
     await expect(page.getByTestId("explanation-step-text").first()).toBeVisible();
-    for (const id of ["check-practise-more", "check-again", "check-to-record"]) await atLeast44(id);
+    for (const id of ["check-practise-more", "check-again"]) {
+      await atLeast44(id);
+      await tabTo(page, id);
+    }
 
     // 8. "Go to my work": the run's link, and the entry after it.
     await press("check-to-record");
@@ -449,6 +459,6 @@ test.describe("keyboard and targets", () => {
     await expect(page.getByTestId("check-position")).toHaveText("Question 1 of 4");
     await expect(page.getByTestId("prompt")).toBeFocused();
 
-    expect(measured).toEqual(expect.arrayContaining(["check-start", "check-save", "check-skip", "check-need-help", "check-switch-yes", "check-switch-no", "check-next", "check-finish", "check-explanation-toggle", "check-practise-more", "check-again", "check-to-record", "check-run-link", "check-run-continue", "check-continue", "check-retry"]));
+    expect(measured).toEqual(expect.arrayContaining(["answer", "check-start", "check-save", "check-skip", "check-need-help", "check-switch-yes", "check-switch-no", "check-next", "check-finish", "check-explanation-toggle", "check-practise-more", "check-again", "check-to-record", "check-run-link", "check-run-continue", "check-continue", "check-retry"]));
   });
 });
