@@ -103,6 +103,8 @@ Accepted decisions are documented in:
 
 The [seed and random-source proposal](proposals/seed-and-random-source.md) is the record of the reasoning and test vectors behind ADR 0011; the ADR is the accepted contract.
 
+The [profiles, recovery, and persistence proposal](proposals/profiles-recovery-and-persistence.md) is the profile design that F9 needs before any account code. It recommends answers to DL-007, DL-022, and DL-027 and to the questions ADR 0006 leaves open; none is decided until the decision log records the owner's choice.
+
 ## Future decisions
 
 - Backend project boundaries and domain interfaces
