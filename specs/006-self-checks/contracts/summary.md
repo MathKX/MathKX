@@ -35,7 +35,7 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 | Independent result, under `check.independentTitle` | three groups in this order: `check.groupCorrect`, `check.groupRevisit`, `check.groupSkipped`. Each has a count (`check.groupCount`) and its questions. An empty group shows `check.groupNone`. With a switch at question 1, the three groups are replaced by `check.noIndependent`. |
 | Supported part | only with a switch: heading `check.supportedTitle` naming `switchAt`, then `check.supportedNote`, then each question with its outcome label (spec 002's `outcome` texts) |
 | Not answered | only for an ended run with a question not answered: heading `check.notAnsweredTitle`, then `check.notAnsweredNote`, then each question |
-| Each question | the expression (`record.question`; for an unreached question, from its answer response, below), `check.yourAnswer`, `check.skippedAnswer`, or `check.noAnswer`; `check.correctAnswer`; a disclosure "Show the explanation" (`practice.showExplanation`) with a `StepPanel` |
+| Each question | the expression (`record.question`; for an unreached question, from its answer response, below), `check.yourAnswer`, `check.skippedAnswer`, or `check.noAnswer`; `check.correctAnswer`; a disclosure "Show explanation" (`practice.showExplanation`) with a `StepPanel` |
 | The tag "Worth revisiting" | `check.groupRevisit` as a tag, on questions in that group only |
 | Note | `check.summaryNote` |
 | Actions | "Practise more" (`check.practiseMore`) to `/practice/{skillId}`, with `check.practiseMoreNote`; "Take a new check" (`check.again`) to `/checks/{checkId}`; a link to "My work" |
@@ -50,7 +50,7 @@ Part of [plan.md](../plan.md) Phase 1. Research R5, R7, and R11; spec User Stori
 - **A reached question**: the explanation is offered when the operands match the record.
 - **An unreached question**: it is offered when they match its answer response's operands.
 
-"Show the explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. Otherwise, the disclosure is replaced by `check.explanationUnavailable`, and whatever the question already shows stays.
+"Show explanation" fetches steps with `api.getStep` in the component and shows them in `StepPanel`. Nothing is dispatched to the store, so nothing is recorded and no group changes. Otherwise, the disclosure is replaced by `check.explanationUnavailable`, and whatever the question already shows stays.
 
 **Never shown**: a score, a fraction such as "2/4", a percentage, a streak, time taken, or a mastery word ("mastered", "level", "grade"). The wording scan (`progress-wording.test.tsx`) gains the check components and the `check` dictionary section.
 

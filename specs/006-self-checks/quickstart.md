@@ -27,7 +27,12 @@ Open http://localhost:5080/lessons/number-bonds-to-ten and choose "Check my unde
 | `npm test` (`src/web`) | The grouping matrix (SC-002); the run's absences, switch, supported part, saving, guidance, and failures; resume after a reload and a language switch; "My work" separation; dictionary parity, literals, and wording |
 | `npx playwright test e2e/checks.spec.ts` (`src/web`, after the build) | The scenarios below on the desktop and iPad projects |
 
-CI runs all of them on every pull request. The run must stay under 10 minutes (SC-007); record the time of the first PR with the end-to-end checks in this file.
+CI runs all of them on every pull request. The run must stay under 10 minutes (SC-007).
+
+**Measured**: the two workflows run in parallel, so the wall time is the longer one, "Build and test".
+- **The first PR with the end-to-end checks**: PR 53, commit `ccfd561`. "Build and test" took 2 min 31 s, and "Validate content" 49 s.
+- **The last PR with feature code**: PR 56, commit `d18ffed`. "Build and test" took 2 min 57 s, with 66 Playwright tests.
+- **The slowest run of the feature**: PR 56, commit `af83b15`, at 6 min 25 s. Its Playwright tests took 52 s; the rest of the end-to-end job was setup.
 
 ## Scenarios
 
