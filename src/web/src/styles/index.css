@@ -63,6 +63,15 @@
 }
 
 @layer mathkx {
+  /* One focus ring. Designsystemet's buttons, fields, and links show it; the app's own links and the language
+     buttons are plain elements, so they take the same rule and tokens here instead of the browser's default
+     (self-checks walkthrough, 2026-11-19). :where() keeps it below any element's own focus rule. */
+  :where(a[href], .mkx-language__button):focus-visible {
+    box-shadow: var(--_ds--focus, var(--dsc-focus-boxShadow));
+    outline: var(--_ds--focus, var(--dsc-focus-outline));
+    outline-offset: var(--_ds--focus, var(--ds-border-width-focus));
+  }
+
   /* Header and navigation */
   .mkx-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 0.75rem; }
   .mkx-nav { display: flex; gap: 1rem; }

@@ -229,9 +229,10 @@ test.describe("the progress view", () => {
         ["outline-on-focus", "", "outline-on-focus"],
         ["shadow-on-focus", "", "shadow-on-focus"],
       ];
+      // Spans, not links: the app gives every link its focus ring, and these test the check, not the app.
       for (const [id, css, className] of cases) {
-        const a = document.createElement("a");
-        a.href = "#";
+        const a = document.createElement("span");
+        a.tabIndex = 0;
         a.textContent = id;
         a.dataset.testid = id;
         a.setAttribute("style", css);
