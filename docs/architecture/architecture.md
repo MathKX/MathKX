@@ -79,7 +79,7 @@ The [lesson structure and Markdown proposal](proposals/lesson-markdown-and-deliv
 - Accessibility requirements apply to every interaction, including mathematical visualizations.
 - Learner profiles must support sign-in and saved progress across sessions and devices without required personal details. Email recovery is optional; see ADR 0006 below.
 - Learner privacy favors minimal collection and no advertising profiling. Anonymous profile setup does not establish complete anonymity for network traffic or operational data.
-- Profiles and progress are stored in PostgreSQL (ADR 0008), and the application is hosted on Azure App Service in Norway East (ADR 0009), so learner data stays in that region. Authentication mechanisms, session handling, retention and deletion rules, and AI usage remain outside the current architecture decision set.
+- Profiles and progress are stored in PostgreSQL (ADR 0008), and the application is hosted on Azure App Service in Norway East (ADR 0009), so learner data stays in that region; the email provider alone may process within the EU/EEA (ADR 0013). Learners sign in with a generated learner ID and a password through ASP.NET Core Identity, with server-side sessions (ADR 0012). AI usage remains outside the current architecture decision set.
 
 ## Diagrams
 
@@ -100,18 +100,20 @@ Accepted decisions are documented in:
 - [ADR 0009: Host on Azure App Service in Norway East](decisions/0009-host-on-azure-app-service.md)
 - [ADR 0010: License code under MIT and content under CC BY-SA 4.0](decisions/0010-license-code-and-content.md)
 - [ADR 0011: Seed representation and random source](decisions/0011-seed-and-random-source.md)
+- [ADR 0012: Authenticate learners with ASP.NET Core Identity and server-side sessions](decisions/0012-authenticate-with-identity-and-server-side-sessions.md)
+- [ADR 0013: Allow the email provider to process learner data in the EU/EEA](decisions/0013-email-provider-in-the-eu-eea.md)
 
 The [seed and random-source proposal](proposals/seed-and-random-source.md) is the record of the reasoning and test vectors behind ADR 0011; the ADR is the accepted contract.
 
-The [profiles, recovery, and persistence proposal](proposals/profiles-recovery-and-persistence.md) is the profile design that F9 needs before any account code. It recommends answers to DL-007, DL-022, and DL-027 and to the questions ADR 0006 leaves open; none is decided until the decision log records the owner's choice.
+The [profiles, recovery, and persistence proposal](proposals/profiles-recovery-and-persistence.md) is the profile design that F9 needs before any account code. The owner accepted it on 2026-11-20 (DL-007, DL-022, DL-027, DL-042, DL-043). ADRs 0012 and 0013 record its durable parts, and the proposal keeps the reasoning, the retention periods, and the details for the specification.
 
 ## Future decisions
 
 - Backend project boundaries and domain interfaces
 - Exercise Format v1 and its compatibility rules
 - Generator and validator registration and versioning
-- Database schema, retention, and deletion rules within PostgreSQL (ADR 0008)
+- Database schema within PostgreSQL (ADR 0008); the retention and deletion periods for profiles are in the profile design proposal (DL-042)
 - Localization storage and delivery
-- Authentication and recovery mechanisms, and learner/parent/teacher relationships
+- Learner/parent/teacher relationships
 - Operational monitoring, infrastructure as code, and service tiers on Azure (ADR 0009)
 - Whether content or visualizations ever warrant separate repositories

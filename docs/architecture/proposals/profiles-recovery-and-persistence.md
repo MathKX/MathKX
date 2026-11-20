@@ -1,6 +1,8 @@
 # Proposal: Learner profiles, recovery, and persistence
 
-**Status**: Proposed, for review before any account code. This is the profile design that [CLAUDE-FABLE-R01-007](../../reviews/round-01/claude-fable/recommendations.md#claude-fable-r01-007--decide-the-production-profile-design-before-building-accounts) asks for and that the decision log's F9 verdict requires: "write the design proposal first". It recommends; it does not decide. DL-007, DL-022, and DL-027 stay with the owner until the decision log records them ([section 9](#9-decisions-for-the-owner)).
+**Status**: Accepted by the owner on 2026-11-20, after review in PR 58 (decision log DL-007, DL-022, DL-027, DL-042, DL-043). [ADR 0012](../decisions/0012-authenticate-with-identity-and-server-side-sessions.md) records the credential, the framework, and the session model; [ADR 0013](../decisions/0013-email-provider-in-the-eu-eea.md) records where the email provider may process data. The F9 specification starts from this document.
+
+This is the profile design that [CLAUDE-FABLE-R01-007](../../reviews/round-01/claude-fable/recommendations.md#claude-fable-r01-007--decide-the-production-profile-design-before-building-accounts) asks for and that the decision log's F9 verdict requires: "write the design proposal first". Its recommendations were written before the owner decided; [section 9](#9-decisions-for-the-owner) records what was decided.
 
 ## Context
 
@@ -59,8 +61,8 @@ These are inputs, not choices:
 **The password hash.** Recommendation: ASP.NET Core Identity's `PasswordHasher`, with its iteration count raised to OWASP's current figure for PBKDF2-HMAC-SHA512. That figure is 210,000; it is external guidance, to confirm when specified. The stored format carries its version, so a later move (for example to Argon2id) can rehash at the next sign-in.
 - **The alternative, Argon2id**: OWASP's first preference. It needs a third-party library in .NET, and contributors would have to keep it current.
 
-**The framework.** Recommendation: ASP.NET Core Identity's core (user manager, sign-in manager, lockout, security stamp) on the EF Core store with Npgsql. The learner ID is the user name, and the email is optional and not unique ([section 4](#4-recovery) covers recovery for a shared address).
-- **For**: reviewed code for hashing, throttling, and invalidating sessions. R01-007's warning is that "the first person to need login will build something plausible and insecure."
+**The framework.** Recommendation: ASP.NET Core Identity's core (user manager, sign-in manager, security stamp) on the EF Core store with Npgsql. Its lockout is turned off ([section 3](#3-sign-in-sessions-and-shared-devices)). The learner ID is the user name, and the email is optional and not unique ([section 4](#4-recovery) covers recovery for a shared address).
+- **For**: reviewed code for hashing and invalidating sessions. Throttling is not part of it ([section 3](#3-sign-in-sessions-and-shared-devices)). R01-007's warning is that "the first person to need login will build something plausible and insecure."
 - **Against**: Identity's tables carry columns this design never uses (phone, two-factor). Its email flows assume links, and this design uses codes, so its defaults must be turned off.
 - **The alternative**: cookie authentication with `PasswordHasher` alone and a small schema of our own. It is smaller, but MathKX would own throttling and session revocation.
 
@@ -97,6 +99,7 @@ The prototype's setup and its reviewed corrections:
 - **One error**: a wrong ID and a wrong password get the same message, "That ID and password don't match.", so the form does not reveal which IDs exist.
 - **Throttling**: after repeated failures, by learner ID and by network address, the service slows down and says "Too many tries. Wait a minute and try again." It does not lock the profile.
 - **Why not lock**: IDs are not secret, so a lock would let anyone shut a learner out.
+- **Who builds it**: Identity offers lockout, not this throttling, and its lockout is turned off. F9 builds both limits, by learner ID and by network address, with ASP.NET Core's rate limiting or a limiter in the sign-in handler, and tests each.
 - **Network addresses** used for throttling are held in memory only, never stored.
 
 **Sessions** are server-side rows.
@@ -111,7 +114,7 @@ The prototype's setup and its reviewed corrections:
 
 **Signing out** deletes the session row and clears everything about the profile from the page and the browser. When signed in, the record is not kept in `localStorage` at all ([section 5](#5-guest-work-and-the-server-record)), so the next person on a shared iPad finds nothing.
 
-**"Sign out everywhere"** (DL-007) is in settings and ends every session, this one included. A password change and a recovery do the same to every other session.
+**"Sign out everywhere"** (DL-007) is in settings and ends every session, this one included. A password change in settings, which asks for the current password, ends every other session and keeps this one. A recovery ends every session of the profile, including one in the browser that completed it; the learner then signs in with the new password.
 
 **Device lists**: settings shows how many devices are signed in and when each was last used. It shows no device names, browsers, or places, because collecting them would mean storing what the platform knows about a learner's devices. This is the smallest form of DL-007's "explicit device sessions".
 
@@ -130,8 +133,9 @@ The prototype's setup and its reviewed corrections:
 
 **Email recovery** is ADR 0006's established option.
 - **Who it reaches**: only a verified address receives reset codes.
-- **The reset**: a reset ends every session and, when an email is verified, sends a short notice to it.
-- **The email service**: sending needs a provider, and learner data passes through it. A verification message carries the address and a code. A forgotten-ID message carries the address, the learner ID, and a reset code. ADR 0009 keeps learner data in Norway East unless a later decision changes that, so the provider must keep these data within that rule. If no suitable provider does, the owner must approve and record a residency exception, as a decision that amends ADR 0009, before a provider is chosen. Naming the transfer in the privacy notice is required either way, but it is not enough on its own. The choice is open (section 9, question 9).
+- **The reset**: a reset ends every session of the profile, including one in the browser that completed it ([section 3](#3-sign-in-sessions-and-shared-devices)), and, when an email is verified, sends a short notice to it.
+- **The email service**: sending needs a provider, and learner data passes through it. A verification message carries the address and a code. A forgotten-ID message carries the address, the learner ID, and a reset code. ADR 0009 keeps learner data in Norway East unless a later decision changes that, so the provider must keep these data within that rule. If no suitable provider does, the owner must approve and record a residency exception, as a decision that amends ADR 0009, before a provider is chosen. Naming the transfer in the privacy notice is required either way, but it is not enough on its own.
+  - **Decided** (DL-043, [ADR 0013](../decisions/0013-email-provider-in-the-eu-eea.md)): the provider may process within the EU/EEA. It sends every profile message this design names: verification codes, recovery messages, the notice after a reset, and the notice before an inactive profile is deleted. It receives only what a message needs, and the specification confirms where it processes before it is used.
 
 **Recovery codes** (DL-007):
 - **What they are**: ten one-time codes, generated at step 2, shown once, and offered as a separate download from the ID reminder.
@@ -142,7 +146,7 @@ The prototype's setup and its reviewed corrections:
 
 ## 5. Guest work and the server record
 
-**Guests stay browser-only.** A guest's record never goes to the server. That keeps today's privacy for everyone who never makes a profile.
+**A guest's record stays in the browser.** The accumulated record (deliveries and their events, lesson views, the practice session, and check runs) is never sent to the server or stored there. A guest's single requests still carry what the service needs to answer them: a validation sends the exercise identity, the answer text, and the submission ID, and the service returns a result and stores none of it. That keeps today's privacy for everyone who never makes a profile.
 
 **Signed-in work is the server's.**
 - **Recording**: each answer, support event, lesson view, check-run step, and session change is written to the server as it happens.
@@ -187,7 +191,7 @@ The schema is the specification's work (ADR 0008). These are the shape's rules:
 
 **Deleting a profile.** Settings offers "Delete my profile", which asks for the password again.
 - **Signing out**: it ends every session at once.
-- **The grace period**: the profile is hidden at once and deleted for good after 7 days. Signing in during those 7 days cancels the deletion, and the confirmation screen says so.
+- **The grace period**: the profile is hidden at once, and its live data is deleted after 7 days. Backups that hold it expire on their own retention (below). Signing in during those 7 days cancels the deletion, and the confirmation screen says so.
 - **The trade**: a 7-day grace protects a learner from an accidental or someone else's deletion. It keeps the data for a week after the learner asked for it to go. The owner should confirm the trade ([section 9](#9-decisions-for-the-owner)); this is not legal advice.
 - **Backups**: they age out on their own retention. Azure's default for this tier is 7 days (external, to confirm), and the notice states the total.
 
@@ -199,7 +203,7 @@ The schema is the specification's work (ADR 0008). These are the shape's rules:
 | Pending email change and its codes | 7 days | Discarded; the verified address, if any, stays |
 | Session | 30 minutes idle unless kept; 30 days idle, at most 90 days, if kept | Deleted |
 | Profile with no sign-in | A period the owner sets; this proposal suggests 3 years | With a verified email: a notice 30 days before. Without: deleted, as the setup screen said |
-| Deleted profile | 7 days | Deleted with everything under it |
+| Deleted profile | 7 days | Live data deleted with everything under it; backups expire on their own retention |
 | Platform request logs | A period set deliberately (ADR 0009); this proposal suggests 30 days | Deleted |
 
 **Export** (DL-007): "Download my work" in settings gives the learner's record as JSON, in the same shape as the guest record, plus the learner ID.
@@ -210,8 +214,9 @@ The schema is the specification's work (ADR 0008). These are the shape's rules:
 
 **A privacy notice** in both languages (DL-007). Recommendation: approve, as a release item. It is plain language, linked from setup and the footer, and covers:
 - what is stored: the learner ID, the password hash, the optional email, the learning record, and sessions;
+- for a guest, what leaves the browser: each request's own data, such as the exercise identity, the answer text, and the submission ID of a validation, none of which the service stores;
 - what is not stored: names, ages, schools, or device details;
-- where the data is (Norway East) and who processes it (the hosting provider and the email provider);
+- where the data is (Norway East, and the email provider within the EU/EEA, ADR 0013) and who processes it (the hosting provider and the email provider);
 - how long each item is kept (section 7);
 - how to export and delete;
 - that anonymous setup is not network anonymity (ADR 0006).
@@ -223,6 +228,8 @@ The owner should check what the law requires for learners under the age of digit
 - **Sign-in failures**: they are counted, not logged with their IDs.
 
 ## 9. Decisions for the owner
+
+**Decided by the owner, 2026-11-20**: every recommendation in this section, and question 9 as an email provider within the EU/EEA. The decision log records them as DL-007, DL-022, DL-027, DL-042, and DL-043.
 
 **DL-007, each addition on its own**:
 
@@ -244,15 +251,15 @@ The owner should check what the law requires for learners under the age of digit
 **New questions this design raises**:
 1. **The framework**: ASP.NET Core Identity's core, or cookie authentication with a small schema of our own ([section 1](#1-identity-and-credentials))?
 2. **The hash**: PBKDF2 through Identity with raised iterations, or Argon2id through a library?
-3. **Guest work**: should guests stay browser-only, with nothing sent to the server for anyone without a profile ([section 5](#5-guest-work-and-the-server-record))?
+3. **Guest work**: should a guest's record stay in the browser, never stored on the server, while single requests such as a validation still send what the service needs to answer ([section 5](#5-guest-work-and-the-server-record))?
 4. **Session lengths**: 30 minutes idle when not kept; 30 days, at most 90, when kept.
 5. **Deletion grace**: 7 days, or immediate.
 6. **Inactive profiles**: deleted after how long, if at all (suggested: 3 years)?
 7. **Log retention**: 30 days suggested.
 8. **The legal check** for the privacy notice and for learners under 13.
-9. **The email provider**: one that keeps learner data within ADR 0009's rule, or, if none fits, a recorded residency exception approved before the choice ([section 4](#4-recovery)).
+9. **The email provider**: one that keeps learner data within ADR 0009's rule, or, if none fits, a recorded residency exception approved before the choice ([section 4](#4-recovery)). Decided: a provider within the EU/EEA (ADR 0013).
 
-When the owner decides, the decision log records each choice. An ADR follows for the durable ones (the authentication framework and the session model), and F9's specification starts from this document.
+The decision log records each choice. ADR 0012 records the durable ones (the credential, the authentication framework, and the session model), ADR 0013 the email provider's region, and F9's specification starts from this document.
 
 ## 10. Tests the specification must carry
 
@@ -266,8 +273,8 @@ From ADR 0006's consequences and ADR 0008, as acceptance for the built feature:
 - **Drafts**: a signed-in learner types an answer, reloads before submitting, and finds the draft, in practice and in a check. An older draft save arriving late does not replace a newer one.
 - **Guest import**: both answers to the prompt; re-validation replaces a forged result; provenance is kept; a retried import is stored once; the browser record is cleared only after the server confirms.
 - **Two unfinished checks**: an import with an unfinished check of the same skill in the browser and on the profile leaves the later one resumable with its draft and the earlier one ended with its answers kept. The browser record is cleared only after that merge is stored.
-- **Sessions**: idle expiry, kept expiry, "Sign out everywhere", and password change and recovery ending other sessions.
-- **Throttling**: it slows a guessing loop and never locks a profile.
+- **Sessions**: idle expiry, kept expiry, and "Sign out everywhere". A password change ends every other session and keeps the current one. A recovery ends every session, including one already signed in to the profile in the browser that completed it.
+- **Throttling**: it slows a guessing loop on one learner ID from many addresses, and one address trying many IDs, and never locks a profile.
 - **Deletion**: cancelled by signing in within the grace period, and complete after it.
 - **Export**: it contains the whole record and nothing about any other profile.
 - **Storage**: all of the above against real PostgreSQL in a container (ADR 0008).

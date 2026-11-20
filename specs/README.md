@@ -14,7 +14,7 @@ Specifications follow the backlog order recorded in the decision log (feature ve
 | [004-progress-view](004-progress-view/spec.md) | F6 | The progress view across skills and lessons, "Lesson viewed" history, and replay of recorded deliveries; adds localized skill names to the content contract (implemented: PRs 36, 38, 40, and 41, then polish) |
 | [005-repeats-and-sessions](005-repeats-and-sessions/spec.md) | F7 | Repeat avoidance, "Repeat this question", and further session controls (implemented: PRs 44, 45, 46, and 48, then polish) |
 | [006-self-checks](006-self-checks/spec.md) | F8 | Self-checks ("Check my understanding"): an independent, bounded check from an authored list, the one-way switch to supported practice, the three-group summary, and checks in "My work"; milestone one is closed (DL-041, [close-out](../docs/reviews/2026-10-31-milestone-one-close-out.md)) (implemented: PRs 52, 53, 54, 55, and 56, then polish) |
-| F9 | — | Profiles, recovery, and persistence: a design proposal first, then a specification (proposal: [profiles-recovery-and-persistence.md](../docs/architecture/proposals/profiles-recovery-and-persistence.md), proposed) |
+| F9 | — | Profiles, recovery, and persistence: a design proposal first, then a specification (proposal: [profiles-recovery-and-persistence.md](../docs/architecture/proposals/profiles-recovery-and-persistence.md), accepted 2026-11-20 with ADRs 0012 and 0013; the specification is next) |
 
 ## Working on a checked-in specification
 
