@@ -11,12 +11,15 @@ The [profiles, recovery, and persistence proposal](../proposals/profiles-recover
 ## Decision
 
 - **Credentials.** A generated learner ID is the user name: `MKX-` and 8 characters from a 31-symbol alphabet without look-alikes. It is not a secret, and it never appears in a URL or a log line. The learner chooses a password of at least 8 characters, with no composition rules, checked against a list of common passwords kept in the repository. No outside breach service is called. An email address is optional and not unique.
-- **Framework.** ASP.NET Core Identity's core (user manager, sign-in manager, security stamp) on its EF Core store with Npgsql. Identity's email-link flows are turned off.
+- **Framework.** ASP.NET Core Identity's core (user manager, sign-in manager, security stamp) on its EF Core store with Npgsql. Identity's lockout and its email-link flows are turned off.
 - **Password hash.** Identity's `PasswordHasher` with PBKDF2-HMAC-SHA512, its iteration count raised to OWASP's current figure (210,000 when the proposal was written; confirmed in the specification). The stored format carries its version, so a later algorithm can rehash at sign-in.
 - **Sign-in.** One message for a wrong ID and a wrong password. Repeated failures are throttled by learner ID and by network address; a profile is never locked, because IDs are not secret. Network addresses used for throttling are held in memory only.
+  - Identity does not provide this throttling. F9 builds both limits, with ASP.NET Core's rate limiting or a limiter in the sign-in handler, and tests each.
 - **Sessions.** Server-side. The browser holds an opaque random token in a `Secure`, `HttpOnly`, `SameSite=Lax` cookie, and the database holds only its hash. State-changing requests carry an anti-forgery token.
   - "Keep me signed in on this device" is unchecked on a new device. Unchecked, a session ends after 30 minutes without activity. Checked, it lasts 30 days from the last use, and never more than 90 days.
-  - "Sign out everywhere" ends every session. A password change or a recovery ends every other session.
+  - "Sign out everywhere" ends every session.
+  - A password change in settings asks for the current password, ends every other session, and keeps the current one.
+  - A recovery ends every session of the profile, including one in the browser that completed it. The learner then signs in with the new password.
   - Settings shows how many devices are signed in and when each was last used, and nothing else about them.
 - **Recovery.** Codes, never links, so no reset token is put in a URL.
   - A verified email receives six-digit codes, valid for 15 minutes, with three tries.
@@ -26,7 +29,7 @@ The [profiles, recovery, and persistence proposal](../proposals/profiles-recover
 
 ## Consequences
 
-- Hashing, throttling, and session invalidation come from reviewed code rather than code MathKX writes.
+- Hashing and session invalidation come from reviewed code rather than code MathKX writes. Throttling does not: MathKX configures it and tests it.
 - Identity's tables include columns this design never uses, such as phone and two-factor fields. Its defaults must be configured for a user name without email.
 - The F9 specification must show that sign-in with the learner ID and no email works on Identity before building on it. If it does not, a new ADR replaces the framework choice; the credential and session rules stand.
 - Passkeys can be added later as a second way in, with their own decision. They are not a release requirement.
