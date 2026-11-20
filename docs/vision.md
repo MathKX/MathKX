@@ -62,5 +62,5 @@ This is a commitment to anonymous profile setup, not a promise of complete anony
 
 ## Long-term direction
 
-The long-term ambition is a trustworthy adaptive learning engine with multiple learner experiences built around it. Reaching that point requires evidence and iteration. Profiles without required personal details and optional email recovery are established requirements. Exact mastery models, curriculum mappings, authentication mechanisms, account relationships, localization mechanisms, and technology choices beyond the initial stack remain open until the project has enough understanding to decide them well.
+The long-term ambition is a trustworthy adaptive learning engine with multiple learner experiences built around it. Reaching that point requires evidence and iteration. Profiles without required personal details and optional email recovery are established requirements. Exact mastery models, curriculum mappings, account relationships, localization mechanisms, and technology choices beyond the initial stack remain open until the project has enough understanding to decide them well.
 

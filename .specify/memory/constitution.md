@@ -34,11 +34,12 @@ The experience is calm, encouraging, modern, and age-appropriate for teenagers a
 
 ## Additional Constraints
 
-- **Stack.** ASP.NET Core and C# for the backend and all domain logic; React and TypeScript for the web client; Designsystemet components and theme with Tailwind for layout; PostgreSQL on Azure Database for PostgreSQL Flexible Server for profiles and progress; Azure App Service (Linux) in Norway East for hosting (ADR 0003, 0007, 0008, 0009; DL-005).
+- **Stack.** ASP.NET Core and C# for the backend and all domain logic; React and TypeScript for the web client; Designsystemet components and theme with Tailwind for layout; PostgreSQL on Azure Database for PostgreSQL Flexible Server for profiles and progress; Azure App Service (Linux) in Norway East for hosting, with the email provider alone allowed within the EU/EEA; ASP.NET Core Identity with a generated learner ID, a password, and server-side sessions for sign-in (ADR 0003, 0007, 0008, 0009, 0012, 0013; DL-005, DL-042, DL-043).
 - **Licensing.** Code and documentation under MIT; learning content under `content/` under CC BY-SA 4.0 (ADR 0010).
 - **Repository.** One monorepo (ADR 0001); directories are created when they hold real work; `content/` holds skills, exercise definitions, and lessons; `schemas/` holds their schemas; durable architectural choices are recorded as ADRs in `docs/architecture/decisions/`, tentative designs under `docs/architecture/proposals/`.
 - **Decided for the first milestone** (decision log, 2026-10-18): skills `numbers.number-bonds-to-ten` and `numbers.addition-within-20` with objectives O1 and O3; one C# addition generator and two definitions (within ten, crossing ten); the prototype's four behaviour rules (counting to the total is a reveal; lesson disclosure rule; "More like this" replaces a pending change; finishing keeps an unanswered question resumable); independent self-checks by default; help-first outcome labels.
-- **Still undecided, and not to be decided inside a specification:** the mastery algorithm, authentication mechanism and credential format, recovery mechanisms beyond email, session handling, retention and deletion rules, symbolic equivalence, AI use, the random-source ADR (pending C# fixtures), and Exercise Format v1.
+- **Decided for profiles** (decision log, 2026-11-20): the accepted [profile design proposal](../../docs/architecture/proposals/profiles-recovery-and-persistence.md) with ADRs 0012 and 0013: credentials, recovery codes and email recovery, sessions, guest work staying in the browser, and the retention and deletion periods (DL-007, DL-022, DL-027, DL-042, DL-043).
+- **Still undecided, and not to be decided inside a specification:** the mastery algorithm, symbolic equivalence, AI use, and Exercise Format v1. The random-source contract is decided (ADR 0011).
 
 ## Development Workflow
 
@@ -59,4 +60,4 @@ The experience is calm, encouraging, modern, and age-appropriate for teenagers a
 
 This constitution supersedes conflicting practice documents. It restates existing decisions; it does not create new requirements. Amendments require an owner decision recorded in the decision log, and an ADR when the change is architectural. Versioning follows semantic versioning: a major version for a removed or redefined principle, a minor version for a new principle or section, a patch for wording.
 
-**Version:** 1.0.0 | **Ratified:** 2026-10-18 | **Last amended:** 2026-10-18
+**Version:** 1.1.0 | **Ratified:** 2026-10-18 | **Last amended:** 2026-11-20 (profile decisions DL-042 and DL-043, ADRs 0012 and 0013; the random-source ADR no longer listed as pending)

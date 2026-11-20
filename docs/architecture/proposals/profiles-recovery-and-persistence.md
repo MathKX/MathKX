@@ -1,6 +1,8 @@
 # Proposal: Learner profiles, recovery, and persistence
 
-**Status**: Proposed, for review before any account code. This is the profile design that [CLAUDE-FABLE-R01-007](../../reviews/round-01/claude-fable/recommendations.md#claude-fable-r01-007--decide-the-production-profile-design-before-building-accounts) asks for and that the decision log's F9 verdict requires: "write the design proposal first". It recommends; it does not decide. DL-007, DL-022, and DL-027 stay with the owner until the decision log records them ([section 9](#9-decisions-for-the-owner)).
+**Status**: Accepted by the owner on 2026-11-20, after review in PR 58 (decision log DL-007, DL-022, DL-027, DL-042, DL-043). [ADR 0012](../decisions/0012-authenticate-with-identity-and-server-side-sessions.md) records the credential, the framework, and the session model; [ADR 0013](../decisions/0013-email-provider-in-the-eu-eea.md) records where the email provider may process data. The F9 specification starts from this document.
+
+This is the profile design that [CLAUDE-FABLE-R01-007](../../reviews/round-01/claude-fable/recommendations.md#claude-fable-r01-007--decide-the-production-profile-design-before-building-accounts) asks for and that the decision log's F9 verdict requires: "write the design proposal first". Its recommendations were written before the owner decided; [section 9](#9-decisions-for-the-owner) records what was decided.
 
 ## Context
 
@@ -131,7 +133,8 @@ The prototype's setup and its reviewed corrections:
 **Email recovery** is ADR 0006's established option.
 - **Who it reaches**: only a verified address receives reset codes.
 - **The reset**: a reset ends every session and, when an email is verified, sends a short notice to it.
-- **The email service**: sending needs a provider, and learner data passes through it. A verification message carries the address and a code. A forgotten-ID message carries the address, the learner ID, and a reset code. ADR 0009 keeps learner data in Norway East unless a later decision changes that, so the provider must keep these data within that rule. If no suitable provider does, the owner must approve and record a residency exception, as a decision that amends ADR 0009, before a provider is chosen. Naming the transfer in the privacy notice is required either way, but it is not enough on its own. The choice is open (section 9, question 9).
+- **The email service**: sending needs a provider, and learner data passes through it. A verification message carries the address and a code. A forgotten-ID message carries the address, the learner ID, and a reset code. ADR 0009 keeps learner data in Norway East unless a later decision changes that, so the provider must keep these data within that rule. If no suitable provider does, the owner must approve and record a residency exception, as a decision that amends ADR 0009, before a provider is chosen. Naming the transfer in the privacy notice is required either way, but it is not enough on its own.
+  - **Decided** (DL-043, [ADR 0013](../decisions/0013-email-provider-in-the-eu-eea.md)): the provider may process within the EU/EEA. It receives only what a message needs, and the specification confirms where it processes before it is used.
 
 **Recovery codes** (DL-007):
 - **What they are**: ten one-time codes, generated at step 2, shown once, and offered as a separate download from the ID reminder.
@@ -211,7 +214,7 @@ The schema is the specification's work (ADR 0008). These are the shape's rules:
 **A privacy notice** in both languages (DL-007). Recommendation: approve, as a release item. It is plain language, linked from setup and the footer, and covers:
 - what is stored: the learner ID, the password hash, the optional email, the learning record, and sessions;
 - what is not stored: names, ages, schools, or device details;
-- where the data is (Norway East) and who processes it (the hosting provider and the email provider);
+- where the data is (Norway East, and the email provider within the EU/EEA, ADR 0013) and who processes it (the hosting provider and the email provider);
 - how long each item is kept (section 7);
 - how to export and delete;
 - that anonymous setup is not network anonymity (ADR 0006).
@@ -223,6 +226,8 @@ The owner should check what the law requires for learners under the age of digit
 - **Sign-in failures**: they are counted, not logged with their IDs.
 
 ## 9. Decisions for the owner
+
+**Decided by the owner, 2026-11-20**: every recommendation in this section, and question 9 as an email provider within the EU/EEA. The decision log records them as DL-007, DL-022, DL-027, DL-042, and DL-043.
 
 **DL-007, each addition on its own**:
 
@@ -250,9 +255,9 @@ The owner should check what the law requires for learners under the age of digit
 6. **Inactive profiles**: deleted after how long, if at all (suggested: 3 years)?
 7. **Log retention**: 30 days suggested.
 8. **The legal check** for the privacy notice and for learners under 13.
-9. **The email provider**: one that keeps learner data within ADR 0009's rule, or, if none fits, a recorded residency exception approved before the choice ([section 4](#4-recovery)).
+9. **The email provider**: one that keeps learner data within ADR 0009's rule, or, if none fits, a recorded residency exception approved before the choice ([section 4](#4-recovery)). Decided: a provider within the EU/EEA (ADR 0013).
 
-When the owner decides, the decision log records each choice. An ADR follows for the durable ones (the authentication framework and the session model), and F9's specification starts from this document.
+The decision log records each choice. ADR 0012 records the durable ones (the credential, the authentication framework, and the session model), ADR 0013 the email provider's region, and F9's specification starts from this document.
 
 ## 10. Tests the specification must carry
 

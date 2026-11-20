@@ -1,6 +1,6 @@
 # ADR 0009: Host on Azure App Service in Norway East
 
-**Status:** Accepted (owner decision, 2026-10-18)
+**Status:** Accepted (owner decision, 2026-10-18). Amended by [ADR 0013](0013-email-provider-in-the-eu-eea.md) (2026-11-20): the email provider may process within the EU/EEA.
 
 ## Context
 

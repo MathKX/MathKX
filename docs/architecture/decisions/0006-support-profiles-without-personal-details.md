@@ -1,6 +1,6 @@
 # ADR 0006: Support profiles without personal details
 
-**Status:** Accepted
+**Status:** Accepted. The authentication mechanism, recovery beyond email, and session handling it leaves open are decided in [ADR 0012](0012-authenticate-with-identity-and-server-side-sessions.md) (2026-11-20).
 
 ## Context
 
