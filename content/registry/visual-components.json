@@ -49,6 +49,23 @@
         }
       },
       "representation": "make-ten"
+    },
+    {
+      "type": "balance-explorer",
+      "attributes": {
+        "a": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "required": true
+        },
+        "b": {
+          "type": "integer",
+          "min": 2,
+          "max": 15,
+          "required": true
+        }
+      }
     }
   ]
 }

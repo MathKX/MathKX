@@ -107,6 +107,8 @@ A divergence names the file, the line, the element, and the value in the other l
 
 Pilot components: `ten-frame-explorer` (`start` 0–10), `groups` (`a`, `b` 1–9, sum 2–10), `make-ten` (`a`, `b` 1–9, sum 11–18). For `groups` and `make-ten`, `a` and `b` are checked together against the linked representation's bounds, so `groups` with `a="9" b="9"` is rejected.
 
+`balance-explorer` (`a` 1–9, `b` 2–15) shows $x + a = b$ on a balance scale; the learner takes weights off either pan and sees the scale tip or stay level (specs/008). `b` must be greater than `a`, so that $x$ is at least 1; `a="5" b="5"` is rejected.
+
 ## 6. Notation grammar
 
 Inside `$…$` and `$$…$$` the pilot accepts:

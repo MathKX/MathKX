@@ -174,7 +174,7 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         using var skills = JsonDocument.Parse(body);
         var list = skills.RootElement.EnumerateArray().ToList();
 
-        Assert.Equal(9, list.Count);
+        Assert.Equal(10, list.Count);
         var ids = list.Select(s => s.GetProperty("id").GetString()!).ToList();
         Assert.Equal(ids.Order(StringComparer.Ordinal), ids);
         Assert.All(list, s =>
@@ -601,6 +601,24 @@ public sealed class StepContractTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal(11, states.Count);
         Assert.All(states, s => Assert.Equal(10, s.GetProperty("filled").GetInt32() + s.GetProperty("partner").GetInt32()));
         Assert.Equal(body, await client.GetStringAsync("/api/visuals/ten-frame-explorer"));
+    }
+
+    [Fact]
+    public async Task The_balance_explorer_returns_every_state_and_refuses_equations_it_cannot_show()
+    {
+        using var client = _factory.CreateClient();
+        using var explorer = JsonDocument.Parse(await client.GetStringAsync("/api/visuals/balance-explorer?a=3&b=7"));
+        var states = explorer.RootElement.GetProperty("states").EnumerateArray().ToList();
+        Assert.Equal(4 * 8, states.Count);
+        Assert.Equal("balanced", states[0].GetProperty("tilt").GetString());
+        var solved = Assert.Single(states, s => s.GetProperty("solved").GetBoolean());
+        Assert.Equal((0, 4), (solved.GetProperty("left").GetInt32(), solved.GetProperty("right").GetInt32()));
+
+        foreach (var query in new[] { "a=7&b=3", "a=4&b=4", "a=3&b=16", "a=0&b=5", "a=x&b=5", "a=3" })
+        {
+            var refused = await client.GetAsync($"/api/visuals/balance-explorer?{query}");
+            Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        }
     }
 
     private static async Task<string> SeedFor(HttpClient client, string definition, int a, int b)

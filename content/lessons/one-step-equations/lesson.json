@@ -1,0 +1,24 @@
+{
+  "$schema": "../../../schemas/lesson.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "one-step-equations",
+  "version": 1,
+  "status": "draft",
+  "skills": [
+    "algebra.one-step-equations"
+  ],
+  "prerequisites": [
+    "numbers.addition-within-20"
+  ],
+  "relatedLessons": [
+    "number-bonds-to-ten"
+  ],
+  "practice": [],
+  "visuals": [
+    "balance-explorer"
+  ],
+  "translations": {
+    "nb": "nb.md",
+    "en": "en.md"
+  }
+}

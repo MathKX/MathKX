@@ -1,0 +1,7 @@
+{
+  "$schema": "../../schemas/skill.schema.json",
+  "schemaVersion": "0.1",
+  "id": "algebra.one-step-equations",
+  "name": { "nb": "Likninger med ett steg", "en": "One-step equations" },
+  "prerequisites": ["numbers.addition-within-20"]
+}
