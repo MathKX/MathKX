@@ -1,5 +1,6 @@
 // specs/008: the one-step equations lesson and its balance explorer, against the real service and the built app.
 import { expect, test } from "@playwright/test";
+import { tabTo } from "./focus";
 
 const LESSON = "/lessons/one-step-equations";
 
@@ -19,30 +20,44 @@ test.describe("the balance explorer (specs/008)", () => {
     await expect(scales.nth(1).getByTestId("balance-equation")).toHaveText(/x\s*\+\s*5\s*=\s*12/);
   });
 
-  test("2. keyboard only: tip the scale, undo, and solve x + 3 = 7, with visible focus", async ({ page }) => {
+  test("2. keyboard only: every control is reached by Tab, shows focus, and works with Enter; x + 3 = 7 is solved", async ({ page }) => {
     await page.goto(LESSON);
     const scale = page.getByTestId("balance-explorer").first();
     await expect(scale.getByTestId("balance-scale")).toBeVisible();
     const beam = scale.locator(".mkx-balance__beam");
     const level = await beam.evaluate((el) => getComputedStyle(el).transform);
+    const hint = "De to sidene er ikke lenger like. Angre, og ta like mye av begge skålene.";
+    const equation = scale.getByTestId("balance-equation");
 
-    await scale.getByTestId("balance-right").focus();
+    // Both pans, then the left pan alone: the scale tips right, and the hint is shown and announced.
+    await tabTo(page, "balance-both");
     await page.keyboard.press("Enter");
-    await expect(scale).toHaveAttribute("data-tilt", "left-down");
+    await expect(equation).toHaveText(/x\s*\+\s*2\s*=\s*6/);
+    await tabTo(page, "balance-left");
+    await page.keyboard.press("Enter");
+    await expect(scale).toHaveAttribute("data-tilt", "right-down");
     await expect(scale.getByTestId("balance-hint")).toBeVisible();
+    await expect(scale.getByTestId("balance-live")).toContainText(hint);
     await expect.poll(() => beam.evaluate((el) => getComputedStyle(el).transform)).not.toBe(level);
 
-    await page.keyboard.press("Tab");
-    await expect(scale.getByTestId("balance-undo")).toBeFocused();
-    const ring = await scale.getByTestId("balance-undo").evaluate((el) => {
-      const style = getComputedStyle(el);
-      return (style.outlineStyle !== "none" && style.outlineWidth !== "0px") || style.boxShadow !== "none";
-    });
-    expect(ring, "Undo shows focus").toBe(true);
+    // Undo levels it again; Start again returns the authored equation.
+    await tabTo(page, "balance-undo");
+    await page.keyboard.press("Enter");
+    await expect(scale).toHaveAttribute("data-tilt", "balanced");
+    await expect(equation).toHaveText(/x\s*\+\s*2\s*=\s*6/);
+    await tabTo(page, "balance-reset");
+    await page.keyboard.press("Enter");
+    await expect(equation).toHaveText(/x\s*\+\s*3\s*=\s*7/);
+
+    // The right pan alone tips the scale left; Undo returns to the start.
+    await tabTo(page, "balance-right", { backward: true });
+    await page.keyboard.press("Enter");
+    await expect(scale).toHaveAttribute("data-tilt", "left-down");
+    await tabTo(page, "balance-undo");
     await page.keyboard.press("Enter");
     await expect(scale).toHaveAttribute("data-tilt", "balanced");
 
-    await scale.getByTestId("balance-both").focus();
+    await tabTo(page, "balance-both", { backward: true });
     for (let i = 0; i < 3; i++) await page.keyboard.press("Enter");
     await expect(scale).toHaveAttribute("data-solved", "true");
     await expect(scale.getByTestId("balance-equation")).toHaveText(/x\s*=\s*4/);

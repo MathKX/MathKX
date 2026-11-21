@@ -3,7 +3,7 @@
 **Feature Branch**: `claude/balance-scale-equations`
 **Created**: 2026-11-21
 **Status**: Implemented (first slice: the lesson and the balance explorer)
-**Sources**: DL-006 (one-step equations as milestone two), the [learning model](../../docs/learning/learning-model.md), the [design principles](../../docs/design/design-principles.md), and the visual pattern of the ten-frame explorer (specs/003 FR-007).
+**Sources**: DL-006 (one-step equations as milestone two), DL-044 (the owner's decision to ship this draft lesson before the educator review that DL-041 placed before milestone two; the review is still owed and now covers this lesson), the [learning model](../../docs/learning/learning-model.md), the [design principles](../../docs/design/design-principles.md), and the visual pattern of the ten-frame explorer (specs/003 FR-007).
 
 A short specification by design: one topic, one change. Practice for this skill (a generator, a validator, and a ladder) is a later change with its own short specification.
 
@@ -31,7 +31,7 @@ A learner opens "Equations and the balance" from the lesson list. A balance scal
 **Acceptance Scenarios**:
 
 1. **Given** keyboard only, **When** the learner tabs through the controls, **Then** each control is reachable, shows the focus ring, and works with Enter.
-2. **Given** a screen reader, **When** the scale changes, **Then** the pans' contents, the tilt, and a solution are announced once, and the drawing carries the same description.
+2. **Given** a screen reader, **When** the scale changes, **Then** the pans' contents, the tilt, the hint when the scale tips, and a solution are announced once, and the drawing carries the same description.
 3. **Given** an iPad, **When** the lesson is shown, **Then** each control is at least 44 by 44 pixels and the page does not scroll sideways.
 4. **Given** either release language, **Then** the lesson and the explorer are fully translated.
 

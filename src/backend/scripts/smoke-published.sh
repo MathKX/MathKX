@@ -26,7 +26,7 @@ for _ in $(seq 1 60); do
   sleep 0.5
 done
 
-curl -fsS "http://127.0.0.1:$port/api/health" | grep -q '"lessons":1' || { echo "health did not report the lesson"; cat "$out/service.log"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/health" | grep -q '"lessons":2' || { echo "health did not report both lessons"; cat "$out/service.log"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/lessons/number-bonds-to-ten" | grep -q '"id":"number-bonds-to-ten"' || { echo "lesson did not resolve"; exit 1; }
 body="$(curl -fsS "http://127.0.0.1:$port/api/instances/numbers.addition.within-10/1/42")"
 echo "$body" | grep -q '"definitionId":"numbers.addition.within-10"' || { echo "instance did not resolve"; exit 1; }
@@ -49,4 +49,8 @@ checks="$(curl -fsS "http://127.0.0.1:$port/api/checks")"
 echo "$checks" | grep -q '"id":"numbers.addition.check-within-20"' || { echo "the pilot check was not published"; exit 1; }
 echo "$checks" | grep -q '"sum"' && { echo "the check list leaked a sum"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/instances/numbers.addition.within-10/1/22/answer" | grep -q '"answer":{"kind":"integer","value":10}' || { echo "the answer endpoint did not give 10"; exit 1; }
+# specs/008: the package carries the equations lesson, its content, and its balance explorer.
+curl -fsS "http://127.0.0.1:$port/api/lessons/one-step-equations" | grep -q '"id":"one-step-equations"' || { echo "the equations lesson did not resolve"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/lessons/one-step-equations/content/nb" | grep -q '"markdown":"---' || { echo "the equations lesson content was not published"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/visuals/balance-explorer?a=3&b=7" | grep -q '"type":"balance-explorer"' || { echo "the balance explorer did not resolve"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

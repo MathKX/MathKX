@@ -47,11 +47,11 @@ export const focusShows = (page: Page) =>
     return { name: el.dataset.testid ?? el.tagName.toLowerCase(), visible: changed && (outline || paintedShadow) };
   });
 
-/** Tabs forward until `testId` has focus, and expects it to show that it has. */
-export async function tabTo(page: Page, testId: string) {
+/** Tabs forward (or backward) until `testId` has focus, and expects it to show that it has. */
+export async function tabTo(page: Page, testId: string, { backward = false }: { backward?: boolean } = {}) {
   await recordUnfocused(page);
   for (let i = 0; i < 30; i++) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(backward ? "Shift+Tab" : "Tab");
     const focus = await focusShows(page);
     if (focus.name === testId) {
       expect(focus.visible, `${testId} shows focus`).toBe(true);

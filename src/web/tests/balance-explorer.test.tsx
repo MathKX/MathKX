@@ -43,7 +43,14 @@ describe("the balance explorer", () => {
 
     await user.click(button("balance-left"));
     expect(figure().dataset.tilt).toBe("right-down");
-    expect(screen.getByTestId("balance-live").textContent).toBe("Left pan: x and 2. Right pan: 7. The scale tips: the right pan is heavier.");
+    const hint = "The two sides are no longer equal. Undo, and take the same off both pans.";
+    const live = screen.getByTestId("balance-live").textContent ?? "";
+    expect(live).toBe(`Left pan: x and 2. Right pan: 7. The scale tips: the right pan is heavier. ${hint}`);
+    expect(live.split(hint)).toHaveLength(2); // announced once
+    expect(screen.getByRole("img").getAttribute("aria-label")).toContain(hint);
+
+    await user.click(button("balance-undo"));
+    expect(screen.getByTestId("balance-live").textContent).not.toContain(hint);
   });
 
   it("solves the equation when the same is taken off both pans until x stands alone", async () => {

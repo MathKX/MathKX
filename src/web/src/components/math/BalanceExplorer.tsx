@@ -126,8 +126,10 @@ export function BalanceExplorer({ a, b, lang, api }: { a: number; b: number; lan
 function describe(state: BalanceState, model: BalanceExplorerDto, lang: Lang) {
   const pans = translate(lang, state.left === 0 ? "lesson.balancePansAlone" : "lesson.balancePans", { left: state.left, right: state.right });
   const tilt = translate(lang, state.tilt === "balanced" ? "lesson.balanceLevel" : state.tilt === "left-down" ? "lesson.balanceLeftDown" : "lesson.balanceRightDown");
+  // A tilted scale carries the same hint the sighted learner sees, so a screen-reader user also learns how to recover.
+  const hint = state.tilt !== "balanced" ? ` ${translate(lang, "lesson.balanceHint")}` : "";
   const solved = state.solved ? ` ${translate(lang, "lesson.balanceSolved", { x: state.right })} ${translate(lang, "lesson.balanceCheck", { x: state.right, a: model.a, b: model.b })}` : "";
-  return { tilt, spoken: `${pans} ${tilt}${solved}` };
+  return { tilt, spoken: `${pans} ${tilt}${hint}${solved}` };
 }
 
 /** x, then + and the left pan's weights unless none are left, then = or ≠ as the service's tilt says, then the right pan. */
