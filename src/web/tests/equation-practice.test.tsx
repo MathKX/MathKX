@@ -1,6 +1,6 @@
 // specs/009: practising x + a = b, with the balance as visual help. The service decides the form, judges the
 // answer, and steps the balance; the app draws what it is given.
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
@@ -26,7 +26,26 @@ const answer = async (user: ReturnType<typeof userEvent.setup>, text: string) =>
 
 afterEach(() => {
   window.localStorage.clear();
+  window.history.replaceState(null, "", "/");
 });
+
+const stored = () => JSON.parse(window.localStorage.getItem("mathkx.guest.v1") ?? "{}").value;
+
+/** An in-app move to another address, as the browser's back and forward do. */
+function go(path: string) {
+  act(() => {
+    window.history.pushState(null, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+}
+
+async function renderAddition() {
+  window.localStorage.clear();
+  const api = createFakeApi({ skills: [SKILL, BONDS_SKILL, EQUATIONS_SKILL] });
+  render(<App api={api} initialPath="/practice/numbers.addition-within-20" />);
+  await screen.findByTestId("prompt");
+  return { api, user: userEvent.setup() };
+}
 
 describe("practice of one-step equations", () => {
   it("asks x + a = b, reads it aloud as an equation, and shows no answer", async () => {
@@ -84,5 +103,48 @@ describe("practice of one-step equations", () => {
     await user.click(screen.getByRole("link", { name: "Mitt arbeid" }));
     const question = await screen.findByTestId("record-question");
     expect(question.textContent).toBe("x + 3 = 7");
+  });
+});
+
+describe("moving between addition and equations (PR 63 review)", () => {
+  it("drops a pending addition change when equations start, so Another question stays on the equations ladder", async () => {
+    const { user, api } = await renderAddition();
+    await user.click(screen.getByTestId("harder"));
+    expect(screen.getByTestId("ladder-pending")).toBeTruthy();
+
+    go("/practice/algebra.one-step-equations");
+    await waitFor(() => expect(screen.getByTestId("prompt").dataset.form).toBe("unknown-addend"));
+    expect(screen.queryByTestId("ladder-pending")).toBeNull();
+    expect(stored().ladder.pending).toBeNull();
+
+    await user.click(screen.getByTestId("another"));
+    await waitFor(() => expect(api.calls.filter((c) => c.startsWith("getInstance algebra.one-step.within-10"))).toHaveLength(2));
+    expect(api.calls.some((c) => c.startsWith("getInstance numbers.addition.crossing-ten"))).toBe(false);
+    expect(screen.getByTestId("prompt").dataset.form).toBe("unknown-addend");
+  });
+
+  async function leaveAnUnansweredAdditionQuestion() {
+    const { user } = await renderAddition();
+    await user.type(screen.getByTestId("answer"), "7");
+    await user.click(screen.getByTestId("finish-practice"));
+    await screen.findByTestId("session-page");
+    return { user, unfinished: stored().resumable.deliveryId as string };
+  }
+
+  it("does not resume an unanswered addition question under equations", async () => {
+    const { unfinished } = await leaveAnUnansweredAdditionQuestion();
+    go("/practice/algebra.one-step-equations");
+    await waitFor(() => expect(screen.getByTestId("prompt").dataset.form).toBe("unknown-addend"));
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("");
+    expect(stored().currentDeliveryId).not.toBe(unfinished);
+    expect(screen.getByTestId("ladder-current").textContent).toBe("Nå: Likninger der høyre side er høyst 10.");
+  });
+
+  it("still resumes it, with its draft, in addition practice", async () => {
+    const { unfinished } = await leaveAnUnansweredAdditionQuestion();
+    go("/practice/numbers.addition-within-20");
+    await waitFor(() => expect(stored().currentDeliveryId).toBe(unfinished));
+    expect(screen.getByTestId("prompt").dataset.form).toBe("addition");
+    expect((screen.getByTestId("answer") as HTMLInputElement).value).toBe("7");
   });
 });

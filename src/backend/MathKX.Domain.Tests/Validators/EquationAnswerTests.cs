@@ -74,11 +74,29 @@ public sealed class EquationAnswerTests
     }
 
     [Fact]
+    public void Every_generated_definition_pairs_a_validator_with_a_generator_of_its_form()
+    {
+        // PR 63 review: the content check refuses a mismatch; this holds the shipped content to the same rule.
+        var catalog = ContentLoader.Load(RepositoryContent.Root);
+        var relations = new Dictionary<string, string> { [QuestionForms.Addition] = "sum-of-two-operands", [QuestionForms.UnknownAddend] = "unknown-addend" };
+        foreach (var definition in catalog.Definitions.Values.Where(d => d.Generator is not null))
+        {
+            var form = catalog.Validators[definition.Validator.Key].Form;
+            Assert.Equal(relations[form], catalog.Generators[definition.Generator!.Key].Relation);
+        }
+    }
+
+    [Fact]
     public void The_registry_implements_every_registered_validator_and_agrees_with_its_entry()
     {
         var catalog = ContentLoader.Load(RepositoryContent.Root);
         var registry = ValidatorRegistry.Default();
         Assert.Equal(catalog.Validators.Keys.Order(StringComparer.Ordinal), registry.Keys.Order(StringComparer.Ordinal));
+
+        foreach (var (key, registered) in catalog.Validators)
+        {
+            Assert.Equal(registered.Form, registry.Get(new NamedVersion(registered.Name, registered.Version)).Form);
+        }
 
         var entry = catalog.Validators["equation-answer@1"];
         Assert.Equal("integer", entry.Artifact.Type);

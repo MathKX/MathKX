@@ -33,6 +33,7 @@ public sealed class EquationDisclosureTests
 
     [Theory]
     [InlineData(2, 9)] // in "Try it yourself" without its answer
+    [InlineData(6, 10)] // the lesson also has x = 4, but for the worked example's x + 3 = 7
     [InlineData(4, 13)]
     [InlineData(1, 2)]
     public void Equations_the_lesson_does_not_solve_are_not_disclosed(int a, int b)
@@ -41,10 +42,14 @@ public sealed class EquationDisclosureTests
     }
 
     [Fact]
-    public void Over_reports_when_another_equation_has_the_same_solution()
+    public void A_solution_counts_only_for_the_equation_it_follows()
     {
-        // x + 6 = 10 is in "Try it yourself"; x = 4 belongs to the worked example. The rule errs towards a notice.
-        Assert.True(LessonDisclosure.For(Translations, Question(6, 10, QuestionForms.UnknownAddend)).Discloses);
+        LessonFacts Facts(params string[] expressions) => new(expressions.Select(e => new LessonExpression(e)).ToList(), []);
+        var question = Question(6, 10, QuestionForms.UnknownAddend);
+        Assert.True(LessonDisclosure.For(Facts("x + 6 = 10", "x + 6 − 6 = 10 − 6", "x = 4"), question).Discloses);
+        Assert.False(LessonDisclosure.For(Facts("x + 3 = 7", "x = 4", "x + 6 = 10"), question).Discloses);
+        Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "x + 3 = 7", "x = 4"), question).Discloses);
+        Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "x = 5"), question).Discloses);
     }
 
     [Fact]

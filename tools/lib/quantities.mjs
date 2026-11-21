@@ -39,6 +39,12 @@ export const RELATIONS = {
 
 export const PILOT_RELATION = "sum-of-two-operands";
 
+/** The relation that produces each question form a validator judges (specs/009); the registry schema lists the forms. */
+export const FORM_RELATIONS = {
+  addition: "sum-of-two-operands",
+  "unknown-addend": "unknown-addend",
+};
+
 const isInteger = (v) => Number.isInteger(v);
 
 /** Domain box of a generated definition: parameter bounds mapped onto the generator's quantities. */

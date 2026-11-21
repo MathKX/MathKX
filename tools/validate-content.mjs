@@ -41,7 +41,7 @@ async function main() {
   const definitions = indexDefinitions([...ofKind("exercise"), ...ofKind("definition")], { skills, registries, diagnostics });
   checkNames(skills, diagnostics);
   checkLadders(skills, definitions, diagnostics);
-  checkChecks(ofKind("check"), { skills, definitions, diagnostics });
+  checkChecks(ofKind("check"), { skills, definitions, registries, diagnostics });
   const lessonCount = await checkLessons(ofKind("lesson"), { skills, definitions, registries, diagnostics });
 
   const counts = { files: fileCount, skills: skills.size, lessons: lessonCount, definitions: definitions.size, checks: ofKind("check").length, registries: registries.count };

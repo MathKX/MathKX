@@ -718,10 +718,15 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       dispatch({ type: "ladder", skillId, entries: skill.ladder, current: first });
       const resumable = current.resumable;
       const resumableDelivery = resumable ? current.deliveries.find((d) => d.id === resumable.deliveryId) : undefined;
-      const resumeFits = resumableDelivery ? !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
+      // Only a question of this skill resumes here (PR 63 review): an unanswered addition question stays resumable
+      // from addition practice, and is not shown under the equations ladder.
+      const ofSkill = resumableDelivery ? skill.definitions.includes(`${resumableDelivery.instance.definitionId}@${resumableDelivery.instance.version}`) : false;
+      const resumeFits = resumableDelivery ? ofSkill && !differsFrom({ definition: resumableDelivery.instance.definitionId, version: resumableDelivery.instance.version }) : false;
       if (resumable && resumeFits && (await resume(resumable)) !== "failed") return;
       if (run !== practiceRun.current) return;
-      await load(first, false, { origin: originLessonId ?? null }); // a new practice run: its origin, or none
+      // A new practice run: its origin, or none. A pending change of another skill's practice is dropped with the
+      // first question of this one (PR 63 review), as a selection's is.
+      await load(first, false, { origin: originLessonId ?? null, clearPending: current.skillId !== null && current.skillId !== skillId });
     },
     [api, load, resume],
   );
@@ -801,7 +806,9 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         } else {
           dispatch({ type: "event", event: { type: "challenge-request", request, outcome: "requested" } });
         }
-        const applying = request === "another" && pending ? pending : null;
+        // A pending change applies only on its own ladder: one left from another skill never loads here.
+        const onLadder = pending ? current.ladder.entries.some((e) => e.definition === pending.definition && e.version === pending.version) : false;
+        const applying = request === "another" && pending && onLadder ? pending : null;
         const target: DefinitionRef | null = applying ?? current.ladder.current;
         if (!target) return;
         await load(target, false, applying ? { applied: applying } : {}); // the applied event and the clearing commit with the question

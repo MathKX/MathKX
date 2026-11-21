@@ -64,7 +64,7 @@ These are carried forward past the milestone (DL-041). The validation plan is in
 | An adult who did not grow up with "tiervenner": the lesson in English, then five questions. Does the framing land, and does anything read as childish? | Brief §10 | Owner's choice of reader | open |
 | Content review of the nine skill names in both languages | Spec 004 (PR 41) | Owner or a translator | open |
 | First contributor check: edit a lesson sentence, preview, validate, in under 15 minutes | Spec 003 SC-007 | A contributor new to the repository | open (the brief puts it before release) |
-| A mathematics educator reviews O1 and O3, the two skills, the misconception codes and texts, and the ladder sentences | Brief §10 | An educator | open (the brief puts it before milestone two; DL-044, 2026-11-21, lets the draft equations lesson ship first, and the review now covers it too) |
+| A mathematics educator reviews O1 and O3, the two skills, the misconception codes and texts, and the ladder sentences | Brief §10 | An educator | open (the brief puts it before milestone two; DL-044, 2026-11-21, lets the draft equations lesson and then its graded practice ship first, and the review now covers both) |
 
 The three learner checks can be done in one session.
 

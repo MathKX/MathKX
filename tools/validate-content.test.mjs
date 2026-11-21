@@ -392,6 +392,30 @@ test("rejects equations the balance cannot draw", async (t) => {
   expectFailure(f.run(), /to-15\.json representations\.help\[0\]: balance supports total 2–15 but the definition allows total 11–18/);
 });
 
+test("rejects a validator whose question form the generator does not make (PR 63 review)", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "within-10" ? { ...d, validator: { name: "integer-answer", version: 1 }, misconceptionCodes: ["add.generic"] } : d));
+  expectFailure(f.run(), /within-10\.json validator: integer-answer@1 judges addition questions, but unknown-addend@1 generates unknown-addend; use a generator with the relation sum-of-two-operands/);
+});
+
+test("rejects addition help on an equation definition", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "within-10" ? { ...d, representations: { help: ["groups"], explanation: ["balance"] } } : d));
+  expectFailure(f.run(), /within-10\.json representations\.help\[0\]: groups needs quantity operand, which the definition does not determine/);
+});
+
+test("rejects equation definitions in a self-check (PR 63 review)", async (t) => {
+  const f = await fixture(t);
+  await equations(f);
+  await f.write("content/checks/algebra/one-step-equations.json", {
+    ...baseCheck,
+    id: "algebra.check-one-step-equations",
+    skill: "algebra.one-step-equations",
+    questions: [{ definition: "algebra.one-step.within-10", version: 1, seed: "3" }, { definition: "algebra.one-step.to-15", version: 1, seed: "4" }],
+  });
+  expectFailure(f.run(), /one-step-equations\.json questions\[0\]\.definition: algebra\.one-step\.within-10@1 asks unknown-addend questions; a self-check can only ask addition questions for now/);
+});
+
 test("rejects a generated definition with an instance and a fixed one with a generator", async (t) => {
   const f = await fixture(t);
   await f.pilot();

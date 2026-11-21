@@ -94,6 +94,29 @@ public sealed class EquationContractTests(WebApplicationFactory<Program> factory
         Assert.Equal(root.GetProperty("b").GetInt32() - root.GetProperty("a").GetInt32(), root.GetProperty("answer").GetProperty("value").GetInt32());
     }
 
+    [Theory]
+    [InlineData(3, 7, true)] // the worked example solves it
+    [InlineData(6, 10, false)] // in "Try it yourself"; x = 4 belongs to the worked example (PR 63 review)
+    [InlineData(2, 9, false)]
+    public async Task The_lesson_flag_a_learner_receives_follows_the_disclosure_rule(int a, int b, bool discloses)
+    {
+        using var client = factory.CreateClient();
+        for (var seed = 0; seed < 5000; seed++)
+        {
+            using var document = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{Definition}/1/{seed}"));
+            var root = document.RootElement;
+            if (root.GetProperty("a").GetInt32() == a && root.GetProperty("b").GetInt32() == b)
+            {
+                var lesson = Assert.Single(root.GetProperty("lessons").EnumerateArray());
+                Assert.Equal("one-step-equations", lesson.GetProperty("id").GetString());
+                Assert.Equal(discloses, lesson.GetProperty("discloses").GetBoolean());
+                return;
+            }
+        }
+
+        Assert.Fail($"no seed gives x + {a} = {b}");
+    }
+
     private static HashSet<string> Names(JsonElement element)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);

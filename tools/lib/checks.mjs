@@ -6,7 +6,7 @@ import { missingSkillOptions } from "./skills.mjs";
 
 const MAX_SEED = 2n ** 64n - 1n;
 
-export function checkChecks(entries, { skills, definitions, diagnostics }) {
+export function checkChecks(entries, { skills, definitions, registries, diagnostics }) {
   const identities = new Map(); // id@version -> file
 
   for (const { file, data } of entries) {
@@ -35,6 +35,11 @@ export function checkChecks(entries, { skills, definitions, diagnostics }) {
       if (!definition || definition.kind !== "definition") {
         diagnostics.error(file, `${definitionKey} is not a pilot exercise definition`, { field: `${field}.definition` });
         return;
+      }
+      // Self-checks ask addition only until the check screens draw other forms (specs/009, PR 63 review).
+      const validator = registries.validators.get(versioned(definition.data.validator.name, definition.data.validator.version))?.entry;
+      if (validator && validator.form !== "addition") {
+        diagnostics.error(file, `${definitionKey} asks ${validator.form} questions; a self-check can only ask addition questions for now`, { field: `${field}.definition` });
       }
       if (definition.data.skill !== data.skill) {
         diagnostics.error(file, `${definitionKey} serves ${definition.data.skill}, not ${data.skill}; a check covers one skill`, { field: `${field}.definition` });

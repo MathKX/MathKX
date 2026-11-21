@@ -3,7 +3,7 @@
 import { range } from "./diagnostics.mjs";
 import { listKeys, versioned } from "./registry.mjs";
 import { missingSkillOptions } from "./skills.mjs";
-import { containment, domainBox, feasible, infeasible, pointBox } from "./quantities.mjs";
+import { FORM_RELATIONS, containment, domainBox, feasible, infeasible, pointBox } from "./quantities.mjs";
 
 const isInteger = (v) => Number.isInteger(v);
 
@@ -75,13 +75,18 @@ function checkPilotDefinition(file, data, registries, diagnostics) {
         }
       });
       box = domainBox(generator, data.generator.parameters);
+      // The validator decides how practice asks the question; the generator must make questions of that form (PR 63 review).
+      const wanted = validator ? FORM_RELATIONS[validator.form] : undefined;
+      if (wanted && generator.relation !== wanted) {
+        error(`${validatorKey} judges ${validator.form} questions, but ${generatorKey} generates ${generator.relation ?? "values without a relation"}; use a generator with the relation ${wanted}`, { field: "validator" });
+      }
       if (generator.relation && !feasible(generator.relation, box)) {
         error(infeasible(generator.relation, box), { field: "generator.parameters" });
       }
     }
   } else {
     const prompt = data.instance.prompt;
-    box = pointBox(prompt);
+    box = pointBox(prompt, (validator && FORM_RELATIONS[validator.form]) || undefined);
     for (const role of ["help", "explanation"]) {
       data.representations[role].forEach((name) => {
         const representation = registries.representations.get(name)?.entry;

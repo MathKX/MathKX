@@ -97,10 +97,14 @@
     },
     "validator": {
       "type": "object",
-      "required": ["name", "version", "artifact", "emits"],
+      "required": ["name", "version", "form", "artifact", "emits"],
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
+        "form": {
+          "enum": ["addition", "unknown-addend"],
+          "description": "The question form the validator judges (specs/009): addition asks a + b = ?, unknown-addend asks x + a = b. A generated definition's generator relation must produce that form; tools/lib/quantities.mjs maps each form to its relation."
+        },
         "artifact": { "$ref": "#/$defs/artifact" },
         "emits": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
       },
