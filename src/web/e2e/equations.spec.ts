@@ -77,4 +77,36 @@ test.describe("the balance explorer (specs/008)", () => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
   });
+
+  test("4. practice from the lesson: x + a = b, feedback that names the mistake, balance help, and My work (specs/009)", async ({ page }) => {
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-algebra.one-step.within-10").click();
+    const prompt = page.getByTestId("prompt");
+    await expect(prompt).toHaveAttribute("data-form", "unknown-addend");
+    const spoken = (await prompt.getAttribute("aria-label")) ?? "";
+    const match = /^x plus (\d+) equals (\d+)\. What is x\?$/.exec(spoken);
+    expect(match, spoken).not.toBeNull();
+    const [a, b] = [Number(match![1]), Number(match![2])];
+    await expect(prompt).toHaveText(new RegExp(`x\\s*\\+\\s*${a}\\s*=\\s*${b}`));
+
+    await page.getByTestId("answer").fill(String(a + b));
+    await page.getByTestId("check").click();
+    await expect(page.getByTestId("result")).toContainText(`${a + b} is ${a} + ${b}. To get x on its own, take ${a} away from both sides instead.`);
+
+    await page.getByTestId("toggle-help").click();
+    const panel = page.getByTestId("help-panel");
+    await expect(panel.getByTestId("balance-scale")).toBeVisible();
+    for (let i = 0; i < 3; i++) await panel.getByTestId("help-next").click();
+    await expect(panel.getByTestId("help-revealed")).toBeVisible();
+    await expect(panel.getByTestId("help-step-text")).toContainText(`so x = ${b - a}. Check: ${b - a} + ${a} = ${b}.`);
+    await expect(panel.getByTestId("balance-pan-right")).toHaveAttribute("data-remaining", String(b - a));
+
+    await page.getByTestId("answer").fill(String(b - a));
+    await page.getByTestId("check").click();
+    await expect(page.getByTestId("result")).toContainText(`Correct. x = ${b - a}, because ${b - a} + ${a} = ${b}.`);
+
+    await page.getByRole("link", { name: "My work" }).click();
+    await expect(page.getByTestId("record-question").first()).toHaveText(`x + ${a} = ${b}`);
+  });
 });

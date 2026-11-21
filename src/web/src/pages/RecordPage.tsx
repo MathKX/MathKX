@@ -9,6 +9,7 @@ import type { LessonSummary, PracticeApi, SkillDto } from "../api/types";
 import { CheckEntry } from "../components/CheckEntry";
 import { PageHeading } from "../components/PageHeading";
 import { formatDate, translate, translateCode, type Lang } from "../i18n";
+import { formOf, writtenQuestion } from "../components/math/MathExpr";
 import { Link } from "../router";
 import { isUnfinished, summarizeRun, type CheckRun } from "../state/checks";
 import { groupBySkill, inProgress, skillOrder } from "../state/progress";
@@ -153,11 +154,11 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                             className="mkx-record__question mkx-inline-target"
                             data-testid="record-question"
                             aria-label={translate(lang, "progress.questionLink", {
-                              question: translate(lang, "record.question", { a: q.delivery.instance.a, b: q.delivery.instance.b }),
+                              question: writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b),
                               date: formatDate(lang, q.delivery.startedAt),
                             })}
                           >
-                            {translate(lang, "record.question", { a: q.delivery.instance.a, b: q.delivery.instance.b })}
+                            {writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b)}
                           </Link>{" "}
                           <strong>{translateCode(lang, "outcome", q.derived.outcome)}</strong>
                           <span className="mkx-record__meta">

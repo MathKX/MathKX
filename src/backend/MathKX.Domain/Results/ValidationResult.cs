@@ -36,10 +36,20 @@ public static class FeedbackCodes
     public const string OffByOne = "add.offByOne";
     public const string Subtracted = "add.subtracted";
     public const string Generic = "add.generic";
+    public const string EquationCorrect = "eq.correct";
+    public const string EquationAdded = "eq.added";
+    public const string EquationTotal = "eq.total";
+    public const string EquationAddend = "eq.addend";
+    public const string EquationOffByOne = "eq.offByOne";
+    public const string EquationGeneric = "eq.generic";
     public const string InvalidEmpty = "invalid.empty";
     public const string InvalidNotAnInteger = "invalid.notAnInteger";
 
+    /// <summary>The codes <c>integer-answer@1</c> emits for a wrong answer.</summary>
     public static readonly IReadOnlyList<string> Misconceptions = [OneGroup, Concat, OffByOne, Subtracted, Generic];
+
+    /// <summary>The codes <c>equation-answer@1</c> emits for a wrong answer (specs/009).</summary>
+    public static readonly IReadOnlyList<string> EquationMisconceptions = [EquationAdded, EquationTotal, EquationAddend, EquationOffByOne, EquationGeneric];
 }
 
 /// <summary>What the learner submitted. Reading is input guidance, not a mathematical judgement.</summary>

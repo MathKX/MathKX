@@ -288,13 +288,13 @@ test("skips the lesson template folder", async (t) => {
 test("rejects a duplicate registry name", async (t) => {
   const f = await fixture(t);
   await f.registry("generators", (r) => r.entries.push(structuredClone(r.entries[0])));
-  expectFailure(f.run(), /content\/registry\/generators\.json entries\[1\]: duplicate name addition-pair@1/);
+  expectFailure(f.run(), /content\/registry\/generators\.json entries\[2\]: duplicate name addition-pair@1/);
 });
 
 test("rejects a misconception code naming an unknown validator", async (t) => {
   const f = await fixture(t);
   await f.registry("misconception-codes", (r) => { r.entries[0].validator = "nope"; });
-  expectFailure(f.run(), /misconception-codes\.json entries\[0\]\.validator: nope is not a registered validator \(one of: integer-answer\)/);
+  expectFailure(f.run(), /misconception-codes\.json entries\[0\]\.validator: nope is not a registered validator \(one of: integer-answer, equation-answer\)/);
 });
 
 test("rejects a visual component naming an unknown representation", async (t) => {
@@ -327,7 +327,7 @@ test("rejects an unregistered generator version", async (t) => {
   const f = await fixture(t);
   await f.pilot();
   await f.definition("addition-within-10", generated({ generator: { version: 2 } }));
-  expectFailure(f.run(), /addition-within-10\.json generator: addition-pair@2 is not registered \(one of: addition-pair@1\)/);
+  expectFailure(f.run(), /addition-within-10\.json generator: addition-pair@2 is not registered \(one of: addition-pair@1, unknown-addend@1\)/);
 });
 
 test("rejects a parameter outside the generator's domain", async (t) => {
@@ -363,6 +363,33 @@ test("rejects bounds that admit no operand pair", async (t) => {
   await f.pilot();
   await f.definition("addition-crossing-ten", { ...baseCrossingTen, generator: { ...baseCrossingTen.generator, parameters: { operand: { min: 1, max: 2 }, sum: { min: 11, max: 18 } } } });
   expectFailure(f.run(), /addition-crossing-ten\.json generator\.parameters: no operand pair within 1–2 has a sum within 11–18/);
+});
+
+// specs/009: the unknown-addend relation for x + a = b, and the balance's support.
+async function equations(f, mutate = (d) => d) {
+  await f.pilot();
+  await f.skill("algebra.one-step-equations", ["numbers.addition-within-20"]);
+  for (const name of ["within-10", "to-15"]) {
+    await f.write(`content/exercises/algebra/${name}.json`, mutate(await json(`content/exercises/algebra/${name}.json`), name));
+  }
+}
+
+test("accepts the two equation definitions", async (t) => {
+  const f = await fixture(t);
+  await equations(f);
+  expectPass(f.run());
+});
+
+test("rejects equation bounds that admit no equation", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "to-15" ? { ...d, generator: { ...d.generator, parameters: { addend: { min: 1, max: 2 }, unknown: { min: 1, max: 2 }, total: { min: 11, max: 15 } } } } : d));
+  expectFailure(f.run(), /to-15\.json generator\.parameters: no addend within 1–2 and unknown within 1–2 give a total within 11–15/);
+});
+
+test("rejects equations the balance cannot draw", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "to-15" ? { ...d, generator: { ...d.generator, parameters: { ...d.generator.parameters, total: { min: 11, max: 18 } } } } : d));
+  expectFailure(f.run(), /to-15\.json representations\.help\[0\]: balance supports total 2–15 but the definition allows total 11–18/);
 });
 
 test("rejects a generated definition with an instance and a fixed one with a generator", async (t) => {
@@ -409,8 +436,8 @@ test("rejects unregistered representations and validators", async (t) => {
   await f.pilot();
   await f.definition("addition-within-10", { ...baseWithin10, representations: { help: ["nope"], explanation: ["groups"] }, validator: { name: "nonexistent", version: 1 } });
   expectFailure(f.run(),
-    /representations\.help\[0\]: nope is not a registered representation \(one of: groups, make-ten, ten-frame-explorer\)/,
-    /validator: nonexistent@1 is not registered \(one of: integer-answer@1\)/);
+    /representations\.help\[0\]: nope is not a registered representation \(one of: groups, make-ten, ten-frame-explorer, balance\)/,
+    /validator: nonexistent@1 is not registered \(one of: integer-answer@1, equation-answer@1\)/);
 });
 
 test("rejects fixed validation data that does not fit the validator's artifact", async (t) => {

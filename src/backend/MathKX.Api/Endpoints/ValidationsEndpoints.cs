@@ -13,7 +13,7 @@ public static class ValidationsEndpoints
         return app;
     }
 
-    public static IResult Validate(ValidationRequestDto? request, InstanceResolver resolver, IntegerAnswerValidator validator)
+    public static IResult Validate(ValidationRequestDto? request, InstanceResolver resolver, ValidatorRegistry validators)
     {
         if (request?.Identity is null || string.IsNullOrWhiteSpace(request.Identity.DefinitionId) || request.Artifact is null || string.IsNullOrWhiteSpace(request.Artifact.Kind) || request.Artifact.OriginalText is null)
         {
@@ -34,7 +34,7 @@ public static class ValidationsEndpoints
         {
             // The instance is always re-resolved from the identity; operands from the client are never trusted.
             var instance = resolver.Resolve(new InstanceIdentity(request.Identity.DefinitionId, request.Identity.Version, seed));
-            var result = validator.Validate(instance, ResponseArtifact.ReadInteger(request.Artifact.OriginalText));
+            var result = validators.Get(instance.Validator).Validate(instance, ResponseArtifact.ReadInteger(request.Artifact.OriginalText));
             return Results.Ok(ValidationResponseDto.From(result, request.SubmissionId));
         }
         catch (UnknownDefinitionException error)

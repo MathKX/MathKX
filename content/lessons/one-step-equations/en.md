@@ -50,3 +50,13 @@ Then try these in your head:
 ## Check your answer {#check}
 
 You can always check an answer by putting it in place of $x$. If both sides give the same number, it is right. If they don’t, the scale would tip, so try again.
+
+## Practise {#practice}
+
+Solve equations of your own. If you get stuck, ask for help and the balance shows you the steps.
+
+:::practice{definition="algebra.one-step.within-10" version="1"}
+:::
+
+:::practice{definition="algebra.one-step.to-15" version="1"}
+:::

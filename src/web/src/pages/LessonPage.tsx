@@ -10,6 +10,8 @@ import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { InstanceDto, LessonDetail, PracticeApi, SkillDto } from "../api/types";
 import { practiceApi } from "../api/client";
 import { translate, type Lang } from "../i18n";
+import type { QuestionForm } from "../api/types";
+import { formOf } from "../components/math/MathExpr";
 import { useRouter } from "../router";
 import { useStore } from "../state/store";
 import { currentQuestion, hasCorrect, identityOf } from "../state/observations";
@@ -37,7 +39,7 @@ interface Visit {
   discloses: boolean;
   fromQuestion: boolean;
   gateOpen: boolean;
-  question: { a: number; b: number; prompt: string; hasHelp: boolean } | null;
+  question: { form: QuestionForm; a: number; b: number; prompt: string; hasHelp: boolean } | null;
   /** Where "Back to your question" and the notice's other choices lead; null without a question to return to. */
   back: string | null;
   /** The check run of a supported check question, for "Show visual help instead"; null for practice. */
@@ -132,7 +134,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
         discloses,
         fromQuestion: from === "check", // the link itself; a reload or a history visit is not
         gateOpen: !discloses,
-        question: detour ? { a, b, prompt: instance?.prompt ?? translate(lang, "record.question", { a, b }), hasHelp: (instance?.representations.help.length ?? 0) > 0 } : null,
+        question: detour ? { form: "addition" as const, a, b, prompt: instance?.prompt ?? translate(lang, "record.question", { a, b }), hasHelp: (instance?.representations.help.length ?? 0) > 0 } : null,
         back: `/checks/${encodeURIComponent(run.checkId)}/${encodeURIComponent(run.id)}`,
         checkRunId: run.id,
       });
@@ -157,7 +159,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       discloses,
       fromQuestion,
       gateOpen: !discloses,
-      question: listed && instance ? { a: instance.a, b: instance.b, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
+      question: listed && instance ? { form: formOf(instance), a: instance.a, b: instance.b, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
       back: state.skillId ? `/practice/${encodeURIComponent(state.skillId)}` : null,
       checkRunId: null,
     });
@@ -235,7 +237,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const loading = <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
   return (
     <article className="mkx-prose mkx-lesson" data-testid="lesson-page">
-      {visit.detour && visit.question && visit.back ? <ReturnBanner a={visit.question.a} b={visit.question.b} href={visit.back} lang={lang} /> : null}
+      {visit.detour && visit.question && visit.back ? <ReturnBanner form={visit.question.form} a={visit.question.a} b={visit.question.b} href={visit.back} lang={lang} /> : null}
       <Heading level={1} data-size="lg">
         {lesson.titles[lang]}
       </Heading>

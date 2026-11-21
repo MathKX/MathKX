@@ -3,7 +3,7 @@
 import { range } from "./diagnostics.mjs";
 import { listKeys, versioned } from "./registry.mjs";
 import { missingSkillOptions } from "./skills.mjs";
-import { containment, domainBox, feasible, pointBox } from "./quantities.mjs";
+import { containment, domainBox, feasible, infeasible, pointBox } from "./quantities.mjs";
 
 const isInteger = (v) => Number.isInteger(v);
 
@@ -75,8 +75,8 @@ function checkPilotDefinition(file, data, registries, diagnostics) {
         }
       });
       box = domainBox(generator, data.generator.parameters);
-      if (generator.relation && box.operand && box.sum && !feasible(generator.relation, box)) {
-        error(`no operand pair within ${range(...box.operand)} has a sum within ${range(...box.sum)}`, { field: "generator.parameters" });
+      if (generator.relation && !feasible(generator.relation, box)) {
+        error(infeasible(generator.relation, box), { field: "generator.parameters" });
       }
     }
   } else {

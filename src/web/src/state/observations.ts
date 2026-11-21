@@ -1,5 +1,5 @@
 // Guest observations (specs/002 contracts/observations.md): one delivery per resolved instance, ordered events.
-import type { Identity, ValidationStatus } from "../api/types";
+import type { Identity, QuestionForm, ValidationStatus } from "../api/types";
 
 export type SupportKind =
   | "visual-help-opened"
@@ -32,6 +32,8 @@ export interface DeliveryInstance {
   validatorVersion: number;
   a: number;
   b: number;
+  /** The question form (specs/009); absent on deliveries recorded before it, which are all addition. */
+  form?: QuestionForm;
 }
 
 export interface Delivery {

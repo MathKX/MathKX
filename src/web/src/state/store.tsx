@@ -569,6 +569,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
     };
     if (instance.identity.seed !== undefined) d.seed = instance.identity.seed;
     if (instance.generator) d.generatorVersion = instance.generator.version;
+    if (instance.form && instance.form !== "addition") d.form = instance.form;
     const delivery: Delivery = { id: newId(), instance: d, purpose, provenance: "guest", startedAt: new Date().toISOString(), events: [] };
     if (originLessonId) delivery.originLessonId = originLessonId;
     if (repeat?.repeatOf) delivery.repeatOf = repeat.repeatOf;

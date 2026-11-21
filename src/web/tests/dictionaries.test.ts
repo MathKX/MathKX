@@ -33,8 +33,9 @@ describe("dictionaries", () => {
     expect(Object.keys(nb.explain).sort()).toEqual([...codes.stepText].sort());
   });
 
-  it("list exactly the registered misconception codes plus correct and the two input codes", () => {
+  it("list exactly the registered misconception codes plus each validator's correct code and the two input codes", () => {
     const registered = ["add.oneGroup", "add.concat", "add.offByOne", "add.subtracted", "add.generic"];
-    expect([...codes.feedback].sort()).toEqual([...registered, "correct", "invalid.empty", "invalid.notAnInteger"].sort());
+    const equation = ["eq.added", "eq.total", "eq.addend", "eq.offByOne", "eq.generic"]; // specs/009
+    expect([...codes.feedback].sort()).toEqual([...registered, ...equation, "correct", "eq.correct", "invalid.empty", "invalid.notAnInteger"].sort());
   });
 });

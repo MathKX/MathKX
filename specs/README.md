@@ -16,6 +16,7 @@ Specifications follow the backlog order recorded in the decision log (feature ve
 | [006-self-checks](006-self-checks/spec.md) | F8 | Self-checks ("Check my understanding"): an independent, bounded check from an authored list, the one-way switch to supported practice, the three-group summary, and checks in "My work"; milestone one is closed (DL-041, [close-out](../docs/reviews/2026-10-31-milestone-one-close-out.md)) (implemented: PRs 52, 53, 54, 55, and 56, then polish) |
 | [007-profiles-and-persistence](007-profiles-and-persistence/spec.md) | F9 | Profiles, recovery, and persistence: setup without personal details, sign-in and sessions on shared devices, recovery by codes and optional email, the signed-in record on the server, guest work on sign-in, settings, deletion, retention, export, and the privacy notice, from the accepted [design](../docs/architecture/proposals/profiles-recovery-and-persistence.md) and ADRs 0012 and 0013 (draft) |
 | [008-one-step-equations](008-one-step-equations/spec.md) | DL-006 milestone two | One-step equations: the lesson "Equations and the balance" and its interactive balance explorer for $x + a = b$; practice follows in a later change (implemented in one PR) |
+| [009-equations-practice](009-equations-practice/spec.md) | DL-006 milestone two; DL-044 | Practice for one-step equations: the question form $x + a = b$ beside $a + b = ?$, a generator, a validator with five misconception codes, balance help and explanation, a two-rung ladder, and the lesson's practice entries |
 
 ## Working on a checked-in specification
 

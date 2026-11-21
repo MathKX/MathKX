@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Paragraph } from "@digdir/designsystemet-react";
 import { practiceApi } from "../api/client";
 import type { PracticeApi } from "../api/types";
-import { AdditionPrompt } from "../components/math/MathExpr";
+import { QuestionPrompt, formOf } from "../components/math/MathExpr";
 import { PageHeading } from "../components/PageHeading";
 import { formatDate, translate, translateCode } from "../i18n";
 import { Link, useRouter } from "../router";
@@ -80,7 +80,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
       <PageHeading>{translate(lang, "replay.title", { date: formatDate(lang, delivery.startedAt) })}</PageHeading>
       {shown === "unavailable" ? <Paragraph data-testid="replay-unavailable">{translate(lang, "replay.unavailable")}</Paragraph> : null}
       {/* Matched or unavailable, the operands on screen are the recorded ones; the expression waits for the answer. */}
-      {shown === "loading" ? null : <AdditionPrompt a={a} b={b} lang={lang} />}
+      {shown === "loading" ? null : <QuestionPrompt form={formOf(delivery.instance)} a={a} b={b} lang={lang} />}
       <Paragraph>
         <strong data-testid="replay-outcome">{translateCode(lang, "outcome", derived.outcome)}</strong>
       </Paragraph>
@@ -106,7 +106,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
             const status = e.type === "submission" ? e.status : "invalid-response";
             const feedback =
               e.type === "submission"
-                ? translateCode(lang, "feedback", e.code, { a, b, v: e.value, sum: e.value }) // sum is used only by "correct"
+                ? translateCode(lang, "feedback", e.code, { a, b, v: e.value, sum: e.value, x: e.value }) // sum and x are used only by "correct" and "eq.correct"
                 : translateCode(lang, "feedback", e.code, { text: e.originalText });
             return (
               <li key={e.submissionId} data-testid="replay-submission" data-status={status}>

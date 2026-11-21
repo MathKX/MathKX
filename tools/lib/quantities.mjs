@@ -1,6 +1,7 @@
 // The pilot quantity model (specs/001 data-model.md "Quantity model").
 // Registries and definitions name quantities; this module is the one place that knows how
 // concrete values relate to them. A box is { quantity: [min, max] } with integer bounds.
+import { range } from "./diagnostics.mjs";
 
 export const RELATIONS = {
   "sum-of-two-operands": {
@@ -15,6 +16,23 @@ export const RELATIONS = {
       const low = 2 * operand[0];
       const high = 2 * operand[1];
       return low <= sum[1] && sum[0] <= high;
+    },
+    infeasible(box) {
+      return `no operand pair within ${range(...box.operand)} has a sum within ${range(...box.sum)}`;
+    },
+  },
+  "unknown-addend": {
+    // specs/009: x + a = b. a is the addend, b the total, and x = b - a the unknown.
+    derive({ a, b }) {
+      return { addend: [a, a], total: [b, b], unknown: [b - a, b - a] };
+    },
+    feasible(box) {
+      const { addend, unknown, total } = box;
+      if (!addend || !unknown || !total) return true;
+      return addend[0] + unknown[0] <= total[1] && total[0] <= addend[1] + unknown[1];
+    },
+    infeasible(box) {
+      return `no addend within ${range(...box.addend)} and unknown within ${range(...box.unknown)} give a total within ${range(...box.total)}`;
     },
   },
 };
@@ -53,6 +71,11 @@ export function pointBox(values, relation = PILOT_RELATION) {
 export function feasible(relation, box) {
   const r = RELATIONS[relation];
   return r ? r.feasible(box) : true;
+}
+
+/** The message for a box the relation finds infeasible. */
+export function infeasible(relation, box) {
+  return RELATIONS[relation].infeasible(box);
 }
 
 /**

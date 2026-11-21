@@ -5,6 +5,7 @@ import type { InstanceDto, StepDto, StepKind } from "../api/types";
 import { translate, translateCode, type Lang } from "../i18n";
 import { Groups, type GroupsState } from "./math/Counters";
 import { MakeTen, type MakeTenState } from "./math/MakeTen";
+import { BalanceScale } from "./math/BalanceScale";
 
 export interface StepPanelProps {
   kind: StepKind;
@@ -28,7 +29,9 @@ export function StepPanel({ kind, instance, steps, currentIndex, lang, onNext }:
       aria-label={translate(lang, kind === "help" ? "a11y.helpRegion" : "a11y.explanationRegion")}
       data-testid={`${kind}-panel`}
     >
-      {representation === "make-ten" ? (
+      {representation === "balance" ? (
+        <BalanceStep a={instance.a} b={instance.b} state={visual as BalanceStepState} lang={lang} />
+      ) : representation === "make-ten" ? (
         <MakeTen a={instance.a} b={instance.b} state={visual as MakeTenState} lang={lang} />
       ) : (
         <Groups a={instance.a} b={instance.b} state={visual as GroupsState} lang={lang} />
@@ -50,5 +53,25 @@ export function StepPanel({ kind, instance, steps, currentIndex, lang, onNext }:
         </Button>
       ) : null}
     </section>
+  );
+}
+
+/** A balance help or explanation step (specs/009 FR-004): the service's weights per pan and the weights marked to take off. */
+interface BalanceStepState {
+  left?: number;
+  right?: number;
+  marked?: number;
+}
+
+function BalanceStep({ a, b, state, lang }: { a: number; b: number; state: BalanceStepState; lang: Lang }) {
+  const left = state.left ?? a;
+  const right = state.right ?? b;
+  const marked = state.marked ?? 0;
+  const pans = translate(lang, left === 0 ? "lesson.balancePansAlone" : "lesson.balancePans", { left, right });
+  const label = [pans, translate(lang, "lesson.balanceLevel"), marked > 0 ? translate(lang, "a11y.balanceMarked", { n: marked }) : ""].filter(Boolean).join(" ");
+  return (
+    <div className="mkx-balance" data-testid="balance-step" data-marked={marked}>
+      <BalanceScale a={a} b={b} left={left} right={right} tilt="balanced" marked={marked} label={label} />
+    </div>
   );
 }

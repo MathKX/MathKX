@@ -131,7 +131,9 @@ public sealed partial class StepModelTests
     {
         foreach (var step in steps)
         {
-            var hasSum = step.Text.Values.ContainsKey("sum") || step.Visual.ContainsKey("total") || step.Visual.ContainsKey("countedAll");
+            // An addition step reveals the sum; a balance step reveals x (specs/009 FR-004).
+            var hasSum = step.Text.Values.ContainsKey("sum") || step.Visual.ContainsKey("total") || step.Visual.ContainsKey("countedAll")
+                || step.Text.Values.ContainsKey("x") || step.Visual.ContainsKey("x");
             Assert.Equal(step.Reveals, hasSum);
         }
     }

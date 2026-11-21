@@ -13,7 +13,16 @@
   "relatedLessons": [
     "number-bonds-to-ten"
   ],
-  "practice": [],
+  "practice": [
+    {
+      "definition": "algebra.one-step.within-10",
+      "version": 1
+    },
+    {
+      "definition": "algebra.one-step.to-15",
+      "version": 1
+    }
+  ],
   "visuals": [
     "balance-explorer"
   ],

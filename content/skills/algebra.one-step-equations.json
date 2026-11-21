@@ -2,6 +2,29 @@
   "$schema": "../../schemas/skill.schema.json",
   "schemaVersion": "0.1",
   "id": "algebra.one-step-equations",
-  "name": { "nb": "Likninger med ett steg", "en": "One-step equations" },
-  "prerequisites": ["numbers.addition-within-20"]
+  "name": {
+    "nb": "Likninger med ett steg",
+    "en": "One-step equations"
+  },
+  "prerequisites": [
+    "numbers.addition-within-20"
+  ],
+  "ladder": [
+    {
+      "definition": "algebra.one-step.within-10",
+      "version": 1,
+      "description": {
+        "nb": "Likninger der høyre side er høyst 10.",
+        "en": "Equations with a right side up to 10."
+      }
+    },
+    {
+      "definition": "algebra.one-step.to-15",
+      "version": 1,
+      "description": {
+        "nb": "Likninger der høyre side er fra 11 til 15.",
+        "en": "Equations with a right side from 11 to 15."
+      }
+    }
+  ]
 }

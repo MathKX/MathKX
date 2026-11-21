@@ -1,5 +1,6 @@
 using System.Globalization;
 using MathKX.Domain.Instances;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Domain.Lessons;
 
@@ -26,6 +27,11 @@ public static class LessonDisclosure
 
     public static DisclosureDecision For(LessonFacts facts, Instance instance)
     {
+        if (instance.Form == QuestionForms.UnknownAddend)
+        {
+            return ForEquation(facts, instance.A, instance.B);
+        }
+
         var (a, b) = (instance.A, instance.B);
         var sum = (a + b).ToString(CultureInfo.InvariantCulture);
         string[] starts =
@@ -49,6 +55,34 @@ public static class LessonDisclosure
                 && visual.Attributes.TryGetValue("a", out var va)
                 && visual.Attributes.TryGetValue("b", out var vb)
                 && ((va == a && vb == b) || (va == b && vb == a)))
+            {
+                return new DisclosureDecision(true, DisclosureSource.Visual);
+            }
+        }
+
+        return DisclosureDecision.No;
+    }
+
+    /// <summary>
+    /// <c>x + a = b</c> (specs/009 FR-006): a balance explorer with the same a and b steps to the solution; and a
+    /// lesson that writes the equation and also <c>x = b − a</c> shows it. The second rule may over-report when
+    /// another equation of the lesson has the same solution, which only adds a notice.
+    /// </summary>
+    private static DisclosureDecision ForEquation(LessonFacts facts, int a, int b)
+    {
+        var equation = string.Create(CultureInfo.InvariantCulture, $"x+{a}={b}");
+        var solution = string.Create(CultureInfo.InvariantCulture, $"x={b - a}");
+        var normalized = facts.Expressions.Select(e => e.Normalized).ToList();
+        if (normalized.Contains(equation, StringComparer.Ordinal) && normalized.Contains(solution, StringComparer.Ordinal))
+        {
+            return new DisclosureDecision(true, DisclosureSource.Expression);
+        }
+
+        foreach (var visual in facts.Visuals)
+        {
+            if (visual.Type == "balance-explorer"
+                && visual.Attributes.TryGetValue("a", out var va) && va == a
+                && visual.Attributes.TryGetValue("b", out var vb) && vb == b)
             {
                 return new DisclosureDecision(true, DisclosureSource.Visual);
             }

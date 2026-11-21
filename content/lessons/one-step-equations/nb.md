@@ -50,3 +50,13 @@ Prøv så disse i hodet:
 ## Sjekk svaret {#check}
 
 Du kan alltid sjekke et svar ved å sette det inn for $x$. Gir begge sider samme tall, stemmer det. Gjør de ikke det, ville vekta tippet, så prøv igjen.
+
+## Øv {#practice}
+
+Løs likninger på egen hånd. Står du fast, kan du be om hjelp, så viser skålvekta deg stegene.
+
+:::practice{definition="algebra.one-step.within-10" version="1"}
+:::
+
+:::practice{definition="algebra.one-step.to-15" version="1"}
+:::

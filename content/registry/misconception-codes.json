@@ -22,6 +22,26 @@
     {
       "code": "add.generic",
       "validator": "integer-answer"
+    },
+    {
+      "code": "eq.added",
+      "validator": "equation-answer"
+    },
+    {
+      "code": "eq.total",
+      "validator": "equation-answer"
+    },
+    {
+      "code": "eq.addend",
+      "validator": "equation-answer"
+    },
+    {
+      "code": "eq.offByOne",
+      "validator": "equation-answer"
+    },
+    {
+      "code": "eq.generic",
+      "validator": "equation-answer"
     }
   ]
 }

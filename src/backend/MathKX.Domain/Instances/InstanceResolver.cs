@@ -1,11 +1,20 @@
 using MathKX.Domain.Content;
 using MathKX.Domain.Generators;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Domain.Instances;
 
-/// <summary>Resolves an identity to an instance: definition at its pinned version, generator at the version the definition pins, or the fixed prompt.</summary>
-public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry generators)
+/// <summary>
+/// Resolves an identity to an instance: definition at its pinned version, generator at the version the definition
+/// pins, or the fixed prompt; the definition's validator decides the question form.
+/// </summary>
+public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry generators, ValidatorRegistry validators)
 {
+    public InstanceResolver(ContentCatalog catalog, GeneratorRegistry generators)
+        : this(catalog, generators, ValidatorRegistry.Default())
+    {
+    }
+
     public Instance Resolve(InstanceIdentity identity)
     {
         if (!catalog.TryGetDefinition(identity.DefinitionId, identity.Version, out var definition))
@@ -13,11 +22,12 @@ public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry g
             throw new UnknownDefinitionException(identity.DefinitionKey);
         }
 
+        var form = validators.Get(definition.Validator).Form;
         if (definition.IsFixed)
         {
             var prompt = definition.Instance!.Prompt;
             // A supplied seed is accepted and ignored: the identity of a fixed task is (definition, version).
-            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator);
+            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator, form);
         }
 
         if (identity.Seed is not { } seed)
@@ -32,6 +42,6 @@ public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry g
         }
 
         var (a, b) = generator.Generate(definition, seed);
-        return new Instance(identity, definition.Skill, a, b, definition.Representations, new NamedVersion(spec.Name, spec.Version), definition.Validator);
+        return new Instance(identity, definition.Skill, a, b, definition.Representations, new NamedVersion(spec.Name, spec.Version), definition.Validator, form);
     }
 }
