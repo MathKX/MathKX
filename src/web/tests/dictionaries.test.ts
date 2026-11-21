@@ -36,6 +36,7 @@ describe("dictionaries", () => {
   it("list exactly the registered misconception codes plus each validator's correct code and the two input codes", () => {
     const registered = ["add.oneGroup", "add.concat", "add.offByOne", "add.subtracted", "add.generic"];
     const equation = ["eq.added", "eq.total", "eq.addend", "eq.offByOne", "eq.generic"]; // specs/009
-    expect([...codes.feedback].sort()).toEqual([...registered, ...equation, "correct", "eq.correct", "invalid.empty", "invalid.notAnInteger"].sort());
+    const product = ["fac.multiplied", "fac.total", "fac.subtracted", "fac.factor", "fac.offByOne", "fac.generic"]; // specs/010
+    expect([...codes.feedback].sort()).toEqual([...registered, ...equation, ...product, "correct", "eq.correct", "fac.correct", "invalid.empty", "invalid.notAnInteger"].sort());
   });
 });

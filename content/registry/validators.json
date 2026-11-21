@@ -36,6 +36,24 @@
         "eq.offByOne",
         "eq.generic"
       ]
+    },
+    {
+      "name": "factor-answer",
+      "version": 1,
+      "form": "unknown-factor",
+      "artifact": {
+        "type": "integer",
+        "min": 0,
+        "max": 100
+      },
+      "emits": [
+        "fac.multiplied",
+        "fac.total",
+        "fac.subtracted",
+        "fac.factor",
+        "fac.offByOne",
+        "fac.generic"
+      ]
     }
   ]
 }

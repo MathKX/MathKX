@@ -109,4 +109,61 @@ test.describe("the balance explorer (specs/008)", () => {
     await page.getByRole("link", { name: "My work" }).click();
     await expect(page.getByTestId("record-question").first()).toHaveText(`x + ${a} = ${b}`);
   });
+
+  test("5. the sharing explorer by keyboard: share 3x = 12 round by round, keep one box and one group, x = 4 (specs/010)", async ({ page }) => {
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    const scale = page.getByTestId("sharing-explorer");
+    await expect(scale.getByTestId("balance-scale")).toBeVisible();
+    await expect(scale.getByTestId("sharing-equation")).toHaveText(/3\s*x\s*=\s*12/);
+    await expect(scale.getByTestId("sharing-keep")).toBeDisabled();
+
+    // A click on the equation sets where keyboard navigation starts, as a reader's click would.
+    await scale.getByTestId("sharing-equation").click();
+    await tabTo(page, "sharing-deal");
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Enter");
+    await expect(scale).toHaveAttribute("data-loose", "0");
+    await expect(scale.getByTestId("sharing-sentence")).toHaveText("Every weight is shared: each group has 4. Now keep one box and one group.");
+
+    await tabTo(page, "sharing-keep");
+    await page.keyboard.press("Enter");
+    await expect(scale).toHaveAttribute("data-solved", "true");
+    await expect(scale.getByTestId("sharing-equation")).toHaveText(/x\s*=\s*4/);
+    await expect(scale.getByTestId("sharing-live")).toContainText("x = 4. Check: 3 × 4 = 12.");
+
+    for (const button of await scale.getByRole("button").all()) {
+      const box = await button.boundingBox();
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    }
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test("6. practice of ax = b from the lesson, with the sharing as help (specs/010)", async ({ page }) => {
+    await page.goto(LESSON);
+    await page.getByTestId("lang-en").click();
+    await page.getByTestId("practice-algebra.one-step.times").click();
+    const prompt = page.getByTestId("prompt");
+    await expect(prompt).toHaveAttribute("data-form", "unknown-factor");
+    const match = /^(\d+) times x equals (\d+)\. What is x\?$/.exec((await prompt.getAttribute("aria-label")) ?? "");
+    expect(match).not.toBeNull();
+    const [a, b] = [Number(match![1]), Number(match![2])];
+
+    await page.getByTestId("answer").fill(String(a * b));
+    await page.getByTestId("check").click();
+    await expect(page.getByTestId("result")).toContainText(`${a * b} is ${a} × ${b}.`);
+
+    await page.getByTestId("toggle-help").click();
+    const panel = page.getByTestId("help-panel");
+    for (let i = 0; i < 3; i++) await panel.getByTestId("help-next").click();
+    await expect(panel.getByTestId("help-revealed")).toBeVisible();
+    await expect(panel.getByTestId("help-step-text")).toContainText(`so x = ${b / a}. Check: ${a} × ${b / a} = ${b}.`);
+
+    await page.getByTestId("answer").fill(String(b / a));
+    await page.getByTestId("check").click();
+    await expect(page.getByTestId("result")).toContainText(`Correct. x = ${b / a}, because ${a} × ${b / a} = ${b}.`);
+    await page.getByRole("link", { name: "My work" }).click();
+    await expect(page.getByTestId("record-question").first()).toHaveText(`${a}x = ${b}`);
+  });
 });

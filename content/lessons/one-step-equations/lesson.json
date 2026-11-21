@@ -21,10 +21,15 @@
     {
       "definition": "algebra.one-step.to-15",
       "version": 1
+    },
+    {
+      "definition": "algebra.one-step.times",
+      "version": 1
     }
   ],
   "visuals": [
-    "balance-explorer"
+    "balance-explorer",
+    "balance-sharing-explorer"
   ],
   "translations": {
     "nb": "nb.md",

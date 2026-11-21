@@ -54,6 +54,9 @@ public static class StepModels
         "explain.balance.show",
         "explain.balance.takeAway",
         "explain.balance.solved",
+        "explain.sharing.show",
+        "explain.sharing.share",
+        "explain.sharing.solved",
     ];
 
     public static bool TryParseKind(string? text, out StepKind kind)
@@ -102,6 +105,7 @@ public static class StepModels
             ("groups", StepKind.Explanation) => GroupsExplanation(a, b),
             ("make-ten", _) => MakeTen(a, b),
             ("balance", _) => Balance(a, b),
+            ("balance-sharing", _) => Sharing(a, b),
             _ => throw new UnsupportedStepsException(representation, kind),
         };
 
@@ -146,6 +150,21 @@ public static class StepModels
             new(false, V(("left", a), ("right", b), ("marked", 0)), new StepText("explain.balance.show", V(("a", a), ("b", b)))),
             new(false, V(("left", a), ("right", b), ("marked", a)), new StepText("explain.balance.takeAway", V(("a", a)))),
             new(true, V(("left", 0), ("right", x), ("marked", 0), ("x", x)), new StepText("explain.balance.solved", V(("a", a), ("b", b), ("x", x)))),
+        ];
+    }
+
+    /// <summary>
+    /// <c>ax = b</c> on a balance (specs/010 FR-003): the boxes and the weights, then the weights marked out in
+    /// <c>a</c> groups still to be shared, then one box against one group of <c>x</c>. Only the last step carries <c>x</c>.
+    /// </summary>
+    private static List<Raw> Sharing(int a, int b)
+    {
+        var x = b / a;
+        return
+        [
+            new(false, V(("each", 0), ("loose", b), ("kept", false), ("groups", false)), new StepText("explain.sharing.show", V(("a", a), ("b", b)))),
+            new(false, V(("each", 0), ("loose", b), ("kept", false), ("groups", true)), new StepText("explain.sharing.share", V(("a", a), ("b", b)))),
+            new(true, V(("each", x), ("loose", 0), ("kept", true), ("groups", true), ("x", x)), new StepText("explain.sharing.solved", V(("a", a), ("b", b), ("x", x)))),
         ];
     }
 

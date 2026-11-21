@@ -35,14 +35,31 @@ export const RELATIONS = {
       return `no addend within ${range(...box.addend)} and unknown within ${range(...box.unknown)} give a total within ${range(...box.total)}`;
     },
   },
+  "unknown-factor": {
+    // specs/010: ax = b. a is the factor, b the product, and x = b / a the unknown (a whole number when b is a multiple).
+    derive({ a, b }) {
+      const x = a !== 0 && b % a === 0 ? b / a : undefined;
+      return { factor: [a, a], product: [b, b], ...(x === undefined ? {} : { unknown: [x, x] }) };
+    },
+    feasible(box) {
+      const { factor, unknown, product } = box;
+      if (!factor || !unknown || !product) return true;
+      return factor[0] * unknown[0] <= product[1] && product[0] <= factor[1] * unknown[1];
+    },
+    infeasible(box) {
+      return `no factor within ${range(...box.factor)} and unknown within ${range(...box.unknown)} give a product within ${range(...box.product)}`;
+    },
+  },
 };
 
 export const PILOT_RELATION = "sum-of-two-operands";
+
 
 /** The relation that produces each question form a validator judges (specs/009); the registry schema lists the forms. */
 export const FORM_RELATIONS = {
   addition: "sum-of-two-operands",
   "unknown-addend": "unknown-addend",
+  "unknown-factor": "unknown-factor",
 };
 
 const isInteger = (v) => Number.isInteger(v);

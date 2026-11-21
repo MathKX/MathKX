@@ -19,19 +19,20 @@ public sealed class ContentCatalogTests
         Assert.Equal(2, addition.Ladder!.Count);
         Assert.Equal("numbers.addition.within-10", addition.Ladder[0].Definition);
 
-        Assert.Equal(5, catalog.Definitions.Count);
+        Assert.Equal(6, catalog.Definitions.Count);
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.within-10@1"));
         Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.within-10@1"));
         Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.to-15@1"));
+        Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.times@1"));
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.crossing-ten@1"));
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.four-plus-four@1"));
         Assert.False(catalog.Definitions.Keys.Any(k => k.StartsWith("algebra.linear-equations.", StringComparison.Ordinal)), "the 0.1 example is skipped by schema name");
 
-        Assert.Equal(2, catalog.Generators.Count);
-        Assert.Equal(2, catalog.Validators.Count);
-        Assert.Equal(4, catalog.Representations.Count);
-        Assert.Equal(4, catalog.VisualComponents.Count);
-        Assert.Equal(10, catalog.MisconceptionCodes.Count);
+        Assert.Equal(3, catalog.Generators.Count);
+        Assert.Equal(3, catalog.Validators.Count);
+        Assert.Equal(5, catalog.Representations.Count);
+        Assert.Equal(5, catalog.VisualComponents.Count);
+        Assert.Equal(16, catalog.MisconceptionCodes.Count);
 
         Assert.Equal(["number-bonds-to-ten", "one-step-equations"], catalog.Lessons.Keys.Order(StringComparer.Ordinal));
         var lesson = catalog.Lessons["number-bonds-to-ten"];
@@ -167,7 +168,7 @@ public sealed class ContentCatalogTests
         var catalogs = new ContentCatalog[32];
         Parallel.For(0, catalogs.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount * 2) }, i => catalogs[i] = ContentLoader.Load(RepositoryContent.Root));
 
-        Assert.All(catalogs, catalog => Assert.Equal(5, catalog.Definitions.Count));
+        Assert.All(catalogs, catalog => Assert.Equal(6, catalog.Definitions.Count));
     }
 
     [Theory]

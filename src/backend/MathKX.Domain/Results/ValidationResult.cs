@@ -42,6 +42,13 @@ public static class FeedbackCodes
     public const string EquationAddend = "eq.addend";
     public const string EquationOffByOne = "eq.offByOne";
     public const string EquationGeneric = "eq.generic";
+    public const string FactorCorrect = "fac.correct";
+    public const string FactorMultiplied = "fac.multiplied";
+    public const string FactorTotal = "fac.total";
+    public const string FactorSubtracted = "fac.subtracted";
+    public const string FactorFactor = "fac.factor";
+    public const string FactorOffByOne = "fac.offByOne";
+    public const string FactorGeneric = "fac.generic";
     public const string InvalidEmpty = "invalid.empty";
     public const string InvalidNotAnInteger = "invalid.notAnInteger";
 
@@ -50,6 +57,9 @@ public static class FeedbackCodes
 
     /// <summary>The codes <c>equation-answer@1</c> emits for a wrong answer (specs/009).</summary>
     public static readonly IReadOnlyList<string> EquationMisconceptions = [EquationAdded, EquationTotal, EquationAddend, EquationOffByOne, EquationGeneric];
+
+    /// <summary>The codes <c>factor-answer@1</c> emits for a wrong answer (specs/010).</summary>
+    public static readonly IReadOnlyList<string> FactorMisconceptions = [FactorMultiplied, FactorTotal, FactorSubtracted, FactorFactor, FactorOffByOne, FactorGeneric];
 }
 
 /// <summary>What the learner submitted. Reading is input guidance, not a mathematical judgement.</summary>

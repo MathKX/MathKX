@@ -47,6 +47,20 @@ Then try these in your head:
 - $x + 6 = 10$
 - $x + 4 = 13$
 
+## When x appears more than once {#groups}
+
+In $3x = 12$, the left pan holds three boxes. Each box is the same unknown weight $x$, so $3x$ means $3 · x$.
+
+To find one $x$, share the 12 weights on the right into 3 equal groups, one group for each box. When the groups are equal, one box weighs the same as one group. Keep one box and one group, and the scale is still level: you have divided both sides by 3.
+
+:::visual{type="balance-sharing-explorer" a="3" b="12"}
+:::
+
+Then try these in your head:
+
+- $2x = 10$
+- $4x = 8$
+
 ## Check your answer {#check}
 
 You can always check an answer by putting it in place of $x$. If both sides give the same number, it is right. If they don’t, the scale would tip, so try again.
@@ -59,4 +73,7 @@ Solve equations of your own. If you get stuck, ask for help and the balance show
 :::
 
 :::practice{definition="algebra.one-step.to-15" version="1"}
+:::
+
+:::practice{definition="algebra.one-step.times" version="1"}
 :::

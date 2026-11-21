@@ -78,7 +78,7 @@ public sealed class EquationAnswerTests
     {
         // PR 63 review: the content check refuses a mismatch; this holds the shipped content to the same rule.
         var catalog = ContentLoader.Load(RepositoryContent.Root);
-        var relations = new Dictionary<string, string> { [QuestionForms.Addition] = "sum-of-two-operands", [QuestionForms.UnknownAddend] = "unknown-addend" };
+        var relations = new Dictionary<string, string> { [QuestionForms.Addition] = "sum-of-two-operands", [QuestionForms.UnknownAddend] = "unknown-addend", [QuestionForms.UnknownFactor] = "unknown-factor" };
         foreach (var definition in catalog.Definitions.Values.Where(d => d.Generator is not null))
         {
             var form = catalog.Validators[definition.Validator.Key].Form;

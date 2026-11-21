@@ -99,8 +99,8 @@ A divergence names the file, the line, the element, and the value in the other l
 
 | File | Entries | Used by |
 | --- | --- | --- |
-| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, and `unknown-addend` for $x + a = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
-| `validators.json` | `name`, `version`, `form` (the question form it judges: `addition` or `unknown-addend`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
+| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, `unknown-addend` for $x + a = b$, and `unknown-factor` for $ax = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
+| `validators.json` | `name`, `version`, `form` (the question form it judges: `addition`, `unknown-addend`, or `unknown-factor`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
 | `representations.json` | `name`, `role` (`help`, `explanation`), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
 | `visual-components.json` | `type`, `attributes` (name → `{ type: integer or string, min, max, required }`), optional `representation` link | `:::visual` directives and `lesson.json` `visuals` |
 | `misconception-codes.json` | `code`, `validator` | definitions |
@@ -110,6 +110,8 @@ Pilot components: `ten-frame-explorer` (`start` 0–10), `groups` (`a`, `b` 1–
 `balance-explorer` (`a` 1–9, `b` 2–15) shows $x + a = b$ on a balance scale; the learner takes weights off either pan and sees the scale tip or stay level (specs/008). `b` must be greater than `a`, so that $x$ is at least 1; `a="5" b="5"` is rejected.
 
 Equations (specs/009): the generator `unknown-addend@1` makes $x + a = b$ from the parameters `addend` ($a$), `unknown` ($x$), and `total` ($b$); the validator `equation-answer@1` judges $x$ and emits `eq.added`, `eq.total`, `eq.addend`, `eq.offByOne`, and `eq.generic`; the representation `balance` (addend 1–9, unknown 1–14, total 2–15) gives the help and explanation. The validator decides how practice asks the question, so an equation definition needs no other field; pairing a validator with a generator of another form is an error. Self-checks ask addition only for now, so a check may not list an equation definition. `content/exercises/algebra/within-10.json` is the reference.
+
+Equations $ax = b$ (specs/010): the generator `unknown-factor@1` (parameters `factor`, `unknown`, `product`), the validator `factor-answer@1` (form `unknown-factor`; codes `fac.multiplied`, `fac.total`, `fac.subtracted`, `fac.factor`, `fac.offByOne`, `fac.generic`), and the representation `balance-sharing` (factor 2–4, unknown 1–5, product 2–20) for help and explanation; `content/exercises/algebra/times.json` is the reference. `balance-sharing-explorer` (`a` 2–4, `b` 2–20) shows $ax = b$ as $a$ boxes and $b$ weights that the learner shares into equal groups; `b` must be `a` times a whole number from 1 to 5, so `a="3" b="10"` is rejected.
 
 ## 6. Notation grammar
 

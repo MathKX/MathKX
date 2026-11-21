@@ -66,6 +66,23 @@
           "required": true
         }
       }
+    },
+    {
+      "type": "balance-sharing-explorer",
+      "attributes": {
+        "a": {
+          "type": "integer",
+          "min": 2,
+          "max": 4,
+          "required": true
+        },
+        "b": {
+          "type": "integer",
+          "min": 2,
+          "max": 20,
+          "required": true
+        }
+      }
     }
   ]
 }

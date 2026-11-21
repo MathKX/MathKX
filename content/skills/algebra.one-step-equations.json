@@ -25,6 +25,14 @@
         "nb": "Likninger der høyre side er fra 11 til 15.",
         "en": "Equations with a right side from 11 to 15."
       }
+    },
+    {
+      "definition": "algebra.one-step.times",
+      "version": 1,
+      "description": {
+        "nb": "Likninger som 3x = 12: del likt i grupper.",
+        "en": "Equations like 3x = 12: share into equal groups."
+      }
     }
   ]
 }

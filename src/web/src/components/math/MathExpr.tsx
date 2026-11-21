@@ -1,5 +1,5 @@
 // Renders a question's prompt as MathML with a spoken label, by the question form the service names (specs/009
-// FR-003): "a + b = ?" for addition, "x + a = b" for an unknown addend. The numbers come from the service. It can
+// FR-003): "a + b = ?" for addition, "x + a = b" for an unknown addend, "ax = b" for an unknown factor (specs/010). The numbers come from the service. It can
 // take focus from code, so a new question can receive it (specs/005 FR-016), but is not a Tab stop.
 import type { Ref } from "react";
 import type { QuestionForm } from "../../api/types";
@@ -12,16 +12,23 @@ export const UNKNOWN = "x";
 export const formOf = (instance: { form?: QuestionForm }): QuestionForm => instance.form ?? "addition";
 
 export const spokenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number) =>
-  translate(lang, form === "unknown-addend" ? "practice.spokenEquation" : "practice.spoken", { a, b });
+  translate(lang, form === "unknown-factor" ? "practice.spokenTimes" : form === "unknown-addend" ? "practice.spokenEquation" : "practice.spoken", { a, b });
 
 export const writtenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number) =>
-  translate(lang, form === "unknown-addend" ? "record.equation" : "record.question", { a, b });
+  translate(lang, form === "unknown-factor" ? "record.equationTimes" : form === "unknown-addend" ? "record.equation" : "record.question", { a, b });
 
 /** The prompt's MathML row, without a label: for the prompt itself and for the "Back to your question" link. */
 export function QuestionRow({ form, a, b }: { form: QuestionForm; a: number; b: number }) {
   return (
     <math display="inline" aria-hidden="true">
-      {form === "unknown-addend" ? (
+      {form === "unknown-factor" ? (
+        <mrow>
+          <mn>{a}</mn>
+          <mi>{UNKNOWN}</mi>
+          <mo>=</mo>
+          <mn>{b}</mn>
+        </mrow>
+      ) : form === "unknown-addend" ? (
         <mrow>
           <mi>{UNKNOWN}</mi>
           <mo>+</mo>

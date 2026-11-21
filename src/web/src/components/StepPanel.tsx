@@ -5,7 +5,8 @@ import type { InstanceDto, StepDto, StepKind } from "../api/types";
 import { translate, translateCode, type Lang } from "../i18n";
 import { Groups, type GroupsState } from "./math/Counters";
 import { MakeTen, type MakeTenState } from "./math/MakeTen";
-import { BalanceScale } from "./math/BalanceScale";
+import { BalanceScale, SharingScale } from "./math/BalanceScale";
+import { describeSharing } from "./math/SharingExplorer";
 
 export interface StepPanelProps {
   kind: StepKind;
@@ -29,7 +30,9 @@ export function StepPanel({ kind, instance, steps, currentIndex, lang, onNext }:
       aria-label={translate(lang, kind === "help" ? "a11y.helpRegion" : "a11y.explanationRegion")}
       data-testid={`${kind}-panel`}
     >
-      {representation === "balance" ? (
+      {representation === "balance-sharing" ? (
+        <SharingStep a={instance.a} b={instance.b} state={visual as SharingStepState} lang={lang} />
+      ) : representation === "balance" ? (
         <BalanceStep a={instance.a} b={instance.b} state={visual as BalanceStepState} lang={lang} />
       ) : representation === "make-ten" ? (
         <MakeTen a={instance.a} b={instance.b} state={visual as MakeTenState} lang={lang} />
@@ -72,6 +75,26 @@ function BalanceStep({ a, b, state, lang }: { a: number; b: number; state: Balan
   return (
     <div className="mkx-balance" data-testid="balance-step" data-marked={marked}>
       <BalanceScale a={a} b={b} left={left} right={right} tilt="balanced" marked={marked} label={label} />
+    </div>
+  );
+}
+
+/** A sharing help or explanation step (specs/010): weights per group, weights not shared, the group places, and kept. */
+interface SharingStepState {
+  each?: number;
+  loose?: number;
+  kept?: boolean;
+  groups?: boolean;
+}
+
+function SharingStep({ a, b, state, lang }: { a: number; b: number; state: SharingStepState; lang: Lang }) {
+  const each = state.each ?? 0;
+  const loose = state.loose ?? b;
+  const kept = state.kept ?? false;
+  const { pans } = describeSharing({ each, loose, kept }, a, b, lang);
+  return (
+    <div className="mkx-balance" data-testid="sharing-step" data-groups={state.groups ?? false}>
+      <SharingScale a={a} b={b} each={each} loose={loose} kept={kept} groups={state.groups ?? false} label={`${pans} ${translate(lang, "lesson.balanceLevel")}`} />
     </div>
   );
 }

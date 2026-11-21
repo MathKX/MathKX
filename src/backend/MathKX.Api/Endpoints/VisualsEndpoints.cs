@@ -7,13 +7,14 @@ namespace MathKX.Api.Endpoints;
 /// <summary>
 /// Models for the visuals a lesson places with authored values (specs/003 contracts/api.md): the step-through
 /// make-ten and groups from the same step models as practice, the ten-frame explorer's pairs, and the balance
-/// explorer's states (specs/008). Lesson content,
+/// explorer's states (specs/008), and the sharing explorer's states (specs/010). Lesson content,
 /// not tied to an instance; the learner app requests them only once the lesson is shown.
 /// </summary>
 public static class VisualsEndpoints
 {
     public const string Explorer = "ten-frame-explorer";
     public const string Balance = "balance-explorer";
+    public const string Sharing = "balance-sharing-explorer";
 
     public static IEndpointRouteBuilder MapVisuals(this IEndpointRouteBuilder app)
     {
@@ -42,6 +43,17 @@ public static class VisualsEndpoints
 
             var states = BalanceExplorer.States(added, total).Select(s => new BalanceStateDto(s.Left, s.Right, Tilt(s.Tilt), s.Solved)).ToList();
             return Results.Ok(new BalanceExplorerDto(type, added, total, states));
+        }
+
+        if (type == Sharing)
+        {
+            if (!int.TryParse(a, out var factor) || !int.TryParse(b, out var product) || !InAttribute(component, "a", factor) || !InAttribute(component, "b", product) || !SharingExplorer.Supports(factor, product))
+            {
+                return Problems.BadRequest("unsupported-values", $"{type} cannot show {a ?? "?"}x = {b ?? "?"}: outside its attributes or without a whole-number solution from 1 to 5.");
+            }
+
+            var shared = SharingExplorer.States(factor, product).Select(s => new SharingStateDto(s.Each, s.Loose, s.Kept, s.Solved)).ToList();
+            return Results.Ok(new SharingExplorerDto(type, factor, product, shared));
         }
 
         if (component.Representation is null || !catalog.Representations.TryGetValue(component.Representation, out var representation))

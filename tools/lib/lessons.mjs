@@ -216,6 +216,13 @@ function checkVisual(d, { error, data, registries }) {
   if (type === "balance-explorer" && Number.isInteger(values.a) && Number.isInteger(values.b) && values.b - values.a < 1) {
     error(`balance-explorer needs b greater than a, but x + ${values.a} = ${values.b} has no solution of at least 1`, { ...at, field });
   }
+  // ax = b needs a whole-number solution from 1 to 5, as the service's SharingExplorer.Supports requires (specs/010).
+  if (type === "balance-sharing-explorer" && Number.isInteger(values.a) && Number.isInteger(values.b) && values.a > 0) {
+    const x = values.b / values.a;
+    if (!Number.isInteger(x) || x < 1 || x > 5) {
+      error(`balance-sharing-explorer needs b to be a times a whole number from 1 to 5, but ${values.a}x = ${values.b} gives x = ${values.b}/${values.a}`, { ...at, field });
+    }
+  }
 
   if (component.representation) {
     const representation = registries.representations.get(component.representation)?.entry;

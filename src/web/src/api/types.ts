@@ -12,8 +12,8 @@ export interface Identity {
   seed?: string;
 }
 
-/** How a question asks for its answer (specs/009 FR-003): a + b = ?, or x + a = b. */
-export type QuestionForm = "addition" | "unknown-addend";
+/** How a question asks for its answer (specs/009 FR-003, specs/010): a + b = ?, x + a = b, or ax = b. */
+export type QuestionForm = "addition" | "unknown-addend" | "unknown-factor";
 
 export interface InstanceDto {
   identity: Identity;
@@ -115,6 +115,21 @@ export interface BalanceState {
   solved: boolean;
 }
 
+/** One sharing explorer state (specs/010): weights in each group, weights not shared yet, kept, and solved. */
+export interface SharingState {
+  each: number;
+  loose: number;
+  kept: boolean;
+  solved: boolean;
+}
+
+export interface SharingExplorerDto {
+  type: "balance-sharing-explorer";
+  a: number;
+  b: number;
+  states: SharingState[];
+}
+
 export interface BalanceExplorerDto {
   type: "balance-explorer";
   a: number;
@@ -196,6 +211,7 @@ export interface PracticeApi {
   getVisualSteps(type: string, a: number, b: number): Promise<VisualStepsDto>;
   getTenFrameExplorer(): Promise<TenFrameExplorerDto>;
   getBalanceExplorer(a: number, b: number): Promise<BalanceExplorerDto>;
+  getSharingExplorer(a: number, b: number): Promise<SharingExplorerDto>;
   /** The newest version of every check, by ID (specs/006). */
   getChecks(): Promise<CheckDto[]>;
   getCheck(id: string, version: number): Promise<CheckDto>;

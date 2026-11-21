@@ -1,0 +1,46 @@
+{
+  "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "algebra.one-step.times",
+  "version": 1,
+  "skill": "algebra.one-step-equations",
+  "source": "generated",
+  "validator": {
+    "name": "factor-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "unknown-factor",
+    "version": 1,
+    "parameters": {
+      "factor": {
+        "min": 2,
+        "max": 4
+      },
+      "unknown": {
+        "min": 1,
+        "max": 5
+      },
+      "product": {
+        "min": 2,
+        "max": 20
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "balance-sharing"
+    ],
+    "explanation": [
+      "balance-sharing"
+    ]
+  },
+  "misconceptionCodes": [
+    "fac.multiplied",
+    "fac.total",
+    "fac.subtracted",
+    "fac.factor",
+    "fac.offByOne",
+    "fac.generic"
+  ]
+}

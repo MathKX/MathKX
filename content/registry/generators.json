@@ -50,6 +50,32 @@
         "a",
         "b"
       ]
+    },
+    {
+      "name": "unknown-factor",
+      "version": 1,
+      "relation": "unknown-factor",
+      "parameters": {
+        "factor": {
+          "quantity": "factor",
+          "min": 2,
+          "max": 9
+        },
+        "unknown": {
+          "quantity": "unknown",
+          "min": 1,
+          "max": 9
+        },
+        "product": {
+          "quantity": "product",
+          "min": 2,
+          "max": 81
+        }
+      },
+      "produces": [
+        "a",
+        "b"
+      ]
     }
   ]
 }
