@@ -548,7 +548,7 @@ test("rejects unknown directives, unregistered components, and unlisted visual t
   });
   expectFailure(f.run(),
     /en\.md:\d+ directive: unknown directive note \(one of: visual, example, practice\)/,
-    /en\.md:\d+ directive visual\{type="nope"\}: unregistered visual component nope \(one of: ten-frame-explorer, groups, make-ten\)/,
+    /en\.md:\d+ directive visual\{type="nope"\}: unregistered visual component nope \(one of: ten-frame-explorer, groups, make-ten, balance-explorer\)/,
     /en\.md:\d+ directive visual\{type="make-ten"\}: type make-ten is not listed in lesson\.json visuals/);
 });
 
@@ -564,6 +564,20 @@ test("checks visual attributes: range, unknown names, and combined representatio
     /directive visual\{type="ten-frame-explorer"\}: attribute foo is not declared for component ten-frame-explorer \(one of: start\)/,
     /directive visual\{type="make-ten"\}: make-ten supports sum 11–18 but a=2 b=2 gives sum 4/,
     /directive visual\{type="groups"\}: groups supports sum 2–10 but a=9 b=9 gives sum 18/);
+});
+
+test("checks that a balance explorer's equation has a solution of at least 1", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const scales = '\n:::visual{type="balance-explorer" a="5" b="5"}\n:::\n\n:::visual{type="balance-explorer" a="3" b="7"}\n:::\n';
+  await f.lesson("my-lesson", {
+    json: { visuals: ["ten-frame-explorer", "make-ten", "balance-explorer"] },
+    en: EN + scales,
+    nb: NB + scales,
+  });
+  const result = f.run();
+  expectFailure(result, /directive visual\{type="balance-explorer"\}: balance-explorer needs b greater than a, but x \+ 5 = 5 has no solution of at least 1/);
+  assert.doesNotMatch(result.output, /x \+ 3 = 7/);
 });
 
 test("requires practice directives and metadata entries to correspond", async (t) => {

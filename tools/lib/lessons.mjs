@@ -212,6 +212,10 @@ function checkVisual(d, { error, data, registries }) {
   for (const [name, spec] of Object.entries(declared)) {
     if (spec.required && !(name in d.attributes)) error(`attribute ${name} is required for component ${type}`, { ...at, field });
   }
+  // x + a = b needs a whole-number solution of at least 1, as the service's BalanceExplorer.Supports requires (specs/008).
+  if (type === "balance-explorer" && Number.isInteger(values.a) && Number.isInteger(values.b) && values.b - values.a < 1) {
+    error(`balance-explorer needs b greater than a, but x + ${values.a} = ${values.b} has no solution of at least 1`, { ...at, field });
+  }
 
   if (component.representation) {
     const representation = registries.representations.get(component.representation)?.entry;

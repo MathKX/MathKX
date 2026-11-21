@@ -100,6 +100,21 @@ export interface TenFrameExplorerDto {
   states: { filled: number; partner: number }[];
 }
 
+/** One balance explorer state (specs/008): unit weights left on each pan, the tilt, and whether x stands alone and level. */
+export interface BalanceState {
+  left: number;
+  right: number;
+  tilt: "balanced" | "left-down" | "right-down";
+  solved: boolean;
+}
+
+export interface BalanceExplorerDto {
+  type: "balance-explorer";
+  a: number;
+  b: number;
+  states: BalanceState[];
+}
+
 export interface LadderEntry {
   definition: string;
   version: number;
@@ -173,6 +188,7 @@ export interface PracticeApi {
   getLessonContent(id: string, lang: string): Promise<LessonContentDto>;
   getVisualSteps(type: string, a: number, b: number): Promise<VisualStepsDto>;
   getTenFrameExplorer(): Promise<TenFrameExplorerDto>;
+  getBalanceExplorer(a: number, b: number): Promise<BalanceExplorerDto>;
   /** The newest version of every check, by ID (specs/006). */
   getChecks(): Promise<CheckDto[]>;
   getCheck(id: string, version: number): Promise<CheckDto>;

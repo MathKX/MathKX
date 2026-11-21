@@ -112,7 +112,7 @@ export function lessonMarkdown(lang: string): string {
   return readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../../content/lessons/number-bonds-to-ten", `${lang}.md`), "utf8");
 }
 
-type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getAnswer" | "getChecks";
+type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getBalanceExplorer" | "getAnswer" | "getChecks";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -131,7 +131,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getAnswer: [], getChecks: [] };
+  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getBalanceExplorer: [], getAnswer: [], getChecks: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -299,6 +299,20 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       calls.push("getTenFrameExplorer");
       await gate("getTenFrameExplorer");
       return { type: "ten-frame-explorer", states: Array.from({ length: 11 }, (_, filled) => ({ filled, partner: 10 - filled })) };
+    },
+    getBalanceExplorer: async (a, b) => {
+      calls.push(`getBalanceExplorer ${a} ${b}`);
+      await gate("getBalanceExplorer");
+      // The service's states (BalanceExplorer.cs), reproduced for the fake only.
+      const states = [];
+      for (let left = a; left >= 0; left--) {
+        for (let right = b; right >= 0; right--) {
+          const difference = b - a + left - right;
+          const tilt = difference === 0 ? ("balanced" as const) : difference > 0 ? ("left-down" as const) : ("right-down" as const);
+          states.push({ left, right, tilt, solved: left === 0 && tilt === "balanced" });
+        }
+      }
+      return { type: "balance-explorer", a, b, states };
     },
     getChecks: async () => {
       calls.push("getChecks");

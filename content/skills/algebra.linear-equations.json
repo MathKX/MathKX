@@ -3,5 +3,5 @@
   "schemaVersion": "0.1",
   "id": "algebra.linear-equations",
   "name": { "nb": "Lineære likninger", "en": "Linear equations" },
-  "prerequisites": ["numbers.integer-operations"]
+  "prerequisites": ["numbers.integer-operations", "algebra.one-step-equations"]
 }

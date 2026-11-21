@@ -152,6 +152,21 @@
   .mkx-return__link { display: inline-flex; align-items: center; font-weight: 600; }
   .mkx-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .mkx-explorer { display: grid; gap: 0.75rem; margin: 0; }
+  .mkx-balance { display: grid; gap: 0.5rem; margin: 0; max-width: 32rem; }
+  .mkx-balance__scale { width: 100%; height: auto; overflow: visible; }
+  .mkx-balance__beam, .mkx-balance__pan { transition: transform 450ms cubic-bezier(0.34, 1.3, 0.64, 1); }
+  .mkx-balance__beam rect, .mkx-balance__pivot { fill: var(--ds-color-neutral-text-subtle, #555); }
+  .mkx-balance__stand { fill: var(--ds-color-neutral-border-default, #999); }
+  .mkx-balance__string { stroke: var(--ds-color-neutral-border-default, #999); stroke-width: 1.5; fill: none; }
+  .mkx-balance__dish { fill: var(--ds-color-neutral-surface-active, #ddd); stroke: var(--ds-color-neutral-border-default, #999); stroke-width: 1.5; }
+  .mkx-balance__unknown rect { fill: var(--ds-color-ochre-surface-active); stroke: var(--ds-color-ochre-border-strong); stroke-width: 2; }
+  .mkx-balance__unknown text { font: italic 700 22px/1 serif; fill: var(--ds-color-ochre-text-default); }
+  .mkx-balance__unit { fill: var(--ds-color-accent-base-default); stroke: var(--ds-color-accent-border-strong); stroke-width: 1.5; transition: fill 250ms, stroke 250ms; }
+  .mkx-balance__unit--taken { fill: none; stroke: var(--ds-color-neutral-border-subtle, #ccc); stroke-dasharray: 3 2; }
+  .mkx-balance__equation { font-size: 1.5rem; margin: 0; }
+  .mkx-balance__solved { font-weight: 700; color: var(--ds-color-success-text-default, #06893a); }
+  .mkx-balance__controls { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .mkx-balance figcaption p { margin: 0; }
   .mkx-explorer .mkx-ten-frame { justify-self: start; }
   .mkx-lesson-footer a { display: inline-flex; align-items: center; min-height: var(--mkx-target); }
   .mkx-lesson-footer { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--ds-color-neutral-border-subtle); font-size: 0.9rem; }

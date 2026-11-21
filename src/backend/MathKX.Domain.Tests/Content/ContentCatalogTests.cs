@@ -11,7 +11,7 @@ public sealed class ContentCatalogTests
     {
         var catalog = ContentLoader.Load(RepositoryContent.Root);
 
-        Assert.Equal(9, catalog.Skills.Count);
+        Assert.Equal(10, catalog.Skills.Count);
         Assert.True(catalog.Skills.ContainsKey("numbers.number-bonds-to-ten"));
         var addition = catalog.Skills["numbers.addition-within-20"];
         Assert.Equal(["numbers.number-bonds-to-ten"], addition.Prerequisites);
@@ -28,11 +28,11 @@ public sealed class ContentCatalogTests
         Assert.Single(catalog.Generators);
         Assert.Single(catalog.Validators);
         Assert.Equal(3, catalog.Representations.Count);
-        Assert.Equal(3, catalog.VisualComponents.Count);
+        Assert.Equal(4, catalog.VisualComponents.Count);
         Assert.Equal(5, catalog.MisconceptionCodes.Count);
 
-        var lesson = Assert.Single(catalog.Lessons).Value;
-        Assert.Equal("number-bonds-to-ten", lesson.Id);
+        Assert.Equal(["number-bonds-to-ten", "one-step-equations"], catalog.Lessons.Keys.Order(StringComparer.Ordinal));
+        var lesson = catalog.Lessons["number-bonds-to-ten"];
         Assert.Equal(2, lesson.Practice.Count);
         Assert.Equal("Tiervenner – tall som blir 10", catalog.FrontMatter(lesson.Id, "nb").Title);
         Assert.Equal("Number bonds to ten", catalog.FrontMatter(lesson.Id, "en").Title);

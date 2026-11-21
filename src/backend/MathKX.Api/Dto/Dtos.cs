@@ -95,6 +95,11 @@ public sealed record TenFrameExplorerStateDto(int Filled, int Partner);
 
 public sealed record TenFrameExplorerDto(string Type, IReadOnlyList<TenFrameExplorerStateDto> States);
 
+/// <summary>One balance explorer state (specs/008): the unit weights left on each pan, the tilt, and whether x stands alone and balanced.</summary>
+public sealed record BalanceStateDto(int Left, int Right, string Tilt, bool Solved);
+
+public sealed record BalanceExplorerDto(string Type, int A, int B, IReadOnlyList<BalanceStateDto> States);
+
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
 /// <summary>A skill with its learner-facing name and the keys (<c>id@version</c>) of its definitions (specs/004 contracts/api.md).</summary>
