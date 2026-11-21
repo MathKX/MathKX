@@ -6,6 +6,12 @@
     "add.offByOne",
     "add.subtracted",
     "add.generic",
+    "eq.correct",
+    "eq.added",
+    "eq.total",
+    "eq.addend",
+    "eq.offByOne",
+    "eq.generic",
     "invalid.empty",
     "invalid.notAnInteger"
   ],
@@ -46,6 +52,9 @@
     "explain.makeTen.frame",
     "explain.makeTen.need",
     "explain.makeTen.split",
-    "explain.makeTen.total"
+    "explain.makeTen.total",
+    "explain.balance.show",
+    "explain.balance.takeAway",
+    "explain.balance.solved"
   ]
 }

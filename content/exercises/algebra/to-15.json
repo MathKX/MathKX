@@ -1,0 +1,45 @@
+{
+  "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "algebra.one-step.to-15",
+  "version": 1,
+  "skill": "algebra.one-step-equations",
+  "source": "generated",
+  "validator": {
+    "name": "equation-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "unknown-addend",
+    "version": 1,
+    "parameters": {
+      "addend": {
+        "min": 1,
+        "max": 9
+      },
+      "unknown": {
+        "min": 1,
+        "max": 9
+      },
+      "total": {
+        "min": 11,
+        "max": 15
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "balance"
+    ],
+    "explanation": [
+      "balance"
+    ]
+  },
+  "misconceptionCodes": [
+    "eq.added",
+    "eq.total",
+    "eq.addend",
+    "eq.offByOne",
+    "eq.generic"
+  ]
+}

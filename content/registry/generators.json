@@ -24,6 +24,32 @@
         "b",
         "sum"
       ]
+    },
+    {
+      "name": "unknown-addend",
+      "version": 1,
+      "relation": "unknown-addend",
+      "parameters": {
+        "addend": {
+          "quantity": "addend",
+          "min": 1,
+          "max": 9
+        },
+        "unknown": {
+          "quantity": "unknown",
+          "min": 1,
+          "max": 14
+        },
+        "total": {
+          "quantity": "total",
+          "min": 2,
+          "max": 15
+        }
+      },
+      "produces": [
+        "a",
+        "b"
+      ]
     }
   ]
 }

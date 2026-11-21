@@ -20,7 +20,7 @@ builder.Services.AddSingleton<ContentCatalog>(services => ContentLoader.Load(ser
 builder.Services.AddSingleton(GeneratorRegistry.Default());
 builder.Services.AddSingleton<InstanceResolver>();
 builder.Services.AddSingleton<QuestionPools>();
-builder.Services.AddSingleton<IntegerAnswerValidator>();
+builder.Services.AddSingleton(ValidatorRegistry.Default());
 
 var app = builder.Build();
 

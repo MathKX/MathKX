@@ -5,15 +5,9 @@ import { useEffect, useState } from "react";
 import { Button, Paragraph } from "@digdir/designsystemet-react";
 import type { BalanceExplorerDto, BalanceState, PracticeApi } from "../../api/types";
 import { translate, type Lang } from "../../i18n";
+import { BalanceScale } from "./BalanceScale";
+import { UNKNOWN } from "./MathExpr";
 
-const PIVOT = { x: 200, y: 70 };
-const ARM = 150;
-const TILT_DEGREES = 9;
-const UNIT = 14;
-const GAP = 3;
-const COLUMNS = 5;
-/** The unknown's symbol: notation, the same in every language, as in the lesson's $x + 3 = 7$. */
-const UNKNOWN = "x";
 
 type Position = { left: number; right: number };
 
@@ -76,7 +70,7 @@ export function BalanceExplorer({ a, b, lang, api }: { a: number; b: number; lan
   const atStart = position.left === model.a && position.right === model.b;
   return (
     <figure className="mkx-balance" data-testid="balance-explorer" data-tilt={state.tilt} data-solved={state.solved}>
-      <Scale state={state} a={model.a} b={model.b} label={described.spoken} />
+      <BalanceScale a={model.a} b={model.b} left={state.left} right={state.right} tilt={state.tilt} label={described.spoken} />
       <Equation state={state} />
       <figcaption>
         <Paragraph data-testid="balance-sentence" aria-hidden="true">
@@ -150,66 +144,5 @@ function Equation({ state }: { state: BalanceState }) {
         </mrow>
       </math>
     </p>
-  );
-}
-
-function Scale({ state, a, b, label }: { state: BalanceState; a: number; b: number; label: string }) {
-  const degrees = state.tilt === "left-down" ? -TILT_DEGREES : state.tilt === "right-down" ? TILT_DEGREES : 0;
-  const radians = (degrees * Math.PI) / 180;
-  const dx = ARM * Math.cos(radians);
-  const dy = ARM * Math.sin(radians);
-  const leftEnd = { x: PIVOT.x - dx, y: PIVOT.y - dy };
-  const rightEnd = { x: PIVOT.x + dx, y: PIVOT.y + dy };
-  return (
-    <svg className="mkx-balance__scale" viewBox="-30 30 460 220" role="img" aria-label={label} data-testid="balance-scale">
-      <path className="mkx-balance__stand" d={`M ${PIVOT.x - 50} 240 L ${PIVOT.x + 50} 240 L ${PIVOT.x + 8} 226 L ${PIVOT.x + 5} ${PIVOT.y} L ${PIVOT.x - 5} ${PIVOT.y} L ${PIVOT.x - 8} 226 Z`} />
-      <g className="mkx-balance__beam" style={{ transform: `rotate(${degrees}deg)`, transformOrigin: `${PIVOT.x}px ${PIVOT.y}px` }}>
-        <rect x={PIVOT.x - ARM - 6} y={PIVOT.y - 5} width={2 * ARM + 12} height={10} rx={5} />
-      </g>
-      <circle className="mkx-balance__pivot" cx={PIVOT.x} cy={PIVOT.y} r={9} />
-      <Pan at={leftEnd} total={a} remaining={state.left} unknown testId="balance-pan-left" />
-      <Pan at={rightEnd} total={b} remaining={state.right} testId="balance-pan-right" />
-    </svg>
-  );
-}
-
-/** A pan hanging from one end of the beam: its weights, with the ones taken off drawn as dashed outlines. */
-function Pan({ at, total, remaining, unknown = false, testId }: { at: { x: number; y: number }; total: number; remaining: number; unknown?: boolean; testId: string }) {
-  const columns = Math.min(total, COLUMNS);
-  const unitsWidth = columns * UNIT + (columns - 1) * GAP;
-  const boxWidth = 34;
-  const contentWidth = unknown ? boxWidth + 8 + unitsWidth : unitsWidth;
-  const startX = -contentWidth / 2;
-  const unitsX = unknown ? startX + boxWidth + 8 : startX;
-  const floor = 70;
-  return (
-    <g className="mkx-balance__pan" style={{ transform: `translate(${at.x}px, ${at.y}px)` }} data-testid={testId} data-remaining={remaining}>
-      <path className="mkx-balance__string" d={`M 0 0 L -66 ${floor} M 0 0 L 66 ${floor}`} />
-      <path className="mkx-balance__dish" d={`M -74 ${floor} Q 0 ${floor + 22} 74 ${floor} Z`} />
-      {unknown ? (
-        <g className="mkx-balance__unknown">
-          <rect x={startX} y={floor - 40} width={boxWidth} height={40} rx={5} />
-          <text x={startX + boxWidth / 2} y={floor - 14} textAnchor="middle">
-            {UNKNOWN}
-          </text>
-        </g>
-      ) : null}
-      {Array.from({ length: total }, (_, i) => {
-        const row = Math.floor(i / COLUMNS);
-        const column = i % COLUMNS;
-        const taken = i >= remaining;
-        return (
-          <rect
-            key={i}
-            className={taken ? "mkx-balance__unit mkx-balance__unit--taken" : "mkx-balance__unit"}
-            x={unitsX + column * (UNIT + GAP)}
-            y={floor - UNIT - row * (UNIT + GAP)}
-            width={UNIT}
-            height={UNIT}
-            rx={3}
-          />
-        );
-      })}
-    </g>
   );
 }

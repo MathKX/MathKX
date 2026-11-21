@@ -45,7 +45,7 @@ public static class InstancesEndpoints
     /// The answer to one question with the operands it belongs to, for the check summary only (specs/006 contracts/api.md):
     /// spec 002's third named exception to "no sum anywhere". Resolves and fails exactly as <see cref="Resolve"/> does.
     /// </summary>
-    public static IResult Answer(string definitionId, int version, string seed, InstanceResolver resolver, IntegerAnswerValidator validator)
+    public static IResult Answer(string definitionId, int version, string seed, InstanceResolver resolver, ValidatorRegistry validators)
     {
         if (!TryParseSeed(seed, out var parsed, out var problem))
         {
@@ -55,7 +55,7 @@ public static class InstancesEndpoints
         try
         {
             var instance = resolver.Resolve(new InstanceIdentity(definitionId, version, parsed));
-            return Results.Ok(new AnswerDto(IdentityDto.From(instance.Identity), instance.A, instance.B, new AnswerValueDto("integer", validator.ExpectedAnswer(instance))));
+            return Results.Ok(new AnswerDto(IdentityDto.From(instance.Identity), instance.A, instance.B, new AnswerValueDto("integer", validators.Get(instance.Validator).ExpectedAnswer(instance))));
         }
         catch (UnknownDefinitionException error)
         {

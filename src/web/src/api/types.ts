@@ -12,12 +12,17 @@ export interface Identity {
   seed?: string;
 }
 
+/** How a question asks for its answer (specs/009 FR-003): a + b = ?, or x + a = b. */
+export type QuestionForm = "addition" | "unknown-addend";
+
 export interface InstanceDto {
   identity: Identity;
   skill: string;
   a: number;
   b: number;
   prompt: string;
+  /** Absent on instances stored before spec 009, which are all addition. */
+  form?: QuestionForm;
   representations: { help: string[]; explanation: string[] };
   generator?: NamedVersion;
   validator: NamedVersion;
@@ -100,11 +105,13 @@ export interface TenFrameExplorerDto {
   states: { filled: number; partner: number }[];
 }
 
+export type BalanceTilt = "balanced" | "left-down" | "right-down";
+
 /** One balance explorer state (specs/008): unit weights left on each pan, the tilt, and whether x stands alone and level. */
 export interface BalanceState {
   left: number;
   right: number;
-  tilt: "balanced" | "left-down" | "right-down";
+  tilt: BalanceTilt;
   solved: boolean;
 }
 

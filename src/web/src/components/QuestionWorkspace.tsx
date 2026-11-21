@@ -6,7 +6,7 @@ import { Button, Textfield } from "@digdir/designsystemet-react";
 import type { InstanceDto, StepDto, ValidationResponse } from "../api/types";
 import { translate, type Lang } from "../i18n";
 import { Link, hasNavigatedInApp } from "../router";
-import { AdditionPrompt } from "./math/MathExpr";
+import { QuestionPrompt, formOf } from "./math/MathExpr";
 import { Feedback } from "./Feedback";
 import { StepPanel } from "./StepPanel";
 
@@ -80,7 +80,7 @@ export function QuestionWorkspace({ controller: c, controls, testId, takeFocus }
 
   return (
     <div className="mkx-exercise" data-testid={testId}>
-      <AdditionPrompt ref={promptRef} a={instance.a} b={instance.b} lang={lang} />
+      <QuestionPrompt ref={promptRef} form={formOf(instance)} a={instance.a} b={instance.b} lang={lang} />
 
       <form onSubmit={onSubmit} className="mkx-answer-form" noValidate>
         <Textfield

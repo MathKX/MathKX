@@ -31,6 +31,7 @@ public sealed class GeneratorRegistry
     {
         var registry = new GeneratorRegistry();
         registry.Register(new AdditionPairGenerator());
+        registry.Register(new UnknownAddendGenerator());
         return registry;
     }
 

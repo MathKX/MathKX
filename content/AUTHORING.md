@@ -99,8 +99,8 @@ A divergence names the file, the line, the element, and the value in the other l
 
 | File | Entries | Used by |
 | --- | --- | --- |
-| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements; the pilot has `sum-of-two-operands`), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
-| `validators.json` | `name`, `version`, `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
+| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, and `unknown-addend` for $x + a = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
+| `validators.json` | `name`, `version`, `form` (the question form it judges: `addition` or `unknown-addend`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
 | `representations.json` | `name`, `role` (`help`, `explanation`), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
 | `visual-components.json` | `type`, `attributes` (name → `{ type: integer or string, min, max, required }`), optional `representation` link | `:::visual` directives and `lesson.json` `visuals` |
 | `misconception-codes.json` | `code`, `validator` | definitions |
@@ -108,6 +108,8 @@ A divergence names the file, the line, the element, and the value in the other l
 Pilot components: `ten-frame-explorer` (`start` 0–10), `groups` (`a`, `b` 1–9, sum 2–10), `make-ten` (`a`, `b` 1–9, sum 11–18). For `groups` and `make-ten`, `a` and `b` are checked together against the linked representation's bounds, so `groups` with `a="9" b="9"` is rejected.
 
 `balance-explorer` (`a` 1–9, `b` 2–15) shows $x + a = b$ on a balance scale; the learner takes weights off either pan and sees the scale tip or stay level (specs/008). `b` must be greater than `a`, so that $x$ is at least 1; `a="5" b="5"` is rejected.
+
+Equations (specs/009): the generator `unknown-addend@1` makes $x + a = b$ from the parameters `addend` ($a$), `unknown` ($x$), and `total` ($b$); the validator `equation-answer@1` judges $x$ and emits `eq.added`, `eq.total`, `eq.addend`, `eq.offByOne`, and `eq.generic`; the representation `balance` (addend 1–9, unknown 1–14, total 2–15) gives the help and explanation. The validator decides how practice asks the question, so an equation definition needs no other field; pairing a validator with a generator of another form is an error. Self-checks ask addition only for now, so a check may not list an equation definition. `content/exercises/algebra/within-10.json` is the reference.
 
 ## 6. Notation grammar
 
@@ -149,7 +151,7 @@ Definitions live under `content/exercises/` and describe either a generated fami
 | `skill` | A skill from `content/skills/` |
 | `source` | `generated` (needs `generator`, no `instance`) or `fixed` (needs `instance`, no `generator`) |
 | `validator` | Registered name and version |
-| `generator.parameters` | Every key is a parameter the generator declares; each `{ min, max }` lies within the generator's domain with `min ≤ max`; the bounds must admit at least one task (for `addition-pair`, some pair of operands in the operand range has a sum in the sum range) |
+| `generator.parameters` | Every key is a parameter the generator declares; each `{ min, max }` lies within the generator's domain with `min ≤ max`; the bounds must admit at least one task (for `addition-pair`, some pair of operands in the operand range has a sum in the sum range; for `unknown-addend`, some addend and unknown in their ranges give a total in the total range) |
 | `generator.constraints` | Optional names from the generator's declared list (the pilot generator declares none) |
 | `instance.prompt` | For fixed tasks: the values the representations read, as integers (`{ "a": 4, "b": 4 }`) |
 | `instance.validation` | For fixed tasks: the validator's private data in its artifact shape (`{ "answer": 8 }` for `integer-answer`) |

@@ -6,6 +6,7 @@
     {
       "name": "integer-answer",
       "version": 1,
+      "form": "addition",
       "artifact": {
         "type": "integer",
         "min": 0,
@@ -17,6 +18,23 @@
         "add.offByOne",
         "add.subtracted",
         "add.generic"
+      ]
+    },
+    {
+      "name": "equation-answer",
+      "version": 1,
+      "form": "unknown-addend",
+      "artifact": {
+        "type": "integer",
+        "min": 0,
+        "max": 40
+      },
+      "emits": [
+        "eq.added",
+        "eq.total",
+        "eq.addend",
+        "eq.offByOne",
+        "eq.generic"
       ]
     }
   ]

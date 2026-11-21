@@ -53,4 +53,6 @@ curl -fsS "http://127.0.0.1:$port/api/instances/numbers.addition.within-10/1/22/
 curl -fsS "http://127.0.0.1:$port/api/lessons/one-step-equations" | grep -q '"id":"one-step-equations"' || { echo "the equations lesson did not resolve"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/lessons/one-step-equations/content/nb" | grep -q '"markdown":"---' || { echo "the equations lesson content was not published"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/visuals/balance-explorer?a=3&b=7" | grep -q '"type":"balance-explorer"' || { echo "the balance explorer did not resolve"; exit 1; }
+# specs/009: the package carries the equation definitions and serves them as x + a = b.
+curl -fsS "http://127.0.0.1:$port/api/instances/algebra.one-step.within-10/1/3" | grep -q '"form":"unknown-addend"' || { echo "the equation practice did not resolve"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

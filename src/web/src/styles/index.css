@@ -162,6 +162,7 @@
   .mkx-balance__unknown rect { fill: var(--ds-color-ochre-surface-active); stroke: var(--ds-color-ochre-border-strong); stroke-width: 2; }
   .mkx-balance__unknown text { font: italic 700 22px/1 serif; fill: var(--ds-color-ochre-text-default); }
   .mkx-balance__unit { fill: var(--ds-color-accent-base-default); stroke: var(--ds-color-accent-border-strong); stroke-width: 1.5; transition: fill 250ms, stroke 250ms; }
+  .mkx-balance__unit--marked { stroke: var(--ds-color-neutral-text-default); stroke-width: 3; }
   .mkx-balance__unit--taken { fill: none; stroke: var(--ds-color-neutral-border-strong, #666); stroke-dasharray: 3 2; }
   .mkx-balance__equation { font-size: 1.5rem; margin: 0; }
   .mkx-balance__solved { font-weight: 700; color: var(--ds-color-success-text-default, #06893a); }

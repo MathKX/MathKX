@@ -9,13 +9,17 @@ namespace MathKX.Domain.Validators;
 /// <c>integer-answer@1</c> (specs/002 contracts/validation-result.md): judges an integer against <c>a + b</c>
 /// with exactly one feedback code chosen in the contract's precedence order.
 /// </summary>
-public sealed class IntegerAnswerValidator
+public sealed class IntegerAnswerValidator : IAnswerValidator
 {
-    public static readonly NamedVersion Identity = new("integer-answer", 1);
+    public static readonly NamedVersion Pinned = new("integer-answer", 1);
 
-    public string Name => Identity.Name;
+    public NamedVersion Identity => Pinned;
 
-    public int Version => Identity.Version;
+    public string Form => QuestionForms.Addition;
+
+    public string Name => Pinned.Name;
+
+    public int Version => Pinned.Version;
 
     /// <summary>The answer this validator accepts for the instance; served only to the check summary (specs/006 research R5).</summary>
     public int ExpectedAnswer(Instance instance) => instance.A + instance.B;
@@ -25,7 +29,7 @@ public sealed class IntegerAnswerValidator
         if (artifact.Value is not int v)
         {
             var code = artifact.IsEmpty ? FeedbackCodes.InvalidEmpty : FeedbackCodes.InvalidNotAnInteger;
-            return new ValidationResult(ValidationStatus.InvalidResponse, code, new Dictionary<string, object> { ["text"] = artifact.OriginalText }, Identity);
+            return new ValidationResult(ValidationStatus.InvalidResponse, code, new Dictionary<string, object> { ["text"] = artifact.OriginalText }, Pinned);
         }
 
         var a = instance.A;
@@ -68,6 +72,6 @@ public sealed class IntegerAnswerValidator
             values["sum"] = s; // only a correct result carries the sum (the completed equation)
         }
 
-        return new ValidationResult(status, code, values, Identity);
+        return new ValidationResult(status, code, values, Pinned);
     }
 }

@@ -51,6 +51,9 @@ public static class StepModels
         "explain.makeTen.need",
         "explain.makeTen.split",
         "explain.makeTen.total",
+        "explain.balance.show",
+        "explain.balance.takeAway",
+        "explain.balance.solved",
     ];
 
     public static bool TryParseKind(string? text, out StepKind kind)
@@ -98,6 +101,7 @@ public static class StepModels
             ("groups", StepKind.Help) => GroupsHelp(a, b),
             ("groups", StepKind.Explanation) => GroupsExplanation(a, b),
             ("make-ten", _) => MakeTen(a, b),
+            ("balance", _) => Balance(a, b),
             _ => throw new UnsupportedStepsException(representation, kind),
         };
 
@@ -127,6 +131,21 @@ public static class StepModels
             new(false, V(("combined", false)), new StepText("explain.groups.twoGroups", V(("a", a), ("b", b)))),
             new(false, V(("combined", true)), new StepText("explain.groups.combine", V(("a", a), ("b", b)))),
             new(true, V(("combined", true), ("countedAll", a + b)), new StepText("explain.groups.total", V(("a", a), ("b", b), ("sum", a + b)))),
+        ];
+    }
+
+    /// <summary>
+    /// <c>x + a = b</c> on a balance (specs/009 FR-004): the level scale, then the <c>a</c> weights to take off both
+    /// pans marked, then <c>x</c> alone against <c>b − a</c>. Only the last step carries <c>x</c>.
+    /// </summary>
+    private static List<Raw> Balance(int a, int b)
+    {
+        var x = b - a;
+        return
+        [
+            new(false, V(("left", a), ("right", b), ("marked", 0)), new StepText("explain.balance.show", V(("a", a), ("b", b)))),
+            new(false, V(("left", a), ("right", b), ("marked", a)), new StepText("explain.balance.takeAway", V(("a", a)))),
+            new(true, V(("left", 0), ("right", x), ("marked", 0), ("x", x)), new StepText("explain.balance.solved", V(("a", a), ("b", b), ("x", x)))),
         ];
     }
 

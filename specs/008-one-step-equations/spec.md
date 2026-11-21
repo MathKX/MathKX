@@ -65,6 +65,6 @@ A learner opens "Equations and the balance" from the lesson list. A balance scal
 
 ## Assumptions
 
-- The lesson is a draft and has no practice yet. Practice of one-step equations, with the balance as visual help, is the next change.
+- The lesson is a draft and had no practice in this slice. Practice of one-step equations, with the balance as visual help, is [spec 009](../009-equations-practice/spec.md).
 - Only addition equations, $x + a = b$, are in this slice. Subtraction ($x - a = b$) and multiplication ($ax = b$, split into equal groups) are later slices.
 - The unknown is always on the left pan, as in the lesson's notation.

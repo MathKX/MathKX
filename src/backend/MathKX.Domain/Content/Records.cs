@@ -52,7 +52,8 @@ public sealed record GeneratorEntry(
 
 public sealed record ArtifactSpec(string Type, int? Min, int? Max);
 
-public sealed record ValidatorEntry(string Name, int Version, ArtifactSpec Artifact, IReadOnlyList<string> Emits)
+/// <summary>A registered validator; <see cref="Form"/> is the question form it judges (specs/009).</summary>
+public sealed record ValidatorEntry(string Name, int Version, string Form, ArtifactSpec Artifact, IReadOnlyList<string> Emits)
 {
     public string Key => $"{Name}@{Version}";
 }
