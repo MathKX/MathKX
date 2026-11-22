@@ -101,7 +101,7 @@ A divergence names the file, the line, the element, and the value in the other l
 | --- | --- | --- |
 | `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, `unknown-addend` for $x + a = b$, `unknown-factor` for $ax = b$, and `two-step` for $ax + c = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
 | `validators.json` | `name`, `version`, `form` (the question form it judges: `addition`, `unknown-addend`, `unknown-factor`, or `two-step`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
-| `representations.json` | `name`, `role` (`help`, `explanation`), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
+| `representations.json` | `name`, `role` (`help`, `explanation`), `forms` (question forms whose steps it draws), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
 | `visual-components.json` | `type`, `attributes` (name → `{ type: integer or string, min, max, required }`), optional `representation` link | `:::visual` directives and `lesson.json` `visuals` |
 | `misconception-codes.json` | `code`, `validator` | definitions |
 
@@ -159,7 +159,7 @@ Definitions live under `content/exercises/` and describe either a generated fami
 | `generator.constraints` | Optional names from the generator's declared list (the pilot generator declares none) |
 | `instance.prompt` | For fixed tasks: the values the representations read, as integers (`{ "a": 4, "b": 4 }`) |
 | `instance.validation` | For fixed tasks: the validator's private data in its artifact shape (`{ "answer": 8 }` for `integer-answer`) |
-| `representations.help`, `.explanation` | Registered representations offering that role whose supported ranges cover the definition's whole range (a generated family's bounds, or a fixed task's values); the check names the quantity and both ranges when they do not |
+| `representations.help`, `.explanation` | Registered representations offering that role, drawing the validator's question form, whose supported ranges cover the definition's whole range (a generated family's bounds, or a fixed task's values); the check names the quantity and both ranges when they do not |
 | `misconceptionCodes` | Registered codes that the named validator emits |
 
 The retired `arithmetic.*` skill IDs from the prototype are reported with a hint: the registry uses `numbers.*`.

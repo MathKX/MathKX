@@ -97,7 +97,8 @@ public sealed class EquationContractTests(WebApplicationFactory<Program> factory
     [Theory]
     [InlineData(3, 7, true)] // the worked example solves it
     [InlineData(6, 10, false)] // in "Try it yourself"; x = 4 belongs to the worked example (PR 63 review)
-    [InlineData(2, 9, false)]
+    [InlineData(2, 9, true)] // in "Try it yourself", but the explorer for x + 5 = 12 shows it level on the way (PR 65 review)
+    [InlineData(1, 2, false)]
     public async Task The_lesson_flag_a_learner_receives_follows_the_disclosure_rule(int a, int b, bool discloses)
     {
         using var client = factory.CreateClient();

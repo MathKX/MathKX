@@ -32,8 +32,17 @@ public sealed class EquationDisclosureTests
     }
 
     [Theory]
-    [InlineData(2, 9)] // in "Try it yourself" without its answer
-    [InlineData(6, 10)] // the lesson also has x = 4, but for the worked example's x + 3 = 7
+    [InlineData(2, 6)] // the first explorer, x + 3 = 7, shows these level on the way (PR 65 review)
+    [InlineData(1, 5)]
+    [InlineData(2, 9)] // "Try it yourself" asks it, but the second explorer, x + 5 = 12, passes through it
+    [InlineData(4, 11)]
+    public void An_explorer_discloses_every_equation_it_shows_level_on_the_way(int a, int b)
+    {
+        Assert.Equal(new DisclosureDecision(true, DisclosureSource.Visual), LessonDisclosure.For(Translations, Question(a, b, QuestionForms.UnknownAddend)));
+    }
+
+    [Theory]
+    [InlineData(6, 10)] // the lesson also has x = 4, but for the worked example's x + 3 = 7; no explorer has 6 weights to take
     [InlineData(4, 13)]
     [InlineData(1, 2)]
     public void Equations_the_lesson_does_not_solve_are_not_disclosed(int a, int b)

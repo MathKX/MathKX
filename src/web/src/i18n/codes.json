@@ -72,10 +72,12 @@
     "explain.balance.solved",
     "explain.sharing.show",
     "explain.sharing.share",
+    "explain.sharing.makeGroups",
     "explain.sharing.solved",
     "explain.twoStep.show",
     "explain.twoStep.takeAway",
     "explain.twoStep.share",
+    "explain.twoStep.makeGroups",
     "explain.twoStep.solved"
   ]
 }

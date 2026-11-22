@@ -142,13 +142,58 @@ public sealed class TwoStepTests
         Assert.All(steps.Take(3), s => Assert.False(s.Visual.ContainsKey("x") || s.Text.Values.ContainsKey("x")));
         Assert.All(steps, s => Assert.Contains(s.Text.Code, StepModels.TextCodes));
 
-        // Without c, there is nothing to step through.
+        // Without c, there is nothing to step through; and the one-step balances never read c (PR 65 review).
         Assert.Throws<UnsupportedStepsException>(() => StepModels.ForValues(2, 11, "balance-two-step", StepKind.Help));
+        Assert.Throws<UnsupportedStepsException>(() => StepModels.ForValues(2, 11, "balance", StepKind.Help, 3));
+        Assert.Throws<UnsupportedStepsException>(() => StepModels.ForValues(2, 8, "balance-sharing", StepKind.Help, 3));
         Assert.Equal(steps.Select(s => s.Text.Code), StepModels.For(Equation(2, 3, 11), "balance-two-step", StepKind.Explanation).Select(s => s.Text.Code));
+    }
+
+    [Fact]
+    public void When_one_round_would_share_every_weight_the_third_step_only_marks_the_groups()
+    {
+        // 2x + 2 = 4: one weight to each group would already show x = 1 (PR 65 review).
+        var steps = StepModels.ForValues(2, 4, "balance-two-step", StepKind.Help, 2);
+        Assert.Equal(["explain.twoStep.show", "explain.twoStep.takeAway", "explain.twoStep.makeGroups", "explain.twoStep.solved"], steps.Select(s => s.Text.Code));
+        Assert.Equal((0, 2, true), ((int)steps[2].Visual["each"], (int)steps[2].Visual["loose"], (bool)steps[2].Visual["groups"]));
+        Assert.Equal([false, false, false, true], steps.Select(s => s.Reveals));
+        Assert.All(steps, s => Assert.Contains(s.Text.Code, StepModels.TextCodes));
+    }
+
+    [Fact]
+    public void Every_registered_representation_draws_the_forms_its_steps_explain()
+    {
+        Assert.Equal([QuestionForms.UnknownAddend], Catalog.Representations["balance"].Forms);
+        Assert.Equal([QuestionForms.UnknownFactor], Catalog.Representations["balance-sharing"].Forms);
+        Assert.Equal([QuestionForms.TwoStep], Catalog.Representations["balance-two-step"].Forms);
+        Assert.All(Catalog.Definitions.Values, d =>
+        {
+            var form = Catalog.Validators[d.Validator.Key].Form;
+            Assert.All(d.Representations.Help.Concat(d.Representations.Explanation), r => Assert.Contains(form, Catalog.Representations[r].Forms));
+        });
+    }
+
+    [Fact]
+    public void Help_that_draws_another_form_fails_the_load()
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        var path = Path.Combine(temp.Root, "exercises", "algebra", "two-step.json");
+        var text = File.ReadAllText(path);
+        // The ranges alone would let the one-step balance through: it reads 2x + 3 = 11 as x + 2 = 11 and gives x = 9.
+        var help = text.IndexOf("\"balance-two-step\"", StringComparison.Ordinal);
+        File.WriteAllText(path, text[..help] + "\"balance\"" + text[(help + "\"balance-two-step\"".Length)..]);
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Equal("exercises/algebra/two-step.json", error.Path);
+        Assert.Contains("representation balance draws unknown-addend questions, but validator two-step-answer@1 judges two-step questions", error.Message, StringComparison.Ordinal);
     }
 
     [Theory]
     [InlineData(2, 3, 11, true)] // the explorer
+    [InlineData(2, 2, 10, true)] // the explorer on the way, after one weight off both pans (PR 65 review)
+    [InlineData(2, 1, 9, true)]
     [InlineData(3, 2, 14, true)] // the worked example, through its halfway 3x = 12
     [InlineData(2, 1, 7, false)] // "Try it yourself", without its answer
     [InlineData(3, 4, 10, false)]
@@ -173,6 +218,11 @@ public sealed class TwoStepTests
         var oneStep = new Instance(new InstanceIdentity("algebra.one-step.times", 1, null), "algebra.one-step-equations", 2, 8, new RepresentationRoles([], []), null, new NamedVersion("factor-answer", 1), QuestionForms.UnknownFactor);
         Assert.False(LessonDisclosure.For(Facts("2x = 8", "2x + 1 = 9", "x = 4"), oneStep).Discloses);
         Assert.True(LessonDisclosure.For(Facts("2x + 3 = 11", "2x = 8", "x = 4"), oneStep).Discloses); // the halfway is 2x = 8 itself
+
+        // The explorer's boxes stand alone as 2x = 8 on the way, so it solves that equation too (PR 65 review).
+        var translations = Catalog.Translations.Where(t => t.Key.LessonId == "two-step-equations").Select(t => t.Value.Facts);
+        Assert.Equal(new DisclosureDecision(true, DisclosureSource.Visual), LessonDisclosure.For(translations, oneStep));
+        Assert.False(LessonDisclosure.For(translations, oneStep with { B = 10 }).Discloses);
     }
 
     [Theory]
@@ -180,6 +230,8 @@ public sealed class TwoStepTests
     [InlineData("{ \"a\": 2, \"b\": 3, \"c\": 3 }")] // x = 0
     [InlineData("{ \"a\": 0, \"b\": 11, \"c\": 3 }")]
     [InlineData("{ \"a\": 2, \"b\": 11 }")] // no c
+    [InlineData("{ \"a\": 2, \"c\": 3 }")] // no b
+    [InlineData("{ \"c\": 3, \"b\": 11 }")] // no a
     public void A_fixed_two_step_equation_without_a_whole_number_solution_fails_the_load(string prompt)
     {
         using var temp = new TempContent();

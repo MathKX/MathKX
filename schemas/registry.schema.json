@@ -112,10 +112,17 @@
     },
     "representation": {
       "type": "object",
-      "required": ["name", "role", "reads", "supports"],
+      "required": ["name", "role", "forms", "reads", "supports"],
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "role": { "type": "array", "items": { "enum": ["help", "explanation"] }, "minItems": 1, "uniqueItems": true },
+        "forms": {
+          "type": "array",
+          "items": { "enum": ["addition", "unknown-addend", "unknown-factor", "two-step"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The question forms whose steps the representation draws (PR 65 review): a definition may list it only when its validator judges one of these forms, so balance help never explains ax + c = b as x + a = b."
+        },
         "reads": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "minItems": 1, "uniqueItems": true },
         "supports": { "$ref": "#/$defs/box" }
       },

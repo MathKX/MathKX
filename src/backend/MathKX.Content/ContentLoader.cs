@@ -324,15 +324,20 @@ public static class ContentLoader
                 throw new ContentLoadException(path, $"validator {definition.Validator.Key} is not registered");
             }
 
-            // A fixed ax = b must have a whole-number x, or the validator could not judge it (PR 64 review).
+            // A fixed ax = b must have both numbers and a whole-number x, or the validator could not judge it (PR 64 and 65 reviews).
             if (definition.IsFixed
                 && validator.Form == QuestionForms.UnknownFactor
-                && definition.Instance?.Prompt is { } prompt
-                && prompt.TryGetValue("a", out var a)
-                && prompt.TryGetValue("b", out var b)
-                && (a <= 0 || b <= 0 || b % a != 0))
+                && definition.Instance?.Prompt is { } prompt)
             {
-                throw new ContentLoadException(path, $"{a}x = {b} has no whole-number solution; a must be greater than 0 and b a multiple of a");
+                if (!prompt.TryGetValue("a", out var a) || !prompt.TryGetValue("b", out var b))
+                {
+                    throw new ContentLoadException(path, "a fixed ax = b needs integers a and b");
+                }
+
+                if (a <= 0 || b <= 0 || b % a != 0)
+                {
+                    throw new ContentLoadException(path, $"{a}x = {b} has no whole-number solution; a must be greater than 0 and b a multiple of a");
+                }
             }
 
             // The same for a fixed ax + c = b, whose x must be a whole number of at least 1 (specs/011 FR-004).
@@ -352,9 +357,15 @@ public static class ContentLoader
 
             foreach (var name in definition.Representations.Help.Concat(definition.Representations.Explanation))
             {
-                if (!representations.ContainsKey(name))
+                if (!representations.TryGetValue(name, out var representation))
                 {
                     throw new ContentLoadException(path, $"representation {name} is not registered");
+                }
+
+                // Help for another form would explain another equation and give another x (PR 65 review).
+                if (!representation.Forms.Contains(validator.Form, StringComparer.Ordinal))
+                {
+                    throw new ContentLoadException(path, $"representation {name} draws {string.Join(", ", representation.Forms)} questions, but validator {definition.Validator.Key} judges {validator.Form} questions");
                 }
             }
 

@@ -176,3 +176,18 @@ describe("a fixed task (test 7)", () => {
     await waitFor(() => expect(screen.queryByTestId("replay-unavailable")).toBeNull());
   });
 });
+
+describe("an equation ax + c = b (specs/011)", () => {
+  it("shows c in the question and in each answer's feedback (PR 65 review)", async () => {
+    const TWO = "algebra.two-step.within-20";
+    const base = delivery({ id: "q", definitionId: TWO, a: 2, b: 11, events: [incorrect(8, "two.notShared"), incorrect(5, "two.offByOne"), { type: "submission", submissionId: "s-two", originalText: "4", value: 4, status: "correct", code: "two.correct" }] });
+    const recorded: Delivery = { ...base, instance: { ...base.instance, validatorName: "two-step-answer", form: "two-step", c: 3 } };
+    replay([recorded], "q", createFakeApi({ pairs: { [TWO]: [2, 11] }, instanceC: 3 }));
+    expect((await screen.findByTestId("prompt")).getAttribute("aria-label")).toBe("2 times x plus 3 equals 11. What is x?");
+    const answers = screen.getAllByTestId("replay-submission");
+    expect(answers[0]!.textContent).toContain("8 is 11 − 3: taking away 3 was right.");
+    expect(answers[1]!.textContent).toContain("what is 2 × 5 + 3? It should be 11.");
+    expect(answers[2]!.textContent).toContain("Correct. x = 4, because 2 × 4 + 3 = 11.");
+    expect(document.body.textContent).not.toContain("{c}");
+  });
+});

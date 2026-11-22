@@ -58,9 +58,11 @@ public sealed record ValidatorEntry(string Name, int Version, string Form, Artif
     public string Key => $"{Name}@{Version}";
 }
 
+/// <summary>A registered representation; <see cref="Forms"/> are the question forms whose steps it draws (PR 65 review).</summary>
 public sealed record RepresentationEntry(
     string Name,
     IReadOnlyList<string> Role,
+    IReadOnlyList<string> Forms,
     IReadOnlyList<string> Reads,
     IReadOnlyDictionary<string, Bounds> Supports);
 

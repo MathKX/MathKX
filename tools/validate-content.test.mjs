@@ -420,10 +420,12 @@ test("rejects a fixed ax = b without a whole-number solution, whatever its repre
   await f.write("content/exercises/algebra/three-x-seven.json", fixedTimes("algebra.one-step.three-x-seven", 3, 7, 2));
   await f.write("content/exercises/algebra/zero-x.json", fixedTimes("algebra.one-step.zero-x", 0, 6, 1));
   await f.write("content/exercises/algebra/three-x-twelve.json", fixedTimes("algebra.one-step.three-x-twelve", 3, 12, 4));
+  await f.write("content/exercises/algebra/no-b.json", fixedTimes("algebra.one-step.no-b", 3, undefined, 4));
   const result = f.run();
   expectFailure(result,
     /three-x-seven\.json instance\.prompt: ax = b needs b to be a times a whole number greater than 0, but 3x = 7 gives x = 7\/3/,
-    /zero-x\.json instance\.prompt: ax = b needs a factor a greater than 0, but a is 0/);
+    /zero-x\.json instance\.prompt: ax = b needs a factor a greater than 0, but a is 0/,
+    /no-b\.json instance\.prompt: ax = b needs b as an integer/); // PR 65 review: whatever its representations
   assert.doesNotMatch(result.output, /three-x-twelve\.json/);
 });
 
@@ -453,6 +455,15 @@ test("rejects two-step help beyond what the pans can draw (specs/011)", async (t
   expectFailure(f.run(), /two-step\.json representations\.help\[0\]: balance-two-step supports addend 1–6 but the definition allows addend 1–8/);
 });
 
+test("rejects help that draws another question form, even when its ranges fit (PR 65 review)", async (t) => {
+  const f = await fixture(t);
+  // The one-step balance would read 2x + 3 = 11 as x + 2 = 11 and give x = 9.
+  await twoStep(f, (d) => ({ ...d, generator: { ...d.generator, parameters: { ...d.generator.parameters, total: { min: 3, max: 15 } } }, representations: { help: ["balance"], explanation: ["balance-two-step"] } }));
+  const result = f.run();
+  expectFailure(result, /two-step\.json representations\.help\[0\]: balance draws unknown-addend questions, but two-step-answer@1 judges two-step questions/);
+  assert.doesNotMatch(result.output, /representations\.explanation/);
+});
+
 test("rejects a two-step validator with a generator of another form (specs/011)", async (t) => {
   const f = await fixture(t);
   await twoStep(f, (d) => ({ ...d, validator: { name: "factor-answer", version: 1 }, misconceptionCodes: ["fac.generic"] }));
@@ -474,12 +485,16 @@ test("rejects a fixed ax + c = b without a whole-number solution of at least 1, 
   await f.write("content/exercises/algebra/half.json", fixed("algebra.two-step.half", { a: 2, c: 3, b: 10 }));
   await f.write("content/exercises/algebra/zero.json", fixed("algebra.two-step.zero", { a: 2, c: 3, b: 3 }));
   await f.write("content/exercises/algebra/no-c.json", fixed("algebra.two-step.no-c", { a: 2, b: 11 }));
+  await f.write("content/exercises/algebra/no-b.json", fixed("algebra.two-step.no-b", { a: 2, c: 3 }));
+  await f.write("content/exercises/algebra/no-a.json", fixed("algebra.two-step.no-a", { c: 3, b: 11 }));
   await f.write("content/exercises/algebra/fine.json", fixed("algebra.two-step.fine", { a: 2, c: 3, b: 11 }));
   const result = f.run();
   expectFailure(result,
     /half\.json instance\.prompt: ax \+ c = b needs b − c to be a times a whole number greater than 0, but 2x \+ 3 = 10 gives x = 7\/2/,
     /zero\.json instance\.prompt: ax \+ c = b needs b − c to be a times a whole number greater than 0, but 2x \+ 3 = 3 gives x = 0\/2/,
-    /no-c\.json instance\.prompt: ax \+ c = b needs c, the number added to ax, as an integer/);
+    /no-c\.json instance\.prompt: ax \+ c = b needs c, the number added to ax, as an integer/,
+    /no-b\.json instance\.prompt: ax \+ c = b needs b, the total, as an integer/, // PR 65 review: without visuals too
+    /no-a\.json instance\.prompt: ax \+ c = b needs a, the number of boxes, as an integer/);
   assert.doesNotMatch(result.output, /fine\.json/);
 });
 

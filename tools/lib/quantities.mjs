@@ -62,6 +62,9 @@ export const RELATIONS = {
     },
     /** A fixed ax = b needs a positive factor and a product it divides exactly, or x is not a whole number (PR 64 review). */
     unsolvable({ a, b }) {
+      for (const [name, value] of [["a", a], ["b", b]]) {
+        if (!Number.isInteger(value)) return `ax = b needs ${name} as an integer`;
+      }
       if (!(a > 0)) return `ax = b needs a factor a greater than 0, but a is ${a}`;
       if (!(b > 0) || b % a !== 0) return `ax = b needs b to be a times a whole number greater than 0, but ${a}x = ${b} gives x = ${b}/${a}`;
       return undefined;
@@ -94,9 +97,11 @@ RELATIONS["two-step"] = {
   infeasible(box) {
     return `no factor within ${range(...box.factor)}, addend within ${range(...box.addend)}, and unknown within ${range(...box.unknown)} give a total within ${range(...box.total)}`;
   },
-  /** A fixed ax + c = b needs integers a, b, c with a above 0 and a whole-number x of at least 1. */
+  /** A fixed ax + c = b needs integers a, b, c with a above 0 and a whole-number x of at least 1, whatever its help (PR 65 review). */
   unsolvable({ a, b, c }) {
+    if (!Number.isInteger(a)) return "ax + c = b needs a, the number of boxes, as an integer";
     if (!Number.isInteger(c)) return "ax + c = b needs c, the number added to ax, as an integer";
+    if (!Number.isInteger(b)) return "ax + c = b needs b, the total, as an integer";
     if (!(a > 0)) return `ax + c = b needs a factor a greater than 0, but a is ${a}`;
     if (!(b - c > 0) || (b - c) % a !== 0) return `ax + c = b needs b − c to be a times a whole number greater than 0, but ${a}x + ${c} = ${b} gives x = ${b - c}/${a}`;
     return undefined;

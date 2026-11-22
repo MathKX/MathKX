@@ -106,7 +106,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
             const status = e.type === "submission" ? e.status : "invalid-response";
             const feedback =
               e.type === "submission"
-                ? translateCode(lang, "feedback", e.code, { a, b, v: e.value, sum: e.value, x: e.value }) // sum and x are used only by "correct" and "eq.correct"
+                ? translateCode(lang, "feedback", e.code, { a, b, c, v: e.value, sum: e.value, x: e.value }) // sum and x only in the correct codes; c only in ax + c = b (PR 65 review)
                 : translateCode(lang, "feedback", e.code, { text: e.originalText });
             return (
               <li key={e.submissionId} data-testid="replay-submission" data-status={status}>
