@@ -124,6 +124,7 @@ test.describe("the balance explorer (specs/008)", () => {
     for (let i = 0; i < 4; i++) await page.keyboard.press("Enter");
     await expect(scale).toHaveAttribute("data-loose", "0");
     await expect(scale.getByTestId("sharing-sentence")).toHaveText("Every weight is shared: each group has 4. Now keep one box and one group.");
+    await expect(scale.getByTestId("sharing-live")).toContainText("Now keep one box and one group.");
 
     await tabTo(page, "sharing-keep");
     await page.keyboard.press("Enter");

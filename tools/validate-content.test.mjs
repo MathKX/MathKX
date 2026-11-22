@@ -398,6 +398,35 @@ test("rejects product bounds that admit no equation (specs/010)", async (t) => {
   expectFailure(f.run(), /times\.json generator\.parameters: no factor within 4–4 and unknown within 5–5 give a product within 2–10/);
 });
 
+test("rejects product bounds whose whole-number products all fall outside the range (PR 64 review)", async (t) => {
+  const f = await fixture(t);
+  // Factor 3 and unknown 2–3 give only 6 and 9; the bounds overlap 7–7, but no product is 7.
+  await equations(f, (d, name) => (name === "times" ? { ...d, generator: { ...d.generator, parameters: { factor: { min: 3, max: 3 }, unknown: { min: 2, max: 3 }, product: { min: 7, max: 7 } } } } : d));
+  expectFailure(f.run(), /times\.json generator\.parameters: no factor within 3–3 and unknown within 2–3 give a product within 7–7/);
+});
+
+test("rejects a fixed ax = b without a whole-number solution, whatever its representations (PR 64 review)", async (t) => {
+  const f = await fixture(t);
+  await equations(f);
+  const fixedTimes = (id, a, b, answer) => ({
+    ...baseFourPlusFour,
+    id,
+    skill: "algebra.one-step-equations",
+    validator: { name: "factor-answer", version: 1 },
+    instance: { prompt: { a, b }, validation: { answer } },
+    representations: { help: [], explanation: [] },
+    misconceptionCodes: ["fac.generic"],
+  });
+  await f.write("content/exercises/algebra/three-x-seven.json", fixedTimes("algebra.one-step.three-x-seven", 3, 7, 2));
+  await f.write("content/exercises/algebra/zero-x.json", fixedTimes("algebra.one-step.zero-x", 0, 6, 1));
+  await f.write("content/exercises/algebra/three-x-twelve.json", fixedTimes("algebra.one-step.three-x-twelve", 3, 12, 4));
+  const result = f.run();
+  expectFailure(result,
+    /three-x-seven\.json instance\.prompt: ax = b needs b to be a times a whole number greater than 0, but 3x = 7 gives x = 7\/3/,
+    /zero-x\.json instance\.prompt: ax = b needs a factor a greater than 0, but a is 0/);
+  assert.doesNotMatch(result.output, /three-x-twelve\.json/);
+});
+
 test("rejects sharing help beyond what the pan can draw (specs/010)", async (t) => {
   const f = await fixture(t);
   await equations(f, (d, name) => (name === "times" ? { ...d, generator: { ...d.generator, parameters: { factor: { min: 2, max: 6 }, unknown: { min: 1, max: 5 }, product: { min: 2, max: 30 } } } } : d));

@@ -92,6 +92,11 @@ public sealed class SharingTests
         Assert.Equal(QuestionForms.UnknownFactor, entry.Form);
         Assert.Equal(FeedbackCodes.FactorMisconceptions.Order(StringComparer.Ordinal), entry.Emits.Order(StringComparer.Ordinal));
         Assert.Equal(4, Validator.ExpectedAnswer(Equation(3, 12)));
+
+        // Never rounded down: 3x = 7 has no whole-number x, so the validator refuses it rather than accept 2 (PR 64 review).
+        Assert.Throws<InvalidOperationException>(() => Validator.ExpectedAnswer(Equation(3, 7)));
+        Assert.Throws<InvalidOperationException>(() => Validator.Validate(Equation(3, 7), ResponseArtifact.ReadInteger("2")));
+        Assert.Throws<InvalidOperationException>(() => Validator.ExpectedAnswer(Equation(0, 6)));
         Assert.Equal("3x = 12", Equation(3, 12).Prompt);
 
         var instance = new InstanceResolver(Catalog, GeneratorRegistry.Default(), ValidatorRegistry.Default()).Resolve(new InstanceIdentity("algebra.one-step.times", 1, new Seed(9)));
@@ -99,14 +104,15 @@ public sealed class SharingTests
     }
 
     [Fact]
-    public void The_balance_steps_show_the_boxes_the_groups_then_one_box_against_one_group()
+    public void The_balance_steps_show_the_boxes_one_round_of_sharing_then_one_box_against_one_group()
     {
         var steps = StepModels.ForValues(3, 12, "balance-sharing", StepKind.Help);
         Assert.Equal(["explain.sharing.show", "explain.sharing.share", "explain.sharing.solved"], steps.Select(s => s.Text.Code));
         Assert.Equal([false, false, true], steps.Select(s => s.Reveals));
         Assert.Equal(false, steps[0].Visual["groups"]);
         Assert.Equal(true, steps[1].Visual["groups"]);
-        Assert.Equal(12, steps[1].Visual["loose"]);
+        Assert.Equal(1, steps[1].Visual["each"]); // the first round shared, so the learner sees how (PR 64 review)
+        Assert.Equal(9, steps[1].Visual["loose"]);
         Assert.Equal(4, steps[2].Visual["each"]);
         Assert.Equal(true, steps[2].Visual["kept"]);
         Assert.Equal(4, steps[2].Text.Values["x"]);
@@ -121,6 +127,34 @@ public sealed class SharingTests
     {
         var translations = Catalog.Translations.Where(t => t.Key.LessonId == "one-step-equations").Select(t => t.Value.Facts);
         Assert.Equal(discloses, LessonDisclosure.For(translations, Equation(a, b)).Discloses);
+    }
+
+    [Theory]
+    [InlineData(3, 7)]
+    [InlineData(0, 6)]
+    public void A_fixed_product_equation_without_a_whole_number_solution_fails_the_load(int a, int b)
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(temp.Root, "exercises", "algebra", "fixed-times.json"), $$"""
+            {
+              "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+              "schemaVersion": "0.1-pilot",
+              "id": "algebra.one-step.fixed-times",
+              "version": 1,
+              "skill": "algebra.one-step-equations",
+              "source": "fixed",
+              "validator": { "name": "factor-answer", "version": 1 },
+              "instance": { "prompt": { "a": {{a}}, "b": {{b}} }, "validation": { "answer": 2 } },
+              "representations": { "help": [], "explanation": [] },
+              "misconceptionCodes": ["fac.generic"]
+            }
+            """);
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Equal("exercises/algebra/fixed-times.json", error.Path);
+        Assert.Contains($"{a}x = {b} has no whole-number solution", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

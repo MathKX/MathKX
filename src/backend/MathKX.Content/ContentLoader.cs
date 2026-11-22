@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using MathKX.Domain.Content;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Content;
 
@@ -318,9 +319,20 @@ public static class ContentLoader
         foreach (var definition in definitions.Values)
         {
             var path = definitionFiles[definition.Key];
-            if (!validators.ContainsKey(definition.Validator.Key))
+            if (!validators.TryGetValue(definition.Validator.Key, out var validator))
             {
                 throw new ContentLoadException(path, $"validator {definition.Validator.Key} is not registered");
+            }
+
+            // A fixed ax = b must have a whole-number x, or the validator could not judge it (PR 64 review).
+            if (definition.IsFixed
+                && validator.Form == QuestionForms.UnknownFactor
+                && definition.Instance?.Prompt is { } prompt
+                && prompt.TryGetValue("a", out var a)
+                && prompt.TryGetValue("b", out var b)
+                && (a <= 0 || b <= 0 || b % a != 0))
+            {
+                throw new ContentLoadException(path, $"{a}x = {b} has no whole-number solution; a must be greater than 0 and b a multiple of a");
             }
 
             if (definition.Generator is not null && !generators.ContainsKey(definition.Generator.Key))

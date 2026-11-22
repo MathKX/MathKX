@@ -209,7 +209,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       const x = b / a;
       return [
         { kind, representation, index: 0, count: 3, reveals: false, visual: { each: 0, loose: b, kept: false, groups: false }, text: { code: "explain.sharing.show", values: { a, b } } },
-        { kind, representation, index: 1, count: 3, reveals: false, visual: { each: 0, loose: b, kept: false, groups: true }, text: { code: "explain.sharing.share", values: { a, b } } },
+        { kind, representation, index: 1, count: 3, reveals: false, visual: { each: 1, loose: b - a, kept: false, groups: true }, text: { code: "explain.sharing.share", values: { a, b } } },
         { kind, representation, index: 2, count: 3, reveals: true, visual: { each: x, loose: 0, kept: true, groups: true, x }, text: { code: "explain.sharing.solved", values: { a, b, x } } },
       ];
     }

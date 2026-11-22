@@ -42,6 +42,8 @@ describe("the sharing explorer", () => {
     expect(figure().dataset.loose).toBe("0");
     expect(button("sharing-deal").disabled).toBe(true);
     expect(screen.getByTestId("sharing-sentence").textContent).toBe("Every weight is shared: each group has 4. Now keep one box and one group.");
+    // The caption is hidden from screen readers, so the announcement carries the next action too (PR 64 review).
+    expect(screen.getByTestId("sharing-live").textContent).toBe("Left pan: 3 boxes of x. Right pan: 4 weights in each of 3 groups, 0 not shared yet. The scale is level. Every weight is shared. Now keep one box and one group.");
 
     await user.click(button("sharing-keep"));
     expect(figure().dataset.solved).toBe("true");
@@ -126,6 +128,9 @@ describe("practice of ax = b", () => {
     expect((await within(panel).findByTestId("help-step-text")).textContent).toContain("Vekta er i balanse: 3 bokser med x i venstre skål, 12 lodd i høyre.");
     await user.click(within(panel).getByTestId("help-next"));
     await waitFor(() => expect(within(panel).getByTestId("sharing-step").dataset.groups).toBe("true"));
+    // The first round of sharing is drawn: one weight in each group, nine still to share (PR 64 review).
+    expect(within(panel).getByTestId("balance-pan-right").getAttribute("data-each")).toBe("1");
+    expect(within(panel).getByTestId("balance-pan-right").getAttribute("data-loose")).toBe("9");
     expect(panel.textContent).not.toMatch(/x = 4/);
 
     await user.click(within(panel).getByTestId("help-next"));

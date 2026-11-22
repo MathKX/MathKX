@@ -129,7 +129,10 @@ export function describeSharing(state: { each: number; loose: number; kept: bool
   return { pans, sentence };
 }
 
+/** What is announced: the pans and the level scale, then x once it is found, or the next action once every weight is shared (PR 64 review). */
 function describe(state: SharingState, model: SharingExplorerDto, lang: Lang) {
   const { pans, sentence } = describeSharing(state, model.a, model.b, lang);
-  return { sentence, spoken: state.kept ? `${pans} ${translate(lang, "lesson.balanceLevel")} ${sentence}` : `${pans} ${translate(lang, "lesson.balanceLevel")}` };
+  const spoken = `${pans} ${translate(lang, "lesson.balanceLevel")}`;
+  const next = state.kept ? sentence : state.loose === 0 ? translate(lang, "lesson.sharingNext") : "";
+  return { sentence, spoken: next ? `${spoken} ${next}` : spoken };
 }

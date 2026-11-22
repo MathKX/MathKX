@@ -154,8 +154,9 @@ public static class StepModels
     }
 
     /// <summary>
-    /// <c>ax = b</c> on a balance (specs/010 FR-003): the boxes and the weights, then the weights marked out in
-    /// <c>a</c> groups still to be shared, then one box against one group of <c>x</c>. Only the last step carries <c>x</c>.
+    /// <c>ax = b</c> on a balance (specs/010 FR-003): the boxes and the weights, then the first round of sharing (one
+    /// weight to each of the <c>a</c> groups, so the learner sees how the sharing goes; PR 64 review), then one box
+    /// against one group of <c>x</c>. Only the last step carries <c>x</c>.
     /// </summary>
     private static List<Raw> Sharing(int a, int b)
     {
@@ -163,7 +164,7 @@ public static class StepModels
         return
         [
             new(false, V(("each", 0), ("loose", b), ("kept", false), ("groups", false)), new StepText("explain.sharing.show", V(("a", a), ("b", b)))),
-            new(false, V(("each", 0), ("loose", b), ("kept", false), ("groups", true)), new StepText("explain.sharing.share", V(("a", a), ("b", b)))),
+            new(false, V(("each", 1), ("loose", b - a), ("kept", false), ("groups", true)), new StepText("explain.sharing.share", V(("a", a), ("b", b)))),
             new(true, V(("each", x), ("loose", 0), ("kept", true), ("groups", true), ("x", x)), new StepText("explain.sharing.solved", V(("a", a), ("b", b), ("x", x)))),
         ];
     }

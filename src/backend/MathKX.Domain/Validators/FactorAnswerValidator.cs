@@ -15,7 +15,19 @@ public sealed class FactorAnswerValidator : IAnswerValidator
 
     public string Form => QuestionForms.UnknownFactor;
 
-    public int ExpectedAnswer(Instance instance) => instance.B / instance.A;
+    /// <remarks>
+    /// Never rounds: an instance without a whole-number x is refused rather than judged against b / a rounded down,
+    /// which would call 2 correct for 3x = 7 (PR 64 review). The content check and the loader refuse such tasks first.
+    /// </remarks>
+    public int ExpectedAnswer(Instance instance)
+    {
+        if (instance.A <= 0 || instance.B <= 0 || instance.B % instance.A != 0)
+        {
+            throw new InvalidOperationException($"{instance.A}x = {instance.B} has no whole-number solution; the content check should have refused it.");
+        }
+
+        return instance.B / instance.A;
+    }
 
     public ValidationResult Validate(Instance instance, ResponseArtifact artifact)
     {

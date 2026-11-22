@@ -26,11 +26,11 @@ In "Equations and the balance", a new section shows $3x = 12$: three boxes marke
 
 1. **Given** the skill "One-step equations", **Then** its ladder has a third rung, equations such as $3x = 12$, and the lesson lists it as practice.
 2. **Given** $3x = 12$, **When** the learner answers 4, **Then** the answer is correct with the check $3 × 4 = 12$; **When** the learner answers 36, 12, 9, or 3, **Then** the feedback names the likely mistake: multiplied instead of shared, gave the right side, took away instead of shared, or gave the number in front of $x$. One away gets "nearly"; any other wrong answer gets a general hint that offers the balance.
-3. **Given** a question, **When** the learner asks for visual help, **Then** the balance shows the boxes and the weights, then the weights shared into equal groups, then one box against one group with $x$; only the last step shows the answer.
+3. **Given** a question, **When** the learner asks for visual help, **Then** the balance shows the boxes and the weights, then the first round of sharing (one weight to each group), then one box against one group with $x$; only the last step shows the answer.
 
 ### User Story 3 – The same for everyone (Priority: P1)
 
-As spec 008 User Story 3: every control reachable by keyboard with a visible focus ring and a 44-pixel target, each change announced once, and the drawing described in both release languages.
+As spec 008 User Story 3: every control reachable by keyboard with a visible focus ring and a 44-pixel target, each change announced once, and the drawing described in both release languages. When the last weight is shared, the announcement also says what to do next: keep one box and one group.
 
 ### Edge Cases
 
@@ -43,7 +43,7 @@ As spec 008 User Story 3: every control reachable by keyboard with a visible foc
 
 - **FR-001**: The content contract MUST register the visual component `balance-sharing-explorer` with integer attributes `a` (2–4) and `b` (2–20); the content check MUST reject values whose $b$ is not $a$ times a whole number from 1 to 5.
 - **FR-002**: The service MUST supply every state of the sharing explorer (weights in each group, weights not yet shared, whether one box and one group are kept, and whether $x$ is found) and MUST refuse other values. The learner app MUST draw only those states.
-- **FR-003**: The content contract MUST register the question form `unknown-factor` ($ax = b$), a generator `unknown-factor@1` (parameters `factor`, `unknown`, `product`; $a$ ascending, then $x$), a validator `factor-answer@1` that accepts $b / a$ and emits one code in the precedence `fac.correct`, `fac.multiplied`, `fac.total`, `fac.subtracted`, `fac.factor`, `fac.offByOne`, `fac.generic`, and the representation `balance-sharing` for help and explanation.
+- **FR-003**: The content contract MUST register the question form `unknown-factor` ($ax = b$), a generator `unknown-factor@1` (parameters `factor`, `unknown`, `product`; $a$ ascending, then $x$), a validator `factor-answer@1` that accepts $b / a$ and emits one code in the precedence `fac.correct`, `fac.multiplied`, `fac.total`, `fac.subtracted`, `fac.factor`, `fac.offByOne`, `fac.generic`, and the representation `balance-sharing` for help and explanation. The content check MUST refuse generator bounds where no whole-number factor and unknown give a product in range, and a fixed $ax = b$ whose $a$ is not positive or whose $b$ is not a positive multiple of $a$, whatever its representations; the service refuses such a fixed task on load.
 - **FR-004**: The definition `algebra.one-step.times` MUST have $a$ from 2 to 4 and $x$ from 1 to 5 (15 questions), be the third rung of the skill's ladder, and be listed as practice in the lesson.
 - **FR-005**: Every new learner-visible text MUST exist in both release languages, and the lesson's two translations MUST keep the same sections and directives.
 
