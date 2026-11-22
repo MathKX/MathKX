@@ -47,6 +47,20 @@ Prøv så disse i hodet:
 - $x + 6 = 10$
 - $x + 4 = 13$
 
+## Når x står flere ganger {#groups}
+
+I $3x = 12$ ligger det tre bokser i venstre skål. Hver boks er den samme ukjente vekten $x$, så $3x$ betyr $3 · x$.
+
+For å finne én $x$ deler du de 12 loddene i høyre skål i 3 like grupper, én gruppe til hver boks. Når gruppene er like, veier én boks like mye som én gruppe. Behold én boks og én gruppe, så er vekta fortsatt i balanse: Du har delt begge sider på 3.
+
+:::visual{type="balance-sharing-explorer" a="3" b="12"}
+:::
+
+Prøv så disse i hodet:
+
+- $2x = 10$
+- $4x = 8$
+
 ## Sjekk svaret {#check}
 
 Du kan alltid sjekke et svar ved å sette det inn for $x$. Gir begge sider samme tall, stemmer det. Gjør de ikke det, ville vekta tippet, så prøv igjen.
@@ -59,4 +73,7 @@ Løs likninger på egen hånd. Står du fast, kan du be om hjelp, så viser skå
 :::
 
 :::practice{definition="algebra.one-step.to-15" version="1"}
+:::
+
+:::practice{definition="algebra.one-step.times" version="1"}
 :::

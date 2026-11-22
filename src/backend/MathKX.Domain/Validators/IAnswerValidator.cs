@@ -12,6 +12,9 @@ public static class QuestionForms
 
     /// <summary><c>x + a = b</c>: the answer is the unknown addend, <c>b − a</c>.</summary>
     public const string UnknownAddend = "unknown-addend";
+
+    /// <summary><c>ax = b</c>: the answer is the unknown factor, <c>b / a</c> (specs/010).</summary>
+    public const string UnknownFactor = "unknown-factor";
 }
 
 /// <summary>A registered, versioned answer validator. The implementation must match its registry entry.</summary>
@@ -38,6 +41,7 @@ public sealed class ValidatorRegistry
         var registry = new ValidatorRegistry();
         registry.Register(new IntegerAnswerValidator());
         registry.Register(new EquationAnswerValidator());
+        registry.Register(new FactorAnswerValidator());
         return registry;
     }
 

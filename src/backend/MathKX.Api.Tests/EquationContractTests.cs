@@ -117,6 +117,51 @@ public sealed class EquationContractTests(WebApplicationFactory<Program> factory
         Assert.Fail($"no seed gives x + {a} = {b}");
     }
 
+    [Fact]
+    public async Task The_sharing_explorer_serves_its_states_and_refuses_other_values()
+    {
+        using var client = factory.CreateClient();
+        using var explorer = JsonDocument.Parse(await client.GetStringAsync("/api/visuals/balance-sharing-explorer?a=3&b=12"));
+        var states = explorer.RootElement.GetProperty("states").EnumerateArray().ToList();
+        Assert.Equal(6, states.Count);
+        Assert.Equal((0, 12), (states[0].GetProperty("each").GetInt32(), states[0].GetProperty("loose").GetInt32()));
+        var solved = Assert.Single(states, s => s.GetProperty("solved").GetBoolean());
+        Assert.True(solved.GetProperty("kept").GetBoolean());
+        Assert.Equal(4, solved.GetProperty("each").GetInt32());
+
+        foreach (var query in new[] { "a=3&b=10", "a=1&b=5", "a=5&b=10", "a=2&b=12", "a=x&b=4", "a=3" })
+        {
+            var refused = await client.GetAsync($"/api/visuals/balance-sharing-explorer?{query}");
+            Assert.Equal(System.Net.HttpStatusCode.BadRequest, refused.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task A_product_equation_names_its_form_judges_x_and_steps_the_sharing()
+    {
+        const string times = "algebra.one-step.times";
+        using var client = factory.CreateClient();
+        using var instance = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{times}/1/5"));
+        var root = instance.RootElement;
+        var (a, b) = (root.GetProperty("a").GetInt32(), root.GetProperty("b").GetInt32());
+        Assert.Equal("unknown-factor", root.GetProperty("form").GetString());
+        Assert.Equal($"{a}x = {b}", root.GetProperty("prompt").GetString());
+        Assert.Equal(["balance-sharing"], root.GetProperty("representations").GetProperty("help").EnumerateArray().Select(e => e.GetString()));
+        Assert.DoesNotContain(Names(root), name => name is "x" or "sum");
+
+        var response = await client.PostAsJsonAsync("/api/validations", new { identity = new { definitionId = times, version = 1, seed = "5" }, artifact = new { kind = "integer", originalText = (b / a).ToString(System.Globalization.CultureInfo.InvariantCulture) } });
+        using var result = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("fac.correct", result.RootElement.GetProperty("code").GetString());
+        Assert.Equal(b / a, result.RootElement.GetProperty("values").GetProperty("x").GetInt32());
+
+        using var last = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{times}/1/5/steps/help/2"));
+        Assert.True(last.RootElement.GetProperty("reveals").GetBoolean());
+        Assert.Equal(b / a, last.RootElement.GetProperty("visual").GetProperty("x").GetInt32());
+
+        using var pool = JsonDocument.Parse(await client.GetStringAsync($"/api/definitions/{times}/1/pool"));
+        Assert.Equal(15, pool.RootElement.GetProperty("questions").GetArrayLength());
+    }
+
     private static HashSet<string> Names(JsonElement element)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);

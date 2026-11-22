@@ -3,7 +3,7 @@
 import { range } from "./diagnostics.mjs";
 import { listKeys, versioned } from "./registry.mjs";
 import { missingSkillOptions } from "./skills.mjs";
-import { FORM_RELATIONS, containment, domainBox, feasible, infeasible, pointBox } from "./quantities.mjs";
+import { FORM_RELATIONS, RELATIONS, containment, domainBox, feasible, infeasible, pointBox } from "./quantities.mjs";
 
 const isInteger = (v) => Number.isInteger(v);
 
@@ -86,7 +86,11 @@ function checkPilotDefinition(file, data, registries, diagnostics) {
     }
   } else {
     const prompt = data.instance.prompt;
-    box = pointBox(prompt, (validator && FORM_RELATIONS[validator.form]) || undefined);
+    const relation = (validator && FORM_RELATIONS[validator.form]) || undefined;
+    box = pointBox(prompt, relation);
+    // Checked whatever the representations: the validator itself needs a whole-number answer (PR 64 review).
+    const unsolvable = relation && isInteger(prompt.a) && isInteger(prompt.b) ? RELATIONS[relation]?.unsolvable?.(prompt) : undefined;
+    if (unsolvable) error(unsolvable, { field: "instance.prompt" });
     for (const role of ["help", "explanation"]) {
       data.representations[role].forEach((name) => {
         const representation = registries.representations.get(name)?.entry;

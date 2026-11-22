@@ -42,6 +42,30 @@
     {
       "code": "eq.generic",
       "validator": "equation-answer"
+    },
+    {
+      "code": "fac.multiplied",
+      "validator": "factor-answer"
+    },
+    {
+      "code": "fac.total",
+      "validator": "factor-answer"
+    },
+    {
+      "code": "fac.subtracted",
+      "validator": "factor-answer"
+    },
+    {
+      "code": "fac.factor",
+      "validator": "factor-answer"
+    },
+    {
+      "code": "fac.offByOne",
+      "validator": "factor-answer"
+    },
+    {
+      "code": "fac.generic",
+      "validator": "factor-answer"
     }
   ]
 }

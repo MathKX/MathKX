@@ -55,4 +55,7 @@ curl -fsS "http://127.0.0.1:$port/api/lessons/one-step-equations/content/nb" | g
 curl -fsS "http://127.0.0.1:$port/api/visuals/balance-explorer?a=3&b=7" | grep -q '"type":"balance-explorer"' || { echo "the balance explorer did not resolve"; exit 1; }
 # specs/009: the package carries the equation definitions and serves them as x + a = b.
 curl -fsS "http://127.0.0.1:$port/api/instances/algebra.one-step.within-10/1/3" | grep -q '"form":"unknown-addend"' || { echo "the equation practice did not resolve"; exit 1; }
+# specs/010: the package carries the product equations and the sharing explorer.
+curl -fsS "http://127.0.0.1:$port/api/instances/algebra.one-step.times/1/3" | grep -q '"form":"unknown-factor"' || { echo "the product equation practice did not resolve"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/visuals/balance-sharing-explorer?a=3&b=12" | grep -q '"type":"balance-sharing-explorer"' || { echo "the sharing explorer did not resolve"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

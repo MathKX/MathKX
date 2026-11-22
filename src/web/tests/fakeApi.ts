@@ -26,8 +26,9 @@ export const EQUATIONS_SKILL: SkillDto = {
   ladder: [
     { definition: "algebra.one-step.within-10", version: 1, description: { nb: "Likninger der høyre side er høyst 10.", en: "Equations with a right side up to 10." } },
     { definition: "algebra.one-step.to-15", version: 1, description: { nb: "Likninger der høyre side er fra 11 til 15.", en: "Equations with a right side from 11 to 15." } },
+    { definition: "algebra.one-step.times", version: 1, description: { nb: "Likninger som 3x = 12: del likt i grupper.", en: "Equations like 3x = 12: share into equal groups." } },
   ],
-  definitions: ["algebra.one-step.to-15@1", "algebra.one-step.within-10@1"],
+  definitions: ["algebra.one-step.times@1", "algebra.one-step.to-15@1", "algebra.one-step.within-10@1"],
 };
 
 export const BONDS_SKILL: SkillDto = {
@@ -124,9 +125,10 @@ export function lessonMarkdown(lang: string): string {
   return readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../../../content/lessons/number-bonds-to-ten", `${lang}.md`), "utf8");
 }
 
-const isEquation = (definitionId: string) => definitionId.startsWith("algebra.one-step.");
+const isProduct = (definitionId: string) => definitionId === "algebra.one-step.times";
+const isEquation = (definitionId: string) => definitionId.startsWith("algebra.one-step.") && !isProduct(definitionId);
 
-type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getBalanceExplorer" | "getAnswer" | "getChecks";
+type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getBalanceExplorer" | "getSharingExplorer" | "getAnswer" | "getChecks";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -145,7 +147,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getBalanceExplorer: [], getAnswer: [], getChecks: [] };
+  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getBalanceExplorer: [], getSharingExplorer: [], getAnswer: [], getChecks: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -178,20 +180,21 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const instanceOf = (identity: Identity): InstanceDto => {
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
     const equation = isEquation(identity.definitionId);
-    const pair: [number, number] = options.instanceOperands ?? bySeed ?? checkPair(identity) ?? poolPair(identity) ?? pairs[identity.definitionId] ?? (equation ? [3, 7] : [3, 5]);
+    const product = isProduct(identity.definitionId);
+    const pair: [number, number] = options.instanceOperands ?? bySeed ?? checkPair(identity) ?? poolPair(identity) ?? pairs[identity.definitionId] ?? (product ? [3, 12] : equation ? [3, 7] : [3, 5]);
     const crossing = identity.definitionId.includes("crossing");
-    const representation = equation ? "balance" : crossing ? "make-ten" : "groups";
+    const representation = product ? "balance-sharing" : equation ? "balance" : crossing ? "make-ten" : "groups";
     const dto: InstanceDto = {
       identity,
-      skill: equation ? "algebra.one-step-equations" : SKILL.id,
+      skill: equation || product ? "algebra.one-step-equations" : SKILL.id,
       a: pair[0],
       b: pair[1],
-      prompt: equation ? `x + ${pair[0]} = ${pair[1]}` : `${pair[0]} + ${pair[1]}`,
-      form: equation ? "unknown-addend" : "addition",
+      prompt: product ? `${pair[0]}x = ${pair[1]}` : equation ? `x + ${pair[0]} = ${pair[1]}` : `${pair[0]} + ${pair[1]}`,
+      form: product ? "unknown-factor" : equation ? "unknown-addend" : "addition",
       representations: { help: [representation], explanation: [representation] },
-      validator: { name: equation ? "equation-answer" : "integer-answer", version: 1 },
+      validator: { name: product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 },
     };
-    if (identity.seed !== undefined) dto.generator = { name: equation ? "unknown-addend" : "addition-pair", version: 1 };
+    if (identity.seed !== undefined) dto.generator = { name: product ? "unknown-factor" : equation ? "unknown-addend" : "addition-pair", version: 1 };
     if (!options.omitLessons) {
       const listed = LESSON.practice.some((p) => p.definition === identity.definitionId && p.version === identity.version);
       dto.lessons = listed ? lessonIds.map((id) => ({ id, discloses: options.discloses?.(pair[0], pair[1]) ?? false })) : [];
@@ -201,6 +204,15 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const steps = (instance: InstanceDto, kind: StepKind): StepDto[] => {
     const { a, b } = instance;
     const representation = instance.representations[kind][0] ?? "groups";
+    if (representation === "balance-sharing") {
+      // specs/010: the service's sharing steps for ax = b.
+      const x = b / a;
+      return [
+        { kind, representation, index: 0, count: 3, reveals: false, visual: { each: 0, loose: b, kept: false, groups: false }, text: { code: "explain.sharing.show", values: { a, b } } },
+        { kind, representation, index: 1, count: 3, reveals: false, visual: { each: 1, loose: b - a, kept: false, groups: true }, text: { code: "explain.sharing.share", values: { a, b } } },
+        { kind, representation, index: 2, count: 3, reveals: true, visual: { each: x, loose: 0, kept: true, groups: true, x }, text: { code: "explain.sharing.solved", values: { a, b, x } } },
+      ];
+    }
     if (representation === "balance") {
       // specs/009: the service's balance steps for x + a = b.
       return [
@@ -298,11 +310,19 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
       const { a, b } = instanceOf(identity);
       const trimmed = originalText.trim();
       const equation = isEquation(identity.definitionId);
-      const base = { validator: { name: equation ? "equation-answer" : "integer-answer", version: 1 }, submissionId };
+      const product = isProduct(identity.definitionId);
+      const base = { validator: { name: product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 }, submissionId };
       if (!/^-?[0-9]+$/.test(trimmed)) {
         return { ...base, status: "invalid-response", code: trimmed ? "invalid.notAnInteger" : "invalid.empty", values: { text: originalText } } satisfies ValidationResponse;
       }
       const v = Number(trimmed);
+      if (product) {
+        // specs/010 FR-003, in its precedence.
+        const x = b / a;
+        if (v === x) return { ...base, status: "correct", code: "fac.correct", values: { a, b, v, x } };
+        const code = v === a * b ? "fac.multiplied" : v === b ? "fac.total" : v === b - a ? "fac.subtracted" : v === a ? "fac.factor" : Math.abs(v - x) === 1 ? "fac.offByOne" : "fac.generic";
+        return { ...base, status: "incorrect", code, values: { a, b, v } };
+      }
       if (equation) {
         // specs/009 FR-002, in its precedence.
         if (v === b - a) return { ...base, status: "correct", code: "eq.correct", values: { a, b, v, x: b - a } };
@@ -344,6 +364,15 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
         }
       }
       return { type: "balance-explorer", a, b, states };
+    },
+    getSharingExplorer: async (a, b) => {
+      calls.push(`getSharingExplorer ${a} ${b}`);
+      await gate("getSharingExplorer");
+      // The service's states (SharingExplorer.cs), reproduced for the fake only.
+      const x = b / a;
+      const states = Array.from({ length: x + 1 }, (_, each) => ({ each, loose: b - a * each, kept: false, solved: false }));
+      states.push({ each: x, loose: 0, kept: true, solved: true });
+      return { type: "balance-sharing-explorer", a, b, states };
     },
     getChecks: async () => {
       calls.push("getChecks");

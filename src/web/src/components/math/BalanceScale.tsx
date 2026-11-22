@@ -1,6 +1,7 @@
-// The drawing of a balance scale for x + a = b: shared by the lesson's balance explorer (specs/008) and the balance
-// help and explanation in practice (specs/009). It draws the state it is given; the tilt, the weights left on each
-// pan, and the weights marked to take off all come from the service.
+// The drawing of a balance scale: shared by the lesson's balance explorer (specs/008), the sharing explorer
+// (specs/010), and the balance help and explanation in practice (specs/009, specs/010). It draws the state it is
+// given; the tilt, the weights on each pan, and the weights marked or set aside all come from the service.
+import type { ReactNode } from "react";
 import type { BalanceTilt } from "../../api/types";
 import { UNKNOWN } from "./MathExpr";
 
@@ -9,7 +10,51 @@ const ARM = 150;
 const TILT_DEGREES = 9;
 const UNIT = 14;
 const GAP = 3;
+const STEP = UNIT + GAP;
 const COLUMNS = 5;
+
+/** The stand, the beam, and two hanging pans; each pan's contents are drawn from the pan's own origin. */
+type PanData = Record<`data-${string}`, string | number | boolean>;
+
+function ScaleFrame({ tilt, label, floor, halfWidth, viewBox, left, right, leftData = {}, rightData = {} }: { tilt: BalanceTilt; label: string; floor: number; halfWidth: number; viewBox: string; left: ReactNode; right: ReactNode; leftData?: PanData; rightData?: PanData }) {
+  const degrees = tilt === "left-down" ? -TILT_DEGREES : tilt === "right-down" ? TILT_DEGREES : 0;
+  const radians = (degrees * Math.PI) / 180;
+  const dx = ARM * Math.cos(radians);
+  const dy = ARM * Math.sin(radians);
+  const base = PIVOT.y + floor + 50;
+  const pan = (at: { x: number; y: number }, contents: ReactNode, testId: string, data: PanData) => (
+    <g className="mkx-balance__pan" style={{ transform: `translate(${at.x}px, ${at.y}px)` }} data-testid={testId} {...data}>
+      <path className="mkx-balance__string" d={`M 0 0 L ${-(halfWidth - 8)} ${floor} M 0 0 L ${halfWidth - 8} ${floor}`} />
+      <path className="mkx-balance__dish" d={`M ${-halfWidth} ${floor} Q 0 ${floor + 22} ${halfWidth} ${floor} Z`} />
+      {contents}
+    </g>
+  );
+  return (
+    <svg className="mkx-balance__scale" viewBox={viewBox} role="img" aria-label={label} data-testid="balance-scale">
+      <path className="mkx-balance__stand" d={`M ${PIVOT.x - 50} ${base} L ${PIVOT.x + 50} ${base} L ${PIVOT.x + 8} ${base - 14} L ${PIVOT.x + 5} ${PIVOT.y} L ${PIVOT.x - 5} ${PIVOT.y} L ${PIVOT.x - 8} ${base - 14} Z`} />
+      <g className="mkx-balance__beam" style={{ transform: `rotate(${degrees}deg)`, transformOrigin: `${PIVOT.x}px ${PIVOT.y}px` }}>
+        <rect x={PIVOT.x - ARM - 6} y={PIVOT.y - 5} width={2 * ARM + 12} height={10} rx={5} />
+      </g>
+      <circle className="mkx-balance__pivot" cx={PIVOT.x} cy={PIVOT.y} r={9} />
+      {pan({ x: PIVOT.x - dx, y: PIVOT.y - dy }, left, "balance-pan-left", leftData)}
+      {pan({ x: PIVOT.x + dx, y: PIVOT.y + dy }, right, "balance-pan-right", rightData)}
+    </svg>
+  );
+}
+
+/** A box marked x standing on a pan floor; set aside, it is drawn as a dashed outline. */
+function UnknownBox({ x, floor, width, setAside = false }: { x: number; floor: number; width: number; setAside?: boolean }) {
+  return (
+    <g className={setAside ? "mkx-balance__unknown mkx-balance__unknown--aside" : "mkx-balance__unknown"}>
+      <rect x={x} y={floor - 40} width={width} height={40} rx={5} />
+      <text x={x + width / 2} y={floor - 14} textAnchor="middle">
+        {UNKNOWN}
+      </text>
+    </g>
+  );
+}
+
+const unitClass = (taken: boolean, marked = false) => `mkx-balance__unit${taken ? " mkx-balance__unit--taken" : marked ? " mkx-balance__unit--marked" : ""}`;
 
 export interface BalanceScaleProps {
   /** The authored a and b: every weight is drawn, the ones taken off as dashed outlines. */
@@ -24,53 +69,97 @@ export interface BalanceScaleProps {
   label: string;
 }
 
+/** x + a = b (specs/008, specs/009): the box and a weights on the left, b weights on the right. */
 export function BalanceScale({ a, b, left, right, tilt, marked = 0, label }: BalanceScaleProps) {
-  const degrees = tilt === "left-down" ? -TILT_DEGREES : tilt === "right-down" ? TILT_DEGREES : 0;
-  const radians = (degrees * Math.PI) / 180;
-  const dx = ARM * Math.cos(radians);
-  const dy = ARM * Math.sin(radians);
-  const leftEnd = { x: PIVOT.x - dx, y: PIVOT.y - dy };
-  const rightEnd = { x: PIVOT.x + dx, y: PIVOT.y + dy };
+  const floor = 70;
+  const units = (total: number, remaining: number, startX: number) =>
+    Array.from({ length: total }, (_, i) => (
+      <rect key={i} className={unitClass(i >= remaining, i >= remaining - marked)} x={startX + (i % COLUMNS) * STEP} y={floor - UNIT - Math.floor(i / COLUMNS) * STEP} width={UNIT} height={UNIT} rx={3} />
+    ));
+  const width = (total: number) => Math.min(total, COLUMNS) * STEP - GAP;
+  const boxWidth = 34;
+  const leftStart = -(boxWidth + 8 + width(a)) / 2;
   return (
-    <svg className="mkx-balance__scale" viewBox="-30 30 460 220" role="img" aria-label={label} data-testid="balance-scale">
-      <path className="mkx-balance__stand" d={`M ${PIVOT.x - 50} 240 L ${PIVOT.x + 50} 240 L ${PIVOT.x + 8} 226 L ${PIVOT.x + 5} ${PIVOT.y} L ${PIVOT.x - 5} ${PIVOT.y} L ${PIVOT.x - 8} 226 Z`} />
-      <g className="mkx-balance__beam" style={{ transform: `rotate(${degrees}deg)`, transformOrigin: `${PIVOT.x}px ${PIVOT.y}px` }}>
-        <rect x={PIVOT.x - ARM - 6} y={PIVOT.y - 5} width={2 * ARM + 12} height={10} rx={5} />
-      </g>
-      <circle className="mkx-balance__pivot" cx={PIVOT.x} cy={PIVOT.y} r={9} />
-      <Pan at={leftEnd} total={a} remaining={left} marked={marked} unknown testId="balance-pan-left" />
-      <Pan at={rightEnd} total={b} remaining={right} marked={marked} testId="balance-pan-right" />
-    </svg>
+    <ScaleFrame
+      tilt={tilt}
+      label={label}
+      floor={floor}
+      halfWidth={74}
+      viewBox="-30 30 460 220"
+      leftData={{ "data-remaining": left }}
+      rightData={{ "data-remaining": right }}
+      left={
+        <>
+          <UnknownBox x={leftStart} floor={floor} width={boxWidth} />
+          {units(a, left, leftStart + boxWidth + 8)}
+        </>
+      }
+      right={units(b, right, -width(b) / 2)}
+    />
   );
 }
 
-/** A pan hanging from one end of the beam: its weights, the ones taken off drawn as dashed outlines. */
-function Pan({ at, total, remaining, marked, unknown = false, testId }: { at: { x: number; y: number }; total: number; remaining: number; marked: number; unknown?: boolean; testId: string }) {
-  const columns = Math.min(total, COLUMNS);
-  const unitsWidth = columns * UNIT + (columns - 1) * GAP;
-  const boxWidth = 34;
-  const contentWidth = unknown ? boxWidth + 8 + unitsWidth : unitsWidth;
-  const startX = -contentWidth / 2;
-  const unitsX = unknown ? startX + boxWidth + 8 : startX;
-  const floor = 70;
+export interface SharingScaleProps {
+  /** The authored a and b: a boxes of x on the left, b weights on the right. */
+  a: number;
+  b: number;
+  /** Weights in each group, and weights not shared yet. */
+  each: number;
+  loose: number;
+  /** One box and one group are kept; the others are set aside as outlines. */
+  kept: boolean;
+  /** Draw the a groups' places even before any weight is shared. */
+  groups: boolean;
+  label: string;
+}
+
+const GROUP_COLUMNS = 2;
+const GROUP_ROWS = 3;
+const LOOSE_COLUMNS = 8;
+
+/** ax = b (specs/010): a boxes on the left; on the right, a groups along the pan and the weights not yet shared above them. */
+export function SharingScale({ a, b, each, loose, kept, groups, label }: SharingScaleProps) {
+  const floor = 120;
+  const boxWidth = 30;
+  const boxGap = 6;
+  const boxesStart = -(a * boxWidth + (a - 1) * boxGap) / 2;
+  const groupWidth = GROUP_COLUMNS * STEP - GAP;
+  const groupGap = 8;
+  const groupsStart = -(a * groupWidth + (a - 1) * groupGap) / 2;
+  const groupHeight = GROUP_ROWS * STEP;
+  const looseBase = floor - groupHeight - 12;
+  const looseStart = -(Math.min(b, LOOSE_COLUMNS) * STEP - GAP) / 2;
   return (
-    <g className="mkx-balance__pan" style={{ transform: `translate(${at.x}px, ${at.y}px)` }} data-testid={testId} data-remaining={remaining}>
-      <path className="mkx-balance__string" d={`M 0 0 L -66 ${floor} M 0 0 L 66 ${floor}`} />
-      <path className="mkx-balance__dish" d={`M -74 ${floor} Q 0 ${floor + 22} 74 ${floor} Z`} />
-      {unknown ? (
-        <g className="mkx-balance__unknown">
-          <rect x={startX} y={floor - 40} width={boxWidth} height={40} rx={5} />
-          <text x={startX + boxWidth / 2} y={floor - 14} textAnchor="middle">
-            {UNKNOWN}
-          </text>
+    <ScaleFrame
+      tilt="balanced"
+      label={label}
+      floor={floor}
+      halfWidth={84}
+      viewBox="-40 40 480 210"
+      leftData={{ "data-boxes": a }}
+      rightData={{ "data-each": each, "data-loose": loose, "data-kept": kept }}
+      left={Array.from({ length: a }, (_, i) => (
+        <UnknownBox key={i} x={boxesStart + i * (boxWidth + boxGap)} floor={floor} width={boxWidth} setAside={kept && i > 0} />
+      ))}
+      right={
+        <g>
+          {Array.from({ length: a }, (_, g) => {
+            const x0 = groupsStart + g * (groupWidth + groupGap);
+            const aside = kept && g > 0;
+            return (
+              <g key={g} className={aside ? "mkx-sharing__group mkx-sharing__group--aside" : "mkx-sharing__group"} data-testid="sharing-group">
+                {groups || each > 0 ? <rect className="mkx-sharing__band" x={x0 - 3} y={floor - groupHeight - 3} width={groupWidth + 6} height={groupHeight + 3} rx={4} /> : null}
+                {Array.from({ length: each }, (_, k) => (
+                  <rect key={k} className={unitClass(aside)} x={x0 + (k % GROUP_COLUMNS) * STEP} y={floor - UNIT - Math.floor(k / GROUP_COLUMNS) * STEP} width={UNIT} height={UNIT} rx={3} />
+                ))}
+              </g>
+            );
+          })}
+          {Array.from({ length: loose }, (_, k) => (
+            <rect key={k} className="mkx-balance__unit mkx-sharing__loose" x={looseStart + (k % LOOSE_COLUMNS) * STEP} y={looseBase - UNIT - Math.floor(k / LOOSE_COLUMNS) * STEP} width={UNIT} height={UNIT} rx={3} />
+          ))}
         </g>
-      ) : null}
-      {Array.from({ length: total }, (_, i) => {
-        const row = Math.floor(i / COLUMNS);
-        const column = i % COLUMNS;
-        const state = i >= remaining ? " mkx-balance__unit--taken" : i >= remaining - marked ? " mkx-balance__unit--marked" : "";
-        return <rect key={i} className={`mkx-balance__unit${state}`} x={unitsX + column * (UNIT + GAP)} y={floor - UNIT - row * (UNIT + GAP)} width={UNIT} height={UNIT} rx={3} />;
-      })}
-    </g>
+      }
+    />
   );
 }

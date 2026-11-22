@@ -100,6 +100,12 @@ public sealed record TenFrameExplorerDto(string Type, IReadOnlyList<TenFrameExpl
 /// <summary>One balance explorer state (specs/008): the unit weights left on each pan, the tilt, and whether x stands alone and balanced.</summary>
 public sealed record BalanceStateDto(int Left, int Right, string Tilt, bool Solved);
 
+/// <summary>One sharing explorer state (specs/010): weights in each group, weights not shared yet, kept, and solved.</summary>
+public sealed record SharingStateDto(int Each, int Loose, bool Kept, bool Solved);
+
+/// <summary>The sharing explorer for <c>ax = b</c> (specs/010 FR-002): every state, from nothing shared to x found.</summary>
+public sealed record SharingExplorerDto(string Type, int A, int B, IReadOnlyList<SharingStateDto> States);
+
 public sealed record BalanceExplorerDto(string Type, int A, int B, IReadOnlyList<BalanceStateDto> States);
 
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);

@@ -24,6 +24,7 @@ import type { LessonComponents } from "../lesson/render";
 import { LessonGate } from "../components/LessonGate";
 import { ReturnBanner } from "../components/ReturnBanner";
 import { BalanceExplorer } from "../components/math/BalanceExplorer";
+import { SharingExplorer } from "../components/math/SharingExplorer";
 import { StepVisual } from "../components/math/StepVisual";
 import { TenFrameExplorer } from "../components/math/TenFrameExplorer";
 
@@ -219,6 +220,8 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
           return <TenFrameExplorer key={key} start={Number.isNaN(n("start")) ? 0 : n("start")} lang={lang} api={api} />;
         case "balance-explorer":
           return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <BalanceExplorer key={key} a={n("a")} b={n("b")} lang={lang} api={api} />;
+        case "balance-sharing-explorer":
+          return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <SharingExplorer key={key} a={n("a")} b={n("b")} lang={lang} api={api} />;
         case "make-ten":
         case "groups":
           return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <StepVisual key={key} type={attributes.type} a={n("a")} b={n("b")} lang={lang} api={api} />;

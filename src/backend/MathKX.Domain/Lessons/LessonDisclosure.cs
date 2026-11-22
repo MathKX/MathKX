@@ -33,6 +33,11 @@ public static partial class LessonDisclosure
             return ForEquation(facts, instance.A, instance.B);
         }
 
+        if (instance.Form == QuestionForms.UnknownFactor)
+        {
+            return ForProduct(facts, instance.A, instance.B);
+        }
+
         var (a, b) = (instance.A, instance.B);
         var sum = (a + b).ToString(CultureInfo.InvariantCulture);
         string[] starts =
@@ -83,6 +88,12 @@ public static partial class LessonDisclosure
                 continue;
             }
 
+            if (ProductPattern().IsMatch(normalized))
+            {
+                solving = null; // an equation ax = b begins: a solution after it is not this one's (specs/010)
+                continue;
+            }
+
             var solution = SolutionPattern().Match(normalized);
             if (solution.Success && solving == (a, b) && Number(solution.Groups[1].Value) == b - a)
             {
@@ -103,13 +114,53 @@ public static partial class LessonDisclosure
         return DisclosureDecision.No;
     }
 
+    /// <summary>
+    /// <c>ax = b</c> (specs/010): a sharing explorer with the same a and b steps to the solution; and a lesson shows it
+    /// when <c>x = b / a</c> follows <c>ax = b</c> before another equation begins, as for <c>x + a = b</c>.
+    /// </summary>
+    private static DisclosureDecision ForProduct(LessonFacts facts, int a, int b)
+    {
+        (int A, int B)? solving = null;
+        foreach (var expression in facts.Expressions)
+        {
+            var normalized = expression.Normalized;
+            var product = ProductPattern().Match(normalized);
+            if (product.Success || EquationPattern().IsMatch(normalized))
+            {
+                solving = product.Success ? (Number(product.Groups[1].Value), Number(product.Groups[2].Value)) : null;
+                continue;
+            }
+
+            var solution = SolutionPattern().Match(normalized);
+            if (solution.Success && solving == (a, b) && (long)Number(solution.Groups[1].Value) * a == b)
+            {
+                return new DisclosureDecision(true, DisclosureSource.Expression);
+            }
+        }
+
+        foreach (var visual in facts.Visuals)
+        {
+            if (visual.Type == "balance-sharing-explorer"
+                && visual.Attributes.TryGetValue("a", out var va) && va == a
+                && visual.Attributes.TryGetValue("b", out var vb) && vb == b)
+            {
+                return new DisclosureDecision(true, DisclosureSource.Visual);
+            }
+        }
+
+        return DisclosureDecision.No;
+    }
+
     private static int Number(string digits) =>
         int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : -1;
 
     [GeneratedRegex(@"^x\+([0-9]{1,9})=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
     private static partial Regex EquationPattern();
 
-    [GeneratedRegex(@"^x+=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^([0-9]{1,9})x=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
+    private static partial Regex ProductPattern();
+
+    [GeneratedRegex("^x=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
     private static partial Regex SolutionPattern();
 
     /// <summary>A lesson discloses when any translation does; an expression anywhere wins over a visual.</summary>

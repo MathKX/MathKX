@@ -288,13 +288,13 @@ test("skips the lesson template folder", async (t) => {
 test("rejects a duplicate registry name", async (t) => {
   const f = await fixture(t);
   await f.registry("generators", (r) => r.entries.push(structuredClone(r.entries[0])));
-  expectFailure(f.run(), /content\/registry\/generators\.json entries\[2\]: duplicate name addition-pair@1/);
+  expectFailure(f.run(), /content\/registry\/generators\.json entries\[3\]: duplicate name addition-pair@1/);
 });
 
 test("rejects a misconception code naming an unknown validator", async (t) => {
   const f = await fixture(t);
   await f.registry("misconception-codes", (r) => { r.entries[0].validator = "nope"; });
-  expectFailure(f.run(), /misconception-codes\.json entries\[0\]\.validator: nope is not a registered validator \(one of: integer-answer, equation-answer\)/);
+  expectFailure(f.run(), /misconception-codes\.json entries\[0\]\.validator: nope is not a registered validator \(one of: integer-answer, equation-answer, factor-answer\)/);
 });
 
 test("rejects a visual component naming an unknown representation", async (t) => {
@@ -327,7 +327,7 @@ test("rejects an unregistered generator version", async (t) => {
   const f = await fixture(t);
   await f.pilot();
   await f.definition("addition-within-10", generated({ generator: { version: 2 } }));
-  expectFailure(f.run(), /addition-within-10\.json generator: addition-pair@2 is not registered \(one of: addition-pair@1, unknown-addend@1\)/);
+  expectFailure(f.run(), /addition-within-10\.json generator: addition-pair@2 is not registered \(one of: addition-pair@1, unknown-addend@1, unknown-factor@1\)/);
 });
 
 test("rejects a parameter outside the generator's domain", async (t) => {
@@ -369,7 +369,7 @@ test("rejects bounds that admit no operand pair", async (t) => {
 async function equations(f, mutate = (d) => d) {
   await f.pilot();
   await f.skill("algebra.one-step-equations", ["numbers.addition-within-20"]);
-  for (const name of ["within-10", "to-15"]) {
+  for (const name of ["within-10", "to-15", "times"]) {
     await f.write(`content/exercises/algebra/${name}.json`, mutate(await json(`content/exercises/algebra/${name}.json`), name));
   }
 }
@@ -390,6 +390,47 @@ test("rejects equations the balance cannot draw", async (t) => {
   const f = await fixture(t);
   await equations(f, (d, name) => (name === "to-15" ? { ...d, generator: { ...d.generator, parameters: { ...d.generator.parameters, total: { min: 11, max: 18 } } } } : d));
   expectFailure(f.run(), /to-15\.json representations\.help\[0\]: balance supports total 2–15 but the definition allows total 11–18/);
+});
+
+test("rejects product bounds that admit no equation (specs/010)", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "times" ? { ...d, generator: { ...d.generator, parameters: { factor: { min: 4, max: 4 }, unknown: { min: 5, max: 5 }, product: { min: 2, max: 10 } } } } : d));
+  expectFailure(f.run(), /times\.json generator\.parameters: no factor within 4–4 and unknown within 5–5 give a product within 2–10/);
+});
+
+test("rejects product bounds whose whole-number products all fall outside the range (PR 64 review)", async (t) => {
+  const f = await fixture(t);
+  // Factor 3 and unknown 2–3 give only 6 and 9; the bounds overlap 7–7, but no product is 7.
+  await equations(f, (d, name) => (name === "times" ? { ...d, generator: { ...d.generator, parameters: { factor: { min: 3, max: 3 }, unknown: { min: 2, max: 3 }, product: { min: 7, max: 7 } } } } : d));
+  expectFailure(f.run(), /times\.json generator\.parameters: no factor within 3–3 and unknown within 2–3 give a product within 7–7/);
+});
+
+test("rejects a fixed ax = b without a whole-number solution, whatever its representations (PR 64 review)", async (t) => {
+  const f = await fixture(t);
+  await equations(f);
+  const fixedTimes = (id, a, b, answer) => ({
+    ...baseFourPlusFour,
+    id,
+    skill: "algebra.one-step-equations",
+    validator: { name: "factor-answer", version: 1 },
+    instance: { prompt: { a, b }, validation: { answer } },
+    representations: { help: [], explanation: [] },
+    misconceptionCodes: ["fac.generic"],
+  });
+  await f.write("content/exercises/algebra/three-x-seven.json", fixedTimes("algebra.one-step.three-x-seven", 3, 7, 2));
+  await f.write("content/exercises/algebra/zero-x.json", fixedTimes("algebra.one-step.zero-x", 0, 6, 1));
+  await f.write("content/exercises/algebra/three-x-twelve.json", fixedTimes("algebra.one-step.three-x-twelve", 3, 12, 4));
+  const result = f.run();
+  expectFailure(result,
+    /three-x-seven\.json instance\.prompt: ax = b needs b to be a times a whole number greater than 0, but 3x = 7 gives x = 7\/3/,
+    /zero-x\.json instance\.prompt: ax = b needs a factor a greater than 0, but a is 0/);
+  assert.doesNotMatch(result.output, /three-x-twelve\.json/);
+});
+
+test("rejects sharing help beyond what the pan can draw (specs/010)", async (t) => {
+  const f = await fixture(t);
+  await equations(f, (d, name) => (name === "times" ? { ...d, generator: { ...d.generator, parameters: { factor: { min: 2, max: 6 }, unknown: { min: 1, max: 5 }, product: { min: 2, max: 30 } } } } : d));
+  expectFailure(f.run(), /times\.json representations\.help\[0\]: balance-sharing supports factor 2–4 but the definition allows factor 2–6/);
 });
 
 test("rejects a validator whose question form the generator does not make (PR 63 review)", async (t) => {
@@ -460,8 +501,8 @@ test("rejects unregistered representations and validators", async (t) => {
   await f.pilot();
   await f.definition("addition-within-10", { ...baseWithin10, representations: { help: ["nope"], explanation: ["groups"] }, validator: { name: "nonexistent", version: 1 } });
   expectFailure(f.run(),
-    /representations\.help\[0\]: nope is not a registered representation \(one of: groups, make-ten, ten-frame-explorer, balance\)/,
-    /validator: nonexistent@1 is not registered \(one of: integer-answer@1, equation-answer@1\)/);
+    /representations\.help\[0\]: nope is not a registered representation \(one of: groups, make-ten, ten-frame-explorer, balance, balance-sharing\)/,
+    /validator: nonexistent@1 is not registered \(one of: integer-answer@1, equation-answer@1, factor-answer@1\)/);
 });
 
 test("rejects fixed validation data that does not fit the validator's artifact", async (t) => {
@@ -599,7 +640,7 @@ test("rejects unknown directives, unregistered components, and unlisted visual t
   });
   expectFailure(f.run(),
     /en\.md:\d+ directive: unknown directive note \(one of: visual, example, practice\)/,
-    /en\.md:\d+ directive visual\{type="nope"\}: unregistered visual component nope \(one of: ten-frame-explorer, groups, make-ten, balance-explorer\)/,
+    /en\.md:\d+ directive visual\{type="nope"\}: unregistered visual component nope \(one of: ten-frame-explorer, groups, make-ten, balance-explorer, balance-sharing-explorer\)/,
     /en\.md:\d+ directive visual\{type="make-ten"\}: type make-ten is not listed in lesson\.json visuals/);
 });
 
@@ -629,6 +670,24 @@ test("checks that a balance explorer's equation has a solution of at least 1", a
   const result = f.run();
   expectFailure(result, /directive visual\{type="balance-explorer"\}: balance-explorer needs b greater than a, but x \+ 5 = 5 has no solution of at least 1/);
   assert.doesNotMatch(result.output, /x \+ 3 = 7/);
+});
+
+test("checks that a sharing explorer's equation has a whole solution from 1 to 5 (specs/010)", async (t) => {
+  const f = await fixture(t);
+  await f.pilot();
+  const scales = '\n:::visual{type="balance-sharing-explorer" a="3" b="10"}\n:::\n\n:::visual{type="balance-sharing-explorer" a="2" b="12"}\n:::\n\n:::visual{type="balance-sharing-explorer" a="3" b="12"}\n:::\n';
+  await f.lesson("my-lesson", {
+    json: { visuals: ["ten-frame-explorer", "make-ten", "balance-sharing-explorer"] },
+    en: EN + scales,
+    nb: NB + scales,
+  });
+  const result = f.run();
+  expectFailure(
+    result,
+    /directive visual\{type="balance-sharing-explorer"\}: balance-sharing-explorer needs b to be a times a whole number from 1 to 5, but 3x = 10 gives x = 10\/3/,
+    /balance-sharing-explorer needs b to be a times a whole number from 1 to 5, but 2x = 12 gives x = 12\/2/,
+  );
+  assert.doesNotMatch(result.output, /3x = 12/);
 });
 
 test("requires practice directives and metadata entries to correspond", async (t) => {

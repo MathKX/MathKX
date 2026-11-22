@@ -12,6 +12,13 @@
     "eq.addend",
     "eq.offByOne",
     "eq.generic",
+    "fac.correct",
+    "fac.multiplied",
+    "fac.total",
+    "fac.subtracted",
+    "fac.factor",
+    "fac.offByOne",
+    "fac.generic",
     "invalid.empty",
     "invalid.notAnInteger"
   ],
@@ -55,6 +62,9 @@
     "explain.makeTen.total",
     "explain.balance.show",
     "explain.balance.takeAway",
-    "explain.balance.solved"
+    "explain.balance.solved",
+    "explain.sharing.show",
+    "explain.sharing.share",
+    "explain.sharing.solved"
   ]
 }

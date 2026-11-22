@@ -13,7 +13,8 @@ public sealed record InstanceIdentity(string DefinitionId, int Version, Seed? Se
 
 /// <summary>
 /// A resolved question: presentation data only. There is deliberately no Sum member. <see cref="Form"/> says how A
-/// and B are asked (specs/009 FR-003): <c>A + B = ?</c> for addition, <c>x + A = B</c> for an unknown addend.
+/// and B are asked (specs/009 FR-003): <c>A + B = ?</c> for addition, <c>x + A = B</c> for an unknown addend,
+/// and <c>Ax = B</c> for an unknown factor (specs/010).
 /// </summary>
 public sealed record Instance(
     InstanceIdentity Identity,
@@ -25,9 +26,12 @@ public sealed record Instance(
     NamedVersion Validator,
     string Form = QuestionForms.Addition)
 {
-    public string Prompt => Form == QuestionForms.UnknownAddend
-        ? string.Create(CultureInfo.InvariantCulture, $"x + {A} = {B}")
-        : string.Create(CultureInfo.InvariantCulture, $"{A} + {B}");
+    public string Prompt => Form switch
+    {
+        QuestionForms.UnknownAddend => string.Create(CultureInfo.InvariantCulture, $"x + {A} = {B}"),
+        QuestionForms.UnknownFactor => string.Create(CultureInfo.InvariantCulture, $"{A}x = {B}"),
+        _ => string.Create(CultureInfo.InvariantCulture, $"{A} + {B}"),
+    };
 }
 
 public sealed class UnknownDefinitionException(string key) : Exception($"Definition {key} is not defined.")

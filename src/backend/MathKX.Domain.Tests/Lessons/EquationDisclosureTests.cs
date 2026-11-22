@@ -50,6 +50,8 @@ public sealed class EquationDisclosureTests
         Assert.False(LessonDisclosure.For(Facts("x + 3 = 7", "x = 4", "x + 6 = 10"), question).Discloses);
         Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "x + 3 = 7", "x = 4"), question).Discloses);
         Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "x = 5"), question).Discloses);
+        Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "xx = 4"), question).Discloses); // only x = 4 is a solution
+        Assert.False(LessonDisclosure.For(Facts("x + 6 = 10", "2x = 8", "x = 4"), question).Discloses); // x = 4 solves 2x = 8 (specs/010)
     }
 
     [Fact]

@@ -35,14 +35,48 @@ export const RELATIONS = {
       return `no addend within ${range(...box.addend)} and unknown within ${range(...box.unknown)} give a total within ${range(...box.total)}`;
     },
   },
+  "unknown-factor": {
+    // specs/010: ax = b. a is the factor, b the product, and x = b / a the unknown (a whole number when b is a multiple).
+    derive({ a, b }) {
+      const x = a !== 0 && b % a === 0 ? b / a : undefined;
+      return { factor: [a, a], product: [b, b], ...(x === undefined ? {} : { unknown: [x, x] }) };
+    },
+    feasible(box) {
+      // Products of whole numbers leave gaps (factor 3, unknown 2–3 gives only 6 and 9), so comparing the bounds is
+      // not enough: look for one factor with a whole unknown in range whose product falls in range (PR 64 review).
+      const { factor, unknown, product } = box;
+      if (!factor || !unknown || !product) return true;
+      for (let f = factor[0]; f <= factor[1]; f++) {
+        if (f <= 0) {
+          if (f === 0 && product[0] <= 0 && 0 <= product[1] && unknown[0] <= unknown[1]) return true;
+          continue;
+        }
+        const low = Math.max(unknown[0], Math.ceil(product[0] / f));
+        const high = Math.min(unknown[1], Math.floor(product[1] / f));
+        if (low <= high) return true;
+      }
+      return false;
+    },
+    infeasible(box) {
+      return `no factor within ${range(...box.factor)} and unknown within ${range(...box.unknown)} give a product within ${range(...box.product)}`;
+    },
+    /** A fixed ax = b needs a positive factor and a product it divides exactly, or x is not a whole number (PR 64 review). */
+    unsolvable({ a, b }) {
+      if (!(a > 0)) return `ax = b needs a factor a greater than 0, but a is ${a}`;
+      if (!(b > 0) || b % a !== 0) return `ax = b needs b to be a times a whole number greater than 0, but ${a}x = ${b} gives x = ${b}/${a}`;
+      return undefined;
+    },
+  },
 };
 
 export const PILOT_RELATION = "sum-of-two-operands";
+
 
 /** The relation that produces each question form a validator judges (specs/009); the registry schema lists the forms. */
 export const FORM_RELATIONS = {
   addition: "sum-of-two-operands",
   "unknown-addend": "unknown-addend",
+  "unknown-factor": "unknown-factor",
 };
 
 const isInteger = (v) => Number.isInteger(v);

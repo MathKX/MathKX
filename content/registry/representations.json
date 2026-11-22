@@ -84,6 +84,31 @@
           "max": 15
         }
       }
+    },
+    {
+      "name": "balance-sharing",
+      "role": [
+        "help",
+        "explanation"
+      ],
+      "reads": [
+        "a",
+        "b"
+      ],
+      "supports": {
+        "factor": {
+          "min": 2,
+          "max": 4
+        },
+        "unknown": {
+          "min": 1,
+          "max": 5
+        },
+        "product": {
+          "min": 2,
+          "max": 20
+        }
+      }
     }
   ]
 }
