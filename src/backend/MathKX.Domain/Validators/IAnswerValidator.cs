@@ -15,6 +15,9 @@ public static class QuestionForms
 
     /// <summary><c>ax = b</c>: the answer is the unknown factor, <c>b / a</c> (specs/010).</summary>
     public const string UnknownFactor = "unknown-factor";
+
+    /// <summary><c>ax + c = b</c>: the answer is <c>(b − c) / a</c>, the one form with a third number (specs/011).</summary>
+    public const string TwoStep = "two-step";
 }
 
 /// <summary>A registered, versioned answer validator. The implementation must match its registry entry.</summary>
@@ -42,6 +45,7 @@ public sealed class ValidatorRegistry
         registry.Register(new IntegerAnswerValidator());
         registry.Register(new EquationAnswerValidator());
         registry.Register(new FactorAnswerValidator());
+        registry.Register(new TwoStepAnswerValidator());
         return registry;
     }
 

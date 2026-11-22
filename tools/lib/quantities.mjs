@@ -69,6 +69,40 @@ export const RELATIONS = {
   },
 };
 
+RELATIONS["two-step"] = {
+  // specs/011: ax + c = b. a is the factor, c the addend, b the total, and x = (b - c) / a the unknown.
+  derive({ a, b, c }) {
+    const box = { factor: [a, a], total: [b, b] };
+    if (!Number.isInteger(c)) return box;
+    box.addend = [c, c];
+    if (a !== 0 && (b - c) % a === 0) box.unknown = [(b - c) / a, (b - c) / a];
+    return box;
+  },
+  feasible(box) {
+    // As for unknown-factor, products leave gaps: look for one factor and addend with a whole unknown in range.
+    const { factor, addend, unknown, total } = box;
+    if (!factor || !addend || !unknown || !total) return true;
+    for (let f = Math.max(1, factor[0]); f <= factor[1]; f++) {
+      for (let c = addend[0]; c <= addend[1]; c++) {
+        const low = Math.max(unknown[0], Math.ceil((total[0] - c) / f));
+        const high = Math.min(unknown[1], Math.floor((total[1] - c) / f));
+        if (low <= high) return true;
+      }
+    }
+    return false;
+  },
+  infeasible(box) {
+    return `no factor within ${range(...box.factor)}, addend within ${range(...box.addend)}, and unknown within ${range(...box.unknown)} give a total within ${range(...box.total)}`;
+  },
+  /** A fixed ax + c = b needs integers a, b, c with a above 0 and a whole-number x of at least 1. */
+  unsolvable({ a, b, c }) {
+    if (!Number.isInteger(c)) return "ax + c = b needs c, the number added to ax, as an integer";
+    if (!(a > 0)) return `ax + c = b needs a factor a greater than 0, but a is ${a}`;
+    if (!(b - c > 0) || (b - c) % a !== 0) return `ax + c = b needs b − c to be a times a whole number greater than 0, but ${a}x + ${c} = ${b} gives x = ${b - c}/${a}`;
+    return undefined;
+  },
+};
+
 export const PILOT_RELATION = "sum-of-two-operands";
 
 
@@ -77,6 +111,7 @@ export const FORM_RELATIONS = {
   addition: "sum-of-two-operands",
   "unknown-addend": "unknown-addend",
   "unknown-factor": "unknown-factor",
+  "two-step": "two-step",
 };
 
 const isInteger = (v) => Number.isInteger(v);

@@ -49,6 +49,13 @@ public static class FeedbackCodes
     public const string FactorFactor = "fac.factor";
     public const string FactorOffByOne = "fac.offByOne";
     public const string FactorGeneric = "fac.generic";
+    public const string TwoStepCorrect = "two.correct";
+    public const string TwoStepNotShared = "two.notShared";
+    public const string TwoStepAddedFirst = "two.addedFirst";
+    public const string TwoStepDivideFirst = "two.divideFirst";
+    public const string TwoStepFactorAsAddend = "two.factorAsAddend";
+    public const string TwoStepOffByOne = "two.offByOne";
+    public const string TwoStepGeneric = "two.generic";
     public const string InvalidEmpty = "invalid.empty";
     public const string InvalidNotAnInteger = "invalid.notAnInteger";
 
@@ -60,6 +67,9 @@ public static class FeedbackCodes
 
     /// <summary>The codes <c>factor-answer@1</c> emits for a wrong answer (specs/010).</summary>
     public static readonly IReadOnlyList<string> FactorMisconceptions = [FactorMultiplied, FactorTotal, FactorSubtracted, FactorFactor, FactorOffByOne, FactorGeneric];
+
+    /// <summary>The codes <c>two-step-answer@1</c> emits for a wrong answer (specs/011).</summary>
+    public static readonly IReadOnlyList<string> TwoStepMisconceptions = [TwoStepNotShared, TwoStepAddedFirst, TwoStepDivideFirst, TwoStepFactorAsAddend, TwoStepOffByOne, TwoStepGeneric];
 }
 
 /// <summary>What the learner submitted. Reading is input guidance, not a mathematical judgement.</summary>

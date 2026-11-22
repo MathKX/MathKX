@@ -14,7 +14,8 @@ public sealed record InstanceIdentity(string DefinitionId, int Version, Seed? Se
 /// <summary>
 /// A resolved question: presentation data only. There is deliberately no Sum member. <see cref="Form"/> says how A
 /// and B are asked (specs/009 FR-003): <c>A + B = ?</c> for addition, <c>x + A = B</c> for an unknown addend,
-/// and <c>Ax = B</c> for an unknown factor (specs/010).
+/// <c>Ax = B</c> for an unknown factor (specs/010), and <c>Ax + C = B</c> for a two-step equation (specs/011), the one
+/// form with a third number <see cref="C"/>.
 /// </summary>
 public sealed record Instance(
     InstanceIdentity Identity,
@@ -24,12 +25,14 @@ public sealed record Instance(
     RepresentationRoles Representations,
     NamedVersion? Generator,
     NamedVersion Validator,
-    string Form = QuestionForms.Addition)
+    string Form = QuestionForms.Addition,
+    int? C = null)
 {
     public string Prompt => Form switch
     {
         QuestionForms.UnknownAddend => string.Create(CultureInfo.InvariantCulture, $"x + {A} = {B}"),
         QuestionForms.UnknownFactor => string.Create(CultureInfo.InvariantCulture, $"{A}x = {B}"),
+        QuestionForms.TwoStep => string.Create(CultureInfo.InvariantCulture, $"{A}x + {C} = {B}"),
         _ => string.Create(CultureInfo.InvariantCulture, $"{A} + {B}"),
     };
 }

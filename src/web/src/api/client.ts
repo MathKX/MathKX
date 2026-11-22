@@ -15,6 +15,7 @@ import {
   type TenFrameExplorerDto,
   type BalanceExplorerDto,
   type SharingExplorerDto,
+  type TwoStepExplorerDto,
   type ValidationResponse,
   type VisualStepsDto,
 } from "./types";
@@ -67,6 +68,7 @@ export const practiceApi: PracticeApi = {
   getTenFrameExplorer: () => request<TenFrameExplorerDto>("/api/visuals/ten-frame-explorer"),
   getBalanceExplorer: (a, b) => request<BalanceExplorerDto>(`/api/visuals/balance-explorer?a=${a}&b=${b}`),
   getSharingExplorer: (a, b) => request<SharingExplorerDto>(`/api/visuals/balance-sharing-explorer?a=${a}&b=${b}`),
+  getTwoStepExplorer: (a, c, b) => request<TwoStepExplorerDto>(`/api/visuals/balance-two-step-explorer?a=${a}&c=${c}&b=${b}`),
   getChecks: () => request<CheckDto[]>("/api/checks"),
   getCheck: (id, version) => request<CheckDto>(`/api/checks/${encodeURIComponent(id)}/${version}`),
   getAnswer: (identity) =>

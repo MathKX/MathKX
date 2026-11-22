@@ -57,6 +57,10 @@ public static class StepModels
         "explain.sharing.show",
         "explain.sharing.share",
         "explain.sharing.solved",
+        "explain.twoStep.show",
+        "explain.twoStep.takeAway",
+        "explain.twoStep.share",
+        "explain.twoStep.solved",
     ];
 
     public static bool TryParseKind(string? text, out StepKind kind)
@@ -90,14 +94,15 @@ public static class StepModels
             throw new UnsupportedStepsException(representation, kind);
         }
 
-        return ForValues(instance.A, instance.B, representation, kind);
+        return ForValues(instance.A, instance.B, representation, kind, instance.C);
     }
 
     /// <summary>
-    /// The steps for two operands: the single source for a question's help and explanation and for a lesson's
-    /// visual with authored values (specs/003 FR-008), so the two can never disagree.
+    /// The steps for a question's numbers: the single source for a question's help and explanation and for a lesson's
+    /// visual with authored values (specs/003 FR-008), so the two can never disagree. <paramref name="c"/> is the third
+    /// number of a two-step equation (specs/011).
     /// </summary>
-    public static IReadOnlyList<StepModel> ForValues(int a, int b, string representation, StepKind kind)
+    public static IReadOnlyList<StepModel> ForValues(int a, int b, string representation, StepKind kind, int? c = null)
     {
         var steps = (representation, kind) switch
         {
@@ -106,6 +111,7 @@ public static class StepModels
             ("make-ten", _) => MakeTen(a, b),
             ("balance", _) => Balance(a, b),
             ("balance-sharing", _) => Sharing(a, b),
+            ("balance-two-step", _) when c is int added => TwoStep(a, added, b),
             _ => throw new UnsupportedStepsException(representation, kind),
         };
 
@@ -166,6 +172,24 @@ public static class StepModels
             new(false, V(("each", 0), ("loose", b), ("kept", false), ("groups", false)), new StepText("explain.sharing.show", V(("a", a), ("b", b)))),
             new(false, V(("each", 1), ("loose", b - a), ("kept", false), ("groups", true)), new StepText("explain.sharing.share", V(("a", a), ("b", b)))),
             new(true, V(("each", x), ("loose", 0), ("kept", true), ("groups", true), ("x", x)), new StepText("explain.sharing.solved", V(("a", a), ("b", b), ("x", x)))),
+        ];
+    }
+
+    /// <summary>
+    /// <c>ax + c = b</c> on a balance (specs/011 FR-004): the boxes and the loose weights against <c>b</c>, then <c>c</c>
+    /// taken off both pans so the boxes stand alone, then the first round of sharing, then one box against one group of
+    /// <c>x</c>. Only the last step carries <c>x</c>.
+    /// </summary>
+    private static List<Raw> TwoStep(int a, int c, int b)
+    {
+        var rest = b - c;
+        var x = rest / a;
+        return
+        [
+            new(false, V(("left", c), ("right", b), ("each", 0), ("loose", b), ("kept", false), ("groups", false)), new StepText("explain.twoStep.show", V(("a", a), ("b", b), ("c", c)))),
+            new(false, V(("left", 0), ("right", rest), ("each", 0), ("loose", rest), ("kept", false), ("groups", false)), new StepText("explain.twoStep.takeAway", V(("a", a), ("c", c), ("rest", rest)))),
+            new(false, V(("left", 0), ("right", rest), ("each", 1), ("loose", rest - a), ("kept", false), ("groups", true)), new StepText("explain.twoStep.share", V(("a", a), ("rest", rest)))),
+            new(true, V(("left", 0), ("right", rest), ("each", x), ("loose", 0), ("kept", true), ("groups", true), ("x", x)), new StepText("explain.twoStep.solved", V(("a", a), ("b", b), ("c", c), ("x", x)))),
         ];
     }
 

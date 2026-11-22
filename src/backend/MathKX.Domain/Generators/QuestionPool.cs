@@ -3,8 +3,9 @@ using MathKX.Domain.Random;
 
 namespace MathKX.Domain.Generators;
 
-/// <summary>One question of a variation's pool: its operands and the smallest seed that generates it (null for a fixed task).</summary>
-public sealed record PoolQuestion(Seed? Seed, int A, int B);
+/// <summary>One question of a variation's pool: its operands and the smallest seed that generates it (null for a fixed task).
+/// <c>C</c> is the third number of a form that has one (specs/011).</summary>
+public sealed record PoolQuestion(Seed? Seed, int A, int B, int? C = null);
 
 /// <summary>
 /// A variation's pool (specs/005 contracts/pool.md): every question the definition admits, in the generator's
@@ -23,7 +24,7 @@ public sealed record QuestionPool(string Definition, IReadOnlyList<PoolQuestion>
         if (definition.IsFixed)
         {
             var prompt = definition.Instance!.Prompt;
-            return new QuestionPool(definition.Key, [new PoolQuestion(null, prompt["a"], prompt["b"])]);
+            return new QuestionPool(definition.Key, [new PoolQuestion(null, prompt["a"], prompt["b"], prompt.TryGetValue("c", out var c) ? c : null)]);
         }
 
         var spec = definition.Generator ?? throw new InvalidOperationException($"{definition.Key} has neither a generator nor a fixed instance.");
@@ -32,12 +33,12 @@ public sealed record QuestionPool(string Definition, IReadOnlyList<PoolQuestion>
             throw new InvalidOperationException($"{definition.Key} names generator {spec.Key}, which is not registered.");
         }
 
-        var questions = generator.Enumerate(definition);
-        var smallest = new Dictionary<(int A, int B), Seed>();
+        var questions = generator.EnumerateOperands(definition);
+        var smallest = new Dictionary<Operands, Seed>();
         for (ulong value = 0; value < limit && smallest.Count < questions.Count; value++)
         {
             var seed = new Seed(value);
-            smallest.TryAdd(generator.Generate(definition, seed), seed);
+            smallest.TryAdd(generator.GenerateOperands(definition, seed), seed);
         }
 
         if (smallest.Count < questions.Count)
@@ -45,6 +46,6 @@ public sealed record QuestionPool(string Definition, IReadOnlyList<PoolQuestion>
             throw new InvalidOperationException($"{definition.Key}: {questions.Count - smallest.Count} of {questions.Count} questions have no seed below {limit}.");
         }
 
-        return new QuestionPool(definition.Key, questions.Select(q => new PoolQuestion(smallest[q], q.A, q.B)).ToList());
+        return new QuestionPool(definition.Key, questions.Select(q => new PoolQuestion(smallest[q], q.A, q.B, q.C)).ToList());
     }
 }

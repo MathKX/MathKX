@@ -567,6 +567,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
       a: instance.a,
       b: instance.b,
     };
+    if (instance.c !== undefined) d.c = instance.c;
     if (instance.identity.seed !== undefined) d.seed = instance.identity.seed;
     if (instance.generator) d.generatorVersion = instance.generator.version;
     if (instance.form && instance.form !== "addition") d.form = instance.form;
@@ -619,7 +620,7 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
         if (stale()) return null;
         // specs/005: a question the learner did not choose avoids the variation's last eight, in either order.
         const window = recentWindow(latest.current.deliveries, ref.definition, ref.version);
-        const recent = new Set(window.map((d) => pairKey(d.instance.a, d.instance.b)));
+        const recent = new Set(window.map((d) => pairKey(d.instance.a, d.instance.b, d.instance.c)));
         let repeat: Pick<Delivery, "repeatOf" | "repeatReason"> | undefined;
         if (requested) {
           repeat = { repeatOf: requested.of, repeatReason: "requested" };
@@ -631,16 +632,16 @@ export function StoreProvider({ children, api = practiceApi, storage }: StorePro
             dispatch({ type: "ladder", skillId: skill.id, entries: skill.ladder, current: ref });
             questionCommit.clearPending = true; // a pending change belonged to the practice that was left
           }
-        } else if (recent.has(pairKey(instance.a, instance.b))) {
+        } else if (recent.has(pairKey(instance.a, instance.b, instance.c))) {
           const pool = await poolFor(ref);
           if (stale()) return null;
-          const choice = pool ? choose({ seed: instance.identity.seed ?? null, a: instance.a, b: instance.b }, recent, pool.questions) : { kind: "fresh" as const };
+          const choice = pool ? choose({ seed: instance.identity.seed ?? null, a: instance.a, b: instance.b, c: instance.c }, recent, pool.questions) : { kind: "fresh" as const };
           if (choice.kind === "chosen") {
             instance = await api.getInstance(ref.definition, ref.version, choice.seed); // the first draw is never shown or recorded
             if (stale()) return null;
           } else if (choice.kind === "exhausted") {
-            const key = pairKey(instance.a, instance.b);
-            repeat = { repeatReason: "exhausted", repeatOf: [...window].reverse().find((d) => pairKey(d.instance.a, d.instance.b) === key)!.id };
+            const key = pairKey(instance.a, instance.b, instance.c);
+            repeat = { repeatReason: "exhausted", repeatOf: [...window].reverse().find((d) => pairKey(d.instance.a, d.instance.b, d.instance.c) === key)!.id };
           }
         }
         dispatch({ type: "question", instance, delivery: toDelivery(instance, origin, repeat), ...questionCommit });

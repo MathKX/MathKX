@@ -20,6 +20,19 @@ public interface IGenerator
 
     /// <summary>Every instance the definition's bounds admit, in the generator's canonical order (specs/005 pools).</summary>
     IReadOnlyList<(int A, int B)> Enumerate(ExerciseDefinition definition);
+
+    /// <summary>
+    /// The operands with the third number, for forms that have one (specs/011 FR-001). Practice and pools use these;
+    /// a two-number generator need not override them.
+    /// </summary>
+    Operands GenerateOperands(ExerciseDefinition definition, Seed seed)
+    {
+        var (a, b) = Generate(definition, seed);
+        return new Operands(a, b);
+    }
+
+    /// <summary>Every instance with its third number, in the canonical order of <see cref="Enumerate"/>.</summary>
+    IReadOnlyList<Operands> EnumerateOperands(ExerciseDefinition definition) => Enumerate(definition).Select(q => new Operands(q.A, q.B)).ToList();
 }
 
 /// <summary>Generators by <c>name@version</c>. A new version is a new registration; definitions pin the one they use.</summary>
@@ -33,6 +46,7 @@ public sealed class GeneratorRegistry
         registry.Register(new AdditionPairGenerator());
         registry.Register(new UnknownAddendGenerator());
         registry.Register(new UnknownFactorGenerator());
+        registry.Register(new TwoStepGenerator());
         return registry;
     }
 

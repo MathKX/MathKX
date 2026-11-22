@@ -162,6 +162,68 @@ public sealed class EquationContractTests(WebApplicationFactory<Program> factory
         Assert.Equal(15, pool.RootElement.GetProperty("questions").GetArrayLength());
     }
 
+    [Fact]
+    public async Task The_two_step_explorer_serves_its_states_and_refuses_other_values()
+    {
+        using var client = factory.CreateClient();
+        using var explorer = JsonDocument.Parse(await client.GetStringAsync("/api/visuals/balance-two-step-explorer?a=2&c=3&b=11"));
+        var root = explorer.RootElement;
+        Assert.Equal((2, 3, 11), (root.GetProperty("a").GetInt32(), root.GetProperty("c").GetInt32(), root.GetProperty("b").GetInt32()));
+        var states = root.GetProperty("states").EnumerateArray().ToList();
+        Assert.Equal(9, states.Count);
+        Assert.Equal((3, 11), (states[0].GetProperty("left").GetInt32(), states[0].GetProperty("right").GetInt32()));
+        Assert.Equal((0, 8, 0), (states[3].GetProperty("left").GetInt32(), states[3].GetProperty("right").GetInt32(), states[3].GetProperty("each").GetInt32()));
+        Assert.True(states[^1].GetProperty("solved").GetBoolean());
+        Assert.Equal(4, states[^1].GetProperty("each").GetInt32());
+
+        foreach (var query in new[] { "a=2&c=3&b=10", "a=4&c=1&b=9", "a=2&c=7&b=15", "a=2&b=11", "a=2&c=three&b=11" })
+        {
+            var refused = await client.GetAsync($"/api/visuals/balance-two-step-explorer?{query}");
+            Assert.Equal(System.Net.HttpStatusCode.BadRequest, refused.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task A_two_step_equation_carries_c_judges_x_steps_both_moves_and_lists_c_in_its_pool()
+    {
+        const string twoStep = "algebra.two-step.within-20";
+        using var client = factory.CreateClient();
+        using var instance = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{twoStep}/1/5"));
+        var root = instance.RootElement;
+        var (a, b, c) = (root.GetProperty("a").GetInt32(), root.GetProperty("b").GetInt32(), root.GetProperty("c").GetInt32());
+        var x = (b - c) / a;
+        Assert.Equal("two-step", root.GetProperty("form").GetString());
+        Assert.Equal($"{a}x + {c} = {b}", root.GetProperty("prompt").GetString());
+        Assert.Equal("algebra.two-step-equations", root.GetProperty("skill").GetString());
+        Assert.Equal(["balance-two-step"], root.GetProperty("representations").GetProperty("help").EnumerateArray().Select(e => e.GetString()));
+        Assert.Equal("two-step-equations", Assert.Single(root.GetProperty("lessons").EnumerateArray()).GetProperty("id").GetString());
+        Assert.DoesNotContain(Names(root), name => name is "x" or "sum");
+
+        var response = await client.PostAsJsonAsync("/api/validations", new { identity = new { definitionId = twoStep, version = 1, seed = "5" }, artifact = new { kind = "integer", originalText = x.ToString(System.Globalization.CultureInfo.InvariantCulture) } });
+        using var result = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("two.correct", result.RootElement.GetProperty("code").GetString());
+        Assert.Equal(x, result.RootElement.GetProperty("values").GetProperty("x").GetInt32());
+
+        using var last = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{twoStep}/1/5/steps/help/3"));
+        Assert.True(last.RootElement.GetProperty("reveals").GetBoolean());
+        Assert.Equal(x, last.RootElement.GetProperty("visual").GetProperty("x").GetInt32());
+
+        using var pool = JsonDocument.Parse(await client.GetStringAsync($"/api/definitions/{twoStep}/1/pool"));
+        var questions = pool.RootElement.GetProperty("questions").EnumerateArray().ToList();
+        Assert.Equal(59, questions.Count);
+        Assert.All(questions, q => Assert.True(q.TryGetProperty("c", out _)));
+
+        using var answer = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{twoStep}/1/5/answer"));
+        Assert.Equal(c, answer.RootElement.GetProperty("c").GetInt32());
+        Assert.Equal(x, answer.RootElement.GetProperty("answer").GetProperty("value").GetInt32());
+
+        // Questions without a third number say nothing about it.
+        using var oneStep = JsonDocument.Parse(await client.GetStringAsync($"/api/instances/{Definition}/1/3"));
+        Assert.False(oneStep.RootElement.TryGetProperty("c", out _));
+        using var onePool = JsonDocument.Parse(await client.GetStringAsync($"/api/definitions/{Definition}/1/pool"));
+        Assert.All(onePool.RootElement.GetProperty("questions").EnumerateArray(), q => Assert.False(q.TryGetProperty("c", out _)));
+    }
+
     private static HashSet<string> Names(JsonElement element)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);

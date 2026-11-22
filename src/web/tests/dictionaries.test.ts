@@ -37,6 +37,9 @@ describe("dictionaries", () => {
     const registered = ["add.oneGroup", "add.concat", "add.offByOne", "add.subtracted", "add.generic"];
     const equation = ["eq.added", "eq.total", "eq.addend", "eq.offByOne", "eq.generic"]; // specs/009
     const product = ["fac.multiplied", "fac.total", "fac.subtracted", "fac.factor", "fac.offByOne", "fac.generic"]; // specs/010
-    expect([...codes.feedback].sort()).toEqual([...registered, ...equation, ...product, "correct", "eq.correct", "fac.correct", "invalid.empty", "invalid.notAnInteger"].sort());
+    const twoStep = ["two.notShared", "two.addedFirst", "two.divideFirst", "two.factorAsAddend", "two.offByOne", "two.generic"]; // specs/011
+    expect([...codes.feedback].sort()).toEqual(
+      [...registered, ...equation, ...product, ...twoStep, "correct", "eq.correct", "fac.correct", "two.correct", "invalid.empty", "invalid.notAnInteger"].sort(),
+    );
   });
 });

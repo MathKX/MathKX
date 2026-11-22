@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "algebra.two-step.within-20",
+  "version": 1,
+  "skill": "algebra.two-step-equations",
+  "source": "generated",
+  "validator": {
+    "name": "two-step-answer",
+    "version": 1
+  },
+  "generator": {
+    "name": "two-step",
+    "version": 1,
+    "parameters": {
+      "factor": {
+        "min": 2,
+        "max": 3
+      },
+      "addend": {
+        "min": 1,
+        "max": 6
+      },
+      "unknown": {
+        "min": 1,
+        "max": 5
+      },
+      "total": {
+        "min": 3,
+        "max": 20
+      }
+    }
+  },
+  "representations": {
+    "help": [
+      "balance-two-step"
+    ],
+    "explanation": [
+      "balance-two-step"
+    ]
+  },
+  "misconceptionCodes": [
+    "two.notShared",
+    "two.addedFirst",
+    "two.divideFirst",
+    "two.factorAsAddend",
+    "two.offByOne",
+    "two.generic"
+  ]
+}

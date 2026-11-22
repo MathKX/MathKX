@@ -335,6 +335,16 @@ public static class ContentLoader
                 throw new ContentLoadException(path, $"{a}x = {b} has no whole-number solution; a must be greater than 0 and b a multiple of a");
             }
 
+            // The same for a fixed ax + c = b, whose x must be a whole number of at least 1 (specs/011 FR-004).
+            if (definition.IsFixed
+                && validator.Form == QuestionForms.TwoStep
+                && definition.Instance?.Prompt is { } twoStep
+                && (!twoStep.TryGetValue("a", out var ta) || !twoStep.TryGetValue("b", out var tb) || !twoStep.TryGetValue("c", out var tc)
+                    || ta <= 0 || tb - tc <= 0 || (tb - tc) % ta != 0))
+            {
+                throw new ContentLoadException(path, "a fixed ax + c = b needs integers a, b, and c with a greater than 0 and b − c a positive multiple of a");
+            }
+
             if (definition.Generator is not null && !generators.ContainsKey(definition.Generator.Key))
             {
                 throw new ContentLoadException(path, $"generator {definition.Generator.Key} is not registered");

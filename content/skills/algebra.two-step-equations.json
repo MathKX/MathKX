@@ -1,0 +1,22 @@
+{
+  "$schema": "../../schemas/skill.schema.json",
+  "schemaVersion": "0.1",
+  "id": "algebra.two-step-equations",
+  "name": {
+    "nb": "Likninger med to steg",
+    "en": "Two-step equations"
+  },
+  "prerequisites": [
+    "algebra.one-step-equations"
+  ],
+  "ladder": [
+    {
+      "definition": "algebra.two-step.within-20",
+      "version": 1,
+      "description": {
+        "nb": "Likninger som 2x + 3 = 11: ta bort, og del så likt i grupper.",
+        "en": "Equations like 2x + 3 = 11: take away, then share into equal groups."
+      }
+    }
+  ]
+}

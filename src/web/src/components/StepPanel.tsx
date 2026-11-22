@@ -7,6 +7,7 @@ import { Groups, type GroupsState } from "./math/Counters";
 import { MakeTen, type MakeTenState } from "./math/MakeTen";
 import { BalanceScale, SharingScale } from "./math/BalanceScale";
 import { describeSharing } from "./math/SharingExplorer";
+import { describeTwoStep } from "./math/TwoStepExplorer";
 
 export interface StepPanelProps {
   kind: StepKind;
@@ -30,7 +31,9 @@ export function StepPanel({ kind, instance, steps, currentIndex, lang, onNext }:
       aria-label={translate(lang, kind === "help" ? "a11y.helpRegion" : "a11y.explanationRegion")}
       data-testid={`${kind}-panel`}
     >
-      {representation === "balance-sharing" ? (
+      {representation === "balance-two-step" ? (
+        <TwoStepStep a={instance.a} b={instance.b} c={instance.c ?? 0} state={visual as TwoStepStepState} lang={lang} />
+      ) : representation === "balance-sharing" ? (
         <SharingStep a={instance.a} b={instance.b} state={visual as SharingStepState} lang={lang} />
       ) : representation === "balance" ? (
         <BalanceStep a={instance.a} b={instance.b} state={visual as BalanceStepState} lang={lang} />
@@ -80,6 +83,26 @@ function BalanceStep({ a, b, state, lang }: { a: number; b: number; state: Balan
 }
 
 /** A sharing help or explanation step (specs/010): weights per group, weights not shared, the group places, and kept. */
+/** A two-step help or explanation step (specs/011 FR-004): the service's loose weights, groups, and kept state. */
+interface TwoStepStepState {
+  left?: number;
+  right?: number;
+  each?: number;
+  loose?: number;
+  kept?: boolean;
+  groups?: boolean;
+}
+
+function TwoStepStep({ a, b, c, state, lang }: { a: number; b: number; c: number; state: TwoStepStepState; lang: Lang }) {
+  const shown = { left: state.left ?? c, right: state.right ?? b, each: state.each ?? 0, loose: state.loose ?? b, kept: state.kept ?? false };
+  const { pans } = describeTwoStep(shown, { a, c, b }, lang);
+  return (
+    <div className="mkx-balance" data-testid="two-step-step" data-groups={state.groups ?? false}>
+      <SharingScale a={a} b={b} each={shown.each} loose={shown.loose} kept={shown.kept} groups={state.groups ?? false} addend={{ total: c, remaining: shown.left }} label={`${pans} ${translate(lang, "lesson.balanceLevel")}`} />
+    </div>
+  );
+}
+
 interface SharingStepState {
   each?: number;
   loose?: number;

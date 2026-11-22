@@ -110,25 +110,39 @@ export interface SharingScaleProps {
   kept: boolean;
   /** Draw the a groups' places even before any weight is shared. */
   groups: boolean;
+  /**
+   * ax + c = b (specs/011): the c loose weights beside the boxes, of which `remaining` are still on the pan; the
+   * others are drawn as outlines, and as many outlines follow the weights on the right.
+   */
+  addend?: { total: number; remaining: number };
   label: string;
 }
 
 const GROUP_COLUMNS = 2;
 const GROUP_ROWS = 3;
 const LOOSE_COLUMNS = 8;
+const ADDEND_COLUMNS = 2;
 
-/** ax = b (specs/010): a boxes on the left; on the right, a groups along the pan and the weights not yet shared above them. */
-export function SharingScale({ a, b, each, loose, kept, groups, label }: SharingScaleProps) {
+/**
+ * ax = b (specs/010): a boxes on the left; on the right, a groups along the pan and the weights not yet shared above
+ * them. With an addend (specs/011), ax + c = b: the c loose weights stand beside the boxes until they are taken off.
+ */
+export function SharingScale({ a, b, each, loose, kept, groups, addend, label }: SharingScaleProps) {
   const floor = 120;
   const boxWidth = 30;
   const boxGap = 6;
-  const boxesStart = -(a * boxWidth + (a - 1) * boxGap) / 2;
+  const boxesWidth = a * boxWidth + (a - 1) * boxGap;
+  const addendWidth = addend ? ADDEND_COLUMNS * STEP - GAP : 0;
+  const boxesStart = -(boxesWidth + (addend ? 8 + addendWidth : 0)) / 2;
+  const addendStart = boxesStart + boxesWidth + 8;
+  const taken = addend ? addend.total - addend.remaining : 0;
   const groupWidth = GROUP_COLUMNS * STEP - GAP;
   const groupGap = 8;
   const groupsStart = -(a * groupWidth + (a - 1) * groupGap) / 2;
   const groupHeight = GROUP_ROWS * STEP;
   const looseBase = floor - groupHeight - 12;
   const looseStart = -(Math.min(b, LOOSE_COLUMNS) * STEP - GAP) / 2;
+  const unit = (key: number, x: number, y: number, className: string) => <rect key={key} className={className} x={x} y={y} width={UNIT} height={UNIT} rx={3} />;
   return (
     <ScaleFrame
       tilt="balanced"
@@ -136,11 +150,20 @@ export function SharingScale({ a, b, each, loose, kept, groups, label }: Sharing
       floor={floor}
       halfWidth={84}
       viewBox="-40 40 480 210"
-      leftData={{ "data-boxes": a }}
+      leftData={addend ? { "data-boxes": a, "data-left": addend.remaining } : { "data-boxes": a }}
       rightData={{ "data-each": each, "data-loose": loose, "data-kept": kept }}
-      left={Array.from({ length: a }, (_, i) => (
-        <UnknownBox key={i} x={boxesStart + i * (boxWidth + boxGap)} floor={floor} width={boxWidth} setAside={kept && i > 0} />
-      ))}
+      left={
+        <>
+          {Array.from({ length: a }, (_, i) => (
+            <UnknownBox key={i} x={boxesStart + i * (boxWidth + boxGap)} floor={floor} width={boxWidth} setAside={kept && i > 0} />
+          ))}
+          {addend
+            ? Array.from({ length: addend.total }, (_, k) =>
+                unit(k, addendStart + (k % ADDEND_COLUMNS) * STEP, floor - UNIT - Math.floor(k / ADDEND_COLUMNS) * STEP, unitClass(k >= addend.remaining)),
+              )
+            : null}
+        </>
+      }
       right={
         <g>
           {Array.from({ length: a }, (_, g) => {
@@ -155,9 +178,9 @@ export function SharingScale({ a, b, each, loose, kept, groups, label }: Sharing
               </g>
             );
           })}
-          {Array.from({ length: loose }, (_, k) => (
-            <rect key={k} className="mkx-balance__unit mkx-sharing__loose" x={looseStart + (k % LOOSE_COLUMNS) * STEP} y={looseBase - UNIT - Math.floor(k / LOOSE_COLUMNS) * STEP} width={UNIT} height={UNIT} rx={3} />
-          ))}
+          {Array.from({ length: loose + taken }, (_, k) =>
+            unit(k, looseStart + (k % LOOSE_COLUMNS) * STEP, looseBase - UNIT - Math.floor(k / LOOSE_COLUMNS) * STEP, k < loose ? "mkx-balance__unit mkx-sharing__loose" : unitClass(true)),
+          )}
         </g>
       }
     />

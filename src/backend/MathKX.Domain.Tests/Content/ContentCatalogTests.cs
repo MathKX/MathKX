@@ -11,7 +11,7 @@ public sealed class ContentCatalogTests
     {
         var catalog = ContentLoader.Load(RepositoryContent.Root);
 
-        Assert.Equal(10, catalog.Skills.Count);
+        Assert.Equal(11, catalog.Skills.Count);
         Assert.True(catalog.Skills.ContainsKey("numbers.number-bonds-to-ten"));
         var addition = catalog.Skills["numbers.addition-within-20"];
         Assert.Equal(["numbers.number-bonds-to-ten"], addition.Prerequisites);
@@ -19,22 +19,23 @@ public sealed class ContentCatalogTests
         Assert.Equal(2, addition.Ladder!.Count);
         Assert.Equal("numbers.addition.within-10", addition.Ladder[0].Definition);
 
-        Assert.Equal(6, catalog.Definitions.Count);
+        Assert.Equal(7, catalog.Definitions.Count);
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.within-10@1"));
         Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.within-10@1"));
         Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.to-15@1"));
         Assert.True(catalog.Definitions.ContainsKey("algebra.one-step.times@1"));
+        Assert.True(catalog.Definitions.ContainsKey("algebra.two-step.within-20@1"));
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.crossing-ten@1"));
         Assert.True(catalog.Definitions.ContainsKey("numbers.addition.four-plus-four@1"));
         Assert.False(catalog.Definitions.Keys.Any(k => k.StartsWith("algebra.linear-equations.", StringComparison.Ordinal)), "the 0.1 example is skipped by schema name");
 
-        Assert.Equal(3, catalog.Generators.Count);
-        Assert.Equal(3, catalog.Validators.Count);
-        Assert.Equal(5, catalog.Representations.Count);
-        Assert.Equal(5, catalog.VisualComponents.Count);
-        Assert.Equal(16, catalog.MisconceptionCodes.Count);
+        Assert.Equal(4, catalog.Generators.Count);
+        Assert.Equal(4, catalog.Validators.Count);
+        Assert.Equal(6, catalog.Representations.Count);
+        Assert.Equal(6, catalog.VisualComponents.Count);
+        Assert.Equal(22, catalog.MisconceptionCodes.Count);
 
-        Assert.Equal(["number-bonds-to-ten", "one-step-equations"], catalog.Lessons.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["number-bonds-to-ten", "one-step-equations", "two-step-equations"], catalog.Lessons.Keys.Order(StringComparer.Ordinal));
         var lesson = catalog.Lessons["number-bonds-to-ten"];
         Assert.Equal(2, lesson.Practice.Count);
         Assert.Equal("Tiervenner – tall som blir 10", catalog.FrontMatter(lesson.Id, "nb").Title);
@@ -168,7 +169,7 @@ public sealed class ContentCatalogTests
         var catalogs = new ContentCatalog[32];
         Parallel.For(0, catalogs.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount * 2) }, i => catalogs[i] = ContentLoader.Load(RepositoryContent.Root));
 
-        Assert.All(catalogs, catalog => Assert.Equal(6, catalog.Definitions.Count));
+        Assert.All(catalogs, catalog => Assert.Equal(7, catalog.Definitions.Count));
     }
 
     [Theory]

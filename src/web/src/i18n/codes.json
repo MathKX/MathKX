@@ -19,6 +19,13 @@
     "fac.factor",
     "fac.offByOne",
     "fac.generic",
+    "two.correct",
+    "two.notShared",
+    "two.addedFirst",
+    "two.divideFirst",
+    "two.factorAsAddend",
+    "two.offByOne",
+    "two.generic",
     "invalid.empty",
     "invalid.notAnInteger"
   ],
@@ -65,6 +72,10 @@
     "explain.balance.solved",
     "explain.sharing.show",
     "explain.sharing.share",
-    "explain.sharing.solved"
+    "explain.sharing.solved",
+    "explain.twoStep.show",
+    "explain.twoStep.takeAway",
+    "explain.twoStep.share",
+    "explain.twoStep.solved"
   ]
 }

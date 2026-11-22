@@ -1,5 +1,6 @@
 // Renders a question's prompt as MathML with a spoken label, by the question form the service names (specs/009
-// FR-003): "a + b = ?" for addition, "x + a = b" for an unknown addend, "ax = b" for an unknown factor (specs/010). The numbers come from the service. It can
+// FR-003): "a + b = ?" for addition, "x + a = b" for an unknown addend, "ax = b" for an unknown factor (specs/010), and
+// "ax + c = b" for a two-step equation (specs/011). The numbers come from the service. It can
 // take focus from code, so a new question can receive it (specs/005 FR-016), but is not a Tab stop.
 import type { Ref } from "react";
 import type { QuestionForm } from "../../api/types";
@@ -11,17 +12,28 @@ export const UNKNOWN = "x";
 /** Instances stored before spec 009 carry no form; they are all addition. */
 export const formOf = (instance: { form?: QuestionForm }): QuestionForm => instance.form ?? "addition";
 
-export const spokenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number) =>
-  translate(lang, form === "unknown-factor" ? "practice.spokenTimes" : form === "unknown-addend" ? "practice.spokenEquation" : "practice.spoken", { a, b });
+const spokenKeys = { addition: "practice.spoken", "unknown-addend": "practice.spokenEquation", "unknown-factor": "practice.spokenTimes", "two-step": "practice.spokenTwoStep" } as const;
+const writtenKeys = { addition: "record.question", "unknown-addend": "record.equation", "unknown-factor": "record.equationTimes", "two-step": "record.equationTwoStep" } as const;
 
-export const writtenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number) =>
-  translate(lang, form === "unknown-factor" ? "record.equationTimes" : form === "unknown-addend" ? "record.equation" : "record.question", { a, b });
+/** c is the third number of ax + c = b (specs/011); the other forms have none. */
+export const spokenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number, c?: number) => translate(lang, spokenKeys[form], { a, b, c: c ?? "" });
+
+export const writtenQuestion = (lang: Lang, form: QuestionForm, a: number, b: number, c?: number) => translate(lang, writtenKeys[form], { a, b, c: c ?? "" });
 
 /** The prompt's MathML row, without a label: for the prompt itself and for the "Back to your question" link. */
-export function QuestionRow({ form, a, b }: { form: QuestionForm; a: number; b: number }) {
+export function QuestionRow({ form, a, b, c }: { form: QuestionForm; a: number; b: number; c?: number | undefined }) {
   return (
     <math display="inline" aria-hidden="true">
-      {form === "unknown-factor" ? (
+      {form === "two-step" ? (
+        <mrow>
+          <mn>{a}</mn>
+          <mi>{UNKNOWN}</mi>
+          <mo>+</mo>
+          <mn>{c}</mn>
+          <mo>=</mo>
+          <mn>{b}</mn>
+        </mrow>
+      ) : form === "unknown-factor" ? (
         <mrow>
           <mn>{a}</mn>
           <mi>{UNKNOWN}</mi>
@@ -49,10 +61,10 @@ export function QuestionRow({ form, a, b }: { form: QuestionForm; a: number; b: 
   );
 }
 
-export function QuestionPrompt({ form, a, b, lang, ref }: { form: QuestionForm; a: number; b: number; lang: Lang; ref?: Ref<HTMLParagraphElement> }) {
+export function QuestionPrompt({ form, a, b, c, lang, ref }: { form: QuestionForm; a: number; b: number; c?: number | undefined; lang: Lang; ref?: Ref<HTMLParagraphElement> }) {
   return (
-    <p ref={ref} tabIndex={-1} className="mkx-expr" aria-label={spokenQuestion(lang, form, a, b)} data-testid="prompt" data-form={form}>
-      <QuestionRow form={form} a={a} b={b} />
+    <p ref={ref} tabIndex={-1} className="mkx-expr" aria-label={spokenQuestion(lang, form, a, b, c)} data-testid="prompt" data-form={form}>
+      <QuestionRow form={form} a={a} b={b} c={c} />
     </p>
   );
 }
