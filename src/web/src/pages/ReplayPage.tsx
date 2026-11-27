@@ -35,7 +35,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
     if (!identity) return;
     let live = true;
     api.getInstance(identity.definitionId, identity.version, identity.seed ?? null).then(
-      (instance) => live && setShown(instance.a === identity.a && instance.b === identity.b ? "matched" : "unavailable"),
+      (instance) => live && setShown(instance.a === identity.a && instance.b === identity.b && instance.c === identity.c ? "matched" : "unavailable"),
       () => live && setShown("unavailable"),
     );
     return () => {
@@ -59,7 +59,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
     );
   }
 
-  const { a, b } = delivery.instance;
+  const { a, b, c } = delivery.instance;
   const resumableId = state.resumable?.deliveryId ?? state.currentDeliveryId;
   const derived = derive(delivery, { resumable: delivery.id === resumableId });
   const tags = [...derived.tags, ...revealsWithoutCorrect(delivery)];
@@ -80,7 +80,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
       <PageHeading>{translate(lang, "replay.title", { date: formatDate(lang, delivery.startedAt) })}</PageHeading>
       {shown === "unavailable" ? <Paragraph data-testid="replay-unavailable">{translate(lang, "replay.unavailable")}</Paragraph> : null}
       {/* Matched or unavailable, the operands on screen are the recorded ones; the expression waits for the answer. */}
-      {shown === "loading" ? null : <QuestionPrompt form={formOf(delivery.instance)} a={a} b={b} lang={lang} />}
+      {shown === "loading" ? null : <QuestionPrompt form={formOf(delivery.instance)} a={a} b={b} c={c} lang={lang} />}
       <Paragraph>
         <strong data-testid="replay-outcome">{translateCode(lang, "outcome", derived.outcome)}</strong>
       </Paragraph>
@@ -106,7 +106,7 @@ export function ReplayPage({ deliveryId, api = practiceApi }: { deliveryId: stri
             const status = e.type === "submission" ? e.status : "invalid-response";
             const feedback =
               e.type === "submission"
-                ? translateCode(lang, "feedback", e.code, { a, b, v: e.value, sum: e.value, x: e.value }) // sum and x are used only by "correct" and "eq.correct"
+                ? translateCode(lang, "feedback", e.code, { a, b, c, v: e.value, sum: e.value, x: e.value }) // sum and x only in the correct codes; c only in ax + c = b (PR 65 review)
                 : translateCode(lang, "feedback", e.code, { text: e.originalText });
             return (
               <li key={e.submissionId} data-testid="replay-submission" data-status={status}>

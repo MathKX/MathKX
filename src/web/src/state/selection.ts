@@ -6,8 +6,11 @@ import type { Delivery } from "./observations";
 /** How many recent deliveries of a variation a new question avoids (addendum §D). */
 export const WINDOW = 8;
 
-/** A question's two numbers regardless of order: `3 + 7` and `7 + 3` are the same question to a learner. */
-export const pairKey = (a: number, b: number) => (a <= b ? `${a}+${b}` : `${b}+${a}`);
+/**
+ * A question's two numbers regardless of order: `3 + 7` and `7 + 3` are the same question to a learner. A third number
+ * (specs/011) tells `2x + 3 = 11` from `2x + 1 = 11`, so it is part of the key when present.
+ */
+export const pairKey = (a: number, b: number, c?: number) => (c !== undefined ? `${a}x+${c}=${b}` : a <= b ? `${a}+${b}` : `${b}+${a}`);
 
 /** The last eight deliveries of one variation, oldest first, by start time and then record order, whatever their outcome. */
 export function recentWindow(deliveries: Delivery[], definitionId: string, version: number): Delivery[] {
@@ -28,9 +31,9 @@ export type Choice =
  * Keeps the first draw when it is not recent; otherwise picks, at `seed mod n`, one of the `n` pool questions outside
  * the window (in pool order); when there are none, the pool is exhausted for now and the first draw repeats.
  */
-export function choose(firstDraw: { seed: string | null; a: number; b: number }, window: Set<string>, pool: PoolDto["questions"]): Choice {
-  if (!window.has(pairKey(firstDraw.a, firstDraw.b))) return { kind: "fresh" };
-  const outside = pool.filter((q) => !window.has(pairKey(q.a, q.b)));
+export function choose(firstDraw: { seed: string | null; a: number; b: number; c?: number | undefined }, window: Set<string>, pool: PoolDto["questions"]): Choice {
+  if (!window.has(pairKey(firstDraw.a, firstDraw.b, firstDraw.c))) return { kind: "fresh" };
+  const outside = pool.filter((q) => !window.has(pairKey(q.a, q.b, q.c)));
   if (outside.length === 0) return { kind: "exhausted" };
   const index = Number(BigInt(firstDraw.seed ?? "0") % BigInt(outside.length));
   const chosen = outside[index]!;

@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../schemas/lesson.schema.json",
+  "schemaVersion": "0.1-pilot",
+  "id": "two-step-equations",
+  "version": 1,
+  "status": "draft",
+  "skills": [
+    "algebra.two-step-equations"
+  ],
+  "prerequisites": [
+    "algebra.one-step-equations"
+  ],
+  "relatedLessons": [
+    "one-step-equations"
+  ],
+  "practice": [
+    {
+      "definition": "algebra.two-step.within-20",
+      "version": 1
+    }
+  ],
+  "visuals": [
+    "balance-two-step-explorer"
+  ],
+  "translations": {
+    "nb": "nb.md",
+    "en": "en.md"
+  }
+}

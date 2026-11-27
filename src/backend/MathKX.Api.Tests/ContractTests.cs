@@ -174,7 +174,7 @@ public sealed class ContractTests : IClassFixture<WebApplicationFactory<Program>
         using var skills = JsonDocument.Parse(body);
         var list = skills.RootElement.EnumerateArray().ToList();
 
-        Assert.Equal(10, list.Count);
+        Assert.Equal(11, list.Count);
         var ids = list.Select(s => s.GetProperty("id").GetString()!).ToList();
         Assert.Equal(ids.Order(StringComparer.Ordinal), ids);
         Assert.All(list, s =>

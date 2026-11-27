@@ -54,6 +54,24 @@
         "fac.offByOne",
         "fac.generic"
       ]
+    },
+    {
+      "name": "two-step-answer",
+      "version": 1,
+      "form": "two-step",
+      "artifact": {
+        "type": "integer",
+        "min": 0,
+        "max": 100
+      },
+      "emits": [
+        "two.notShared",
+        "two.addedFirst",
+        "two.divideFirst",
+        "two.factorAsAddend",
+        "two.offByOne",
+        "two.generic"
+      ]
     }
   ]
 }

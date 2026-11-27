@@ -31,7 +31,8 @@ public sealed record InstanceDto(
     RepresentationsDto Representations,
     NamedVersionDto? Generator,
     NamedVersionDto Validator,
-    IReadOnlyList<LessonDisclosureDto> Lessons)
+    IReadOnlyList<LessonDisclosureDto> Lessons,
+    int? C = null)
 {
     public static InstanceDto From(Instance instance, IReadOnlyList<LessonDisclosureDto> lessons) => new(
         IdentityDto.From(instance.Identity),
@@ -43,7 +44,8 @@ public sealed record InstanceDto(
         new RepresentationsDto(instance.Representations.Help, instance.Representations.Explanation),
         instance.Generator is null ? null : NamedVersionDto.From(instance.Generator),
         NamedVersionDto.From(instance.Validator),
-        lessons);
+        lessons,
+        instance.C);
 }
 
 /// <summary>A lesson that lists the instance's definition and whether it shows this instance's answer (specs/003); never the sum.</summary>
@@ -108,6 +110,12 @@ public sealed record SharingExplorerDto(string Type, int A, int B, IReadOnlyList
 
 public sealed record BalanceExplorerDto(string Type, int A, int B, IReadOnlyList<BalanceStateDto> States);
 
+/// <summary>One two-step explorer state (specs/011): loose weights left of the boxes, weights on the right, weights in each group, weights not shared yet, kept, and solved.</summary>
+public sealed record TwoStepStateDto(int Left, int Right, int Each, int Loose, bool Kept, bool Solved);
+
+/// <summary>The two-step explorer for <c>ax + c = b</c> (specs/011 FR-003): every state, from the authored scale to x found.</summary>
+public sealed record TwoStepExplorerDto(string Type, int A, int C, int B, IReadOnlyList<TwoStepStateDto> States);
+
 public sealed record LadderEntryDto(string Definition, int Version, LocalizedDto Description);
 
 /// <summary>A skill with its learner-facing name and the keys (<c>id@version</c>) of its definitions (specs/004 contracts/api.md).</summary>
@@ -143,7 +151,7 @@ public sealed record CheckDto(string Id, int Version, string Skill, LocalizedDto
 public sealed record CheckQuestionDto(string Definition, int Version, string? Seed);
 
 /// <summary>The answer to one question and the operands it belongs to; requested only by the check summary (specs/006).</summary>
-public sealed record AnswerDto(IdentityDto Identity, int A, int B, AnswerValueDto Answer);
+public sealed record AnswerDto(IdentityDto Identity, int A, int B, AnswerValueDto Answer, int? C = null);
 
 public sealed record AnswerValueDto(string Kind, int Value);
 
@@ -151,11 +159,12 @@ public sealed record AnswerValueDto(string Kind, int Value);
 public sealed record PoolDto(string Definition, int Version, IReadOnlyList<PoolQuestionDto> Questions)
 {
     public static PoolDto From(QuestionPool pool, int version) =>
-        new(pool.Definition[..pool.Definition.LastIndexOf('@')], version, pool.Questions.Select(q => new PoolQuestionDto(q.Seed?.Format(), q.A, q.B)).ToList());
+        new(pool.Definition[..pool.Definition.LastIndexOf('@')], version, pool.Questions.Select(q => new PoolQuestionDto(q.Seed?.Format(), q.A, q.B, q.C)).ToList());
 }
 
 /// <summary>One question; <c>seed</c> is written even when null (a fixed task), unlike other optional fields.</summary>
 public sealed record PoolQuestionDto(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] string? Seed,
     int A,
-    int B);
+    int B,
+    int? C = null);

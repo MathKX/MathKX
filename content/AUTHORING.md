@@ -99,9 +99,9 @@ A divergence names the file, the line, the element, and the value in the other l
 
 | File | Entries | Used by |
 | --- | --- | --- |
-| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, `unknown-addend` for $x + a = b$, and `unknown-factor` for $ax = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
-| `validators.json` | `name`, `version`, `form` (the question form it judges: `addition`, `unknown-addend`, or `unknown-factor`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
-| `representations.json` | `name`, `role` (`help`, `explanation`), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
+| `generators.json` | `name`, `version`, optional `relation` (a named quantity relation the tooling implements: `sum-of-two-operands`, `unknown-addend` for $x + a = b$, `unknown-factor` for $ax = b$, and `two-step` for $ax + c = b$), optional `constraints` (names), `parameters` (parameter → `{ quantity, min, max }` domain), `produces` | generated definitions |
+| `validators.json` | `name`, `version`, `form` (the question form it judges: `addition`, `unknown-addend`, `unknown-factor`, or `two-step`; a generated definition's generator must make that form), `artifact` (the response shape; pilot: `{ "type": "integer", "min", "max" }`), `emits` (misconception codes) | every definition |
+| `representations.json` | `name`, `role` (`help`, `explanation`), `forms` (question forms whose steps it draws), `reads` (quantities it needs), `supports` (quantity → `{ min, max }` it can show) | definitions, visual components |
 | `visual-components.json` | `type`, `attributes` (name → `{ type: integer or string, min, max, required }`), optional `representation` link | `:::visual` directives and `lesson.json` `visuals` |
 | `misconception-codes.json` | `code`, `validator` | definitions |
 
@@ -112,6 +112,8 @@ Pilot components: `ten-frame-explorer` (`start` 0–10), `groups` (`a`, `b` 1–
 Equations (specs/009): the generator `unknown-addend@1` makes $x + a = b$ from the parameters `addend` ($a$), `unknown` ($x$), and `total` ($b$); the validator `equation-answer@1` judges $x$ and emits `eq.added`, `eq.total`, `eq.addend`, `eq.offByOne`, and `eq.generic`; the representation `balance` (addend 1–9, unknown 1–14, total 2–15) gives the help and explanation. The validator decides how practice asks the question, so an equation definition needs no other field; pairing a validator with a generator of another form is an error. Self-checks ask addition only for now, so a check may not list an equation definition. `content/exercises/algebra/within-10.json` is the reference.
 
 Equations $ax = b$ (specs/010): the generator `unknown-factor@1` (parameters `factor`, `unknown`, `product`), the validator `factor-answer@1` (form `unknown-factor`; codes `fac.multiplied`, `fac.total`, `fac.subtracted`, `fac.factor`, `fac.offByOne`, `fac.generic`), and the representation `balance-sharing` (factor 2–4, unknown 1–5, product 2–20) for help and explanation; `content/exercises/algebra/times.json` is the reference. `balance-sharing-explorer` (`a` 2–4, `b` 2–20) shows $ax = b$ as $a$ boxes and $b$ weights that the learner shares into equal groups; `b` must be `a` times a whole number from 1 to 5, so `a="3" b="10"` is rejected.
+
+Two-step equations $ax + c = b$ (specs/011): the generator `two-step@1` (parameters `factor`, `addend`, `unknown`, `total`; it produces `a`, `b`, and `c`), the validator `two-step-answer@1` (form `two-step`; codes `two.notShared`, `two.addedFirst`, `two.divideFirst`, `two.factorAsAddend`, `two.offByOne`, `two.generic`), and the representation `balance-two-step` (factor 2–3, addend 1–6, unknown 1–5, total 3–20) for help and explanation; `content/exercises/algebra/two-step.json` is the reference. A fixed task gives `a`, `b`, and `c` in its prompt, and `b − c` must be a positive multiple of `a`. `balance-two-step-explorer` (`a` 2–3, `c` 1–6, `b` 3–20) shows $ax + c = b$ as $a$ boxes and $c$ loose weights against $b$ weights: the learner takes the loose weights off both pans, then shares; `b − c` must be `a` times a whole number from 1 to 5, so `a="2" c="3" b="10"` is rejected.
 
 ## 6. Notation grammar
 
@@ -157,7 +159,7 @@ Definitions live under `content/exercises/` and describe either a generated fami
 | `generator.constraints` | Optional names from the generator's declared list (the pilot generator declares none) |
 | `instance.prompt` | For fixed tasks: the values the representations read, as integers (`{ "a": 4, "b": 4 }`) |
 | `instance.validation` | For fixed tasks: the validator's private data in its artifact shape (`{ "answer": 8 }` for `integer-answer`) |
-| `representations.help`, `.explanation` | Registered representations offering that role whose supported ranges cover the definition's whole range (a generated family's bounds, or a fixed task's values); the check names the quantity and both ranges when they do not |
+| `representations.help`, `.explanation` | Registered representations offering that role, drawing the validator's question form, whose supported ranges cover the definition's whole range (a generated family's bounds, or a fixed task's values); the check names the quantity and both ranges when they do not |
 | `misconceptionCodes` | Registered codes that the named validator emits |
 
 The retired `arithmetic.*` skill IDs from the prototype are reported with a hint: the registry uses `numbers.*`.

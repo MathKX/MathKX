@@ -35,6 +35,21 @@ describe("pairKey", () => {
     expect(pairKey(3, 7)).toBe(pairKey(7, 3));
     expect(pairKey(3, 7)).not.toBe(pairKey(3, 6));
   });
+
+  it("tells two-step questions apart by c, which differ only in it (specs/011)", () => {
+    expect(pairKey(2, 11, 3)).not.toBe(pairKey(2, 11, 1));
+    expect(pairKey(2, 11, 3)).toBe(pairKey(2, 11, 3));
+    expect(pairKey(2, 11, 3)).not.toBe(pairKey(2, 11));
+  });
+
+  it("chooses a two-step question outside the window when the first draw differs from it only in c", () => {
+    const pool = [
+      { seed: "1", a: 2, b: 11, c: 3 },
+      { seed: "2", a: 2, b: 11, c: 1 },
+    ];
+    const choice = choose({ seed: "5", a: 2, b: 11, c: 3 }, new Set([pairKey(2, 11, 3)]), pool);
+    expect(choice).toEqual({ kind: "chosen", seed: "2", a: 2, b: 11 });
+  });
 });
 
 describe("choose", () => {

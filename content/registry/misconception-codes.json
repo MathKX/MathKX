@@ -66,6 +66,30 @@
     {
       "code": "fac.generic",
       "validator": "factor-answer"
+    },
+    {
+      "code": "two.notShared",
+      "validator": "two-step-answer"
+    },
+    {
+      "code": "two.addedFirst",
+      "validator": "two-step-answer"
+    },
+    {
+      "code": "two.divideFirst",
+      "validator": "two-step-answer"
+    },
+    {
+      "code": "two.factorAsAddend",
+      "validator": "two-step-answer"
+    },
+    {
+      "code": "two.offByOne",
+      "validator": "two-step-answer"
+    },
+    {
+      "code": "two.generic",
+      "validator": "two-step-answer"
     }
   ]
 }

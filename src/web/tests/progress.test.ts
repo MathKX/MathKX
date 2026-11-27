@@ -89,6 +89,15 @@ describe("repeats", () => {
     expect([...repeats(record)]).toEqual(["b"]);
   });
 
+  it("counts a two-step question with another c as new, and one with the same c as a repeat (specs/011)", () => {
+    const twoStep = (id: string, minute: number, c: number) => {
+      const d = delivery({ id, startedAt: at(minute), a: 2, b: 11, seed: String(minute) });
+      d.instance.c = c;
+      return d;
+    };
+    expect([...repeats([twoStep("a", 1, 3), twoStep("b", 2, 1), twoStep("c", 3, 3)])]).toEqual(["c"]);
+  });
+
   it("decides the earlier delivery by start time, not by record position", () => {
     const record = [delivery({ id: "late", startedAt: at(9), a: 3, b: 7 }), delivery({ id: "early", startedAt: at(1), a: 3, b: 7 })];
     expect([...repeats(record)]).toEqual(["late"]);

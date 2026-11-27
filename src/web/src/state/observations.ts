@@ -32,6 +32,8 @@ export interface DeliveryInstance {
   validatorVersion: number;
   a: number;
   b: number;
+  /** The third number of ax + c = b (specs/011); absent for every other form. */
+  c?: number;
   /** The question form (specs/009); absent on deliveries recorded before it, which are all addition. */
   form?: QuestionForm;
 }

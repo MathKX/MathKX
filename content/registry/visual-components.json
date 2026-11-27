@@ -83,6 +83,29 @@
           "required": true
         }
       }
+    },
+    {
+      "type": "balance-two-step-explorer",
+      "attributes": {
+        "a": {
+          "type": "integer",
+          "min": 2,
+          "max": 3,
+          "required": true
+        },
+        "c": {
+          "type": "integer",
+          "min": 1,
+          "max": 6,
+          "required": true
+        },
+        "b": {
+          "type": "integer",
+          "min": 3,
+          "max": 20,
+          "required": true
+        }
+      }
     }
   ]
 }

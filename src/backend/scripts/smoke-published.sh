@@ -26,7 +26,7 @@ for _ in $(seq 1 60); do
   sleep 0.5
 done
 
-curl -fsS "http://127.0.0.1:$port/api/health" | grep -q '"lessons":2' || { echo "health did not report both lessons"; cat "$out/service.log"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/health" | grep -q '"lessons":3' || { echo "health did not report all three lessons"; cat "$out/service.log"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/lessons/number-bonds-to-ten" | grep -q '"id":"number-bonds-to-ten"' || { echo "lesson did not resolve"; exit 1; }
 body="$(curl -fsS "http://127.0.0.1:$port/api/instances/numbers.addition.within-10/1/42")"
 echo "$body" | grep -q '"definitionId":"numbers.addition.within-10"' || { echo "instance did not resolve"; exit 1; }
@@ -58,4 +58,8 @@ curl -fsS "http://127.0.0.1:$port/api/instances/algebra.one-step.within-10/1/3" 
 # specs/010: the package carries the product equations and the sharing explorer.
 curl -fsS "http://127.0.0.1:$port/api/instances/algebra.one-step.times/1/3" | grep -q '"form":"unknown-factor"' || { echo "the product equation practice did not resolve"; exit 1; }
 curl -fsS "http://127.0.0.1:$port/api/visuals/balance-sharing-explorer?a=3&b=12" | grep -q '"type":"balance-sharing-explorer"' || { echo "the sharing explorer did not resolve"; exit 1; }
+# specs/011: the package carries the two-step lesson, its practice, and its explorer.
+curl -fsS "http://127.0.0.1:$port/api/lessons/two-step-equations" | grep -q '"id":"two-step-equations"' || { echo "the two-step lesson did not resolve"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/instances/algebra.two-step.within-20/1/3" | grep -q '"form":"two-step"' || { echo "the two-step practice did not resolve"; exit 1; }
+curl -fsS "http://127.0.0.1:$port/api/visuals/balance-two-step-explorer?a=2&c=3&b=11" | grep -q '"type":"balance-two-step-explorer"' || { echo "the two-step explorer did not resolve"; exit 1; }
 echo "published service resolved content outside the checkout: ok"

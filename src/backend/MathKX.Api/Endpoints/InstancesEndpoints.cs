@@ -55,7 +55,7 @@ public static class InstancesEndpoints
         try
         {
             var instance = resolver.Resolve(new InstanceIdentity(definitionId, version, parsed));
-            return Results.Ok(new AnswerDto(IdentityDto.From(instance.Identity), instance.A, instance.B, new AnswerValueDto("integer", validators.Get(instance.Validator).ExpectedAnswer(instance))));
+            return Results.Ok(new AnswerDto(IdentityDto.From(instance.Identity), instance.A, instance.B, new AnswerValueDto("integer", validators.Get(instance.Validator).ExpectedAnswer(instance)), instance.C));
         }
         catch (UnknownDefinitionException error)
         {

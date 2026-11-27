@@ -119,6 +119,17 @@ public sealed class SharingTests
         Assert.All(steps.Take(2), s => Assert.False(s.Visual.ContainsKey("x") || s.Text.Values.ContainsKey("x")));
     }
 
+    [Fact]
+    public void When_one_round_would_share_every_weight_the_middle_step_only_marks_the_groups()
+    {
+        // 2x = 2: one weight to each group would already show x = 1 (PR 65 review).
+        var steps = StepModels.ForValues(2, 2, "balance-sharing", StepKind.Help);
+        Assert.Equal(["explain.sharing.show", "explain.sharing.makeGroups", "explain.sharing.solved"], steps.Select(s => s.Text.Code));
+        Assert.Equal((0, 2, true), ((int)steps[1].Visual["each"], (int)steps[1].Visual["loose"], (bool)steps[1].Visual["groups"]));
+        Assert.Equal([false, false, true], steps.Select(s => s.Reveals));
+        Assert.All(steps, s => Assert.Contains(s.Text.Code, StepModels.TextCodes));
+    }
+
     [Theory]
     [InlineData(3, 12, true)] // the explorer
     [InlineData(2, 10, false)] // "Then try these", without its answer
@@ -155,6 +166,31 @@ public sealed class SharingTests
 
         Assert.Equal("exercises/algebra/fixed-times.json", error.Path);
         Assert.Contains($"{a}x = {b} has no whole-number solution", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_fixed_product_equation_without_b_fails_the_load()
+    {
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        File.WriteAllText(Path.Combine(temp.Root, "exercises", "algebra", "fixed-times.json"), """
+            {
+              "$schema": "../../../schemas/exercise-definition.pilot.schema.json",
+              "schemaVersion": "0.1-pilot",
+              "id": "algebra.one-step.fixed-times",
+              "version": 1,
+              "skill": "algebra.one-step-equations",
+              "source": "fixed",
+              "validator": { "name": "factor-answer", "version": 1 },
+              "instance": { "prompt": { "a": 3 }, "validation": { "answer": 2 } },
+              "representations": { "help": [], "explanation": [] },
+              "misconceptionCodes": ["fac.generic"]
+            }
+            """);
+
+        var error = Assert.Throws<ContentLoadException>(() => ContentLoader.Load(temp.Root));
+
+        Assert.Contains("a fixed ax = b needs integers a and b", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

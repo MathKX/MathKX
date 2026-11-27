@@ -154,11 +154,11 @@ export function RecordPage({ api = practiceApi }: { api?: PracticeApi }) {
                             className="mkx-record__question mkx-inline-target"
                             data-testid="record-question"
                             aria-label={translate(lang, "progress.questionLink", {
-                              question: writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b),
+                              question: writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b, q.delivery.instance.c),
                               date: formatDate(lang, q.delivery.startedAt),
                             })}
                           >
-                            {writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b)}
+                            {writtenQuestion(lang, formOf(q.delivery.instance), q.delivery.instance.a, q.delivery.instance.b, q.delivery.instance.c)}
                           </Link>{" "}
                           <strong>{translateCode(lang, "outcome", q.derived.outcome)}</strong>
                           <span className="mkx-record__meta">

@@ -76,6 +76,38 @@
         "a",
         "b"
       ]
+    },
+    {
+      "name": "two-step",
+      "version": 1,
+      "relation": "two-step",
+      "parameters": {
+        "factor": {
+          "quantity": "factor",
+          "min": 2,
+          "max": 9
+        },
+        "addend": {
+          "quantity": "addend",
+          "min": 1,
+          "max": 20
+        },
+        "unknown": {
+          "quantity": "unknown",
+          "min": 1,
+          "max": 9
+        },
+        "total": {
+          "quantity": "total",
+          "min": 3,
+          "max": 100
+        }
+      },
+      "produces": [
+        "a",
+        "b",
+        "c"
+      ]
     }
   ]
 }

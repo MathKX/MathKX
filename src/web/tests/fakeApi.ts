@@ -31,6 +31,21 @@ export const EQUATIONS_SKILL: SkillDto = {
   definitions: ["algebra.one-step.times@1", "algebra.one-step.to-15@1", "algebra.one-step.within-10@1"],
 };
 
+/** specs/011: two-step equations, with the one rung of ax + c = b. Not among the default skills. */
+export const TWO_STEP_SKILL: SkillDto = {
+  id: "algebra.two-step-equations",
+  name: { nb: "Likninger med to steg", en: "Two-step equations" },
+  prerequisites: ["algebra.one-step-equations"],
+  ladder: [
+    {
+      definition: "algebra.two-step.within-20",
+      version: 1,
+      description: { nb: "Likninger som 2x + 3 = 11: ta bort, og del så likt i grupper.", en: "Equations like 2x + 3 = 11: take away, then share into equal groups." },
+    },
+  ],
+  definitions: ["algebra.two-step.within-20@1"],
+};
+
 export const BONDS_SKILL: SkillDto = {
   id: "numbers.number-bonds-to-ten",
   name: { nb: "Tiervenner", en: "Number bonds to ten" },
@@ -93,6 +108,8 @@ export interface FakeOptions {
   lessonsFail?: boolean;
   /** Operands the service resolves every identity to, as if the generator had changed (specs/004 replay). */
   instanceOperands?: [number, number];
+  /** c for two-step questions (specs/011); 3 when absent, so the default question is 2x + 3 = 11. */
+  instanceC?: number;
   /**
    * Serve each variation's pool (specs/005): the canonical ordered pairs, each with the seed `p{index}`. With a pool,
    * a first draw (a numeric seed) resolves like the real generator, to the pair at `seed mod n`. Without one (the
@@ -126,9 +143,10 @@ export function lessonMarkdown(lang: string): string {
 }
 
 const isProduct = (definitionId: string) => definitionId === "algebra.one-step.times";
+const isTwoStep = (definitionId: string) => definitionId.startsWith("algebra.two-step.");
 const isEquation = (definitionId: string) => definitionId.startsWith("algebra.one-step.") && !isProduct(definitionId);
 
-type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getBalanceExplorer" | "getSharingExplorer" | "getAnswer" | "getChecks";
+type Method = "getSkill" | "getInstance" | "getStep" | "validate" | "getLessonContent" | "getVisualSteps" | "getTenFrameExplorer" | "getBalanceExplorer" | "getSharingExplorer" | "getTwoStepExplorer" | "getAnswer" | "getChecks";
 
 /** Test controls: hold a method's responses until released, or make it fail, to drive timing and failure cases. */
 export interface FakeControls {
@@ -147,7 +165,7 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const lessonFor = (id: string): LessonDetail =>
     id === LESSON.id ? LESSON : { ...LESSON, id, titles: { nb: id, en: id } };
   const held = new Set<Method>();
-  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getBalanceExplorer: [], getSharingExplorer: [], getAnswer: [], getChecks: [] };
+  const waiting: Record<Method, (() => void)[]> = { getSkill: [], getInstance: [], getStep: [], validate: [], getLessonContent: [], getVisualSteps: [], getTenFrameExplorer: [], getBalanceExplorer: [], getSharingExplorer: [], getTwoStepExplorer: [], getAnswer: [], getChecks: [] };
   const fail = new Set<Method>();
   const gate = async (method: Method) => {
     if (fail.has(method)) throw new Error(`${method} failed`);
@@ -181,20 +199,23 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
     const bySeed = identity.seed !== undefined ? options.bySeed?.[identity.seed] : undefined;
     const equation = isEquation(identity.definitionId);
     const product = isProduct(identity.definitionId);
-    const pair: [number, number] = options.instanceOperands ?? bySeed ?? checkPair(identity) ?? poolPair(identity) ?? pairs[identity.definitionId] ?? (product ? [3, 12] : equation ? [3, 7] : [3, 5]);
+    const twoStep = isTwoStep(identity.definitionId);
+    const pair: [number, number] = options.instanceOperands ?? bySeed ?? checkPair(identity) ?? poolPair(identity) ?? pairs[identity.definitionId] ?? (twoStep ? [2, 11] : product ? [3, 12] : equation ? [3, 7] : [3, 5]);
     const crossing = identity.definitionId.includes("crossing");
-    const representation = product ? "balance-sharing" : equation ? "balance" : crossing ? "make-ten" : "groups";
+    const representation = twoStep ? "balance-two-step" : product ? "balance-sharing" : equation ? "balance" : crossing ? "make-ten" : "groups";
+    const c = options.instanceC ?? 3;
     const dto: InstanceDto = {
       identity,
-      skill: equation || product ? "algebra.one-step-equations" : SKILL.id,
+      skill: twoStep ? "algebra.two-step-equations" : equation || product ? "algebra.one-step-equations" : SKILL.id,
       a: pair[0],
       b: pair[1],
-      prompt: product ? `${pair[0]}x = ${pair[1]}` : equation ? `x + ${pair[0]} = ${pair[1]}` : `${pair[0]} + ${pair[1]}`,
-      form: product ? "unknown-factor" : equation ? "unknown-addend" : "addition",
+      prompt: twoStep ? `${pair[0]}x + ${c} = ${pair[1]}` : product ? `${pair[0]}x = ${pair[1]}` : equation ? `x + ${pair[0]} = ${pair[1]}` : `${pair[0]} + ${pair[1]}`,
+      form: twoStep ? "two-step" : product ? "unknown-factor" : equation ? "unknown-addend" : "addition",
       representations: { help: [representation], explanation: [representation] },
-      validator: { name: product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 },
+      validator: { name: twoStep ? "two-step-answer" : product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 },
     };
-    if (identity.seed !== undefined) dto.generator = { name: product ? "unknown-factor" : equation ? "unknown-addend" : "addition-pair", version: 1 };
+    if (twoStep) dto.c = c;
+    if (identity.seed !== undefined) dto.generator = { name: twoStep ? "two-step" : product ? "unknown-factor" : equation ? "unknown-addend" : "addition-pair", version: 1 };
     if (!options.omitLessons) {
       const listed = LESSON.practice.some((p) => p.definition === identity.definitionId && p.version === identity.version);
       dto.lessons = listed ? lessonIds.map((id) => ({ id, discloses: options.discloses?.(pair[0], pair[1]) ?? false })) : [];
@@ -204,6 +225,18 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
   const steps = (instance: InstanceDto, kind: StepKind): StepDto[] => {
     const { a, b } = instance;
     const representation = instance.representations[kind][0] ?? "groups";
+    if (representation === "balance-two-step") {
+      // specs/011: the service's two-step steps for ax + c = b.
+      const c = instance.c ?? 0;
+      const rest = b - c;
+      const x = rest / a;
+      return [
+        { kind, representation, index: 0, count: 4, reveals: false, visual: { left: c, right: b, each: 0, loose: b, kept: false, groups: false }, text: { code: "explain.twoStep.show", values: { a, b, c } } },
+        { kind, representation, index: 1, count: 4, reveals: false, visual: { left: 0, right: rest, each: 0, loose: rest, kept: false, groups: false }, text: { code: "explain.twoStep.takeAway", values: { a, c, rest } } },
+        { kind, representation, index: 2, count: 4, reveals: false, visual: { left: 0, right: rest, each: 1, loose: rest - a, kept: false, groups: true }, text: { code: "explain.twoStep.share", values: { a, rest } } },
+        { kind, representation, index: 3, count: 4, reveals: true, visual: { left: 0, right: rest, each: x, loose: 0, kept: true, groups: true, x }, text: { code: "explain.twoStep.solved", values: { a, b, c, x } } },
+      ];
+    }
     if (representation === "balance-sharing") {
       // specs/010: the service's sharing steps for ax = b.
       const x = b / a;
@@ -307,15 +340,24 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
         throw new Error("unreachable");
       }
       await gate("validate");
-      const { a, b } = instanceOf(identity);
+      const { a, b, c = 0 } = instanceOf(identity);
       const trimmed = originalText.trim();
       const equation = isEquation(identity.definitionId);
       const product = isProduct(identity.definitionId);
-      const base = { validator: { name: product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 }, submissionId };
+      const twoStep = isTwoStep(identity.definitionId);
+      const base = { validator: { name: twoStep ? "two-step-answer" : product ? "factor-answer" : equation ? "equation-answer" : "integer-answer", version: 1 }, submissionId };
       if (!/^-?[0-9]+$/.test(trimmed)) {
         return { ...base, status: "invalid-response", code: trimmed ? "invalid.notAnInteger" : "invalid.empty", values: { text: originalText } } satisfies ValidationResponse;
       }
       const v = Number(trimmed);
+      if (twoStep) {
+        // specs/011 FR-004, in its precedence.
+        const x = (b - c) / a;
+        if (v === x) return { ...base, status: "correct", code: "two.correct", values: { a, b, c, v, x } };
+        const code =
+          v === b - c ? "two.notShared" : v * a === b + c ? "two.addedFirst" : (v + c) * a === b ? "two.divideFirst" : v === b - c - a ? "two.factorAsAddend" : Math.abs(v - x) === 1 ? "two.offByOne" : "two.generic";
+        return { ...base, status: "incorrect", code, values: { a, b, c, v } };
+      }
       if (product) {
         // specs/010 FR-003, in its precedence.
         const x = b / a;
@@ -364,6 +406,19 @@ export function createFakeApi(options: FakeOptions = {}): PracticeApi & FakeCont
         }
       }
       return { type: "balance-explorer", a, b, states };
+    },
+    getTwoStepExplorer: async (a, c, b) => {
+      calls.push(`getTwoStepExplorer ${a} ${c} ${b}`);
+      await gate("getTwoStepExplorer");
+      // The service's states (TwoStepExplorer.cs), reproduced for the fake only.
+      const rest = b - c;
+      const x = rest / a;
+      const states = [
+        ...Array.from({ length: c }, (_, removed) => ({ left: c - removed, right: b - removed, each: 0, loose: b - removed, kept: false, solved: false })),
+        ...Array.from({ length: x + 1 }, (_, each) => ({ left: 0, right: rest, each, loose: rest - a * each, kept: false, solved: false })),
+        { left: 0, right: rest, each: x, loose: 0, kept: true, solved: true },
+      ];
+      return { type: "balance-two-step-explorer", a, c, b, states };
     },
     getSharingExplorer: async (a, b) => {
       calls.push(`getSharingExplorer ${a} ${b}`);

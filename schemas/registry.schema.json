@@ -69,7 +69,7 @@
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
         "relation": {
-          "enum": ["sum-of-two-operands", "unknown-addend", "unknown-factor"],
+          "enum": ["sum-of-two-operands", "unknown-addend", "unknown-factor", "two-step"],
           "description": "Optional named quantity relation. The enum lists exactly the relations tools/lib/quantities.mjs implements, so an unimplemented name is a schema violation; adding a relation adds a value here and its implementation in the same change. When present it drives the feasibility check and the mapping from a, b to operand and sum; generators that pick from reviewed tables declare none."
         },
         "constraints": {
@@ -102,8 +102,8 @@
         "name": { "$ref": "#/$defs/name" },
         "version": { "type": "integer", "minimum": 1 },
         "form": {
-          "enum": ["addition", "unknown-addend", "unknown-factor"],
-          "description": "The question form the validator judges (specs/009): addition asks a + b = ?, unknown-addend asks x + a = b, unknown-factor asks ax = b (specs/010). A generated definition's generator relation must produce that form; tools/lib/quantities.mjs maps each form to its relation."
+          "enum": ["addition", "unknown-addend", "unknown-factor", "two-step"],
+          "description": "The question form the validator judges (specs/009): addition asks a + b = ?, unknown-addend asks x + a = b, unknown-factor asks ax = b (specs/010), two-step asks ax + c = b (specs/011). A generated definition's generator relation must produce that form; tools/lib/quantities.mjs maps each form to its relation."
         },
         "artifact": { "$ref": "#/$defs/artifact" },
         "emits": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+\\.[A-Za-z]+$" }, "uniqueItems": true }
@@ -112,10 +112,17 @@
     },
     "representation": {
       "type": "object",
-      "required": ["name", "role", "reads", "supports"],
+      "required": ["name", "role", "forms", "reads", "supports"],
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "role": { "type": "array", "items": { "enum": ["help", "explanation"] }, "minItems": 1, "uniqueItems": true },
+        "forms": {
+          "type": "array",
+          "items": { "enum": ["addition", "unknown-addend", "unknown-factor", "two-step"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The question forms whose steps the representation draws (PR 65 review): a definition may list it only when its validator judges one of these forms, so balance help never explains ax + c = b as x + a = b."
+        },
         "reads": { "type": "array", "items": { "$ref": "#/$defs/quantity" }, "minItems": 1, "uniqueItems": true },
         "supports": { "$ref": "#/$defs/box" }
       },

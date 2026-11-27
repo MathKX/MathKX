@@ -38,6 +38,11 @@ public static partial class LessonDisclosure
             return ForProduct(facts, instance.A, instance.B);
         }
 
+        if (instance.Form == QuestionForms.TwoStep && instance.C is int c)
+        {
+            return ForTwoStep(facts, instance.A, c, instance.B);
+        }
+
         var (a, b) = (instance.A, instance.B);
         var sum = (a + b).ToString(CultureInfo.InvariantCulture);
         string[] starts =
@@ -70,7 +75,8 @@ public static partial class LessonDisclosure
     }
 
     /// <summary>
-    /// <c>x + a = b</c> (specs/009 FR-006): a balance explorer with the same a and b steps to the solution; and a
+    /// <c>x + a = b</c> (specs/009 FR-006): a balance explorer steps to the solution of every equation it shows level on
+    /// the way, so one for <c>x + 3 = 7</c> also solves <c>x + 2 = 6</c> and <c>x + 1 = 5</c> (PR 65 review); and a
     /// lesson shows it when <c>x = b − a</c> follows this equation before another equation <c>x + c = d</c> begins, in
     /// document order. A solution belongs to the equation it follows, so <c>x = 4</c> in the worked example for
     /// <c>x + 3 = 7</c> does not disclose <c>x + 6 = 10</c> from a later list (PR 63 review).
@@ -88,9 +94,9 @@ public static partial class LessonDisclosure
                 continue;
             }
 
-            if (ProductPattern().IsMatch(normalized))
+            if (ProductPattern().IsMatch(normalized) || TwoStepPattern().IsMatch(normalized))
             {
-                solving = null; // an equation ax = b begins: a solution after it is not this one's (specs/010)
+                solving = null; // an equation ax = b or ax + c = b begins: a solution after it is not this one's (specs/010, specs/011)
                 continue;
             }
 
@@ -104,8 +110,8 @@ public static partial class LessonDisclosure
         foreach (var visual in facts.Visuals)
         {
             if (visual.Type == "balance-explorer"
-                && visual.Attributes.TryGetValue("a", out var va) && va == a
-                && visual.Attributes.TryGetValue("b", out var vb) && vb == b)
+                && visual.Attributes.TryGetValue("a", out var va) && a >= 1 && a <= va
+                && visual.Attributes.TryGetValue("b", out var vb) && (long)vb - va == (long)b - a)
             {
                 return new DisclosureDecision(true, DisclosureSource.Visual);
             }
@@ -115,7 +121,8 @@ public static partial class LessonDisclosure
     }
 
     /// <summary>
-    /// <c>ax = b</c> (specs/010): a sharing explorer with the same a and b steps to the solution; and a lesson shows it
+    /// <c>ax = b</c> (specs/010): a sharing explorer with the same a and b steps to the solution, and so does a two-step
+    /// explorer whose boxes stand alone as <c>ax = b</c> on the way (specs/011, PR 65 review); and a lesson shows it
     /// when <c>x = b / a</c> follows <c>ax = b</c> before another equation begins, as for <c>x + a = b</c>.
     /// </summary>
     private static DisclosureDecision ForProduct(LessonFacts facts, int a, int b)
@@ -125,7 +132,7 @@ public static partial class LessonDisclosure
         {
             var normalized = expression.Normalized;
             var product = ProductPattern().Match(normalized);
-            if (product.Success || EquationPattern().IsMatch(normalized))
+            if (product.Success || EquationPattern().IsMatch(normalized) || TwoStepPattern().IsMatch(normalized))
             {
                 solving = product.Success ? (Number(product.Groups[1].Value), Number(product.Groups[2].Value)) : null;
                 continue;
@@ -146,6 +153,72 @@ public static partial class LessonDisclosure
             {
                 return new DisclosureDecision(true, DisclosureSource.Visual);
             }
+
+            if (visual.Type == "balance-two-step-explorer"
+                && visual.Attributes.TryGetValue("a", out var ta) && ta == a
+                && visual.Attributes.TryGetValue("c", out var tc)
+                && visual.Attributes.TryGetValue("b", out var tb) && (long)tb - tc == b)
+            {
+                return new DisclosureDecision(true, DisclosureSource.Visual);
+            }
+        }
+
+        return DisclosureDecision.No;
+    }
+
+    /// <summary>
+    /// <c>ax + c = b</c> (specs/011): a two-step explorer steps to the solution of every equation it shows on the way, so
+    /// one for <c>2x + 3 = 11</c> also solves <c>2x + 2 = 10</c> and <c>2x + 1 = 9</c> (PR 65 review); and a lesson
+    /// shows it when <c>x = (b − c) / a</c> follows <c>ax + c = b</c> before another equation begins. The intermediate
+    /// <c>ax = b − c</c> of the same working continues it rather than beginning another equation.
+    /// </summary>
+    private static DisclosureDecision ForTwoStep(LessonFacts facts, int a, int c, int b)
+    {
+        (int A, int C, int B)? solving = null;
+        foreach (var expression in facts.Expressions)
+        {
+            var normalized = expression.Normalized;
+            var twoStep = TwoStepPattern().Match(normalized);
+            if (twoStep.Success)
+            {
+                solving = (Number(twoStep.Groups[1].Value), Number(twoStep.Groups[2].Value), Number(twoStep.Groups[3].Value));
+                continue;
+            }
+
+            var product = ProductPattern().Match(normalized);
+            if (product.Success)
+            {
+                var halfway = solving is var (sa, sc, sb) && Number(product.Groups[1].Value) == sa && (long)Number(product.Groups[2].Value) == (long)sb - sc;
+                if (!halfway)
+                {
+                    solving = null;
+                }
+
+                continue;
+            }
+
+            if (EquationPattern().IsMatch(normalized))
+            {
+                solving = null;
+                continue;
+            }
+
+            var solution = SolutionPattern().Match(normalized);
+            if (solution.Success && solving == (a, c, b) && ((long)Number(solution.Groups[1].Value) * a) + c == b)
+            {
+                return new DisclosureDecision(true, DisclosureSource.Expression);
+            }
+        }
+
+        foreach (var visual in facts.Visuals)
+        {
+            if (visual.Type == "balance-two-step-explorer"
+                && visual.Attributes.TryGetValue("a", out var va) && va == a
+                && visual.Attributes.TryGetValue("c", out var vc) && c >= 1 && c <= vc
+                && visual.Attributes.TryGetValue("b", out var vb) && (long)vb - vc == (long)b - c)
+            {
+                return new DisclosureDecision(true, DisclosureSource.Visual);
+            }
         }
 
         return DisclosureDecision.No;
@@ -159,6 +232,9 @@ public static partial class LessonDisclosure
 
     [GeneratedRegex("^([0-9]{1,9})x=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
     private static partial Regex ProductPattern();
+
+    [GeneratedRegex(@"^([0-9]{1,9})x\+([0-9]{1,9})=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
+    private static partial Regex TwoStepPattern();
 
     [GeneratedRegex("^x=([0-9]{1,9})$", RegexOptions.CultureInvariant)]
     private static partial Regex SolutionPattern();

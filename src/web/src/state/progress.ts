@@ -30,7 +30,7 @@ export function repeats(deliveries: Delivery[]): Set<string> {
   const seen = new Set<string>();
   const repeated = new Set<string>();
   for (const d of chronological(deliveries)) {
-    const question = `${keyOf(d)} ${d.instance.a} ${d.instance.b}`;
+    const question = `${keyOf(d)} ${d.instance.a} ${d.instance.b}${d.instance.c === undefined ? "" : ` ${d.instance.c}`}`;
     if (seen.has(question)) repeated.add(d.id);
     else seen.add(question);
   }

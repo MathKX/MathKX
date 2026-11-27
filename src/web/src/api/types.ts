@@ -13,13 +13,15 @@ export interface Identity {
 }
 
 /** How a question asks for its answer (specs/009 FR-003, specs/010): a + b = ?, x + a = b, or ax = b. */
-export type QuestionForm = "addition" | "unknown-addend" | "unknown-factor";
+export type QuestionForm = "addition" | "unknown-addend" | "unknown-factor" | "two-step";
 
 export interface InstanceDto {
   identity: Identity;
   skill: string;
   a: number;
   b: number;
+  /** The third number of ax + c = b (specs/011); absent for every other form. */
+  c?: number;
   prompt: string;
   /** Absent on instances stored before spec 009, which are all addition. */
   form?: QuestionForm;
@@ -123,6 +125,24 @@ export interface SharingState {
   solved: boolean;
 }
 
+/** One two-step explorer state (specs/011): loose weights beside the boxes, weights on the right, weights in each group, weights not shared yet, kept, and solved. */
+export interface TwoStepState {
+  left: number;
+  right: number;
+  each: number;
+  loose: number;
+  kept: boolean;
+  solved: boolean;
+}
+
+export interface TwoStepExplorerDto {
+  type: "balance-two-step-explorer";
+  a: number;
+  c: number;
+  b: number;
+  states: TwoStepState[];
+}
+
 export interface SharingExplorerDto {
   type: "balance-sharing-explorer";
   a: number;
@@ -158,7 +178,7 @@ export interface PoolDto {
   definition: string;
   version: number;
   /** In the generator's canonical order; `seed` is null for a fixed task. */
-  questions: { seed: string | null; a: number; b: number }[];
+  questions: { seed: string | null; a: number; b: number; c?: number }[];
 }
 
 /** One question of a self-check (specs/006 contracts/api.md): an identity, never operands. `seed` is absent for a fixed task. */
@@ -183,6 +203,7 @@ export interface AnswerDto {
   identity: Identity;
   a: number;
   b: number;
+  c?: number;
   answer: { kind: "integer"; value: number };
 }
 
@@ -212,6 +233,7 @@ export interface PracticeApi {
   getTenFrameExplorer(): Promise<TenFrameExplorerDto>;
   getBalanceExplorer(a: number, b: number): Promise<BalanceExplorerDto>;
   getSharingExplorer(a: number, b: number): Promise<SharingExplorerDto>;
+  getTwoStepExplorer(a: number, c: number, b: number): Promise<TwoStepExplorerDto>;
   /** The newest version of every check, by ID (specs/006). */
   getChecks(): Promise<CheckDto[]>;
   getCheck(id: string, version: number): Promise<CheckDto>;

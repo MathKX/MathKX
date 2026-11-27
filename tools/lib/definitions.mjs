@@ -88,8 +88,9 @@ function checkPilotDefinition(file, data, registries, diagnostics) {
     const prompt = data.instance.prompt;
     const relation = (validator && FORM_RELATIONS[validator.form]) || undefined;
     box = pointBox(prompt, relation);
-    // Checked whatever the representations: the validator itself needs a whole-number answer (PR 64 review).
-    const unsolvable = relation && isInteger(prompt.a) && isInteger(prompt.b) ? RELATIONS[relation]?.unsolvable?.(prompt) : undefined;
+    // Checked whatever the representations, every operand included: the validator itself needs a whole-number answer
+    // (PR 64 review), and the service refuses a prompt without one of its numbers (PR 65 review).
+    const unsolvable = relation ? RELATIONS[relation]?.unsolvable?.(prompt) : undefined;
     if (unsolvable) error(unsolvable, { field: "instance.prompt" });
     for (const role of ["help", "explanation"]) {
       data.representations[role].forEach((name) => {
@@ -116,6 +117,10 @@ function checkPilotDefinition(file, data, registries, diagnostics) {
       }
       if (!representation.role.includes(role)) {
         error(`${name} does not offer the ${role} role`, { field, expected: `one of: ${representation.role.join(", ")}` });
+      }
+      // Help for another form would explain another equation and give another answer (PR 65 review).
+      if (validator && !representation.forms.includes(validator.form)) {
+        error(`${name} draws ${representation.forms.join(", ")} questions, but ${validatorKey} judges ${validator.form} questions`, { field, expected: `a representation for ${validator.form}` });
       }
       if (!box) return;
       for (const v of containment(representation.supports, box)) {

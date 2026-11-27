@@ -80,7 +80,7 @@ export function QuestionWorkspace({ controller: c, controls, testId, takeFocus }
 
   return (
     <div className="mkx-exercise" data-testid={testId}>
-      <QuestionPrompt ref={promptRef} form={formOf(instance)} a={instance.a} b={instance.b} lang={lang} />
+      <QuestionPrompt ref={promptRef} form={formOf(instance)} a={instance.a} b={instance.b} c={instance.c} lang={lang} />
 
       <form onSubmit={onSubmit} className="mkx-answer-form" noValidate>
         <Textfield

@@ -25,6 +25,7 @@ import { LessonGate } from "../components/LessonGate";
 import { ReturnBanner } from "../components/ReturnBanner";
 import { BalanceExplorer } from "../components/math/BalanceExplorer";
 import { SharingExplorer } from "../components/math/SharingExplorer";
+import { TwoStepExplorer } from "../components/math/TwoStepExplorer";
 import { StepVisual } from "../components/math/StepVisual";
 import { TenFrameExplorer } from "../components/math/TenFrameExplorer";
 
@@ -40,7 +41,7 @@ interface Visit {
   discloses: boolean;
   fromQuestion: boolean;
   gateOpen: boolean;
-  question: { form: QuestionForm; a: number; b: number; prompt: string; hasHelp: boolean } | null;
+  question: { form: QuestionForm; a: number; b: number; c?: number | undefined; prompt: string; hasHelp: boolean } | null;
   /** Where "Back to your question" and the notice's other choices lead; null without a question to return to. */
   back: string | null;
   /** The check run of a supported check question, for "Show visual help instead"; null for practice. */
@@ -160,7 +161,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
       discloses,
       fromQuestion,
       gateOpen: !discloses,
-      question: listed && instance ? { form: formOf(instance), a: instance.a, b: instance.b, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
+      question: listed && instance ? { form: formOf(instance), a: instance.a, b: instance.b, c: instance.c, prompt: instance.prompt, hasHelp: instance.representations.help.length > 0 } : null,
       back: state.skillId ? `/practice/${encodeURIComponent(state.skillId)}` : null,
       checkRunId: null,
     });
@@ -222,6 +223,8 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
           return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <BalanceExplorer key={key} a={n("a")} b={n("b")} lang={lang} api={api} />;
         case "balance-sharing-explorer":
           return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <SharingExplorer key={key} a={n("a")} b={n("b")} lang={lang} api={api} />;
+        case "balance-two-step-explorer":
+          return [n("a"), n("c"), n("b")].some(Number.isNaN) ? <Placeholder key={key} lang={lang} /> : <TwoStepExplorer key={key} a={n("a")} c={n("c")} b={n("b")} lang={lang} api={api} />;
         case "make-ten":
         case "groups":
           return Number.isNaN(n("a")) || Number.isNaN(n("b")) ? <Placeholder key={key} lang={lang} /> : <StepVisual key={key} type={attributes.type} a={n("a")} b={n("b")} lang={lang} api={api} />;
@@ -240,7 +243,7 @@ export function LessonPage({ id, api = practiceApi }: { id: string; api?: Practi
   const loading = <Paragraph>{translate(lang, "lesson.loading")}</Paragraph>;
   return (
     <article className="mkx-prose mkx-lesson" data-testid="lesson-page">
-      {visit.detour && visit.question && visit.back ? <ReturnBanner form={visit.question.form} a={visit.question.a} b={visit.question.b} href={visit.back} lang={lang} /> : null}
+      {visit.detour && visit.question && visit.back ? <ReturnBanner form={visit.question.form} a={visit.question.a} b={visit.question.b} c={visit.question.c} href={visit.back} lang={lang} /> : null}
       <Heading level={1} data-size="lg">
         {lesson.titles[lang]}
       </Heading>

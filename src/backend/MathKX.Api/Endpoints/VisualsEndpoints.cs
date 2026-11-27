@@ -7,7 +7,8 @@ namespace MathKX.Api.Endpoints;
 /// <summary>
 /// Models for the visuals a lesson places with authored values (specs/003 contracts/api.md): the step-through
 /// make-ten and groups from the same step models as practice, the ten-frame explorer's pairs, and the balance
-/// explorer's states (specs/008), and the sharing explorer's states (specs/010). Lesson content,
+/// explorer's states (specs/008), the sharing explorer's states (specs/010), and the two-step explorer's states
+/// (specs/011). Lesson content,
 /// not tied to an instance; the learner app requests them only once the lesson is shown.
 /// </summary>
 public static class VisualsEndpoints
@@ -15,6 +16,7 @@ public static class VisualsEndpoints
     public const string Explorer = "ten-frame-explorer";
     public const string Balance = "balance-explorer";
     public const string Sharing = "balance-sharing-explorer";
+    public const string TwoStep = "balance-two-step-explorer";
 
     public static IEndpointRouteBuilder MapVisuals(this IEndpointRouteBuilder app)
     {
@@ -22,7 +24,7 @@ public static class VisualsEndpoints
         return app;
     }
 
-    public static IResult Visual(string type, string? a, string? b, ContentCatalog catalog)
+    public static IResult Visual(string type, string? a, string? b, string? c, ContentCatalog catalog)
     {
         if (!catalog.VisualComponents.TryGetValue(type, out var component))
         {
@@ -54,6 +56,18 @@ public static class VisualsEndpoints
 
             var shared = SharingExplorer.States(factor, product).Select(s => new SharingStateDto(s.Each, s.Loose, s.Kept, s.Solved)).ToList();
             return Results.Ok(new SharingExplorerDto(type, factor, product, shared));
+        }
+
+        if (type == TwoStep)
+        {
+            if (!int.TryParse(a, out var factor) || !int.TryParse(c, out var addend) || !int.TryParse(b, out var total)
+                || !InAttribute(component, "a", factor) || !InAttribute(component, "c", addend) || !InAttribute(component, "b", total) || !TwoStepExplorer.Supports(factor, addend, total))
+            {
+                return Problems.BadRequest("unsupported-values", $"{type} cannot show {a ?? "?"}x + {c ?? "?"} = {b ?? "?"}: outside its attributes or without a whole-number solution from 1 to 5.");
+            }
+
+            var states = TwoStepExplorer.States(factor, addend, total).Select(s => new TwoStepStateDto(s.Left, s.Right, s.Each, s.Loose, s.Kept, s.Solved)).ToList();
+            return Results.Ok(new TwoStepExplorerDto(type, factor, addend, total, states));
         }
 
         if (component.Representation is null || !catalog.Representations.TryGetValue(component.Representation, out var representation))

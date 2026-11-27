@@ -27,7 +27,7 @@ public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry g
         {
             var prompt = definition.Instance!.Prompt;
             // A supplied seed is accepted and ignored: the identity of a fixed task is (definition, version).
-            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator, form);
+            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator, form, QuestionForms.ThirdNumber(form, prompt));
         }
 
         if (identity.Seed is not { } seed)
@@ -41,7 +41,7 @@ public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry g
             throw new UnknownGeneratorException(spec.Key);
         }
 
-        var (a, b) = generator.Generate(definition, seed);
-        return new Instance(identity, definition.Skill, a, b, definition.Representations, new NamedVersion(spec.Name, spec.Version), definition.Validator, form);
+        var drawn = generator.GenerateOperands(definition, seed);
+        return new Instance(identity, definition.Skill, drawn.A, drawn.B, definition.Representations, new NamedVersion(spec.Name, spec.Version), definition.Validator, form, drawn.C);
     }
 }

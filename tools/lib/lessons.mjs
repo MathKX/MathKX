@@ -223,6 +223,13 @@ function checkVisual(d, { error, data, registries }) {
       error(`balance-sharing-explorer needs b to be a times a whole number from 1 to 5, but ${values.a}x = ${values.b} gives x = ${values.b}/${values.a}`, { ...at, field });
     }
   }
+  // ax + c = b needs a whole-number solution from 1 to 5, as the service's TwoStepExplorer.Supports requires (specs/011).
+  if (type === "balance-two-step-explorer" && [values.a, values.b, values.c].every(Number.isInteger) && values.a > 0) {
+    const x = (values.b - values.c) / values.a;
+    if (!Number.isInteger(x) || x < 1 || x > 5) {
+      error(`balance-two-step-explorer needs b − c to be a times a whole number from 1 to 5, but ${values.a}x + ${values.c} = ${values.b} gives x = ${values.b - values.c}/${values.a}`, { ...at, field });
+    }
+  }
 
   if (component.representation) {
     const representation = registries.representations.get(component.representation)?.entry;
