@@ -27,8 +27,7 @@ public sealed class InstanceResolver(ContentCatalog catalog, GeneratorRegistry g
         {
             var prompt = definition.Instance!.Prompt;
             // A supplied seed is accepted and ignored: the identity of a fixed task is (definition, version).
-            int? c = prompt.TryGetValue("c", out var third) ? third : null;
-            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator, form, c);
+            return new Instance(identity with { Seed = null }, definition.Skill, prompt["a"], prompt["b"], definition.Representations, null, definition.Validator, form, QuestionForms.ThirdNumber(form, prompt));
         }
 
         if (identity.Seed is not { } seed)

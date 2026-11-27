@@ -1,5 +1,6 @@
 using MathKX.Domain.Content;
 using MathKX.Domain.Random;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Domain.Generators;
 
@@ -18,13 +19,21 @@ public sealed record QuestionPool(string Definition, IReadOnlyList<PoolQuestion>
     /// <summary>The most seeds tried per definition; covering a pool of n questions takes about n · ln n on average.</summary>
     public const ulong DefaultLimit = 65_536;
 
-    /// <summary>Builds the pool, trying seeds 0, 1, 2, … until every question has one; throws if the limit is reached first.</summary>
-    public static QuestionPool For(ExerciseDefinition definition, GeneratorRegistry generators, ulong limit = DefaultLimit)
+    /// <summary>Builds the pool with the default validators; see the overload.</summary>
+    public static QuestionPool For(ExerciseDefinition definition, GeneratorRegistry generators, ulong limit = DefaultLimit) =>
+        For(definition, generators, ValidatorRegistry.Default(), limit);
+
+    /// <summary>
+    /// Builds the pool, trying seeds 0, 1, 2, … until every question has one; throws if the limit is reached first. A
+    /// fixed task's question keeps <c>c</c> only when its validator's form has one, as the resolver does (PR 65 review).
+    /// </summary>
+    public static QuestionPool For(ExerciseDefinition definition, GeneratorRegistry generators, ValidatorRegistry validators, ulong limit = DefaultLimit)
     {
         if (definition.IsFixed)
         {
             var prompt = definition.Instance!.Prompt;
-            return new QuestionPool(definition.Key, [new PoolQuestion(null, prompt["a"], prompt["b"], prompt.TryGetValue("c", out var c) ? c : null)]);
+            var form = validators.Get(definition.Validator).Form;
+            return new QuestionPool(definition.Key, [new PoolQuestion(null, prompt["a"], prompt["b"], QuestionForms.ThirdNumber(form, prompt))]);
         }
 
         var spec = definition.Generator ?? throw new InvalidOperationException($"{definition.Key} has neither a generator nor a fixed instance.");

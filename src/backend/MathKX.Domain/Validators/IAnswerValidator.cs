@@ -18,6 +18,13 @@ public static class QuestionForms
 
     /// <summary><c>ax + c = b</c>: the answer is <c>(b − c) / a</c>, the one form with a third number (specs/011).</summary>
     public const string TwoStep = "two-step";
+
+    /// <summary>
+    /// The third number of a fixed prompt: <c>c</c> for a two-step equation, and none for another form, whatever the
+    /// prompt carries, so a stray <c>c</c> never turns a question into one the help cannot explain (PR 65 review).
+    /// </summary>
+    public static int? ThirdNumber(string form, IReadOnlyDictionary<string, int> prompt) =>
+        form == TwoStep && prompt.TryGetValue("c", out var c) ? c : null;
 }
 
 /// <summary>A registered, versioned answer validator. The implementation must match its registry entry.</summary>

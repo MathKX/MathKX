@@ -225,6 +225,27 @@ public sealed class TwoStepTests
         Assert.False(LessonDisclosure.For(translations, oneStep with { B = 10 }).Discloses);
     }
 
+    [Fact]
+    public void Only_a_two_step_task_reads_c_from_its_prompt()
+    {
+        // A stray c on the fixed 4 + 4 must not reach its instance or pool, or groups help would refuse it (PR 65 review).
+        using var temp = new TempContent();
+        temp.CopyRepositoryContent();
+        temp.Rewrite(Path.Combine("exercises", "numbers", "addition-4-plus-4.json"), text => text.Replace("\"b\": 4", "\"b\": 4,\n      \"c\": 1", StringComparison.Ordinal));
+        var catalog = ContentLoader.Load(temp.Root);
+        var definition = catalog.Definitions["numbers.addition.four-plus-four@1"];
+        Assert.Equal(1, definition.Instance!.Prompt["c"]);
+
+        var instance = new InstanceResolver(catalog, GeneratorRegistry.Default(), ValidatorRegistry.Default()).Resolve(new InstanceIdentity("numbers.addition.four-plus-four", 1, null));
+        Assert.Null(instance.C);
+        Assert.NotEmpty(StepModels.For(instance, StepModels.RepresentationFor(instance, StepKind.Help)!, StepKind.Help));
+        Assert.Null(Assert.Single(QuestionPool.For(definition, GeneratorRegistry.Default(), ValidatorRegistry.Default()).Questions).C);
+
+        // A fixed two-step task keeps its c in both.
+        Assert.Equal(3, QuestionForms.ThirdNumber(QuestionForms.TwoStep, new Dictionary<string, int> { ["a"] = 2, ["b"] = 11, ["c"] = 3 }));
+        Assert.Null(QuestionForms.ThirdNumber(QuestionForms.UnknownFactor, new Dictionary<string, int> { ["a"] = 2, ["b"] = 8, ["c"] = 3 }));
+    }
+
     [Theory]
     [InlineData("{ \"a\": 2, \"b\": 10, \"c\": 3 }")] // x = 7/2
     [InlineData("{ \"a\": 2, \"b\": 3, \"c\": 3 }")] // x = 0

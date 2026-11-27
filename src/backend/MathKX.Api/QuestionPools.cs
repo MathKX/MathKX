@@ -1,5 +1,6 @@
 using MathKX.Domain.Content;
 using MathKX.Domain.Generators;
+using MathKX.Domain.Validators;
 
 namespace MathKX.Api;
 
@@ -11,8 +12,8 @@ public sealed class QuestionPools
 {
     private readonly IReadOnlyDictionary<string, QuestionPool> _pools;
 
-    public QuestionPools(ContentCatalog catalog, GeneratorRegistry generators) =>
-        _pools = catalog.Definitions.Values.ToDictionary(d => d.Key, d => QuestionPool.For(d, generators), StringComparer.Ordinal);
+    public QuestionPools(ContentCatalog catalog, GeneratorRegistry generators, ValidatorRegistry validators) =>
+        _pools = catalog.Definitions.Values.ToDictionary(d => d.Key, d => QuestionPool.For(d, generators, validators), StringComparer.Ordinal);
 
     public bool TryGet(string definitionKey, out QuestionPool pool) => _pools.TryGetValue(definitionKey, out pool!);
 }
